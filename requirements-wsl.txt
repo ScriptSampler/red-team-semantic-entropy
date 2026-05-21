@@ -42,5 +42,6 @@ ipykernel==6.29.5
 # Testing
 pytest==8.3.3
 
-# 4-bit quantisation — bitsandbytes ROCm fork installed separately (see docs/setup_wsl_rocm.md)
-# Alternative: autoawq / auto-gptq for pre-quantised models — added in Week 2 if needed.
+# 4-bit quantisation — upstream bitsandbytes 0.49+ auto-detects ROCm on gfx1201
+# (verified 2026-05-21 via scripts/preflight_bnb.sh: Qwen2.5-0.5B 4-bit forward pass OK).
+bitsandbytes==0.49.2
