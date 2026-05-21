@@ -1,6 +1,6 @@
-# Red-Teaming Semantic Entropy — Python deps
-# Pin hard before tagging env-ready (per Week 1 deliverable).
-# PyTorch installed separately — see README for ROCm wheel index URL.
+# Windows venv dependencies, for editor and IDE tooling only.
+# Computational work runs in the WSL venv; see requirements-wsl.txt.
+# PyTorch installed separately. See README for the ROCm wheel index.
 
 # Core ML
 transformers==4.46.3
@@ -10,10 +10,10 @@ huggingface-hub==0.26.2
 safetensors==0.4.5
 tokenizers==0.20.3
 
-# Quantisation (CUDA-first; ROCm fork installed separately if needed)
+# Quantisation (CUDA-first upstream; the ROCm fork lives in the WSL venv).
 bitsandbytes==0.44.1
 
-# NLI / semantic equivalence (Week 3+)
+# NLI / semantic equivalence (used from Week 3).
 sentencepiece==0.2.0
 protobuf==5.28.3
 
@@ -29,7 +29,7 @@ python-dotenv==1.0.1
 pyyaml==6.0.2
 click==8.1.7
 
-# Plotting (Week 9+ figures)
+# Plotting (Week 9 onwards).
 matplotlib==3.9.2
 seaborn==0.13.2
 

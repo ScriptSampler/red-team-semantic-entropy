@@ -1,12 +1,11 @@
-"""Week 1 deliverable: environment smoke test.
+"""Week 1 deliverable. Environment smoke test.
 
-Run inside the WSL .venv-wsl. Reports torch/ROCm versions, GPU detection,
-basic kernel execution, VRAM allocation. Writes the report to results/env_check.txt
-so we have a tagged artifact for the env-ready commit.
+Run inside the WSL .venv-wsl. Reports torch and ROCm versions, GPU detection,
+basic kernel execution, and VRAM allocation. Writes the report to
+results/env_check.txt so we have a tracked artifact at the env-ready commit.
 """
 from __future__ import annotations
 
-import os
 import sys
 import platform
 import subprocess
@@ -28,7 +27,7 @@ def run(cmd: list[str]) -> str:
 
 def main() -> int:
     lines: list[str] = []
-    lines.append(f"# env_check report — {datetime.utcnow().isoformat()}Z")
+    lines.append(f"# env_check report, {datetime.utcnow().isoformat()}Z")
     lines.append(f"Host: {platform.platform()}")
     lines.append(f"Python: {sys.version.split()[0]} at {sys.executable}")
 
@@ -59,7 +58,7 @@ def main() -> int:
 
     lines.append(section("matmul on GPU"))
     if not torch.cuda.is_available():
-        lines.append("torch.cuda.is_available() False — cannot run GPU matmul.")
+        lines.append("torch.cuda.is_available() False. Cannot run GPU matmul.")
         return write_and_exit(lines, 2)
     try:
         device = torch.device("cuda")
@@ -71,7 +70,7 @@ def main() -> int:
         z = (x @ y).sum().item()
         torch.cuda.synchronize()
         dt = time.perf_counter() - t0
-        lines.append(f"2048x2048 fp32 matmul → sum={z:.4f}  ({dt*1000:.2f} ms)")
+        lines.append(f"2048x2048 fp32 matmul: sum={z:.4f} ({dt*1000:.2f} ms)")
         mem_mb = torch.cuda.memory_allocated(device) / 1024**2
         lines.append(f"memory_allocated: {mem_mb:.2f} MB")
         mem_max_mb = torch.cuda.max_memory_allocated(device) / 1024**2
@@ -91,7 +90,7 @@ def main() -> int:
         return write_and_exit(lines, 4)
 
     lines.append(section("Result"))
-    lines.append("PASS — env-ready.")
+    lines.append("PASS. env-ready.")
     return write_and_exit(lines, 0)
 
 

@@ -1,6 +1,8 @@
 #!/bin/bash
-# Pre-flight: try bitsandbytes 4-bit on RX 9070 XT (gfx1201) via upstream pip install.
-# If upstream lacks ROCm support / errors on import, we know we need the source build path.
+# Pre-flight: check whether upstream bitsandbytes supports 4-bit quantisation
+# on RX 9070 XT (gfx1201). If it does, the project plan (Llama 3.1 8B at 4-bit
+# with N=10 sampling) is unblocked. If it doesn't, we'd switch to an AWQ
+# or GPTQ pre-quantised model via autoawq or auto-gptq.
 set -uo pipefail
 
 PROJECT_DIR="/mnt/i/GITHUBPROJECTS/SE Research"
@@ -13,23 +15,16 @@ pip install --upgrade 'bitsandbytes>=0.45' 2>&1 | tail -8
 echo
 echo "=== 2. Import + check ROCm detection ==="
 python <<'PY'
-import importlib, sys
+import sys
 try:
     import bitsandbytes as bnb
     print("bnb version:", bnb.__version__)
     print("bnb file:", bnb.__file__)
-    # Check if ROCm backend is registered
     try:
         from bitsandbytes import cuda_setup
         print("cuda_setup module:", cuda_setup)
     except Exception as e:
         print("cuda_setup import:", e)
-    # Try to print the device the lib detects
-    try:
-        info = bnb.utils.print_module_info() if hasattr(bnb.utils, 'print_module_info') else None
-    except Exception as e:
-        print("module_info err:", e)
-    # Most-direct check: try to import the c-extension
     print("backends:", getattr(bnb, 'backends', 'no backends attr'))
 except Exception as e:
     print("bnb import FAILED:", type(e).__name__, str(e)[:300])
@@ -45,7 +40,6 @@ try:
     import torch
     import bitsandbytes as bnb
     print("torch cuda:", torch.cuda.is_available(), "device:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "none")
-    # Tiny 4-bit linear layer test
     from bitsandbytes.nn import Linear4bit
     layer = Linear4bit(128, 64, bias=False, quant_type='nf4').to('cuda')
     x = torch.randn(2, 128, device='cuda', dtype=torch.float16)
@@ -58,8 +52,8 @@ PY
 echo "linear4bit exit: $?"
 
 echo
-echo "=== 4. Try loading a tiny non-gated model in 4-bit via transformers ==="
-# Qwen2.5-0.5B is small (~500MB), non-gated, instruction-tuned
+echo "=== 4. Load a tiny non-gated model in 4-bit via transformers ==="
+# Qwen2.5-0.5B is small (around 500 MB), non-gated, instruction-tuned.
 python <<'PY'
 import sys
 try:
@@ -86,6 +80,6 @@ echo "model load exit: $?"
 
 echo
 echo "=== Verdict ==="
-echo "If all 4 steps printed without FAILED: bitsandbytes 4-bit works on gfx1201 — proceed with plan."
-echo "If step 2 fails: bitsandbytes-rocm not auto-detected by upstream → need source build or fork."
-echo "If step 3/4 fails: detected but kernels don't run → try AMD fork or pivot to AWQ."
+echo "All four steps printed without FAILED: bitsandbytes 4-bit works on gfx1201."
+echo "Step 2 failed: upstream bnb doesn't auto-detect ROCm. Try the AMD fork or AWQ."
+echo "Steps 3 or 4 failed: detected but kernels don't run. Try the AMD fork or AWQ."

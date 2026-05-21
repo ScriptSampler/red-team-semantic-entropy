@@ -1,4 +1,6 @@
 #!/bin/bash
+# Deeper torch inspection. Useful when torch.cuda.is_available() is False
+# and diag_torch_gpu.sh hasn't pinpointed the cause.
 set -uo pipefail
 
 PROJECT_DIR="/mnt/i/GITHUBPROJECTS/SE Research"
@@ -19,15 +21,14 @@ echo "=== libamdhip64 / libhsa in torch/lib ==="
 ls "$TORCH_DIR/lib/" 2>/dev/null | grep -iE 'hip|hsa|amd|rocm' | head -20
 
 echo
-echo "=== Check rocBLAS kernel arch list inside torch ==="
+echo "=== rocBLAS kernel arch files inside torch ==="
 find "$TORCH_DIR" -name '*.dat' -path '*rocblas*' 2>/dev/null | head -5
 find "$TORCH_DIR" -name '*gfx*' 2>/dev/null | head -20
 
 echo
-echo "=== torch internal lookup of arches ==="
+echo "=== torch internal arch lookup ==="
 python <<'PY'
 import torch
-# torch.cuda.get_arch_list() returns from internal table; let's also try the build info
 try:
     print("get_arch_list:", torch.cuda.get_arch_list())
 except Exception as e:
@@ -36,21 +37,10 @@ try:
     print("torch._C._cuda_getArchFlags:", torch._C._cuda_getArchFlags() if hasattr(torch._C, '_cuda_getArchFlags') else 'N/A')
 except Exception as e:
     print("getArchFlags err:", e)
-# print torch.__config__.show()
 print()
 print("=== torch config dump ===")
 print(torch.__config__.show())
 PY
-
-echo
-echo "=== Library load: which libhsa does torch use? ==="
-python -c "
-import torch
-import ctypes
-# Force load torch's HIP runtime, then check
-hip = torch._C
-print('torch._C loaded:', hip)
-" 2>&1 | head -10
 
 echo
 echo "=== Direct ldd on torch's libamdhip ==="

@@ -1,6 +1,7 @@
 #!/bin/bash
-# Create venv inside Ubuntu-24.04 WSL and install PyTorch ROCm 6.4 + project deps.
-# Run as user abhi: wsl -d Ubuntu-24.04 bash this-script
+# Create the venv inside Ubuntu 24.04 WSL and install PyTorch ROCm 6.4 plus
+# the project dependencies. Run as user abhi:
+#   wsl -d Ubuntu-24.04 bash this-script
 set -euo pipefail
 
 PROJECT_DIR="/mnt/i/GITHUBPROJECTS/SE Research"
@@ -24,7 +25,7 @@ echo "=== Upgrade pip + base tools ==="
 pip install --upgrade pip wheel setuptools
 
 echo
-echo "=== Install PyTorch ROCm 6.4 (torch 2.9.1 + torchvision 0.24.1) ==="
+echo "=== Install PyTorch ROCm 6.4 (torch 2.9.1, torchvision 0.24.1) ==="
 pip install torch==2.9.1 torchvision==0.24.1 \
     --index-url https://download.pytorch.org/whl/rocm6.4
 
@@ -41,7 +42,7 @@ print('cuda:', torch.version.cuda)
 "
 
 echo
-echo "=== Install project deps (excluding torch which we just pinned to ROCm wheel) ==="
+echo "=== Install project dependencies (torch already pinned above) ==="
 pip install \
     transformers==4.46.3 \
     datasets==3.1.0 \
@@ -66,15 +67,17 @@ pip install \
     pytest==8.3.3
 
 echo
-echo "=== Apply WSL libhsa fix (replace bundled torch libhsa with WSL system one) ==="
+echo "=== Apply the WSL libhsa fix ==="
+# torch ships its own libhsa-runtime64.so that targets native Linux ROCm.
+# In WSL we need the one from hsa-runtime-rocr4wsl-amdgpu. Symlink it.
 TORCH_LIB="$(python -c 'import torch, os; print(os.path.dirname(torch.__file__))')/lib"
 SYS_HSA="/opt/rocm-6.4.0/lib/libhsa-runtime64.so"
 if [ -f "$SYS_HSA" ] && [ ! -L "$TORCH_LIB/libhsa-runtime64.so" ]; then
     mv "$TORCH_LIB/libhsa-runtime64.so" "$TORCH_LIB/libhsa-runtime64.so.bundled"
     ln -s "$SYS_HSA" "$TORCH_LIB/libhsa-runtime64.so"
-    echo "Symlinked $TORCH_LIB/libhsa-runtime64.so -> $SYS_HSA"
+    echo "Symlinked $TORCH_LIB/libhsa-runtime64.so to $SYS_HSA"
 else
-    echo "Symlink already in place or system HSA not found, skipping."
+    echo "Symlink already in place, or system HSA not found. Skipping."
 fi
 
 echo

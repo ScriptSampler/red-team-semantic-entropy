@@ -1,5 +1,5 @@
-# Force LF line endings for shell scripts and Python files so they remain executable
-# inside WSL even when checked out on Windows.
+# Force LF line endings for shell scripts and Python so they remain
+# executable inside WSL even when checked out on Windows.
 *.sh text eol=lf
 *.py text eol=lf
 *.txt text eol=lf
@@ -8,7 +8,7 @@
 *.yaml text eol=lf
 *.toml text eol=lf
 
-# Binary files — never normalize
+# Binary files. Never normalize.
 *.png binary
 *.jpg binary
 *.pdf binary

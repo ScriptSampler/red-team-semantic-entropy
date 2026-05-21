@@ -1,6 +1,7 @@
 #!/bin/bash
-# Install ROCm 6.4 with WSL usecase inside Ubuntu-24.04.
-# Run as root: wsl -d Ubuntu-24.04 -u root bash this-script
+# Install ROCm 6.4 with the WSL usecase inside Ubuntu 24.04.
+# Run as root:
+#   wsl -d Ubuntu-24.04 -u root bash this-script
 set -euo pipefail
 
 echo "=== Download amdgpu-install 6.4 for noble ==="
@@ -17,24 +18,19 @@ echo "=== Install amdgpu-install ==="
 apt install -y "./${INSTALLER}"
 
 echo
-echo "=== Check available usecases ==="
+echo "=== Available usecases ==="
 amdgpu-install --list-usecase 2>&1 | head -40
 
 echo
 echo "=== Install ROCm 6.4 for WSL ==="
-# --usecase=wsl,rocm pulls ROCm + the WSL DXG bridge (librocdxg.so)
-# --no-dkms because WSL uses the Windows host driver, no kernel module needed
+# --usecase=wsl,rocm pulls in ROCm plus the WSL HSA shim (hsa-runtime-rocr4wsl-amdgpu).
+# --no-dkms because the kernel driver lives on the Windows host in WSL.
 amdgpu-install --usecase=wsl,rocm --no-dkms -y
 
 echo
-echo "=== Verify librocdxg.so present ==="
-find /opt/rocm* -name 'librocdxg*' 2>/dev/null
-
-echo
-echo "=== Verify rocminfo + libhsa versions ==="
+echo "=== Verify rocminfo and libhsa versions ==="
 which rocminfo
 ls /opt/rocm/lib/libhsa-runtime*
-ls /opt/rocm/lib/librocdxg* 2>/dev/null || echo "no librocdxg in /opt/rocm/lib"
 
 echo
-echo "=== Done. Run as user: rocminfo | grep -E 'gfx|Marketing' ==="
+echo "Done. As user: rocminfo | grep -E 'gfx|Marketing'"

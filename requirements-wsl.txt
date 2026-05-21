@@ -1,11 +1,12 @@
-# Red-Teaming Semantic Entropy — WSL Ubuntu-24.04 deps
-# Python 3.12, ROCm 6.4, RX 9070 XT (gfx1201).
-# PyTorch installed separately from rocm6.4 index — do NOT pin torch here.
+# WSL Ubuntu 24.04 dependencies. Python 3.12, ROCm 6.4, RX 9070 XT (gfx1201).
+# This is the research runtime.
 #
-# Install:
+# Install order:
 #   pip install torch==2.9.1 torchvision==0.24.1 \
 #       --index-url https://download.pytorch.org/whl/rocm6.4
 #   pip install -r requirements-wsl.txt
+#
+# Don't pin torch here. It comes from the ROCm wheel index above.
 
 # Core ML
 transformers==4.46.3
@@ -15,7 +16,7 @@ huggingface-hub==0.26.2
 safetensors==0.4.5
 tokenizers==0.20.3
 
-# NLI / semantic equivalence (Week 3+)
+# NLI / semantic equivalence (used from Week 3).
 sentencepiece==0.2.0
 protobuf==5.28.3
 
@@ -31,7 +32,7 @@ python-dotenv==1.0.1
 pyyaml==6.0.2
 click==8.1.7
 
-# Plotting (Week 9+ figures)
+# Plotting (Week 9 onwards).
 matplotlib==3.9.2
 seaborn==0.13.2
 
@@ -42,6 +43,7 @@ ipykernel==6.29.5
 # Testing
 pytest==8.3.3
 
-# 4-bit quantisation — upstream bitsandbytes 0.49+ auto-detects ROCm on gfx1201
-# (verified 2026-05-21 via scripts/preflight_bnb.sh: Qwen2.5-0.5B 4-bit forward pass OK).
+# 4-bit quantisation. Upstream bitsandbytes 0.49 and newer auto-detects ROCm
+# on gfx1201 (verified 2026-05-21 via scripts/preflight_bnb.sh: Qwen2.5-0.5B
+# 4-bit forward pass and generation OK).
 bitsandbytes==0.49.2

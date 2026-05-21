@@ -1,6 +1,7 @@
 #!/bin/bash
-# Bootstrap Ubuntu-24.04 WSL: create user 'abhi', set as default, install build tools.
-# Run as root: wsl -d Ubuntu-24.04 -u root bash this-script
+# Bootstrap Ubuntu 24.04 WSL. Creates the user 'abhi', sets it as the default,
+# and installs build tools. Run as root:
+#   wsl -d Ubuntu-24.04 -u root bash this-script
 set -euo pipefail
 
 USERNAME="abhi"
@@ -15,10 +16,10 @@ echo
 echo "=== Create user $USERNAME ==="
 if ! id "$USERNAME" >/dev/null 2>&1; then
     useradd -m -s /bin/bash -G sudo,render,video "$USERNAME"
-    # Passwordless sudo for abhi (consistent with WSL convention)
+    # Passwordless sudo, consistent with the WSL convention.
     echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME
     chmod 0440 /etc/sudoers.d/$USERNAME
-    # Set a password just in case (not needed with NOPASSWD but harmless)
+    # Set a password too, in case sudo NOPASSWD is ever revoked.
     echo "$USERNAME:abhi" | chpasswd
 fi
 id "$USERNAME"
@@ -34,4 +35,4 @@ default=$USERNAME
 EOF
 
 echo
-echo "Done. After 'wsl --shutdown', wsl -d Ubuntu-24.04 will launch as $USERNAME."
+echo "Done. Run 'wsl --shutdown', then wsl -d Ubuntu-24.04 launches as $USERNAME."

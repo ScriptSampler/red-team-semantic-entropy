@@ -1,4 +1,4 @@
-# env_check report — 2026-05-21T21:06:46.282591Z
+# env_check report, 2026-05-21T21:48:25.101487Z
 Host: Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
 Python: 3.12.3 at /mnt/i/GITHUBPROJECTS/SE Research/.venv-wsl/bin/python
 
@@ -32,7 +32,7 @@ torch.cuda.device_count(): 1
 
 === matmul on GPU ===
 
-2048x2048 fp32 matmul → sum=-19168.4277  (212.24 ms)
+2048x2048 fp32 matmul: sum=1663.7500 (190.51 ms)
 memory_allocated: 108.00 MB
 max_memory_allocated: 124.00 MB
 
@@ -43,4 +43,4 @@ datasets: 3.1.0
 
 === Result ===
 
-PASS — env-ready.
+PASS. env-ready.

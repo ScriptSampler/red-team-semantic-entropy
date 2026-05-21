@@ -7,9 +7,9 @@ PROJECT_DIR="/mnt/i/GITHUBPROJECTS/SE Research"
 cd "$PROJECT_DIR"
 source .venv-wsl/bin/activate
 
-echo "=== Step 1: What arches did this torch wheel compile for? ==="
+echo "=== Step 1: which arches did this torch wheel compile for? ==="
 python - <<'PY'
-import torch, os
+import torch
 print("torch:", torch.__version__)
 print("hip:", torch.version.hip)
 try:
@@ -24,7 +24,7 @@ echo "=== Step 2: rocminfo confirms gfx1201 ==="
 rocminfo 2>&1 | grep -E 'Name:.*gfx|Marketing' | head -4
 
 echo
-echo "=== Step 3: Try torch with HSA_OVERRIDE_GFX_VERSION=12.0.1 (force gfx1201) ==="
+echo "=== Step 3: torch with HSA_OVERRIDE_GFX_VERSION=12.0.1 (force gfx1201) ==="
 HSA_OVERRIDE_GFX_VERSION=12.0.1 python -c "
 import torch
 print('cuda_avail:', torch.cuda.is_available())
@@ -37,7 +37,7 @@ if torch.cuda.is_available():
 "
 
 echo
-echo "=== Step 4: Try with HSA_OVERRIDE_GFX_VERSION=11.0.0 (RDNA 3 fallback) ==="
+echo "=== Step 4: HSA_OVERRIDE_GFX_VERSION=11.0.0 (RDNA 3 fallback) ==="
 HSA_OVERRIDE_GFX_VERSION=11.0.0 python -c "
 import torch
 print('cuda_avail:', torch.cuda.is_available())
@@ -50,7 +50,7 @@ if torch.cuda.is_available():
 " 2>&1 | head -20
 
 echo
-echo "=== Step 5: Without any override, but with PYTORCH_ROCM_ARCH ==="
+echo "=== Step 5: PYTORCH_ROCM_ARCH=gfx1201 without HSA override ==="
 PYTORCH_ROCM_ARCH=gfx1201 python -c "
 import torch
 print('cuda_avail:', torch.cuda.is_available())
@@ -58,7 +58,7 @@ print('device_count:', torch.cuda.device_count())
 "
 
 echo
-echo "=== Step 6: Detailed HSA log (debug) ==="
+echo "=== Step 6: detailed HSA log ==="
 HSA_ENABLE_LOG=1 AMD_LOG_LEVEL=3 python -c "
 import torch
 print('cuda_avail:', torch.cuda.is_available())

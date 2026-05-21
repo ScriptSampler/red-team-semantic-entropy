@@ -1,6 +1,7 @@
 #!/bin/bash
-# Force torch to use the WSL-aware libhsa-runtime64 from the system ROCm,
-# not the native-Linux one bundled in the wheel.
+# Point torch at the WSL-aware libhsa-runtime64 from the system ROCm
+# install, instead of the native-Linux one bundled in the wheel.
+# Re-run this after any pip install or upgrade of torch.
 set -uo pipefail
 
 PROJECT_DIR="/mnt/i/GITHUBPROJECTS/SE Research"
@@ -20,7 +21,7 @@ echo "from package:"
 dpkg -S /opt/rocm-6.4.0/lib/libhsa-runtime64.so.1.14.0
 
 echo
-echo "=== Try 1: LD_PRELOAD the system WSL libhsa ==="
+echo "=== Sanity test with LD_PRELOAD ==="
 LD_PRELOAD="$SYS_HSA" python -c "
 import torch
 print('cuda_avail:', torch.cuda.is_available())
@@ -33,17 +34,17 @@ if torch.cuda.is_available():
 "
 
 echo
-echo "=== Try 2: rename bundled lib + symlink to system ==="
+echo "=== Rename bundled lib and symlink to the system one ==="
 if [ ! -L "$TORCH_LIB/libhsa-runtime64.so" ]; then
     cp "$TORCH_LIB/libhsa-runtime64.so" "$TORCH_LIB/libhsa-runtime64.so.bundled"
     rm "$TORCH_LIB/libhsa-runtime64.so"
     ln -s "$SYS_HSA" "$TORCH_LIB/libhsa-runtime64.so"
-    echo "Symlinked $TORCH_LIB/libhsa-runtime64.so -> $SYS_HSA"
+    echo "Symlinked $TORCH_LIB/libhsa-runtime64.so to $SYS_HSA"
     ls -la "$TORCH_LIB/libhsa-runtime64.so"*
 fi
 
 echo
-echo "=== Now without LD_PRELOAD ==="
+echo "=== Verify torch GPU access without LD_PRELOAD ==="
 python -c "
 import torch
 print('cuda_avail:', torch.cuda.is_available())
