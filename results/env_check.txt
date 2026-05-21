@@ -1,0 +1,46 @@
+# env_check report — 2026-05-21T21:06:46.282591Z
+Host: Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+Python: 3.12.3 at /mnt/i/GITHUBPROJECTS/SE Research/.venv-wsl/bin/python
+
+=== rocminfo (GPU agents) ===
+
+Agent 1                  
+  Name:                    AMD Ryzen 7 9800X3D 8-Core Processor
+  Marketing Name:          AMD Ryzen 7 9800X3D 8-Core Processor
+  Vendor Name:             CPU                                
+  Compute Unit:            16                                 
+Agent 2                  
+  Name:                    gfx1201                            
+  Marketing Name:          AMD Radeon RX 9070 XT              
+  Vendor Name:             AMD                                
+  Compute Unit:            64                                 
+  Wavefront Size:          32(0x20)                           
+      Name:                    amdgcn-amd-amdhsa--gfx1201         
+      Name:                    amdgcn-amd-amdhsa--gfx12-generic   
+
+=== torch import ===
+
+torch: 2.9.1+rocm6.4
+torch.version.cuda: None
+torch.version.hip: 6.4.43484-123eb5128
+torch.cuda.is_available(): True
+torch.cuda.device_count(): 1
+  device[0]: AMD Radeon RX 9070 XT
+    total_mem_GB: 15.81
+    multi_processor_count: 32
+    major.minor: 12.0
+
+=== matmul on GPU ===
+
+2048x2048 fp32 matmul → sum=-19168.4277  (212.24 ms)
+memory_allocated: 108.00 MB
+max_memory_allocated: 124.00 MB
+
+=== transformers + datasets import ===
+
+transformers: 4.46.3
+datasets: 3.1.0
+
+=== Result ===
+
+PASS — env-ready.

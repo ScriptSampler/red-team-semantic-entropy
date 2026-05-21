@@ -1,0 +1,93 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual envs
+.venv/
+.venv-wsl/
+venv/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Project artifacts
+data/raw/
+data/processed/
+data/cache/
+results/*.json
+results/*.pkl
+results/*.npy
+results/*.csv
+results/figures/
+results/runs/
+results/samples/
+!results/.gitkeep
+!results/*.md
+!results/env_check.txt
+
+# Model weights / HF cache
+models/
+*.bin
+*.safetensors
+*.gguf
+.huggingface/
+hf_cache/
+
+# Logs
+*.log
+logs/
+wandb/
+rocm_install.log
+wsl_install.log
+
+# Tooling artifacts created during bootstrap
+*.deb
+
+# Secrets
+.env
+.env.local
+*.key
+hf_token*
+
+# Compiled latex (for Phase 3)
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+paper/build/

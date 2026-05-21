@@ -1,0 +1,46 @@
+# Red-Teaming Semantic Entropy — WSL Ubuntu-24.04 deps
+# Python 3.12, ROCm 6.4, RX 9070 XT (gfx1201).
+# PyTorch installed separately from rocm6.4 index — do NOT pin torch here.
+#
+# Install:
+#   pip install torch==2.9.1 torchvision==0.24.1 \
+#       --index-url https://download.pytorch.org/whl/rocm6.4
+#   pip install -r requirements-wsl.txt
+
+# Core ML
+transformers==4.46.3
+datasets==3.1.0
+accelerate==1.1.1
+huggingface-hub==0.26.2
+safetensors==0.4.5
+tokenizers==0.20.3
+
+# NLI / semantic equivalence (Week 3+)
+sentencepiece==0.2.0
+protobuf==5.28.3
+
+# Numerics + eval
+numpy<2.2
+scipy==1.14.1
+scikit-learn==1.5.2
+pandas==2.2.3
+
+# Utilities
+tqdm==4.67.0
+python-dotenv==1.0.1
+pyyaml==6.0.2
+click==8.1.7
+
+# Plotting (Week 9+ figures)
+matplotlib==3.9.2
+seaborn==0.13.2
+
+# Dev / notebooks
+jupyterlab==4.3.1
+ipykernel==6.29.5
+
+# Testing
+pytest==8.3.3
+
+# 4-bit quantisation — bitsandbytes ROCm fork installed separately (see docs/setup_wsl_rocm.md)
+# Alternative: autoawq / auto-gptq for pre-quantised models — added in Week 2 if needed.
