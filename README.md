@@ -58,7 +58,13 @@ The Windows-side `.venv` (Python 3.11, CPU torch) exists only for IDE and editor
 
 ## Status
 
-Week 1 (15 to 21 May): environment bootstrap, complete. Sessions run Mon/Wed/Fri 8 to 10 am, with a Sunday review 10 to 11 am. The Phase 1 stop condition is to replicate Farquhar SE AUROC within plus or minus three percentage points by 15 June.
+Sessions run Mon/Wed/Fri 8 to 10 am, with a Sunday review 10 to 11 am. The Phase 1 stop condition is to replicate Farquhar SE AUROC within plus or minus three percentage points by 15 June.
+
+Week 1 (15 to 21 May): environment bootstrap, complete (tag `env-ready`).
+
+Week 2 (22 to 28 May): model loaded, dataset loaded, end-to-end pipeline working. All four Sunday-checkpoint deliverables met. Llama 3.1 8B Instruct runs at 4-bit on the RX 9070 XT with about 5.6 GB peak VRAM. TriviaQA `rc.nocontext` validation loaded, 17,944 examples. Greedy correctness on the first 10 questions was 7 of 10, with the misses spanning a hallucination loop, a confident-wrong answer, and an honest refusal. Sustained N=10 sampling throughput on 100 questions is 14.27 s per question (about 35 generated tokens per second), which projects to roughly 71 hours for full validation. That is over the plan's 12 to 36 hour budget for Week 4, so Phase 1 will use the plan's pre-authorised mitigation: a 2000 question subset at N=10 for the first replication pass. See [docs/decisions.md](docs/decisions.md).
+
+Week 3 (29 May to 4 Jun): SE implementation. Multi-sample generation, NLI entailment check, clustering and entropy.
 
 ## License
 
