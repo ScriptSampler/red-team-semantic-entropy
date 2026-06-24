@@ -200,6 +200,58 @@ def test_optimizer_termination_short_circuits(monkeypatch):
     assert result.improved
 
 
+# ---- optimizer keeps the MAX feasible candidate (guard regression) ---------
+
+def test_optimizer_keeps_max_not_last(monkeypatch):
+    """Two feasible candidates in one iteration, the second lower than the
+    first. best_query must be the higher one. This locks the in-loop guard
+    in optimizer.py: removing it would make best_query the LAST candidate."""
+    nli = FakeNLI()
+
+    def objective(q: str) -> float:
+        return float(len(q))
+
+    # All three share first word "WHAT" (FakeNLI -> equivalent) and both
+    # candidates sit inside the feasibility length band [0.4, 2.5] x base.
+    base = "WHAT is the capital?"            # len 20
+    higher = "WHAT is the capital city here"  # len 29 (ratio 1.45), obj 29
+    lower = "WHAT is the capital too"         # len 23 (ratio 1.15), obj 23
+    seq = iter([higher, lower])
+    monkeypatch.setattr(proposer_mod, "propose",
+                        lambda query, lm, **kw: next(seq))
+
+    result = optimizer.optimize(
+        base, objective, lm=None, nli=nli,
+        max_iteration=1, candidate_size_M=2, top_N=1,
+    )
+    assert result.best_obj == float(len(higher))   # the MAX, not the last
+    assert result.best_query == higher
+
+
+# ---- proposer label stripping ----------------------------------------------
+
+def test_proposer_strips_known_labels(monkeypatch):
+    import se.model as model_mod
+    from se.attacks import proposer
+
+    # "New question:" label should be stripped.
+    monkeypatch.setattr(model_mod, "generate_one",
+                        lambda lm, prompt, gen: 'New question: What is the capital?')
+    out = proposer.propose("Where is the capital?", lm=None)
+    assert out == "What is the capital?"
+
+
+def test_proposer_preserves_legitimate_colon(monkeypatch):
+    import se.model as model_mod
+    from se.attacks import proposer
+
+    # A real question that happens to start "In 1969:" must NOT be stripped.
+    q = "In 1969: which mission landed humans on the Moon?"
+    monkeypatch.setattr(model_mod, "generate_one", lambda lm, prompt, gen: q)
+    out = proposer.propose("What 1969 mission landed on the Moon?", lm=None)
+    assert out == q
+
+
 # ---- SRE pooled clustering -------------------------------------------------
 
 def test_sre_pooled_clustering():

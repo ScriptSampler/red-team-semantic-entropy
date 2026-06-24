@@ -102,6 +102,12 @@ def optimize(
             c.feasible = fr.feasible
             if fr.feasible:
                 feasible_candidates.append(c)
+                # This guard is NOT redundant with the improved_children filter
+                # above: that filter used best_obj's PRE-LOOP value, but best_obj
+                # rises as we accept candidates within this loop. The guard keeps
+                # best_query tracking the MAXIMUM feasible candidate, not the last
+                # one. Dropping it would let a later, lower-obj feasible candidate
+                # overwrite the best.
                 if c.obj >= best_obj:
                     best_obj = c.obj
                     best_query = c.query

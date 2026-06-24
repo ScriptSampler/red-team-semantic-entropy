@@ -28,12 +28,19 @@ method in this project, not our contribution:
     To avoid a third resident model under the 16 GB VRAM budget, we filter
     with NLI instead: a reformulation is kept if it is not NLI-contradictory
     with the original in either direction. Configurable.
+  - Total reformulation failure. If the proposer yields zero usable
+    reformulations, we fall back to sampling the original question alone.
+    That pools K samples instead of N*K and biases entropy low; the result
+    carries n_reform=0 and a warning is logged so the case is visible.
 """
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 
 import torch
+
+logger = logging.getLogger(__name__)
 
 from . import model as M
 from .config import GenConfig
@@ -127,8 +134,17 @@ def self_reflective_entropy(
         reformulations = generate_reformulations(
             question, lm, nli, n_reform=n_reform, temperature=1.0
         )
-    # If reformulation generation failed entirely, fall back to the
-    # original question so SRE still returns a defined score.
+    # If reformulation generation failed entirely, fall back to the original
+    # question so SRE still returns a defined score. This pools only K samples
+    # instead of N*K, which biases the entropy DOWNWARD (fewer samples cluster
+    # into fewer groups). The bias is observable via n_reform=0 in the result;
+    # we also warn so it is not silent.
+    if not reformulations:
+        logger.warning(
+            "SRE: reformulation generation returned 0 variants for a question; "
+            "falling back to the original only. Entropy is biased low "
+            "(K samples instead of N*K). question=%r", question[:80]
+        )
     variants = reformulations if reformulations else [question]
 
     gen = GenConfig(max_new_tokens=max_new_tokens, temperature=temperature,

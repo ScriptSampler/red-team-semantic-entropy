@@ -12,9 +12,19 @@ paraphrase, or a separate paraphraser"). Generation runs at temperature
 from __future__ import annotations
 
 import random
+import re
 
 from .. import model as M
 from ..config import GenConfig
+
+
+# Known labels the proposer model sometimes prepends. Case-insensitive.
+# Kept as an allowlist so legitimate question text like "In 1969:" survives.
+_LABEL_PREFIX = re.compile(
+    r"^\s*(new question|question|rewritten|reworded|rephrased|paraphrase|"
+    r"answer|rewrite|here(?:'s| is)(?: the)?(?: rewritten| new)?(?: question)?)\s*[:\-]\s*",
+    re.IGNORECASE,
+)
 
 
 _VERBS = [
@@ -65,10 +75,13 @@ def propose(
                     top_p=1.0, n_samples=1)
     raw = M.generate_one(lm, _build_prompt(question), gen)
     cand = raw.strip().strip('"').strip("'").strip()
-    # Models sometimes prefix "New question:" or similar; drop a leading label.
-    for sep in ("\n",):
-        if sep in cand:
-            cand = cand.split(sep)[0].strip()
+    # Take the first line: the model sometimes adds commentary on later lines.
+    if "\n" in cand:
+        cand = cand.split("\n")[0].strip()
+    # Drop a known leading label if present (e.g. "New question: ...",
+    # "Answer: ..."). A targeted allowlist, not a generic "Word:" strip, so a
+    # legitimate question like "In 1969: who landed on the Moon?" is untouched.
+    cand = _LABEL_PREFIX.sub("", cand).strip().strip('"').strip("'").strip()
     if not cand:
         return question
     return cand
