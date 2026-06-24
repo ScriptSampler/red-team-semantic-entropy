@@ -134,17 +134,30 @@ def main() -> int:
     log("## AUROC")
     log("Positive class is the hallucination case (the boolean is False).")
     log("")
-    log("| label convention | AUROC | pass (in [0.72, 0.82])? |")
+    log(f"| label convention | AUROC | pass (in [{TARGET_LOW}, {TARGET_HIGH}])? |")
     log("| --- | --- | --- |")
+    auc_by_label: dict[str, float] = {}
     for label_key in ("greedy_correct", "all_samples_correct", "majority_correct"):
         labels = [0 if r[label_key] else 1 for r in rows]
         if 0 < sum(labels) < len(labels):
             auc = roc_auc_score(labels, entropies)
+            auc_by_label[label_key] = auc
             pass_ = TARGET_LOW <= auc <= TARGET_HIGH
             log(f"| {label_key} | {auc:.3f} | {'yes' if pass_ else 'no'} |")
         else:
             log(f"| {label_key} | undefined (all one class) | n/a |")
     log("")
+
+    # Machine-readable summary so the overnight driver can gate Phase 2.
+    best_auc = max(auc_by_label.values()) if auc_by_label else 0.0
+    (RESULTS_DIR / "replication_auroc.json").write_text(json.dumps({
+        "n_scored": n,
+        "auroc": auc_by_label,
+        "best_auroc": best_auc,
+        "target_low": TARGET_LOW,
+        "target_high": TARGET_HIGH,
+        "in_target": any(TARGET_LOW <= a <= TARGET_HIGH for a in auc_by_label.values()),
+    }, indent=2))
 
     log("## Right vs wrong entropy gap")
     for label_key in ("greedy_correct", "all_samples_correct", "majority_correct"):

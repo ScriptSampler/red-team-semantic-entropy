@@ -46,6 +46,7 @@ data/raw/
 data/processed/
 data/cache/
 results/*.json
+results/run_all_status.txt
 results/*.pkl
 results/*.npy
 results/*.csv

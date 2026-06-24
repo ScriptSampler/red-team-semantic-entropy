@@ -11,6 +11,7 @@ Run after Week 4 completes and the GPU is free:
 """
 from __future__ import annotations
 
+import os
 import statistics
 import sys
 from pathlib import Path
@@ -23,7 +24,11 @@ from se.attacks.harness import load_pair, run_attack_batch
 from se.attacks.select import select_examples
 
 
-N = 10
+# Overridable from the overnight driver; defaults match the plan's prototype.
+N = int(os.environ.get("ATTACK_N", "10"))
+MAX_ITER = int(os.environ.get("ATTACK_MAX_ITER", "20"))
+M = int(os.environ.get("ATTACK_M", "3"))
+TOP_N = int(os.environ.get("ATTACK_TOPN", "3"))
 OUT = DEFAULT_SAMPLES_DIR / "attacks" / "wk6_hide.jsonl"
 
 
@@ -37,7 +42,7 @@ def main() -> int:
     outcomes = run_attack_batch(
         examples, "hide", pair, OUT,
         detector="se", gen_cfg=gen,
-        max_iteration=20, candidate_size_M=3, top_N=3, min_delta_nats=0.25,
+        max_iteration=MAX_ITER, candidate_size_M=M, top_N=TOP_N, min_delta_nats=0.25,
     )
 
     report: list[str] = []

@@ -17,6 +17,7 @@ Run after Week 4 completes and the GPU is free:
 from __future__ import annotations
 
 import json
+import os
 import statistics
 import sys
 import time
@@ -35,7 +36,7 @@ from se.sre import self_reflective_entropy
 from se.attacks.harness import load_pair
 
 
-N_QUESTIONS = 100
+N_QUESTIONS = int(os.environ.get("SRE_N", "100"))
 OUT = DEFAULT_SAMPLES_DIR / "wk8_sre_100q.jsonl"
 
 

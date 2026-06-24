@@ -58,6 +58,8 @@ def main() -> int:
     ap.add_argument("--dataset", choices=["triviaqa", "squad"], default="triviaqa")
     ap.add_argument("--n", type=int, default=200)
     ap.add_argument("--max_iteration", type=int, default=20)
+    ap.add_argument("--candidate_size_M", type=int, default=3)
+    ap.add_argument("--top_N", type=int, default=3)
     args = ap.parse_args()
 
     want = "wrong" if args.attack == "hide" else "right"
@@ -84,8 +86,8 @@ def main() -> int:
     run_attack_batch(
         examples, args.attack, pair, out,
         detector=args.detector, gen_cfg=gen, sre_kwargs=sre_kwargs,
-        max_iteration=args.max_iteration, candidate_size_M=3, top_N=3,
-        min_delta_nats=0.25, progress_every=5,
+        max_iteration=args.max_iteration, candidate_size_M=args.candidate_size_M,
+        top_N=args.top_N, min_delta_nats=0.25, progress_every=5,
     )
     print(f"campaign written to {out}", flush=True)
     return 0
