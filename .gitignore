@@ -74,6 +74,10 @@ wsl_install.log
 # Tooling artifacts created during bootstrap
 *.deb
 
+# Vendored external repos (cloned, not committed). Provenance recorded in
+# docs/phase2_overview.md. Re-clone with the documented command + commit.
+vendor/
+
 # Secrets
 .env
 .env.local

@@ -71,6 +71,41 @@ def load_triviaqa(
     return out
 
 
+def load_squad(
+    split: str = "validation", limit: int | None = None, version: str = "v1"
+) -> list[TriviaQAExample]:
+    """Load SQuAD as TriviaQAExample records for a shared eval path.
+
+    SQuAD answers are spans drawn from a context paragraph. For SE
+    replication in the no-context setting (matching the SRE paper's
+    "SQuAD no context" row), we keep only the question and the answer
+    texts; the accepted forms are the distinct gold answer strings.
+
+    version "v1" loads rajpurkar/squad, "v2" loads rajpurkar/squad_v2.
+    Unanswerable v2 questions (empty answer set) are skipped, since an SE
+    correctness label needs a gold answer.
+    """
+    name = "rajpurkar/squad_v2" if version == "v2" else "rajpurkar/squad"
+    ds = load_dataset(name, split=split)
+    if limit is not None:
+        ds = ds.select(range(min(limit, len(ds))))
+    out: list[TriviaQAExample] = []
+    for row in ds:
+        texts = list(row["answers"].get("text") or [])
+        texts = [t.strip() for t in texts if t and t.strip()]
+        if not texts:
+            continue  # unanswerable (v2) — no gold answer to score against
+        out.append(
+            TriviaQAExample(
+                question_id=row["id"],
+                question=row["question"].strip(),
+                answer=texts[0],
+                aliases=texts[1:],
+            )
+        )
+    return out
+
+
 def iter_triviaqa(
     split: str = "validation", limit: int | None = None
 ) -> Iterator[TriviaQAExample]:
