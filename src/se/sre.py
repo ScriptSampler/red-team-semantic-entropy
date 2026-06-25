@@ -79,26 +79,28 @@ def generate_reformulations(
     max_new_tokens: int = 48,
     temperature: float = 1.0,
     keep_non_contradictory: bool = True,
-    max_tries: int | None = None,
+    oversample: int = 3,
 ) -> list[str]:
     """Produce up to n_reform paraphrases of the question.
 
-    Uses Llama itself as the paraphraser. Reformulations equal to the
-    original (after normalisation) or duplicates are dropped. If
-    keep_non_contradictory, a reformulation is also dropped when NLI calls
-    either direction against the original a contradiction.
+    Uses Llama itself as the paraphraser, by SAMPLING. An earlier version called
+    the greedy generate_one in a loop, which returns identical text every call,
+    so the n_reform reformulations collapsed to one and SRE silently degraded to
+    vanilla SE on a single variant (observed as ~0.92 reformulations kept). We
+    now draw a batch of sampled candidates and keep the distinct, non-
+    contradictory ones. Reformulations equal to the original (after
+    normalisation) or duplicates are dropped; if keep_non_contradictory, any
+    that NLI calls a contradiction in either direction are dropped too.
     """
-    max_tries = max_tries or (n_reform * 4)
     prompt = _REFORM_INSTRUCTION.format(q=question)
     gen = GenConfig(max_new_tokens=max_new_tokens, temperature=temperature,
-                    top_p=1.0, n_samples=1)
+                    top_p=1.0, n_samples=min(n_reform * oversample, 16))
+    raw = M.generate_samples(lm, prompt, gen)
 
     kept: list[str] = []
     seen = {normalise(question)}
-    tries = 0
-    while len(kept) < n_reform and tries < max_tries:
-        tries += 1
-        cand = M.generate_one(lm, prompt, gen).strip().strip('"').strip()
+    for cand in raw:
+        cand = cand.strip().strip('"').strip("'").strip()
         key = normalise(cand)
         if not key or key in seen:
             continue
@@ -108,6 +110,8 @@ def generate_reformulations(
                 continue
         seen.add(key)
         kept.append(cand)
+        if len(kept) >= n_reform:
+            break
     return kept
 
 
