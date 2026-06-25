@@ -59,22 +59,33 @@ def main() -> int:
     rows = [json.loads(l) for l in entropy_path.read_text().splitlines() if l.strip()]
     by_id = {ex.question_id: ex for ex in load_triviaqa(split="validation")}
     rows = [r for r in rows if r["question_id"] in by_id]
+    # entropy.jsonl is in sample order, not shuffled. Use a seeded permutation so
+    # the train/test split is random and reproducible.
+    rng = np.random.default_rng(0)
+    perm = rng.permutation(len(rows))
+    rows = [rows[i] for i in perm]
     questions = [by_id[r["question_id"]].question for r in rows]
     entropies = np.array([r["entropy_nats"] for r in rows])
-    labels = binarize_entropy(entropies)
-    log(f"clean set: {len(rows)} questions, high-entropy rate {labels.mean():.2f}")
+    n_train = int(len(rows) * TRAIN_FRAC)
+    # Threshold from TRAIN entropies only; otherwise the held-out entropies leak
+    # into the label definition and inflate the probe's reported AUROC.
+    thr = float(np.median(entropies[:n_train]))
+    labels = binarize_entropy(entropies, threshold=thr)
+    log(f"clean set: {len(rows)} questions, train high-entropy rate "
+        f"{labels[:n_train].mean():.2f}, threshold {thr:.3f}")
 
     # --- extract features + train probe ---
     lm = M.load_llama(ModelConfig())
     log("extracting TBG features for clean set...")
     feats = extract_tbg_features(lm, questions)
-    n_train = int(len(feats) * TRAIN_FRAC)
     probe = SEPProbe.train(feats[:n_train], labels[:n_train])
     test_scores = probe.score(feats[n_train:])
     test_labels = labels[n_train:]
     if 0 < test_labels.sum() < len(test_labels):
         probe_auc = roc_auc_score(test_labels, test_scores)
         log(f"SEP probe AUROC (predicting binarized SE on held-out): {probe_auc:.3f}")
+    else:
+        log("SEP probe AUROC: held-out is single-class, undefined")
     log("")
 
     # --- transfer: do attacked paraphrases move the SEP score? ---

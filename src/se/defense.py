@@ -17,12 +17,14 @@ adversarial outlier among the paraphrases.
 """
 from __future__ import annotations
 
+import dataclasses
 import statistics
 from dataclasses import dataclass
 
 from . import model as M
 from .config import GenConfig
 from .nli import NLI
+from .scoring import normalise
 from .se_pipeline import semantic_entropy
 from .attacks import proposer
 
@@ -54,13 +56,27 @@ def defended_entropy(
     always included.
     """
     gen_cfg = gen_cfg or GenConfig()
+    # The defense's premise is that averaging SE over paraphrases cancels
+    # independent sampling noise. A fixed seed would reset the RNG identically
+    # for every variant and correlate the draws, defeating that. Force seed=None
+    # so each variant samples independently.
+    var_gen = dataclasses.replace(gen_cfg, seed=None)
+
+    # Dedupe: proposer.propose returns the input unchanged on a degenerate
+    # generation, which would otherwise re-add the original (already in variants)
+    # and bias the aggregate toward the original's entropy.
     variants = [question]
+    seen = {normalise(question)}
     for cand in proposer.propose_many(question, lm, k_paraphrases):
+        key = normalise(cand)
+        if key in seen:
+            continue
         if require_equivalent and not nli.bidirectional_equivalent(question, cand):
             continue
+        seen.add(key)
         variants.append(cand)
 
-    ents = [semantic_entropy(v, lm, nli, gen_cfg).entropy_nats for v in variants]
+    ents = [semantic_entropy(v, lm, nli, var_gen).entropy_nats for v in variants]
     if aggregate == "median":
         agg = float(statistics.median(ents))
     elif aggregate == "mean":

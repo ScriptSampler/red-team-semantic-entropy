@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from se.config import GenConfig, RESULTS_DIR
 from se.sampling import DEFAULT_SAMPLES_DIR
-from se.attacks.harness import load_pair, run_attack_batch
+from se.attacks.harness import load_pair, run_attack_batch, read_outcomes
 from se.attacks.select import select_examples
 
 
@@ -39,11 +39,14 @@ def main() -> int:
     pair = load_pair()
     gen = GenConfig(max_new_tokens=48, n_samples=10, temperature=1.0, seed=0)
 
-    outcomes = run_attack_batch(
+    run_attack_batch(
         examples, "hide", pair, OUT,
         detector="se", gen_cfg=gen,
         max_iteration=MAX_ITER, candidate_size_M=M, top_N=TOP_N, min_delta_nats=0.25,
     )
+    # Summarize the FULL cache, not just questions processed this (possibly
+    # resumed) run, so the report reflects all N attacks.
+    outcomes = read_outcomes(OUT)
 
     report: list[str] = []
     def log(s: str = "") -> None:

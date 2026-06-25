@@ -29,7 +29,6 @@ from se.nli import NLI
 from se import model as M
 from se.config import ModelConfig
 from se.sampling import DEFAULT_SAMPLES_DIR
-from se.se_pipeline import semantic_entropy
 from se.defense import defended_entropy
 from se.attacks.harness import read_outcomes
 
@@ -64,20 +63,30 @@ def main() -> int:
             continue
 
         log(f"## {attack}: {len(outcomes)} attacks")
-        vanilla_effects, defended_effects = [], []
+        vanilla_effects, defended_effects, per_q_reduction = [], [], []
         for o in outcomes:
-            se_q = semantic_entropy(o.question, lm, nli, gen).entropy_nats
-            se_adv = o.entropy_after  # cached vanilla SE on the adversarial paraphrase
+            # Use the cached SE(Q) and SE(Q') so both sides of the vanilla effect
+            # come from the same run that produced the attack (no fresh-vs-cached
+            # sampling-noise mismatch).
+            se_q = o.entropy_before
+            se_adv = o.entropy_after
             d_q = defended_entropy(o.question, lm, nli, k_paraphrases=K_PARAPHRASES, gen_cfg=gen).defended_entropy
             d_adv = defended_entropy(o.best_query, lm, nli, k_paraphrases=K_PARAPHRASES, gen_cfg=gen).defended_entropy
-            vanilla_effects.append(abs(se_adv - se_q))
-            defended_effects.append(abs(d_adv - d_q))
+            ve_i, de_i = abs(se_adv - se_q), abs(d_adv - d_q)
+            vanilla_effects.append(ve_i)
+            defended_effects.append(de_i)
+            if ve_i > 1e-9:
+                per_q_reduction.append(1.0 - de_i / ve_i)
 
         ve, de = statistics.mean(vanilla_effects), statistics.mean(defended_effects)
         log(f"mean vanilla attack effect:  {ve:.3f} nats")
         log(f"mean defended attack effect: {de:.3f} nats")
-        if ve > 0:
-            log(f"attack effect reduced by:    {(1 - de/ve)*100:.0f}%")
+        if per_q_reduction:
+            # Per-question paired reduction, robust to a few large-effect outliers
+            # dominating a ratio-of-means.
+            log(f"per-question effect reduction: median "
+                f"{statistics.median(per_q_reduction)*100:.0f}%, mean "
+                f"{statistics.mean(per_q_reduction)*100:.0f}% (n={len(per_q_reduction)})")
         log("")
 
     log("Interpretation: a large reduction means averaging SE over paraphrases of")
