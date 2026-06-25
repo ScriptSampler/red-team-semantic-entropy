@@ -1,0 +1,54 @@
+% Related Work. Grounded in docs/positioning.md; citations in related_work.bib.
+% Draft prose --- tighten to ~700 words at revision.
+
+\paragraph{Sampling-based hallucination detection.}
+Semantic entropy estimates a model's uncertainty by sampling several answers,
+clustering them into meaning-equivalence classes, and taking the entropy of the
+cluster distribution~\citep{kuhn2023semantic,farquhar2024detecting}. Its central
+selling point is \emph{linguistic invariance}: because clustering is on meaning
+rather than surface form, the score is meant to be stable across rephrasings.
+Subsequent work improves the estimator. Semantic Reformulation Entropy (SRE)
+adds input-side reformulations and energy-based hybrid clustering for
+robustness~\citep{tong2025sre}, and Semantic Entropy Probes (SEPs) approximate
+the entropy from a single hidden state, removing the sampling
+cost~\citep{kossen2024seps}. We treat all three as \emph{detectors to be
+attacked}: our contribution is to test the invariance claim adversarially, a
+question none of these papers ask of themselves.
+
+\paragraph{Hallucination-elicitation attacks on models.}
+The closest methodological neighbours attack the \emph{generating model}, not a
+detector. SECA frames realistic hallucination elicitation as constrained
+optimization over the prompt under semantic-equivalence and coherence
+constraints, solved with a zeroth-order method~\citep{liang2025seca}; its
+successor REALISTA extends this to free-form reasoning models via continuous
+latent edit directions~\citep{liang2026realista}. We reuse SECA's optimization
+loop as tooling, but our objective is the \emph{detector's} uncertainty score
+rather than the model's answer correctness, and we add a direction (false alarm)
+absent from both. Crucially, neither evaluates a hallucination detector, so
+neither subsumes our result despite the shared machinery.
+
+\paragraph{Paraphrase attacks on text-origin detectors.}
+A mature line paraphrases text to evade AI-versus-human
+classifiers~\citep{cheng2025advparaphrasing,fang2025copa}. These share the
+high-level move ``paraphrase to fool a detector'' but differ on every axis that
+matters here: the victim is a text-origin classifier, not a sampling-based
+uncertainty estimator; the attacks are evasion-only (one-directional); and the
+equivalence guarantee is a soft similarity score rather than the hard
+bidirectional-NLI gate we require. We adopt a distinct name to avoid confusion
+with~\citet{cheng2025advparaphrasing}.
+
+\paragraph{Manipulating uncertainty and probes.}
+Closest on the ``manipulate uncertainty'' axis, \citet{uncertaintyfragile2024}
+shift answer confidence via a fine-tuned backdoor trigger on multiple-choice
+self-evaluation --- a different threat model (weight access, not input
+paraphrase). Most relevant of all, CORVUS red-teams single-pass hallucination
+detectors and degrades SEP~\citep{corvus2026}; we differentiate it on five
+points: CORVUS is model-side (LoRA fine-tuning with fixed inputs), suppression-
+only, uses no semantic-equivalence constraint, targets single-pass telemetry
+rather than the sampling-based SE detector, and evaluates on Alpaca/FAVA rather
+than TriviaQA/SQuAD. Our attack is input-side, bidirectional, NLI-constrained,
+and targets the sampling-based detectors directly. A weaker neighbour prompts
+LLMs to fool generic activation probes~\citep{blandfort2025redteamprobes}, but
+not in the hallucination-detection setting. To our knowledge, no prior work
+moves a sampling-based hallucination-detector score in both directions via
+meaning-preserving input paraphrases under a bidirectional-NLI constraint.

@@ -1,0 +1,60 @@
+% Methods. Draft prose --- target ~800 words; verify symbols at revision.
+
+\paragraph{Detectors.}
+Given a question $q$, the target model $M$ samples $N$ answers
+$\{y_1,\dots,y_N\}$ at temperature $T$. Bidirectional natural-language
+inference partitions them into semantic-equivalence clusters
+$\mathcal{C}(q)$: $y_i$ and $y_j$ share a cluster iff each entails the other
+under the NLI model. Semantic entropy is the Shannon entropy of the cluster-size
+distribution,
+\[
+H_{\mathrm{SE}}(q) = -\sum_{c \in \mathcal{C}(q)} p(c)\log p(c),
+\qquad p(c) = \frac{|c|}{N}.
+\]
+Semantic Reformulation Entropy (SRE)~\citep{tong2025sre} first generates
+$R$ paraphrases of $q$, draws $K$ samples from each, pools all $R{\times}K$
+answers, and computes a single entropy over the joint clustering. A higher score
+is read as higher uncertainty; a detector flags an answer as a likely
+hallucination when its score exceeds a threshold.
+
+\paragraph{Threat model.}
+The attacker is black-box: it may query $M$ and the detector but has no
+gradients. It may replace the question $q$ with any paraphrase $q'$ subject to a
+hard equivalence constraint, $\mathrm{NLI}(q,q')$ and $\mathrm{NLI}(q',q)$ both
+entailment, so $q'$ asks the same thing and admits the same answer. The model's
+answer is not otherwise constrained; the attack manipulates only the
+\emph{detector's score}.
+
+\paragraph{Attack objectives.}
+We define two directions. The \emph{false-alarm} attack targets a question the
+model answers correctly and seeks to \emph{inflate} the detector score so a
+correct answer is flagged:
+$\max_{q'} H(q')$ subject to the equivalence constraint.
+The \emph{hide} attack targets a question the model answers incorrectly and seeks
+to \emph{suppress} the score so a hallucination is missed:
+$\min_{q'} H(q')$, i.e. $\max_{q'} -H(q')$. Writing both as maximization of a
+signed objective lets a single optimizer serve both, with the sign encoding the
+direction. The same objective is instantiated against either detector
+($H \in \{H_{\mathrm{SE}}, H_{\mathrm{SRE}}\}$), which is what makes the
+cross-detector transfer measurement well-defined.
+
+\paragraph{Optimizer.}
+We adapt the constraint-preserving zeroth-order search of
+SECA~\citep{liang2025seca}. The search maintains a beam of the top-$P$ paraphrase
+candidates; each round proposes $M$ further paraphrases per beam member via an
+LLM paraphraser, scores them with the objective, keeps those that improve on the
+running best, and admits a candidate only if it passes the bidirectional-NLI gate
+against the \emph{original} $q$ (not the parent, so meaning cannot drift across
+rounds). The search terminates on a score threshold or an iteration budget. We
+swap SECA's objective (confidence in a wrong multiple-choice token) for the
+detector entropy above, and its LLM-judge feasibility check for the NLI gate.
+
+\paragraph{Transfer and defense.}
+To test whether the vulnerability is paradigm-level rather than implementation-
+specific, we take a paraphrase optimized against one detector and measure the
+score change it induces on another (SE$\leftrightarrow$SRE), and, as a stretch,
+on a hidden-state probe (SEP~\citep{kossen2024seps}) that never samples. As a
+first defense we average the detector score over $k$ paraphrases of whatever
+input is received, on the intuition that a single adversarial phrasing is diluted
+by its own paraphrases; this mirrors SRE's built-in reformulation and lets us ask
+whether that mechanism confers attack resistance.

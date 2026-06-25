@@ -1,0 +1,58 @@
+% Red-Teaming Semantic Entropy --- arXiv preprint scaffold.
+% Generic arXiv-friendly preamble (swap in neurips/iclr style before submission).
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage[numbers]{natbib}
+\usepackage[margin=1in]{geometry}
+
+% Working title --- avoids collision with "Adversarial Paraphrasing" (2506.07001).
+\title{Crying Wolf: Meaning-Preserving Paraphrases Break Sampling-Based
+Hallucination Detectors in Both Directions}
+\author{ScriptSampler\\ \texttt{(affiliation TBD)}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+% <250 words, write last. See paper/skeleton.md section 1.
+Placeholder. Sampling-based hallucination detectors are deployed on the claim
+that they are invariant to surface form. We show that claim is breakable: a
+meaning-preserving paraphrase of the question, verified equivalent by
+bidirectional NLI, moves a detector's uncertainty score in either direction
+while the model's answer is unchanged. We lead with the under-explored
+false-alarm direction, show transferability across SE and SRE, and probe a
+simple defense. [Numbers from results/.]
+\end{abstract}
+
+\section{Introduction}
+\input{sections/introduction}
+
+\section{Related Work}
+\input{sections/related_work}
+
+\section{Methods}
+\input{sections/methods}
+
+\section{Experiments}
+\input{sections/experiments}
+
+\section{Discussion}
+\input{sections/discussion}
+
+\section{Limitations}
+\input{sections/limitations}
+
+\section{Conclusion}
+\input{sections/conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{related_work}
+
+\end{document}
