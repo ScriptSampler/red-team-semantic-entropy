@@ -134,4 +134,14 @@ done
 run_py wk10_matrix scripts/wk10_matrix.py
 run_py wk11_analysis scripts/wk11_analysis.py
 
-status "DRIVER DONE (full pipeline)"
+# ---- Stage 10: feedback-driven extensions ----------------------------------
+# Cross-detector transfer (SE<->SRE), the input-paraphrase-averaging defense,
+# and the headline figure. These consume the wk9 caches. The SEP-transfer
+# stretch (wk_seps_transfer.py) is intentionally NOT auto-run here: it extracts
+# hidden states for all 2000 questions plus the attacks and is the heaviest,
+# most optional experiment; run it manually when ready.
+run_py wk_transfer scripts/wk_transfer.py
+run_py wk_defense scripts/wk_defense.py
+run_py make_figures scripts/make_figures.py
+
+status "DRIVER DONE (full pipeline + extensions)"
