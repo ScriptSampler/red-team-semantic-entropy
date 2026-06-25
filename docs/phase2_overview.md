@@ -32,7 +32,7 @@ pieces:
 | Module | Role |
 | --- | --- |
 | `se_pipeline.py` | `semantic_entropy(question)` — the detector the attacks fool |
-| `sre.py` | Self-Reflective Entropy (Tong et al.): reformulate, pool, cluster, one entropy |
+| `sre.py` | Semantic Reformulation Entropy (Tong et al.): reformulate, pool, cluster, one entropy |
 | `attacks/proposer.py` | Llama-based paraphrase generator (open-ended QA port of SECA's) |
 | `attacks/feasibility.py` | NLI bidirectional equivalence gate + no-op/length guards |
 | `attacks/optimizer.py` | objective-agnostic zeroth-order beam search (SECA port) |

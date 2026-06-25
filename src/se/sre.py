@@ -1,4 +1,4 @@
-"""Self-Reflective / Semantic Reformulation Entropy (Tong et al. 2025).
+"""Semantic Reformulation Entropy (SRE; Tong et al. 2025, arXiv 2509.17445).
 
 Reference: arXiv 2509.17445. SRE augments vanilla SE with input-side
 reformulation. The procedure we reproduce:

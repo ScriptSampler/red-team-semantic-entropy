@@ -1,6 +1,6 @@
 """Week 8: SRE implementation, AUROC vs vanilla SE on 100 TriviaQA questions.
 
-Implements Self-Reflective Entropy (Tong et al., arXiv 2509.17445) in
+Implements Semantic Reformulation Entropy (Tong et al., arXiv 2509.17445) in
 se.sre and checks it reproduces in the same ballpark as the paper. For 100
 validation questions we compute both vanilla SE and SRE, label correctness
 by greedy answer, and compare AUROC.

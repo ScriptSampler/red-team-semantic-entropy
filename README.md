@@ -1,14 +1,19 @@
 # Red-Teaming Semantic Entropy
 
-Adversarial paraphrasing attacks against Semantic Entropy (SE) and Self-Reflective Entropy (SRE) hallucination detection in LLMs.
+Adversarial paraphrasing attacks against Semantic Entropy (SE) and Semantic Reformulation Entropy (SRE) hallucination detection in LLMs.
 
 The target output is an arXiv preprint by 15 September 2026. Week-by-week deliverables, stop conditions, and mitigations live in [SE_Project_Execution_Plan.md](SE_Project_Execution_Plan.md).
 
 ## What this project does
 
-We attack the detector, not the model. Given a question Q and an LLM that may hallucinate, SE and SRE estimate the model's uncertainty over its own answer. We construct semantically equivalent paraphrases Q' that move that uncertainty score in the wrong direction.
+We attack the detector, not the model. Given a question Q and an LLM that may hallucinate, SE and SRE estimate the model's uncertainty over its own answer. We construct semantically equivalent paraphrases Q' that move that uncertainty score in a chosen direction while the model's answer is unchanged. Equivalence between Q and Q' is enforced by bidirectional NLI with DeBERTa-large-MNLI. The optimisation loop is forked from [Buyun-Liang/SECA](https://github.com/Buyun-Liang/SECA) (we reuse its search; SECA attacks the model's answer, we attack the detector's score).
 
-The Hide attack pushes SE or SRE low on questions the model answers incorrectly, so the detector misses a hallucination. The False-alarm attack pushes SE or SRE high on questions the model answers correctly, so the detector cries wolf. Semantic equivalence between Q and Q' is checked by bidirectional NLI with DeBERTa-large-MNLI. The optimisation loop is forked from [Buyun-Liang/SECA](https://github.com/Buyun-Liang/SECA).
+Two directions, attacked across both detectors and both benchmarks:
+
+- **False-alarm (the headline).** Push SE/SRE *high* on a question the model answers *correctly*, so a reliable detector flags a correct answer. Inducing false positives in a hallucination detector is the more surprising, less-explored result — and our own data shows SE already false-alarms on its own (a correct answer expressed ten ways fragments into high entropy). The attack weaponises that fragility.
+- **Hide.** Push SE/SRE *low* on a question the model answers *wrong*, so the detector misses a hallucination.
+
+The same paraphrase machinery targets both Semantic Entropy and SRE, so a perturbation that fools both is evidence against the *paradigm* of sampling-based uncertainty detection, not one implementation. How this sits against the recent literature — including what does and does not scoop it — is in [docs/positioning.md](docs/positioning.md).
 
 ## Stack
 
