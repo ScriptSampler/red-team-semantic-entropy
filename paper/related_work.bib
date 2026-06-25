@@ -1,0 +1,101 @@
+% Related-work bibliography for the Red-Teaming Semantic Entropy preprint.
+% arXiv ids verified 2026-06-25 (see docs/positioning.md).
+% VERIFY-BEFORE-SUBMIT: author lists marked with %TODO were not fully
+% confirmed during verification; check on arXiv before the camera-ready.
+
+% ---- Detectors we attack (victims) ----------------------------------------
+
+@article{kuhn2023semantic,
+  title   = {Semantic Uncertainty: Linguistic Invariances for Uncertainty Estimation in Natural Language Generation},
+  author  = {Kuhn, Lorenz and Gal, Yarin and Farquhar, Sebastian},
+  journal = {International Conference on Learning Representations (ICLR)},
+  year    = {2023},
+  note    = {arXiv:2302.09664. Origin of semantic entropy; the linguistic-invariance claim this project attacks.}
+}
+
+@article{farquhar2024detecting,
+  title   = {Detecting Hallucinations in Large Language Models Using Semantic Entropy},
+  author  = {Farquhar, Sebastian and Kossen, Jannik and Kuhn, Lorenz and Gal, Yarin},
+  journal = {Nature},
+  volume  = {630},
+  year    = {2024},
+  note    = {The SE detector. Primary victim method.}
+}
+
+@article{tong2025sre,
+  title   = {Semantic Reformulation Entropy for Robust Hallucination Detection in QA Tasks},
+  author  = {Tong, Chaodong and Zhang, Qi and Jiang, Lei and Liu, Yanbing and Sun, Nannan and Li, Wei},
+  journal = {arXiv preprint arXiv:2509.17445},
+  year    = {2025},
+  note    = {SRE = Semantic Reformulation Entropy. Input reformulations + energy-based hybrid clustering. Second victim method. (NOT "Self-Reflective Entropy".)}
+}
+
+@article{kossen2024seps,
+  title   = {Semantic Entropy Probes: Robust and Cheap Hallucination Detection in LLMs},
+  author  = {Kossen, Jannik and Han, Jiatong and Razzak, Muhammed and Schut, Lisa and Malik, Shreshth and Gal, Yarin},
+  journal = {Conference on Language Modeling (COLM)},
+  year    = {2024},
+  note    = {arXiv:2406.15927. Linear probe approximating SE from one hidden state. Transfer target for the SEP-transfer stretch.}
+}
+
+% ---- Hallucination-elicitation attacks on models (shared tooling) ----------
+
+@inproceedings{liang2025seca,
+  title     = {{SECA}: Semantically Equivalent and Coherent Attacks for Eliciting LLM Hallucinations},
+  author    = {Liang, Buyun and Peng, Liangzu and Luo, Jinqi and Thaker, Darshan and Chan, Kwan Ho Ryan and Vidal, Ren{\'e}},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2025},
+  note      = {arXiv:2510.04398. Forked optimizer. Attacks the model's answer (MMLU), not a detector.}
+}
+
+@article{liang2026realista,
+  title   = {{REALISTA}: Realistic Semantically-Equivalent Attacks on Large Reasoning Models},
+  author  = {Liang, Buyun and Peng, Liangzu and Luo, Jinqi and Kinfu, Kaleab A. and Tian, Fengrui and Hassani, Hamed and Vidal, Ren{\'e}},
+  journal = {International Conference on Machine Learning (ICML)},
+  year    = {2026},
+  note    = {arXiv:2605.12813. SECA successor, continuous latent edit directions. Attacks the model, not a detector. Cite-and-distinguish. %TODO confirm exact title and full author order.}
+}
+
+% ---- Paraphrase-evasion of text-origin detectors (different victim class) ---
+
+@inproceedings{cheng2025advparaphrasing,
+  title     = {Adversarial Paraphrasing: A Universal Attack for Humanizing AI-Generated Text},
+  author    = {Cheng, Yize and Sadasivan, Vinu Sankar and Saberi, Mehrdad and Saha, Shoumik and Feizi, Soheil},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2025},
+  note      = {arXiv:2506.07001. Detector-guided paraphrase to evade AI-text classifiers. Evasion-only, different victim. Avoid title collision.}
+}
+
+@inproceedings{fang2025copa,
+  title     = {{CoPA}: Contrastive Paraphrase Attacks on LLM-Generated Text Detectors},
+  author    = {Fang, Hao and others},
+  booktitle = {Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year      = {2025},
+  note      = {arXiv:2505.15337. Contrastive-decoding paraphrase, soft >90\% similarity. Contrast with our hard bidirectional-NLI gate. %TODO full author list.}
+}
+
+% ---- Attacks on uncertainty / probes (differentiate threat model) ----------
+
+@article{corvus2026,
+  title   = {{CORVUS}: Red-Teaming Single-Pass Hallucination Detectors},
+  author  = {Min, Nay Myat and Pham, Long H. and Zhang, Hongyu and Sun, Jun},
+  journal = {arXiv preprint arXiv:2601.14310},
+  year    = {2026},
+  note    = {Degrades SEP, but MODEL-SIDE (LoRA), suppression-only, no NLI constraint, Alpaca/FAVA. The closest adjacent attack; differentiate head-on if pursuing SEP transfer. %TODO confirm exact title.}
+}
+
+@article{uncertaintyfragile2024,
+  title   = {Uncertainty is Fragile: Manipulating Uncertainty in Large Language Models},
+  author  = {others},
+  journal = {arXiv preprint arXiv:2407.11282},
+  year    = {2024},
+  note    = {Backdoor-trigger manipulation of MCQ self-evaluation confidence. Different threat model (fine-tuning, not input paraphrase). %TODO author list.}
+}
+
+@article{blandfort2025redteamprobes,
+  title   = {Red-Teaming Activation Probes using Prompted LLMs},
+  author  = {Blandfort, Philipp and Graham, others},
+  journal = {arXiv preprint arXiv:2511.00554},
+  year    = {2025},
+  note    = {Prompts to fool safety/behavior activation probes; not SE/hallucination. Weak overlap. %TODO confirm authors.}
+}
