@@ -1,0 +1,16 @@
+{
+  "triviaqa/se": {
+    "clean": 1.0,
+    "hide_only": 1.0,
+    "false_alarm_only": 0.9666666666666667,
+    "both": 0.7866666666666667,
+    "n": 30
+  },
+  "triviaqa/sre": {
+    "clean": 0.7422222222222221,
+    "hide_only": 0.5511111111111111,
+    "false_alarm_only": 0.4,
+    "both": 0.17555555555555555,
+    "n": 30
+  }
+}

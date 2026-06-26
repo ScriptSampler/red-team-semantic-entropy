@@ -85,8 +85,15 @@ def load_squad(
     Unanswerable v2 questions (empty answer set) are skipped, since an SE
     correctness label needs a gold answer.
     """
-    name = "rajpurkar/squad_v2" if version == "v2" else "rajpurkar/squad"
-    ds = load_dataset(name, split=split)
+    # datasets 3.1.0 mis-parses rajpurkar/squad's exported feature metadata
+    # (generate_from_dict -> fields() on a non-dataclass), so the normal
+    # load_dataset(name) path raises TypeError. Load the published parquet
+    # files directly, which bypasses the dataset-info/features parsing.
+    if version == "v2":
+        data_files = f"hf://datasets/rajpurkar/squad_v2/squad_v2/{split}-*.parquet"
+    else:
+        data_files = f"hf://datasets/rajpurkar/squad/plain_text/{split}-*.parquet"
+    ds = load_dataset("parquet", data_files=data_files, split="train")
     if limit is not None:
         ds = ds.select(range(min(limit, len(ds))))
     out: list[TriviaQAExample] = []
