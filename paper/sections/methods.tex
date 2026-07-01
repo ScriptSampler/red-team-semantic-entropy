@@ -49,6 +49,45 @@ rounds). The search terminates on a score threshold or an iteration budget. We
 swap SECA's objective (confidence in a wrong multiple-choice token) for the
 detector entropy above, and its LLM-judge feasibility check for the NLI gate.
 
+\paragraph{Target selection.}
+Both attacks require a pool of questions with a known clean outcome---wrong
+answers for the hide attack, correct answers for the false-alarm attack. We label
+correctness by greedy decoding under an alias-aware span-match oracle (canonical
+normalization, crediting any accepted answer form) and draw a
+\emph{score-independent}, stratified-random sample within each correctness
+stratum. Selection reads only the correctness label and a fixed seed, never any
+detector score; consequently the SE and SRE campaigns operate on the
+\emph{identical} question set by construction, which is what makes the
+cross-detector comparison well-defined. This is a deliberate departure from
+selecting targets at extreme clean entropy: extreme selection inflates the clean
+detector AUROC toward $1.0$ by construction---the selection rule reflected
+back---and would overstate any measured degradation. We therefore report
+degradation against the clean AUROC of the \emph{fair} pool, not the extreme one.
+
+\paragraph{Success criterion.}
+An attack on a question succeeds only if all three conditions hold: (i) the
+paraphrase $q'$ passes the bidirectional-NLI equivalence gate; (ii) the detector
+score moves in the intended direction by at least $\delta$ nats past its clean
+value; and (iii) the model's hallucination \emph{status} is unchanged under
+$q'$---still wrong for the hide attack, still correct for the false-alarm
+attack---checked with the same greedy decode and span oracle used to label the
+pool. Condition (iii) is essential: a score can fall because the paraphrase
+accidentally elicited a \emph{correct} answer (removing the hallucination rather
+than hiding it), or rise because it elicited a wrong one; without the status
+check these would be miscounted as attacks. We report the status-gated success
+rate alongside the weaker entropy-only rate so the attrition between them is
+explicit.
+
+\paragraph{Evaluation and reporting.}
+We report every rate with a bootstrap $95\%$ confidence interval over questions.
+Beyond the aggregate score shift we report operating-point flips: fixing a
+detector threshold at a target false-positive rate on clean data, we count hide
+targets that move from flagged to unflagged and false-alarm targets that move
+from unflagged to flagged---the operationally meaningful events. We additionally
+break out the subset of would-be successes voided by condition~(iii) because the
+model's answer flipped, since these are candidates for equivalence-gate leakage
+and bound the fidelity of the NLI constraint.
+
 \paragraph{Transfer and defense.}
 To test whether the vulnerability is paradigm-level rather than implementation-
 specific, we take a paraphrase optimized against one detector and measure the
