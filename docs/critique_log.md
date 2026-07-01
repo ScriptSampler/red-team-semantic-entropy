@@ -68,3 +68,23 @@ difficulty proxy stays optional polish, not a blocker. Will re-submit the revise
 plan before implementing.
 
 ---
+
+## 2. 2026-07-01 — B3 oracle implementation. Critic verdict: APPROVE-WITH-NITS.
+
+Author submitted scoring.py span-match oracle + tests (9/9). **Span-match accepted
+over extraction+EM as a recorded override** (less fragile than a first-sentence
+extraction heuristic that could itself correlate with the manipulation; standard
+SQuAD "gold span present" notion). Cleared to build relabel + fair-pool clean
+AUROC on this oracle. Nits owed WITHIN the relabel checkpoint:
+- Article-in-title edge case: `normalize_answer` strips a/an/the, so "The Who" ->
+  "who", "A Beautiful Mind" -> "beautiful mind". Add a test; confirm the TriviaQA
+  pool has no load-bearing-article gold answers or document the residual.
+- Alias-set provenance: confirm `TriviaQAExample.all_acceptable()` surfaces the
+  FULL TriviaQA alias set (thin aliases -> under-crediting -> inflated
+  hallucination rate).
+- `normalise()` caller audit: it now DELETES punctuation (was space-replace);
+  confirm no clustering/SE caller depends on the old space behaviour.
+- Ship the substring/span/strict oracle-sensitivity table + old-vs-new label-flip
+  count + entity-ambiguity fraction (single-token ambiguous golds).
+
+---
