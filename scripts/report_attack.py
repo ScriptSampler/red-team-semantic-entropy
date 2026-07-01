@@ -8,43 +8,43 @@ or when you just want a fresh summary from the full cache.
 """
 from __future__ import annotations
 
-import statistics
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from se.attacks.harness import read_outcomes
+from se.attacks.report import summarize_cell, render_cell_md
 
 
 def summarize(jsonl: Path, attack: str) -> str:
     outcomes = read_outcomes(jsonl)
-    lines: list[str] = []
-    direction = "drop" if attack == "hide" else "rise"
-    lines.append(f"# Attack summary: {attack} ({jsonl.name})")
-    lines.append("")
-    n = len(outcomes)
-    n_succ = sum(o.success for o in outcomes)
-    n_feas = sum(o.feasible for o in outcomes)
-    moves = [(o.entropy_before - o.entropy_after) if attack == "hide"
-             else (o.entropy_after - o.entropy_before) for o in outcomes if o.feasible]
-    lines.append(f"questions: {n}")
-    lines.append(f"success (feasible + entropy {direction} >= 0.25 nats): {n_succ}/{n}")
-    lines.append(f"feasible paraphrase found: {n_feas}/{n}")
-    if moves:
-        lines.append(f"mean entropy {direction} among feasible: {statistics.mean(moves):.3f} nats")
-        lines.append(f"max entropy {direction} among feasible: {max(moves):.3f} nats")
-    lines.append("")
-    lines.append("| qid | SE before | SE after | delta | feasible | success |")
-    lines.append("| --- | --------- | -------- | ----- | -------- | ------- |")
+    s = summarize_cell(outcomes)
+    lines: list[str] = [f"# Attack summary: {attack} ({jsonl.name})", ""]
+    lines += render_cell_md(s)
+    lines += [
+        "",
+        "Success is the B2 invariance-gated criterion (entropy moved AND feasible "
+        "AND the model's hallucination status held under Q'); the entropy-only line "
+        "is the pre-B2 number, and their gap is the attrition. All rates carry "
+        "bootstrap 95% CIs.",
+        "",
+        "| qid | SE before | SE after | delta | feasible | ent+feas | correct@Q' | held | success |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
     for o in outcomes:
-        lines.append(f"| {o.question_id} | {o.entropy_before:.3f} | {o.entropy_after:.3f} | "
-                     f"{o.delta:+.3f} | {'yes' if o.feasible else 'no'} | "
-                     f"{'yes' if o.success else 'no'} |")
-    lines.append("")
-    rate = n_succ / n if n else 0.0
-    lines.append(f"## Verdict: {'PASS' if rate > 0.5 else 'BELOW TARGET'} "
-                 f"({n_succ}/{n} = {rate*100:.0f}%)")
+        lines.append(
+            f"| {o.question_id} | {o.entropy_before:.3f} | {o.entropy_after:.3f} | "
+            f"{o.delta:+.3f} | {'yes' if o.feasible else 'no'} | "
+            f"{'yes' if o.entropy_and_feasible else 'no'} | "
+            f"{'yes' if o.correct_under_q_prime else 'no'} | "
+            f"{'yes' if o.status_held else 'no'} | "
+            f"{'yes' if o.success else 'no'} |"
+        )
+    lines += ["", f"## Verdict (B2-gated): "
+              f"{'PASS' if s['success_gated'].point > 0.5 else 'BELOW TARGET'} "
+              f"({int(round(s['success_gated'].point * s['n']))}/{s['n']} = "
+              f"{s['success_gated'].point*100:.0f}%)"]
     return "\n".join(lines) + "\n"
 
 
