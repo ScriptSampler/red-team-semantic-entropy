@@ -61,6 +61,7 @@ def summarize_cell(outcomes, *, cutoffs=(0.0, 0.1, 0.25, 0.5, 1.0)) -> dict:
         "feasible_rate": rate_ci(feasible),
         "success_entropy_only": rate_ci(entropy_only),     # old (pre-B2) headline
         "success_gated": rate_ci(gated),                   # B2 headline
+        "n_entropy_only": int(n_entropy_only),             # exact count (not rate*n)
         "attrition_count": int(attrition),
         "attrition_rate_of_would_be":
             (attrition / n_entropy_only) if n_entropy_only else 0.0,
@@ -87,7 +88,43 @@ def matrix_operating_point(hide_outcomes, fa_outcomes, *, target_fpr: float = 0.
     thr = operating_point(labels, clean, target_fpr=target_fpr)
     flips = flips_at_threshold(labels, clean, attacked, thr)
     flips["target_fpr"] = target_fpr
+    # The threshold at a low FPR is set on few negatives -> noisy; surface it.
+    flips["n_negatives_for_threshold"] = len(fa_outcomes)
     return flips
+
+
+def matrix_operating_point_sweep(hide_outcomes, fa_outcomes,
+                                 *, fprs=(0.05, 0.10, 0.20)) -> list[dict]:
+    """Operating-point flips across a small FPR sweep (critic guidance on §6): a
+    detector is a threshold family, not a point. Headline is 0.10; 0.05 sets the
+    threshold on few negatives (noisy at n~200) and should be read with care."""
+    return [matrix_operating_point(hide_outcomes, fa_outcomes, target_fpr=f)
+            for f in fprs]
+
+
+def matrix_answer_flip_breakdown(hide_outcomes, fa_outcomes) -> dict:
+    """Split the answer-flip subcategory by DIRECTION at the matrix level (B2 nit
+    1, critic guidance): the two directions are NOT symmetric evidence.
+
+    hide -> became correct under Q' is the stronger meaning-shift signal (the NLI
+    gate passed a Q' the model itself answers correctly, i.e. treats differently),
+    and is the primary candidate for equivalence-gate leakage (B5). false_alarm ->
+    became wrong is the mirror. Counted only among entropy_and_feasible outcomes
+    (B2 nit 2)."""
+    hide_ef = [o for o in hide_outcomes if o.entropy_and_feasible]
+    fa_ef = [o for o in fa_outcomes if o.entropy_and_feasible]
+    hide_became_correct = sum(1 for o in hide_ef if o.correct_under_q_prime)
+    fa_became_wrong = sum(1 for o in fa_ef if not o.correct_under_q_prime)
+    return {
+        "hide_became_correct": int(hide_became_correct),
+        "hide_ef_n": len(hide_ef),
+        "hide_became_correct_rate":
+            (hide_became_correct / len(hide_ef)) if hide_ef else float("nan"),
+        "fa_became_wrong": int(fa_became_wrong),
+        "fa_ef_n": len(fa_ef),
+        "fa_became_wrong_rate":
+            (fa_became_wrong / len(fa_ef)) if fa_ef else float("nan"),
+    }
 
 
 def _fmt_ci(ci: CI) -> str:
@@ -100,17 +137,22 @@ def render_cell_md(summary: dict) -> list[str]:
     if summary.get("n", 0) == 0:
         return ["(no outcomes)"]
     s = summary
+    n_ef = s["n_entropy_and_feasible"]
+    # Guard the empty-entropy+feasible cell so a degenerate (e.g. all-infeasible)
+    # cell does not emit "nan%" into a paper table.
+    if n_ef:
+        flip_str = (f"{s['answer_flip_count']}/{n_ef} of entropy+feasible "
+                    f"({s['answer_flip_rate_among_ef']:.0%})")
+    else:
+        flip_str = "0/0 entropy+feasible (n/a — no re-checked attacks)"
     lines = [
         f"**{s['detector'].upper()} / {s['attack']}** (n={s['n']})",
         "",
         f"- success (B2 invariance-gated): {_fmt_ci(s['success_gated'])}",
         f"- success (entropy-only, pre-B2): {_fmt_ci(s['success_entropy_only'])}",
-        f"- attrition from B2: {s['attrition_count']} of "
-        f"{int(round(s['success_entropy_only'].point * s['n']))} would-be wins "
-        f"({s['attrition_rate_of_would_be']:.0%})",
-        f"- of those, answer-flip subcategory (meaning-shift suspect): "
-        f"{s['answer_flip_count']}/{s['n_entropy_and_feasible']} of "
-        f"entropy+feasible ({s['answer_flip_rate_among_ef']:.0%})",
+        f"- attrition from B2: {s['attrition_count']} of {s['n_entropy_only']} "
+        f"would-be wins ({s['attrition_rate_of_would_be']:.0%})",
+        f"- of those, answer-flip subcategory (meaning-shift suspect): {flip_str}",
         f"- feasible paraphrase rate: {_fmt_ci(s['feasible_rate'])}",
         f"- mean intended entropy move (feasible): {s['mean_move_feasible']:.3f} nats",
     ]

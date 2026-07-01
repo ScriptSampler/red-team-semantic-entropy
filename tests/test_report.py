@@ -10,7 +10,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from se.attacks.report import summarize_cell, matrix_operating_point, render_cell_md
+from se.attacks.report import (
+    summarize_cell, matrix_operating_point, matrix_operating_point_sweep,
+    matrix_answer_flip_breakdown, render_cell_md,
+)
 
 
 @dataclass
@@ -23,6 +26,7 @@ class FakeOutcome:
     entropy_and_feasible: bool
     success: bool
     status_held: bool
+    correct_under_q_prime: bool = False   # only read by the matrix answer-flip split
 
 
 def _hide_cell():
@@ -100,3 +104,42 @@ def test_render_cell_md_smoke():
     body = "\n".join(lines)
     assert "invariance-gated" in body
     assert "answer-flip" in body
+
+
+def test_render_guards_empty_entropy_and_feasible():
+    # n > 0 but NO outcome moved entropy -> n_ef == 0. Must not print "nan%".
+    cell = [FakeOutcome("hide", "se", 2.0, 1.98, True, False, False, True)
+            for _ in range(3)]
+    s = summarize_cell(cell)
+    assert s["n"] == 3 and s["n_entropy_and_feasible"] == 0
+    body = "\n".join(render_cell_md(s))
+    assert "nan%" not in body.lower()
+    assert "n/a" in body
+
+
+def test_matrix_answer_flip_breakdown_splits_by_direction():
+    # hide: 2 entropy+feasible, one became correct under Q' (status not held).
+    hide = [
+        FakeOutcome("hide", "se", 2.0, 1.0, True, True, False, False, correct_under_q_prime=True),
+        FakeOutcome("hide", "se", 2.0, 1.0, True, True, True, True, correct_under_q_prime=False),
+    ]
+    # false_alarm: 2 entropy+feasible, one became wrong under Q' (status not held).
+    fa = [
+        FakeOutcome("false_alarm", "se", 1.0, 2.0, True, True, False, False, correct_under_q_prime=False),
+        FakeOutcome("false_alarm", "se", 1.0, 2.0, True, True, True, True, correct_under_q_prime=True),
+    ]
+    b = matrix_answer_flip_breakdown(hide, fa)
+    assert b["hide_became_correct"] == 1 and b["hide_ef_n"] == 2
+    assert b["fa_became_wrong"] == 1 and b["fa_ef_n"] == 2
+    assert abs(b["hide_became_correct_rate"] - 0.5) < 1e-9
+    assert abs(b["fa_became_wrong_rate"] - 0.5) < 1e-9
+
+
+def test_operating_point_sweep_covers_fprs():
+    hide = [FakeOutcome("hide", "se", cb, ca, True, True, True, True)
+            for cb, ca in [(0.5, 0.1), (0.6, 0.6), (0.7, 0.7)]]
+    fa = [FakeOutcome("false_alarm", "se", cb, ca, True, True, True, True)
+          for cb, ca in [(0.1, 0.5), (0.2, 0.2), (0.3, 0.3)]]
+    sweep = matrix_operating_point_sweep(hide, fa)
+    assert [row["target_fpr"] for row in sweep] == [0.05, 0.10, 0.20]
+    assert all(row["n_negatives_for_threshold"] == 3 for row in sweep)
