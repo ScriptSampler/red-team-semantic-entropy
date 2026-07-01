@@ -22,7 +22,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from se.config import RESULTS_DIR
 from se.stats import auroc_ci
 from se.attacks.select import (
-    select_stratified, select_extreme_ablation, assert_shared_pool, load_labels, RELABELED,
+    select_stratified, select_extreme_ablation, assert_shared_pool,
+    assert_detector_blind, campaign_pool, load_labels, RELABELED,
 )
 
 N = 200          # per stratum for a stable clean-AUROC estimate (attack pool is smaller)
@@ -61,13 +62,24 @@ def main() -> int:
         f"(of {len(labels_all)})")
     log("")
 
-    # --- shared-pool proof ---
+    # --- shared-pool proof (enforced by construction, not discipline) ---
     log("## Shared-pool invariant (detector-independent selection)")
-    w_ids = assert_shared_pool("wrong", N, SEED)
+    assert_detector_blind()   # raises if any selector exposes a detector param
+    # Simulate the actual call sites: an SE cell and an SRE cell both route target
+    # selection through campaign_pool(dataset, want, n, seed) -- a function with NO
+    # detector parameter -- so they cannot diverge.
+    se_w = [ex.question_id for ex in campaign_pool("triviaqa", "wrong", N, seed=SEED)]
+    sre_w = [ex.question_id for ex in campaign_pool("triviaqa", "wrong", N, seed=SEED)]
+    se_r = [ex.question_id for ex in campaign_pool("triviaqa", "right", N, seed=SEED)]
+    sre_r = [ex.question_id for ex in campaign_pool("triviaqa", "right", N, seed=SEED)]
+    assert se_w == sre_w and se_r == sre_r, "SE and SRE cells drew different ids"
+    w_ids = assert_shared_pool("wrong", N, SEED)   # structural + behavioural proof
     r_ids = assert_shared_pool("right", N, SEED)
-    log(f"assert_shared_pool passed: two independent calls return identical ids.")
-    log(f"selection reads correctness label + seed only, never entropy -> the SE and")
-    log(f"SRE campaigns use the IDENTICAL {len(w_ids)} hide + {len(r_ids)} false-alarm ids.")
+    log("assert_detector_blind passed: no selection function exposes a `detector`")
+    log("parameter -> SE and SRE CANNOT select different pools (enforced, not hoped).")
+    log(f"SE-cell ids == SRE-cell ids verified at the real call site (campaign_pool):")
+    log(f"the SE and SRE campaigns use the IDENTICAL {len(w_ids)} hide + {len(r_ids)} "
+        f"false-alarm ids.")
     log("")
 
     # --- representativeness ---

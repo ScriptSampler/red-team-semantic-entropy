@@ -26,6 +26,7 @@ from .. import model as M
 from ..config import GenConfig, ModelConfig
 from ..data import TriviaQAExample
 from ..nli import NLI
+from ..scoring import is_acceptable
 from . import objectives, optimizer
 
 
@@ -62,15 +63,30 @@ class AttackOutcome:
     success: bool
     n_objective_calls: int
     n_iterations_run: int
+    # B2 (external review §3): hold hallucination status fixed under Q'.
+    entropy_and_feasible: bool = False   # the OLD criterion (entropy moved + feasible)
+    answer_under_q_prime: str = ""        # greedy answer under Q' (audit; re-oracle later)
+    correct_under_q_prime: bool = False   # model correct under Q' (same rule as the label)
+    status_held: bool = True              # hallucination status unchanged under Q'
 
 
-def _success(attack: str, entropy_before: float, entropy_after: float,
-             feasible: bool, min_delta_nats: float) -> bool:
-    if not feasible:
-        return False
+def _entropy_moved(attack: str, entropy_before: float, entropy_after: float,
+                   min_delta_nats: float) -> bool:
     if attack == "hide":
         return (entropy_before - entropy_after) >= min_delta_nats
     return (entropy_after - entropy_before) >= min_delta_nats
+
+
+def _status_held(attack: str, correct_under_q_prime: bool) -> bool:
+    """B2: does the hallucination status survive the paraphrase?
+
+    A hide attack is only meaningful if the model is STILL wrong under Q' (else
+    entropy fell because the model got it right — nothing to hide). A false-alarm
+    is only meaningful if the model is STILL right under Q' (else the "alarm" is
+    a true positive). Same span oracle as the label the pool was built on."""
+    if attack == "hide":
+        return not correct_under_q_prime
+    return bool(correct_under_q_prime)
 
 
 def run_attack_on_example(
@@ -98,8 +114,26 @@ def run_attack_on_example(
     )
     entropy_before = bundle.entropy(ex.question)
     entropy_after = bundle.entropy(result.best_query)
-    success = _success(attack, entropy_before, entropy_after,
-                       result.best_is_feasible, min_delta_nats)
+    feasible = result.best_is_feasible
+    moved = _entropy_moved(attack, entropy_before, entropy_after, min_delta_nats)
+    entropy_and_feasible = bool(moved and feasible)
+
+    # B2 (external review §3): a hide "success" requires the model to STILL answer
+    # incorrectly under Q' (else the entropy dropped because the model got it right
+    # -> no hallucination to hide); false-alarm requires it to STILL answer right.
+    # We only pay for the re-check when it could change a success, i.e. when the
+    # entropy moved AND the paraphrase is feasible. The re-check uses the SAME rule
+    # as the original greedy label (greedy generate_one) at the pinned generation
+    # length, so it is on the same footing as the label the pool was stratified on.
+    answer_qp, correct_qp, status_held = "", False, True
+    if entropy_and_feasible:
+        greedy_cfg = GenConfig(max_new_tokens=(gen_cfg or GenConfig()).max_new_tokens,
+                               n_samples=1)
+        answer_qp = M.generate_one(pair.lm, result.best_query, greedy_cfg)
+        correct_qp = is_acceptable(answer_qp, ex)
+        status_held = _status_held(attack, correct_qp)
+
+    success = bool(entropy_and_feasible and status_held)
     return AttackOutcome(
         question_id=ex.question_id,
         question=ex.question,
@@ -109,11 +143,15 @@ def run_attack_on_example(
         entropy_after=entropy_after,
         delta=entropy_after - entropy_before,
         best_query=result.best_query,
-        feasible=result.best_is_feasible,
+        feasible=feasible,
         improved=result.improved,
         success=success,
         n_objective_calls=result.n_objective_calls,
         n_iterations_run=result.n_iterations_run,
+        entropy_and_feasible=entropy_and_feasible,
+        answer_under_q_prime=answer_qp,
+        correct_under_q_prime=correct_qp,
+        status_held=status_held,
     )
 
 

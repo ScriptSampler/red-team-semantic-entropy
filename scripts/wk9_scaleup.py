@@ -17,6 +17,7 @@ adds a labelling pass before the attack loop.
 from __future__ import annotations
 
 import argparse
+import random
 import sys
 from pathlib import Path
 
@@ -27,7 +28,9 @@ from se.data import load_triviaqa, load_squad, TriviaQAExample
 from se.sampling import DEFAULT_SAMPLES_DIR
 from se.se_pipeline import semantic_entropy
 from se.attacks.harness import load_pair, run_attack_batch, LoadedPair
-from se.attacks.select import select_examples
+from se.attacks.select import campaign_pool
+
+SEED = 0   # fixed across ALL cells so SE and SRE draw the identical pool.
 
 
 CAMPAIGN_DIR = DEFAULT_SAMPLES_DIR / "attacks" / "wk9"
@@ -65,22 +68,27 @@ def main() -> int:
     want = "wrong" if args.attack == "hide" else "right"
     pair = load_pair()
     gen = GenConfig(max_new_tokens=48, n_samples=10, temperature=1.0, seed=0)
+    # sre_kwargs configures the DETECTOR, not selection — SE and SRE still share
+    # the same pool below; only how each cell scores that pool differs.
     sre_kwargs = dict(n_reform=3, k_samples=8, temperature=0.8) if args.detector == "sre" else None
 
-    # Target selection.
-    if args.dataset == "triviaqa" and args.detector == "se":
-        # Use the Week 4 cache for fast label-free selection.
-        try:
-            examples = select_examples(want, args.n)
-        except FileNotFoundError:
-            examples = _label_fresh(load_triviaqa("validation"), pair, gen, want, args.n)
-    else:
+    # Detector-INDEPENDENT target selection (external review B1). Both the SE and
+    # SRE cells route through campaign_pool, which has no detector parameter, so
+    # they draw the identical pool by construction. triviaqa uses the Week-4 span-
+    # oracle cache; squad has no cache and is labelled fresh via this callback —
+    # which is itself detector-blind (it never reads args.detector) and seeded so
+    # the SQuAD SE and SRE cells select the same questions.
+    def label_fresh(want: str, n: int, seed: int) -> list[TriviaQAExample]:
         loader = load_triviaqa if args.dataset == "triviaqa" else load_squad
-        pool = loader("validation")[: max(args.n * 4, 800)]  # oversample, label, filter
-        examples = _label_fresh(pool, pair, gen, want, args.n)
+        pool = list(loader("validation"))
+        random.Random(f"labelpool:{args.dataset}:{seed}:{want}").shuffle(pool)
+        return _label_fresh(pool[: max(n * 6, 1000)], pair, gen, want, n)
+
+    examples = campaign_pool(args.dataset, want, args.n, seed=SEED, label_fresh=label_fresh)
 
     print(f"campaign: attack={args.attack} detector={args.detector} "
-          f"dataset={args.dataset} n={len(examples)}", flush=True)
+          f"dataset={args.dataset} n={len(examples)} (pool seed={SEED}, detector-blind)",
+          flush=True)
 
     out = CAMPAIGN_DIR / f"{args.dataset}_{args.detector}_{args.attack}.jsonl"
     run_attack_batch(
