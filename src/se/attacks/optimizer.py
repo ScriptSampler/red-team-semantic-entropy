@@ -77,20 +77,26 @@ def optimize(
     best_obj = base_obj
     best_feasible = True  # the original is trivially equivalent to itself
 
-    # parents: list of (query, obj, parent_index)
+    # parents: list of (query, obj, OWN_index). The original has no index of its
+    # own, so it uses -1 as a sentinel meaning "index 0". new_parents (built below
+    # from feasible_candidates) stores each candidate's OWN c.index here, so a
+    # child records its PARENT's own index as parent_index — not the grandparent's.
     parents: list[tuple[str, float, int]] = [(original_query, base_obj, -1)] * top_N
     traj = [best_obj]
     self_index = 0
 
     for it in range(max_iteration):
         children: list[Candidate] = []
-        for p_query, _p_obj, _p_idx in parents:
+        for p_query, _p_obj, parent_own_idx in parents:
             for _ in range(candidate_size_M):
                 cand_q = proposer.propose(p_query, lm, temperature=proposer_temperature)
                 cand_obj = objective(cand_q)
                 n_calls += 1
                 self_index += 1
-                children.append(Candidate(cand_q, cand_obj, _p_idx if _p_idx >= 0 else 0, self_index))
+                # parent_index = the parent's OWN index (original -> 0 via sentinel).
+                children.append(Candidate(cand_q, cand_obj,
+                                          parent_own_idx if parent_own_idx >= 0 else 0,
+                                          self_index))
 
         # Keep only children that beat the running best objective.
         improved_children = [c for c in children if c.obj > best_obj]

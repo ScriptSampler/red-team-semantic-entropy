@@ -88,3 +88,21 @@ AUROC on this oracle. Nits owed WITHIN the relabel checkpoint:
   count + entity-ambiguity fraction (single-token ambiguous golds).
 
 ---
+
+## 3. 2026-07-01 — Relabel checkpoint. Critic verdict: APPROVE.
+
+All B3 nits discharged; critic verified AUROC polarity + alias provenance against
+the code directly (the two ways it could have been silently wrong; both hold).
+**Decisive circularity-free number landed: clean SE AUROC = 0.694 (span oracle) on
+the full 2000-question pool, no entropy selection** — vs 1.000 on the attack
+matrix's extreme-entropy pool. The 0.306 gap is the selection artifact made
+visible (external review B2/§2). Cross-checks: 0.694 ~= Phase-1 greedy-label 0.698;
+all-samples convention ~0.787. Oracle-robust (substr 0.697 / span 0.694 / strict
+0.561, strict degenerate). 20/2000 label flips. "The finding of the project so far."
+Cleared to build B1 on relabeled.jsonl. Four nits carried into the B1 checkpoint:
+bootstrap CI on 0.694; assert accepted_forms coverage (fail loud, not silent
+single-form); pin the cached-entropy invariant (sampler draws from the same cache,
+no re-cluster); report 1.000-vs-0.694 side by side (0.694 is the honest number,
+1.000 was never real).
+
+---

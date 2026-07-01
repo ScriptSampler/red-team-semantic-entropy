@@ -65,20 +65,33 @@ def main() -> int:
         log(f"objective calls per question: mean {statistics.mean([o.n_objective_calls for o in outcomes]):.0f}")
         log("")
 
-        ranked = sorted(outcomes, key=_move, reverse=True)
-        log("### 10 strongest successes")
-        for o in ranked[:10]:
-            log(f"- {o.question_id} move {_move(o):+.3f} (SE {o.entropy_before:.2f} -> {o.entropy_after:.2f})")
-            log(f"    orig: {o.question}")
-            log(f"    adv:  {o.best_query}")
-        log("")
-        log("### 10 clearest failures")
-        for o in ranked[-10:]:
-            log(f"- {o.question_id} move {_move(o):+.3f} feasible={o.feasible}")
-            log(f"    orig: {o.question}")
-            if o.best_query != o.question:
+        # Top/bottom lists only make sense when they cannot overlap; with a small
+        # campaign (n < 20) ranked[:10] and ranked[-10:] would share rows and
+        # mislead. Suppress the lists below that size and cap k = n // 2.
+        successes = [o for o in outcomes if o.success]
+        failures = [o for o in outcomes if not o.success]
+        if len(outcomes) < 20:
+            log(f"(campaign has {len(outcomes)} questions; per-example strongest/"
+                f"weakest lists suppressed below n=20 to avoid overlap. "
+                f"{len(successes)} successes, {len(failures)} non-successes.)")
+            log("")
+        else:
+            k = min(10, len(outcomes) // 2)
+            top = sorted(successes, key=_move, reverse=True)[:k]
+            bot = sorted(failures, key=_move)[:k]
+            log(f"### {len(top)} strongest successes")
+            for o in top:
+                log(f"- {o.question_id} move {_move(o):+.3f} (SE {o.entropy_before:.2f} -> {o.entropy_after:.2f})")
+                log(f"    orig: {o.question}")
                 log(f"    adv:  {o.best_query}")
-        log("")
+            log("")
+            log(f"### {len(bot)} clearest failures (non-successes only)")
+            for o in bot:
+                log(f"- {o.question_id} move {_move(o):+.3f} feasible={o.feasible}")
+                log(f"    orig: {o.question}")
+                if o.best_query != o.question:
+                    log(f"    adv:  {o.best_query}")
+            log("")
 
     log("## Patterns to write into methodology.md")
     log("- Which question types yield the largest entropy moves?")

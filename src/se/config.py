@@ -30,7 +30,11 @@ class GenConfig:
     Defaults here match that: N=10 at T=1.0. Greedy single-answer
     generation uses do_sample=False.
     """
-    max_new_tokens: int = 96
+    # PINNED across every condition (clean SE, SRE, attacks, defense). Cluster
+    # granularity depends on generation length, so a single value must be used
+    # everywhere or the effect could be a length artifact (external review §7).
+    # All Phase-1/2 runs used 48; the old 96 default was a latent inconsistency.
+    max_new_tokens: int = 48
     temperature: float = 1.0
     top_p: float = 1.0
     n_samples: int = 10            # N in the SE paper
