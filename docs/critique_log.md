@@ -106,3 +106,73 @@ no re-cluster); report 1.000-vs-0.694 side by side (0.694 is the honest number,
 1.000 was never real).
 
 ---
+
+## 4. 2026-07-01 — B1 checkpoint (v1, select_stratified). Critic verdict: BLOCK.
+
+Score-independence, the demotion of the extreme rule, the CI (0.704 [0.653,0.753]),
+the fail-loud accepted_forms guard, and representativeness were all verified correct
+on the code. But B1's DEFINING requirement — the cross-detector shared pool — was
+only **asserted, not enforced**: `assert_shared_pool` re-called one function with
+one seed (proving determinism, never in doubt), and `wk9_scaleup.py` still branched
+on detector (`triviaqa+se` → `select_examples`; `triviaqa+sre` → `_label_fresh`),
+reopening the founding doubly-confounded comparison. `select_examples`'s `**_`
+silently swallowed `seed`. The identity held by accident (all cells fell through to
+default seed=0), not by construction. DoD to clear: (1) prove SE-cell ids == SRE-cell
+ids at the real call site; (2) forward seed explicitly; (3) grep-confirm wk8/wk9 SRE
+no longer route through `_label_fresh`. Numbers stand; re-prove the pool.
+
+## 5. 2026-07-02 — B1 re-submission (v2, campaign_pool). Critic verdict: APPROVE.
+
+BLOCK cleared. The loophole is closed **structurally**: `campaign_pool(dataset, want,
+n, *, seed, label_fresh)` has NO detector parameter, so an SE cell and an SRE cell
+are the same call for a given (dataset, want, n, seed) — identity by construction.
+`assert_detector_blind` enforces (via inspect.signature) that no selector exposes a
+detector param. wk9 routes every cell through campaign_pool at module SEED=0; the old
+detector selection branch is deleted; `args.detector` survives only in `sre_kwargs`
+(scoring, not selection). SQuAD's `label_fresh` is detector-blind + seeded; fails
+loud if missing. `select_examples` forwards seed. The critic **accepts the structural
+proof in lieu of a behavioral triviaqa print** (cache gone) and notes it is STRONGER:
+it holds for every (want,n,seed), test-enforced, not one sampled tuple. wk8 was never
+confounded (SE and SRE share load_triviaqa()[:N] in one loop). Tests 51 (+4 B1
+enforcement incl. squad SE==SRE pool). Fair AUROC 0.704 [0.653,0.753] stands.
+Residual (non-gating): add a one-line behavioral SE==SRE print when the cache is
+rebuilt, for the record.
+
+## 6. 2026-07-02 — B2 answer-invariance (harness.py). Critic verdict: APPROVE-WITH-NITS.
+
+The metric now measures the claim. `success = entropy_and_feasible AND status_held`
+— a genuine conjunction that GATES success, not a recorded-alongside flag. The
+re-check is on the SAME footing as the label (the load-bearing fidelity point,
+verified against se_pipeline.py): original `greedy_correct` = `is_acceptable(generate_one(
+lm, question, greedy_cfg), example)`; B2 re-check = `is_acceptable(generate_one(lm,
+best_query, greedy_cfg), ex)` — same span oracle (B3), same deterministic greedy
+decode (`do_sample=False`, no seed dependence), same pinned max_new_tokens=48. No
+gen-config mismatch. Attrition recoverable (`entropy_and_feasible` stored beside
+`success`); `answer_under_q_prime` persisted for retroactive re-oracling. Re-check
+runs only when entropy_and_feasible (cannot manufacture a success). Tests: 6 truth-
+table cases incl. the two that matter (hide voided when model becomes correct; false-
+alarm voided when model becomes wrong). Two nits carried to the GPU-recompute
+checkpoint: (1) report the answer-flip subcategory separately (hide→correct under Q'
+is weak evidence the paraphrase shifted meaning → feeds B5/NLI-fidelity); (2) filter
+on `entropy_and_feasible` before aggregating `status_held` (default True dilutes the
+rate with never-re-checked attacks).
+
+## 7. 2026-07-02 — INFRA finding (does NOT gate B1/B2 code; GATES the headline).
+
+While attempting to re-run fair_pool_check for a fresh behavioral shared-pool print,
+found the entire Phase-1 cache **GONE**: `~/.cache/se-research/` does not exist on
+Windows or in WSL home. It held `samples.jsonl` + `entropy.jsonl` (the 2000q Phase-1
+run), `relabeled.jsonl`, and the wk9 attack-matrix JSONLs. Only the committed
+`results/*.md` summaries survive → **0.704, the relabel numbers, and last night's
+attack matrix are currently UNREPRODUCIBLE** (charter §6 reproducibility failure).
+`DEFAULT_SAMPLES_DIR` still resolves to the standard path (confirmed) — so this is
+genuine loss, not a path change. GPU diagnosis: ROCm 6.4 IS installed (/opt/rocm,
+rocminfo present) but NO torch binding exists in any env (system python3, .venv
+cpu-only 2.12.0, .venv-wsl none) — the GPU torch used last night is gone too.
+Consequence: no post-attack numbers can be produced tonight; B1/B2 made the PIPELINE
+correct but zero post-attack numbers exist yet — do not conflate "B1/B2 approved"
+with "the degradation result is in." Morning priority: (1) diagnose the loss cause
+(WSL home reset? disk cleanup?) before spending GPU-hours; (2) decide restore-vs-
+regenerate; (3) reinstall torch-ROCm (user's infra decision, not done autonomously).
+
+---
