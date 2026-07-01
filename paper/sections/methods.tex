@@ -18,12 +18,15 @@ is read as higher uncertainty; a detector flags an answer as a likely
 hallucination when its score exceeds a threshold.
 
 \paragraph{Threat model.}
-The attacker is black-box: it may query $M$ and the detector but has no
-gradients. It may replace the question $q$ with any paraphrase $q'$ subject to a
-hard equivalence constraint, $\mathrm{NLI}(q,q')$ and $\mathrm{NLI}(q',q)$ both
-entailment, so $q'$ asks the same thing and admits the same answer. The model's
-answer is not otherwise constrained; the attack manipulates only the
-\emph{detector's score}.
+The attacker is black-box: it may query $M$, the detector, and an auxiliary LLM
+paraphraser, but has no gradients. It may replace the question $q$ with any
+paraphrase $q'$ subject to a hard equivalence constraint, $\mathrm{NLI}(q,q')$ and
+$\mathrm{NLI}(q',q)$ both entailment, so $q'$ is constrained to ask the same
+thing. This gate \emph{approximates} answer-invariance but does not guarantee it
+formally---bidirectional entailment between two questions is an NLI model's
+judgement, not a proof---which is exactly why the success criterion below spends a
+separate condition re-checking the answer empirically. The model's answer is not
+otherwise constrained; the attack manipulates only the \emph{detector's score}.
 
 \paragraph{Attack objectives.}
 We define two directions. The \emph{false-alarm} attack targets a question the
@@ -39,15 +42,21 @@ direction. The same objective is instantiated against either detector
 cross-detector transfer measurement well-defined.
 
 \paragraph{Optimizer.}
-We adapt the constraint-preserving zeroth-order search of
+We adapt the constraint-respecting zeroth-order search of
 SECA~\citep{liang2025seca}. The search maintains a beam of the top-$P$ paraphrase
 candidates; each round proposes $M$ further paraphrases per beam member via an
 LLM paraphraser, scores them with the objective, keeps those that improve on the
 running best, and admits a candidate only if it passes the bidirectional-NLI gate
-against the \emph{original} $q$ (not the parent, so meaning cannot drift across
-rounds). The search terminates on a score threshold or an iteration budget. We
-swap SECA's objective (confidence in a wrong multiple-choice token) for the
-detector entropy above, and its LLM-judge feasibility check for the NLI gate.
+against the \emph{original} $q$ rather than the parent. Anchoring every candidate
+to the original means equivalence error cannot \emph{accumulate} across rounds;
+it does not eliminate it. Because the optimizer searches many candidates for the
+one that maximizes the objective while passing the gate, it will preferentially
+surface single-hop NLI false positives---so the residual fidelity of that one
+gate hop is not assumed away but measured directly (the answer-flip subcategory
+of the evaluation below). The search terminates on a score threshold or an
+iteration budget. We swap SECA's objective (confidence in a wrong
+multiple-choice token) for the detector entropy above, and its LLM-judge
+feasibility check for the NLI gate.
 
 \paragraph{Target selection.}
 Both attacks require a pool of questions with a known clean outcome---wrong
