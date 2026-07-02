@@ -229,3 +229,32 @@ invalidate the running SE recompute. This audit-and-remediation is itself submit
 the critic for verdict.
 
 ---
+
+## 10. 2026-07-02 — B7 remediation verdict: APPROVE-WITH-NITS; BLOCK on SE headline.
+
+Critic accepted all five landed fixes (SRE seeding, auroc_diff_ci paired bootstrap,
+artifact hygiene, proposer seeding, prose) but **corrected my central SE judgment,
+and the correction is right.** I claimed seeded SE was "not affected" by the winner's
+curse. Wrong: `torch.manual_seed(0)` (model.py:103) makes `SE(query)` *reproducible*
+but each candidate's entropy is still a finite N=10 Monte-Carlo estimate, and the beam
+search's max over ~180 candidates capitalizes on the upper tail of that estimator
+variance — an ATTENUATED (not zero, unlike unseeded SRE which was pure) winner's curse
+in the attack-favoring direction. Reproducibility != noise-free.
+
+Consequences accepted: (1) the running SE recompute is valid only as EXPLORATORY /
+preliminary, NOT the confirmatory headline; do not kill it. (2) **Finding 13 (null/
+noise control) is RECLASSIFIED to BLOCKING the SE headline** (per charter: no headline
+until blockers clear), not merely shaping the definitive run. (3) Finding 16 (greedy
+vs T=1.0 status) affects the FALSE-ALARM headline too, not just hide — report both
+statuses. (4) Land finding-15 "answer-flip = lower bound" prose now (done: methods.tex
+"lower-bound the fidelity"). Records corrected: audit doc line 15 + findings 13/16.
+
+DoD for the SE headline (critic): report success / degradation NET OF the noise floor
+— original + K random NLI-passing paraphrases re-scored under k>=3 seeds — with the
+paired-diff CI on the fair pool. Tooling built this session: scripts/null_control.py.
+recompute_fair report now carries a PRELIMINARY/EXPLORATORY banner. Verification asks
+answered: auroc_diff_ci resamples the question as the unit (idx over the outcome list,
+one row per target); SRE seed threads into BOTH inner GenConfigs (reformulation + K).
+Minor nits deferred: finding 12 (SQuAD floor) before the SQuAD run.
+
+---

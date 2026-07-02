@@ -11,8 +11,12 @@ a top-tier reviewer would raise. Status: **FIXED** (this session), **POST-HOC**
   fully unseeded, so the objective was one noisy Monte-Carlo draw and the beam search
   kept the luckiest candidate without re-evaluation → inflated SRE success. FIX: seed
   `generate_reformulations` + `self_reflective_entropy`; callers pass seed=0. SRE is
-  now deterministic like SE (no lucky-max, reproducible). Note: SE was already seeded,
-  so the SE cells were **not** affected — the running SE recompute is valid.
+  now deterministic like SE (no lucky-max, reproducible). **Correction (critic, entry
+  10):** SE seeding makes `SE(query)` *reproducible* but NOT *noise-free* — the beam
+  search still takes the max over ~180 finite-N=10 SE estimates, so seeded SE carries
+  an ATTENUATED (not zero) winner's-curse bias in the attack-favoring direction. The
+  running SE recompute is therefore valid only as an **exploratory/preliminary** number,
+  not the confirmatory headline; see finding 13.
 - **[major] No CI on AUROC degradation / no paired-diff CI** (stats.py). FIX:
   `auroc_diff_ci` — paired bootstrap resampling questions jointly for clean/attacked/
   degradation CIs. Wired into `recompute_fair.py` (which previously produced no AUROC).
@@ -33,15 +37,22 @@ a top-tier reviewer would raise. Status: **FIXED** (this session), **POST-HOC**
   distribution shifted toward correct — the entropy drop then isn't a hidden
   hallucination. PLAN: a cheap GPU pass over completed outcomes recording
   `frac_correct_under_q_prime` over the N detector samples; report greedy-status and
-  sampled-status side by side. (Mostly affects the hide cell; the headline is
-  false-alarm.)
+  sampled-status side by side. **Correction (critic):** this affects the FALSE-ALARM
+  headline too, not just hide — status "still correct" (greedy) can disagree with a
+  T=1.0 sampled set that shifted toward wrong, making the "false alarm" partly a true
+  alarm. Report both statuses for false-alarm as well.
 
-## Experiments (need a GPU run; the definitive resubmit needs these)
+## Experiments (need a GPU run)
 
-- **[BLOCKER, finding 13] No null/noise control.** Even with seeded SE, the optimizer
-  maximizes over candidates under one seed, so success may be seed-overfit. NEED: for
-  each target, a null baseline (re-score the original and/or random NLI-passing
-  paraphrases under k seeds) to report success **net of** the noise floor.
+- **[BLOCKER, finding 13 — BLOCKS THE SE HEADLINE, not just the definitive run]** No
+  null/noise control. Seeded SE is reproducible but the beam max over ~180 finite-N=10
+  estimates is upward-biased, so a chunk of "success" may be max-over-noise rather than
+  the attack. **The confirmatory SE headline may not be written until this lands.**
+  NEED: for each target, a noise floor = re-score the original AND K random NLI-passing
+  paraphrases (NOT chosen by the optimizer) under k>=3 seeds; report attack success /
+  degradation **net of** that floor, with the paired-diff CI, on the fair pool. If the
+  effect survives the floor the headline stands; if it collapses into the floor, that
+  is the finding. Tooling: scripts/null_control.py (this session).
 - **[major, finding 14] Shared NLI model for clustering AND the feasibility gate.**
   "AUROC degradation" partly measures one NLI model's self-inconsistency. NEED: a
   robustness check with an independent clusterer (different NLI / embedding / exact

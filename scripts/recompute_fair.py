@@ -46,6 +46,12 @@ def write_report(outcomes_by_cell: dict, out_md: Path, n: int, seed: int) -> Non
         "success = entropy moved AND feasible AND hallucination status held under Q'. "
         "All rates carry bootstrap 95% CIs. This supersedes the pre-B1/B2 wk9 matrix.")
     log("")
+    log("> **PRELIMINARY / EXPLORATORY (critic, critique_log entry 10).** Seeded SE is "
+        "reproducible but each candidate's entropy is a finite N=10 estimate, so the "
+        "beam max carries an attenuated winner's-curse bias. These numbers are NOT the "
+        "confirmatory headline until reported NET OF the noise floor "
+        "(scripts/null_control.py, finding 13). Treat effect sizes as upper-ish bounds.")
+    log("")
 
     # Per-cell summaries.
     log("## Per-cell summaries")
