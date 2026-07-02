@@ -63,7 +63,13 @@ def main() -> int:
     ap.add_argument("--max_iteration", type=int, default=20)
     ap.add_argument("--candidate_size_M", type=int, default=3)
     ap.add_argument("--top_N", type=int, default=3)
+    ap.add_argument("--tag", default="",
+                    help="suffix for the campaign dir, e.g. '_fair' -> attacks/wk9_fair. "
+                         "Keeps a corrected (B1/B2) recompute separate from old runs.")
+    ap.add_argument("--seed", type=int, default=SEED,
+                    help="shared-pool seed (identical across SE/SRE cells).")
     args = ap.parse_args()
+    campaign_dir = DEFAULT_SAMPLES_DIR / "attacks" / f"wk9{args.tag}"
 
     want = "wrong" if args.attack == "hide" else "right"
     pair = load_pair()
@@ -84,13 +90,14 @@ def main() -> int:
         random.Random(f"labelpool:{args.dataset}:{seed}:{want}").shuffle(pool)
         return _label_fresh(pool[: max(n * 6, 1000)], pair, gen, want, n)
 
-    examples = campaign_pool(args.dataset, want, args.n, seed=SEED, label_fresh=label_fresh)
+    examples = campaign_pool(args.dataset, want, args.n, seed=args.seed, label_fresh=label_fresh)
 
     print(f"campaign: attack={args.attack} detector={args.detector} "
-          f"dataset={args.dataset} n={len(examples)} (pool seed={SEED}, detector-blind)",
+          f"dataset={args.dataset} n={len(examples)} (pool seed={args.seed}, detector-blind) "
+          f"-> {campaign_dir.name}",
           flush=True)
 
-    out = CAMPAIGN_DIR / f"{args.dataset}_{args.detector}_{args.attack}.jsonl"
+    out = campaign_dir / f"{args.dataset}_{args.detector}_{args.attack}.jsonl"
     run_attack_batch(
         examples, args.attack, pair, out,
         detector=args.detector, gen_cfg=gen, sre_kwargs=sre_kwargs,
