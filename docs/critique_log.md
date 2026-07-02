@@ -304,3 +304,38 @@ saved (not lost). Reasoning: the "don't kill" instruction assumed the run could 
 its purpose; the deadline makes that false, so the merits favor the blocker's experiment.
 
 ---
+
+## 13. 2026-07-02 — Null-control result + reframe. Critic: APPROVE tooling + interpretation.
+
+DoD met: the null control ran and did its job — it caught an effect that does not
+survive the floor at n=6 and would otherwise have shipped as a ~50% headline.
+
+**Critical catch (a real bias in null_control.py):** the comparison is max-over-~180
+(attack candidates) vs max-over-8 (benign). Max is increasing in sample count, so even
+with ZERO adversarial signal the attack max exceeds the benign max by construction — the
+current "net" is biased TOWARD the attack, and it STILL cleared only 33%. This makes the
+"does not beat the floor" reading *more* robust, not less.
+
+Rulings: (1) "inconclusive at n=6, no targeted-attack claim" is CORRECT — underpowered
+in BOTH directions (not a clean negative); the seed-std 0.191 nats (~76% of the 0.25
+threshold) means much raw "success" could be seed noise, making the read if anything
+more conservative. (2) Reframe (b) "SE is fragile to ANY meaning-preserving paraphrase"
+is legitimate and likely the STRONGER paper, but is BLOCKED on finding 14: the benign
+floor uses the same DeBERTa NLI to gate AND cluster, so "paraphrase moves the score"
+cannot be separated from "the clusterer is self-inconsistent"; (b) is interesting only
+under the former. Do not state (b) as a property of SE until the independent-clusterer
+arm runs.
+
+**Definitive-run DoD (either reframe):** n>=80/stratum on the fair pool (pool supplies
+576 wrong / 1424 right); report the FULL benign-move distribution with the attack as a
+per-target PERCENTILE within it (not max-vs-max — budget-biased toward the attack); add
+a same-question different-seed floor as a second band (seed-noise < benign-paraphrase <
+attack); run the shared-vs-independent clusterer 2x2 (finding 14, adjudicates a-vs-b and
+discharges 14 at once); apply the sampled-status re-check (finding 16); paired-bootstrap
+CIs throughout. Fallback if both floors hold: "the null-controlled protocol + a negative
+result (these attacks do not beat benign paraphrase variation)" — contribution (2)
+carries the paper, which given how many published attacks lack this control is still
+real. Critic's closing: "you found the floor BEFORE publishing over it — that is the
+difference between this and the work the external review rejected."
+
+---
