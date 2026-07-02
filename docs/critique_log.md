@@ -203,3 +203,29 @@ attack matrix. (Silver lining: the preflight.py cache-check from the false alarm
 a genuine, kept improvement.)
 
 ---
+
+## 9. 2026-07-02 — B7+ adversarial audit (6 lenses -> verify -> synth) + remediation.
+
+Ran a multi-agent adversarial audit of the corrected (B1–B6) pipeline+paper to find
+the NEXT round of reviewer blockers, each finding adversarially verified. 26 filed,
+20 survived, **19 CONFIRMED**. Full list + status in docs/audit_b7_findings.md.
+
+Landed this session (commit a19214c, 68 tests): (1) **SRE winner's-curse BLOCKER** —
+SRE was unseeded so the beam search kept lucky Monte-Carlo maxima; fixed by seeding
+generate_reformulations + self_reflective_entropy (SRE now deterministic like SE).
+Verified SE was already seeded, so the running SE recompute is NOT affected. (2)
+`auroc_diff_ci` paired bootstrap for the AUROC-degradation headline (the corrected
+recompute previously produced no AUROC) + wired into recompute_fair. (3) artifact
+hygiene — wk10 --tag defaults to the fair pool + warns on clean AUROC ~1.0; SUPERSEDED
+banners on the pre-B1 result files (clean AUROC 1.000). (4) proposer seeded per
+question + docstring corrected. (5) abstract overclaim + Methods multiplicity/seed
+notes.
+
+Deferred with a plan (docs/audit_b7_findings.md): finding 16 (greedy-vs-sampled
+status) -> post-hoc frac_correct pass; findings 13/14/15/9 (null control, shared-NLI
+confound, human equivalence audit, SRE indirect-control threat model) -> GPU
+experiments for the definitive resubmit. These shape the definitive run; none
+invalidate the running SE recompute. This audit-and-remediation is itself submitted to
+the critic for verdict.
+
+---
