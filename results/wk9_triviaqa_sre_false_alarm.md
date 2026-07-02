@@ -1,3 +1,7 @@
+> **SUPERSEDED (2026-07-02): pre-B1 extreme-entropy selection.** These numbers use the
+> discredited selection rule where clean AUROC = 1.000 by construction (external review B1).
+> Do NOT cite. B1-corrected fair-pool results: scripts/recompute_fair.py -> results/fair_recompute_report.md.
+
 # Attack summary: false_alarm (triviaqa_sre_false_alarm.jsonl)
 
 questions: 15

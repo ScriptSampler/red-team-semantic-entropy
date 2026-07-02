@@ -76,7 +76,7 @@ def main() -> int:
     gen = GenConfig(max_new_tokens=48, n_samples=10, temperature=1.0, seed=0)
     # sre_kwargs configures the DETECTOR, not selection — SE and SRE still share
     # the same pool below; only how each cell scores that pool differs.
-    sre_kwargs = dict(n_reform=3, k_samples=8, temperature=0.8) if args.detector == "sre" else None
+    sre_kwargs = dict(n_reform=3, k_samples=8, temperature=0.8, seed=0) if args.detector == "sre" else None
 
     # Detector-INDEPENDENT target selection (external review B1). Both the SE and
     # SRE cells route through campaign_pool, which has no detector parameter, so

@@ -65,6 +65,48 @@ def auroc_ci(labels, scores, *, n_boot: int = 2000, alpha: float = 0.05,
               float(np.quantile(vals, 1 - alpha / 2)))
 
 
+def auroc_diff_ci(labels, clean_scores, attacked_scores, *,
+                  n_boot: int = 3000, alpha: float = 0.05, seed: int = 0) -> dict:
+    """Paired bootstrap CIs for clean AUROC, attacked AUROC, and the degradation
+    (clean - attacked), resampling QUESTIONS jointly.
+
+    Clean and attacked AUROC are measured on the SAME questions (entropy_before vs
+    entropy_after of the same outcomes), and per question the two scores are
+    strongly correlated (attacked == clean unless the attack moved it). A valid CI
+    on the difference must therefore resample the question index ONCE per replicate
+    and recompute both AUROCs on that shared resample; taking two independent
+    auroc_ci's and subtracting would overstate the interval and break the pairing.
+    Positive degradation = the attack made the detector worse. Returns a dict with
+    CI objects under keys 'clean', 'attacked', 'degradation'."""
+    y = np.asarray(labels)
+    c = np.asarray(clean_scores, dtype=float)
+    a = np.asarray(attacked_scores, dtype=float)
+    n = len(y)
+
+    def _auc(yy, ss):
+        return float(roc_auc_score(yy, ss)) if 0 < yy.sum() < len(yy) else float("nan")
+
+    pt_c, pt_a = _auc(y, c), _auc(y, a)
+    rng = np.random.default_rng(seed)
+    cs, ats, ds = [], [], []
+    for _ in range(n_boot):
+        idx = rng.integers(0, n, size=n)
+        yb = y[idx]
+        if not (0 < yb.sum() < len(yb)):
+            continue                                   # single-class replicate
+        ac, aa = roc_auc_score(yb, c[idx]), roc_auc_score(yb, a[idx])
+        cs.append(ac); ats.append(aa); ds.append(ac - aa)
+
+    def _ci(pt, vals):
+        if not vals:
+            return CI(pt, float("nan"), float("nan"))
+        return CI(pt, float(np.quantile(vals, alpha / 2)),
+                  float(np.quantile(vals, 1 - alpha / 2)))
+
+    return {"clean": _ci(pt_c, cs), "attacked": _ci(pt_a, ats),
+            "degradation": _ci(pt_c - pt_a, ds)}
+
+
 def rate_ci(flags, *, n_boot: int = 2000, alpha: float = 0.05, seed: int = 0) -> CI:
     """Bootstrap CI for a success/proportion (list of bools/0-1)."""
     return bootstrap_ci([1.0 if f else 0.0 for f in flags], np.mean,

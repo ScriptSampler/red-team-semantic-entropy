@@ -23,11 +23,16 @@ from se.sampling import DEFAULT_SAMPLES_DIR
 from se.attacks.harness import load_pair, run_attack_batch, read_outcomes
 from se.attacks.select import campaign_pool
 from se.attacks import report as R
+from se.stats import auroc_diff_ci
 
 # SE cells first (the headline + a complete SE operating point) so a time-limited
 # run still yields the primary result; SRE is best-effort after.
 CELLS = [("false_alarm", "se"), ("hide", "se"),
          ("false_alarm", "sre"), ("hide", "sre")]
+
+
+def _fmt_ci(ci) -> str:
+    return f"{ci.point:.3f} [{ci.lo:.3f}, {ci.hi:.3f}]"
 
 
 def write_report(outcomes_by_cell: dict, out_md: Path, n: int, seed: int) -> None:
@@ -56,6 +61,30 @@ def write_report(outcomes_by_cell: dict, out_md: Path, n: int, seed: int) -> Non
         for line in R.render_cell_md(s):
             log(line)
         log("")
+
+    # AUROC degradation on the fair pool (the headline), with a PAIRED bootstrap CI.
+    log("## AUROC degradation on the fair pool (paired bootstrap 95% CI)")
+    log("")
+    log("Hide=positives (model wrong), false-alarm=negatives (model right); clean="
+        "entropy_before, attacked=entropy_after; degradation = clean AUROC - attacked "
+        "AUROC (positive = the attack made the detector worse). CI resamples questions "
+        "jointly so the clean/attacked pairing is preserved.")
+    log("")
+    log("| detector | n | clean AUROC | attacked AUROC | degradation |")
+    log("| --- | --- | --- | --- | --- |")
+    for detector in ("se", "sre"):
+        hide = outcomes_by_cell.get(f"{detector}_hide") or []
+        fa = outcomes_by_cell.get(f"{detector}_false_alarm") or []
+        if not hide or not fa:
+            log(f"| {detector.upper()} | - | (needs both hide+fa cells) | | |")
+            continue
+        labels = [1] * len(hide) + [0] * len(fa)
+        clean = [o.entropy_before for o in hide] + [o.entropy_before for o in fa]
+        att = [o.entropy_after for o in hide] + [o.entropy_after for o in fa]
+        d = auroc_diff_ci(labels, clean, att)
+        log(f"| {detector.upper()} | {len(labels)} | {_fmt_ci(d['clean'])} | "
+            f"{_fmt_ci(d['attacked'])} | {_fmt_ci(d['degradation'])} |")
+    log("")
 
     # Matrix-level operating point (needs both classes; per detector).
     log("## Operating-point flips (clean-data threshold sweep)")
@@ -129,8 +158,8 @@ def main() -> int:
             print(f"[load] model+NLI in {time.perf_counter()-t0:.0f}s", flush=True)
         want = "wrong" if attack == "hide" else "right"
         examples = campaign_pool("triviaqa", want, args.n, seed=args.seed)
-        sre_kwargs = (dict(n_reform=3, k_samples=8, temperature=0.8)
-                      if detector == "sre" else None)
+        sre_kwargs = (dict(n_reform=3, k_samples=8, temperature=0.8, seed=0)
+                      if detector == "sre" else None)   # seed -> deterministic SRE (no winner's curse)
         print(f"[cell {key}] n={len(examples)} -> {out.name}", flush=True)
         t0 = time.perf_counter()
         run_attack_batch(

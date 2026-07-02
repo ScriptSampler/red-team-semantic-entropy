@@ -61,7 +61,7 @@ def main() -> int:
             se = semantic_entropy(ex.question, pair.lm, pair.nli, se_gen,
                                   example=ex, compute_greedy=True)
             sre = self_reflective_entropy(ex.question, pair.lm, pair.nli,
-                                          n_reform=3, k_samples=8, temperature=0.8)
+                                          n_reform=3, k_samples=8, temperature=0.8, seed=0)
             row = {
                 "question_id": ex.question_id,
                 "greedy_correct": bool(se.greedy_correct),

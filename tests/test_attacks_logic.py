@@ -20,6 +20,20 @@ from se.entropy import discrete_entropy, cluster_samples
 from se.nli import NLIResult
 from se.attacks import feasibility, optimizer
 from se.attacks import proposer as proposer_mod
+from se.attacks.proposer import seed_proposer, _instruction
+
+
+def test_proposer_instruction_is_reproducible_when_seeded():
+    # external review B7 (finding 6): seeded instruction RNG -> reproducible
+    # candidate prompts. Same seed -> same sequence; different seed -> differs.
+    seed_proposer(0)
+    a = [_instruction() for _ in range(8)]
+    seed_proposer(0)
+    b = [_instruction() for _ in range(8)]
+    assert a == b
+    seed_proposer(1)
+    c = [_instruction() for _ in range(8)]
+    assert a != c    # a different seed explores different templates
 
 
 # ---- Fakes -----------------------------------------------------------------

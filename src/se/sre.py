@@ -80,6 +80,7 @@ def generate_reformulations(
     temperature: float = 1.0,
     keep_non_contradictory: bool = True,
     oversample: int = 3,
+    seed: int | None = None,
 ) -> list[str]:
     """Produce up to n_reform paraphrases of the question.
 
@@ -94,7 +95,7 @@ def generate_reformulations(
     """
     prompt = _REFORM_INSTRUCTION.format(q=question)
     gen = GenConfig(max_new_tokens=max_new_tokens, temperature=temperature,
-                    top_p=1.0, n_samples=min(n_reform * oversample, 16))
+                    top_p=1.0, n_samples=min(n_reform * oversample, 16), seed=seed)
     raw = M.generate_samples(lm, prompt, gen)
 
     kept: list[str] = []
@@ -126,6 +127,7 @@ def self_reflective_entropy(
     temperature: float = 0.8,
     max_new_tokens: int = 48,
     reformulations: list[str] | None = None,
+    seed: int | None = None,
 ) -> SREResult:
     """Compute SRE for a question.
 
@@ -136,7 +138,7 @@ def self_reflective_entropy(
     """
     if reformulations is None:
         reformulations = generate_reformulations(
-            question, lm, nli, n_reform=n_reform, temperature=1.0
+            question, lm, nli, n_reform=n_reform, temperature=1.0, seed=seed
         )
     # If reformulation generation failed entirely, fall back to the original
     # question so SRE still returns a defined score. This pools only K samples
@@ -152,7 +154,7 @@ def self_reflective_entropy(
     variants = reformulations if reformulations else [question]
 
     gen = GenConfig(max_new_tokens=max_new_tokens, temperature=temperature,
-                    top_p=1.0, n_samples=k_samples)
+                    top_p=1.0, n_samples=k_samples, seed=seed)
 
     pooled: list[str] = []
     for variant in variants:

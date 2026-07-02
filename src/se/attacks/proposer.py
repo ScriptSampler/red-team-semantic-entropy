@@ -6,8 +6,16 @@ LLM does not collapse to one rephrasing; we keep that idea but drop the
 MMLU multiple-choice scaffolding because TriviaQA questions are open-ended.
 
 The proposer is Llama itself (the plan allows "use the model itself to
-paraphrase, or a separate paraphraser"). Generation runs at temperature
-1.0 to get genuinely different candidates across calls.
+paraphrase, or a separate paraphraser").
+
+Decoding note (corrected 2026-07-02 per audit finding B7): `propose` calls
+`M.generate_one`, which decodes GREEDILY (`do_sample=False`); the `temperature`
+argument is not applied. Candidate diversity therefore comes from randomising the
+instruction (verb / style / template), not from sampling. That randomisation is
+drawn from a MODULE-LEVEL seedable RNG (`seed_proposer`) so a campaign's candidate
+set is reproducible; call `seed_proposer(seed)` once before a run (the harness does
+this per question). Genuine temperature sampling is a possible future upgrade but is
+deliberately not enabled mid-investigation so attack strength is held fixed.
 """
 from __future__ import annotations
 
@@ -16,6 +24,15 @@ import re
 
 from .. import model as M
 from ..config import GenConfig
+
+# Module-level RNG so candidate selection is reproducible when seeded. Unseeded by
+# default (matches prior behaviour); the harness seeds it per question.
+_RNG = random.Random()
+
+
+def seed_proposer(seed: int) -> None:
+    """Seed the proposer's instruction-randomisation RNG for reproducibility."""
+    _RNG.seed(seed)
 
 
 # Known labels the proposer model sometimes prepends. Case-insensitive.
@@ -48,9 +65,9 @@ _SYSTEM = "You rewrite questions while preserving their exact meaning. You never
 
 
 def _instruction() -> str:
-    verb = random.choice(_VERBS)
-    return random.choice(_INSTRUCTION_TEMPLATES).format(
-        verb=verb, verb_l=verb.lower(), style=random.choice(_STYLES)
+    verb = _RNG.choice(_VERBS)
+    return _RNG.choice(_INSTRUCTION_TEMPLATES).format(
+        verb=verb, verb_l=verb.lower(), style=_RNG.choice(_STYLES)
     )
 
 

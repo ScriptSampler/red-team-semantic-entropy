@@ -17,6 +17,7 @@ Run after the Week 9 campaigns you care about have produced files in
 """
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -29,7 +30,6 @@ from se.sampling import DEFAULT_SAMPLES_DIR
 from se.attacks.harness import read_outcomes
 
 
-CAMPAIGN_DIR = DEFAULT_SAMPLES_DIR / "attacks" / "wk9"
 DATASETS = ["triviaqa", "squad"]
 DETECTORS = ["se", "sre"]
 
@@ -41,12 +41,26 @@ def _auc(labels, scores):
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser()
+    # Default to the B1-corrected fair pool, NOT the pre-B1 wk9 dir whose clean
+    # AUROC is the artefactual 1.000 (external review B1 / audit finding).
+    ap.add_argument("--tag", default="_fair",
+                    help="campaign dir suffix: '' -> attacks/wk9 (pre-B1), "
+                         "'_fair' -> attacks/wk9_fair (B1-corrected).")
+    args = ap.parse_args()
+    campaign_dir = DEFAULT_SAMPLES_DIR / "attacks" / f"wk9{args.tag}"
+
     report: list[str] = []
     def log(s: str = "") -> None:
         print(s, flush=True); report.append(s)
 
-    log("# Week 10: full attack result matrix")
+    log(f"# Week 10: full attack result matrix (dir: {campaign_dir.name})")
     log("")
+    if args.tag == "":
+        log("> WARNING: reading the PRE-B1 pool (extreme-entropy selection). Clean")
+        log("> AUROC here is the artefactual ~1.000 the fair pool (--tag _fair)")
+        log("> replaced; do NOT cite these as headline numbers.")
+        log("")
     log("Label convention: positive class is the hallucination case.")
     log("Hide campaign questions are model-wrong (label 1); False-alarm are")
     log("model-right (label 0). Clean AUROC uses pre-attack entropy, attacked")
@@ -58,8 +72,8 @@ def main() -> int:
 
     for dataset in DATASETS:
         for detector in DETECTORS:
-            hide_f = CAMPAIGN_DIR / f"{dataset}_{detector}_hide.jsonl"
-            fa_f = CAMPAIGN_DIR / f"{dataset}_{detector}_false_alarm.jsonl"
+            hide_f = campaign_dir / f"{dataset}_{detector}_hide.jsonl"
+            fa_f = campaign_dir / f"{dataset}_{detector}_false_alarm.jsonl"
             if not hide_f.exists() and not fa_f.exists():
                 log(f"## {dataset} x {detector}: no campaign files yet, skipped")
                 log("")
@@ -79,6 +93,9 @@ def main() -> int:
             log(f"pool: {len(hide)} hide (wrong) + {len(fa)} false-alarm (right) = {len(labels)}")
             if clean is not None:
                 log(f"clean AUROC:    {clean:.3f}")
+                if clean >= 0.999:
+                    log("  ^ WARNING: clean AUROC ~1.0 signals selection-on-score "
+                        "circularity (a non-fair pool). Use the fair pool (--tag _fair).")
                 numbers += 1
             if attacked is not None:
                 log(f"attacked AUROC: {attacked:.3f}")

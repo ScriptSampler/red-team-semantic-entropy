@@ -9,7 +9,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from se.stats import (
-    bootstrap_ci, auroc_ci, rate_ci, success_rate_over_cutoffs,
+    bootstrap_ci, auroc_ci, auroc_diff_ci, rate_ci, success_rate_over_cutoffs,
     operating_point, flips_at_threshold,
 )
 
@@ -38,6 +38,27 @@ def test_auroc_ci_perfect_separation():
 def test_rate_ci_all_true():
     ci = rate_ci([True] * 10)
     assert ci.point == 1.0
+
+
+def test_auroc_diff_ci_detects_degradation():
+    # 6 questions: 3 positives (label 1), 3 negatives (label 0).
+    labels = [1, 1, 1, 0, 0, 0]
+    clean = [0.9, 0.8, 0.7, 0.3, 0.2, 0.1]      # perfect separation -> clean AUROC 1.0
+    attacked = [0.3, 0.2, 0.1, 0.9, 0.8, 0.7]   # fully reversed -> attacked AUROC 0.0
+    out = auroc_diff_ci(labels, clean, attacked, n_boot=500, seed=0)
+    assert abs(out["clean"].point - 1.0) < 1e-9
+    assert abs(out["attacked"].point - 0.0) < 1e-9
+    assert abs(out["degradation"].point - 1.0) < 1e-9
+    assert out["degradation"].lo <= out["degradation"].point <= out["degradation"].hi
+    assert out["degradation"].lo > 0.0            # degradation is clearly positive
+
+
+def test_auroc_diff_ci_no_change_brackets_zero():
+    labels = [1, 1, 0, 0, 1, 0]
+    clean = [0.8, 0.6, 0.4, 0.2, 0.7, 0.3]
+    out = auroc_diff_ci(labels, clean, list(clean), n_boot=500, seed=0)
+    assert abs(out["degradation"].point) < 1e-9   # attacked == clean -> zero degradation
+    assert out["degradation"].lo <= 0.0 <= out["degradation"].hi
 
 
 def test_cutoff_curve_is_monotone_non_increasing():

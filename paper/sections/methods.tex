@@ -95,7 +95,13 @@ targets that move from flagged to unflagged and false-alarm targets that move
 from unflagged to flagged---the operationally meaningful events. We additionally
 break out the subset of would-be successes voided by condition~(iii) because the
 model's answer flipped, since these are candidates for equivalence-gate leakage
-and bound the fidelity of the NLI constraint.
+and lower-bound the fidelity of the NLI constraint. Both detectors are evaluated
+with a fixed sampling seed, so per-question entropy is reproducible and the
+SE--SRE comparison is like-for-like rather than one deterministic detector against
+one stochastic one. The operating-point FPR sweep and the entropy-cutoff curve are
+exploratory sensitivity analyses, not independent hypothesis tests; the confirmatory
+comparisons are stated in advance and the AUROC degradation is reported with a
+paired bootstrap confidence interval that resamples questions jointly.
 
 \paragraph{Transfer and defense.}
 To test whether the vulnerability is paradigm-level rather than implementation-

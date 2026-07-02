@@ -16,6 +16,7 @@ prototype gate the plan uses in Weeks 6 and 7 (">50% of 10 examples").
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import time
 from dataclasses import dataclass, asdict
@@ -27,7 +28,12 @@ from ..config import GenConfig, ModelConfig
 from ..data import TriviaQAExample
 from ..nli import NLI
 from ..scoring import is_acceptable
-from . import objectives, optimizer
+from . import objectives, optimizer, proposer
+
+
+def _stable_seed(s: str) -> int:
+    """Deterministic 32-bit seed from a string (stable across runs, unlike hash())."""
+    return int.from_bytes(hashlib.sha1(s.encode("utf-8")).digest()[:4], "big")
 
 
 @dataclass
@@ -103,6 +109,9 @@ def run_attack_on_example(
     min_delta_nats: float = 0.25,
     verbose: bool = False,
 ) -> AttackOutcome:
+    # Reproducible candidate search: seed the proposer's instruction RNG per
+    # question (stable across runs and resumes) — external review B7 (finding 6).
+    proposer.seed_proposer(_stable_seed(ex.question_id))
     bundle = objectives.make_objective(
         attack, pair.lm, pair.nli,
         detector=detector, gen_cfg=gen_cfg, sre_kwargs=sre_kwargs,
