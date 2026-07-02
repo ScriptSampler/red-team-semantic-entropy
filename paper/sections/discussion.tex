@@ -1,6 +1,45 @@
-% Discussion. See paper/skeleton.md section 6.
-% Why it works: SE's equivalence clustering is itself NLI-bounded, so a
-% paraphrase that shifts the model's sampling distribution without crossing the
-% NLI boundary moves entropy without changing meaning. False-alarm exploits SE's
-% own over-fragmentation of a correct answer phrased many ways.
-\textit{Draft pending main results.}
+% Discussion. Draft prose --- mechanism + implications; keep claims scoped to what
+% the null-controlled results support. Fill exact numbers at revision.
+
+\paragraph{Why the attack works.}
+Semantic entropy measures uncertainty over \emph{meaning} by clustering sampled
+answers with an NLI equivalence relation. Its foundational assumption is that this
+meaning is a property of the question, invariant to how the question is phrased. Our
+attack targets exactly that assumption: a paraphrase $q'$ that an NLI model still
+calls equivalent to $q$ can nonetheless shift the target model's answer-sampling
+distribution, and hence the induced cluster structure and its entropy. The
+false-alarm direction exploits the detector's tendency to over-fragment a correct
+answer that can be expressed many ways; the hide direction exploits the mirror,
+collapsing a wrong answer's diverse phrasings toward apparent consensus. In both
+cases the manipulation lives in the gap between two notions of equivalence---the
+NLI gate's and the sampling distribution's---that the detector implicitly assumes
+coincide.
+
+\paragraph{A structural, not incidental, weakness.}
+The mechanism generalises beyond one implementation. Any detector that
+operationalises ``semantic equivalence'' through a learned model inherits that
+model's decision boundary as an attack surface: the very component that defines the
+score is the component an attacker steers. This is why we measure transfer between
+SE and a reformulation-based variant (SRE)---if a paraphrase optimised against one
+moves the other, the vulnerability is paradigm-level rather than a quirk of a single
+scorer. It is also why we are deliberately cautious in attribution: because our
+clusterer and our feasibility gate share an NLI model, part of any single-detector
+effect could be that model's self-inconsistency, and only an independent-clusterer
+check (Limitations) can fully separate the two.
+
+\paragraph{Why lead with false alarms.}
+Prior red-teaming of uncertainty estimators emphasises the hide direction (missed
+hallucinations). We foreground false alarms because, for a deployed abstention or
+flagging system, systematically inflating the uncertainty of \emph{correct} answers
+is its own failure mode: it erodes utility and user trust, and it is cheaper for an
+adversary who merely wants to make a model look unreliable. That this direction is
+attackable at all is, we argue, the more surprising and under-examined result.
+
+\paragraph{Defence.}
+Averaging the detector score over several reformulations of whatever input is
+received---the mechanism SRE already builds in---should dilute a single adversarial
+phrasing. Our defence experiment asks whether this confers measurable robustness or
+merely raises the attacker's query cost; either way, a detector whose own
+reformulation step is its best defence suggests that robustness to paraphrase must be
+designed in, not assumed. We frame all of the above against a null noise floor, so
+the claims are about effects that exceed what benign rephrasing achieves by chance.

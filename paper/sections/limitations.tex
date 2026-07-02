@@ -1,6 +1,64 @@
-% Limitations. See paper/skeleton.md section 7.
-% Single model family; English only; deberta-large NLI weaker than v2-xlarge
-% used by SE/SEP papers (replication 0.787 vs 0.828); reduced attack budget on
-% one 16GB GPU (state exact iterations/pool sizes); SRE reproduced with
-% NLI-union-find clustering rather than the full energy-based HSC.
-\textit{Draft pending final scope.}
+% Limitations. Draft prose --- owns the construct-validity issues surfaced by our
+% own adversarial audit; verify numbers/scope at revision.
+
+\paragraph{Selection on a noisy estimator.}
+Semantic entropy is a finite-sample quantity: for each candidate we cluster
+$N{=}10$ sampled answers, so the score is a Monte-Carlo estimate of the true
+entropy. Our optimiser selects the extremum of this estimate over $\sim$180
+candidate paraphrases, and the extremum of many noisy-but-unbiased estimates is
+biased in the attacker's favour even when, as here, sampling is seeded so each
+estimate is \emph{reproducible}. Reproducibility is not the same as noise-freeness.
+We therefore do not report raw attack effect sizes as the headline; we report attack
+success and AUROC degradation \emph{net of a noise floor} obtained by scoring $K$
+random, non-adversarial NLI-passing paraphrases of each target and taking the best
+move they achieve by chance. An effect that does not exceed this floor is not
+claimed. This control distinguishes genuine manipulation from selection-on-noise and
+is, to our knowledge, absent from prior paraphrase-attack evaluations of these
+detectors.
+
+\paragraph{The clusterer and the equivalence gate share one NLI model.}
+Semantic entropy is \emph{defined} by DeBERTa-large-MNLI bidirectional clustering,
+and our attack's feasibility constraint uses the same model. A measured degradation
+can therefore reflect, in part, the self-inconsistency of a single NLI model rather
+than a paradigm-level weakness: the optimiser is free to find phrasings that this
+model both clusters differently and still calls equivalent. Establishing that the
+vulnerability survives an \emph{independent} clustering oracle (a different NLI model,
+embedding similarity, or exact match) is important future work; we currently bound
+only the question-side gate leakage, not the answer-clustering side.
+
+\paragraph{Equivalence is certified automatically, not by humans.}
+Feasibility is a bidirectional-entailment judgement, and our answer-flip
+subcategory---successful attacks in which the model's correctness flips under
+$q'$---is a \emph{lower} bound on how often the gate admits a non-equivalent
+paraphrase, since a $q'$ can shift scope or presupposition while leaving the greedy
+answer unchanged. We do not yet report a human (or disclosed strong-LLM-judge)
+equivalence audit of a random sample of successful $q'$; such an audit, with an
+inter-annotator agreement estimate, is needed before the meaning-preserving claim is
+fully established.
+
+\paragraph{Status check versus what the detector sees.}
+The success criterion re-checks the model's answer with a single greedy decode, while
+the detector clusters temperature-$1.0$ samples. The two can disagree---a greedy
+answer may stay wrong while the sampled distribution shifts toward correct (or vice
+versa)---so we report both the greedy status and the fraction of the detector's own
+samples that are correct under $q'$, rather than relying on the greedy check alone.
+
+\paragraph{Model, precision, data, and budget.}
+Results are on a single model family (Llama-3.1-8B-Instruct) run in 4-bit
+quantisation on one 16\,GB GPU; quantisation may shift both the entropy estimates and
+the attack surface relative to a full-precision detector, and generalisation across
+model families and scales is untested. Our primary dataset is TriviaQA; broader
+datasets (e.g.\ SQuAD) are in progress. The attack budget (beam and iteration counts)
+is modest by necessity, and the reported cells use small per-stratum $n$, so the
+confidence intervals are wide and the numbers are best read as preliminary effect
+sizes rather than tight estimates.
+
+\paragraph{SRE fidelity and threat model.}
+We reproduce SRE with exact-match-then-NLI-union-find clustering rather than the
+paper's full energy-based hybrid, and our NLI backend (deberta-large-mnli;
+replication AUROC $0.787$ vs.\ the paper's $0.828$) is weaker than the
+deberta-v2-xlarge used in some prior work. Because SRE re-paraphrases its input
+internally, the attacker's chosen $q'$ is only one input to a detector that then
+generates its own reformulations; the SRE threat model (whether the attacker controls
+the reformulation set) needs to be stated and matched to the implementation, which we
+flag as a limitation of the SRE results specifically.
