@@ -50,16 +50,33 @@ Full gate record: `docs/critique_log.md` (entries 4–11). B7 findings + status:
   for clusterer AND gate (independent-clusterer check), human/LLM-judge equivalence audit
   (answer-flip is only a lower bound), greedy-vs-sampled status, SRE threat model.
 
-## The only experimental signal so far (EXPLORATORY)
+## The experimental signal — and the null control that reframes it
 
-From the partial fair-pool recompute (`results/fair_recompute_report.md`):
+Raw (pre-floor) exploratory result from the partial fair-pool recompute
+(`results/fair_recompute_report.md`): **SE / false-alarm, n=6:** B2-gated success
+0.500 [0.167, 0.833], feasible rate 1.000, mean intended entropy move +0.534 nats.
 
-> **SE / false-alarm, n=6:** B2-gated success **0.500 [0.167, 0.833]**, feasible rate
-> 1.000, mean intended entropy move **+0.534 nats**.
+**But the null control (`results/null_control_report.md`) is the honest picture, and
+it is sobering:**
 
-Read this as: meaning-preserving paraphrases push a *correct* answer's SE past threshold
-roughly half the time on the fair pool — **preliminary, wide CI, and not yet net of the
-noise floor.** Not a headline.
+> **SE / false-alarm, n=6, net of the benign-paraphrase noise floor:**
+> mean attack move **+0.534** vs benign-floor **+0.339** nats; net **+0.195 [+0.000,
+> +0.399]**; success **net of floor 33% [0%, 67%]**; original entropy std over 3 seeds
+> **0.191 nats**.
+
+**At n=6 the false-alarm effect does NOT clearly beat the noise floor.** Benign,
+non-adversarial paraphrases move SE almost as much as the optimised attack, and the
+N=10 estimator noise alone (std 0.191) is large relative to the 0.25-nat threshold.
+The net-move CI touches 0 and net success (33%) is well below the raw 50%.
+
+This is the payoff of the night's rigor: **without B1 (fair pool) + B2 (invariance) +
+the null floor, this would have been reported as a ~50% false-alarm attack; with them,
+the honest n=6 result is marginal and inconclusive.** Two live interpretations, to be
+resolved at scale: (a) the effect is real but small and needs much larger n to clear
+the floor; or (b) the more interesting reframing — **SE is inherently unstable to
+*any* paraphrase, benign or adversarial**, so the story is detector fragility to
+rephrasing rather than a targeted attack. n=6 cannot distinguish these; the definitive
+run must, and the contribution may pivot toward (b).
 
 ## Infrastructure: fine (my false alarm, corrected)
 
