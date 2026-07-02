@@ -12,9 +12,9 @@ We therefore do not report raw attack effect sizes as the headline; we report at
 success and AUROC degradation \emph{net of a noise floor} obtained by scoring $K$
 random, non-adversarial NLI-passing paraphrases of each target and taking the best
 move they achieve by chance. An effect that does not exceed this floor is not
-claimed. This control distinguishes genuine manipulation from selection-on-noise and
-is, to our knowledge, absent from prior paraphrase-attack evaluations of these
-detectors.
+claimed. This control distinguishes genuine manipulation from selection-on-noise; we are
+not aware of it in prior paraphrase-attack evaluations of these detectors (a claim
+we will verify against the literature at revision).
 
 \paragraph{The clusterer and the equivalence gate share one NLI model.}
 Semantic entropy is \emph{defined} by DeBERTa-large-MNLI bidirectional clustering,
@@ -55,9 +55,11 @@ sizes rather than tight estimates.
 
 \paragraph{SRE fidelity and threat model.}
 We reproduce SRE with exact-match-then-NLI-union-find clustering rather than the
-paper's full energy-based hybrid, and our NLI backend (deberta-large-mnli;
-replication AUROC $0.787$ vs.\ the paper's $0.828$) is weaker than the
-deberta-v2-xlarge used in some prior work. Because SRE re-paraphrases its input
+paper's full energy-based hybrid, and our NLI backend (deberta-large-mnli) is
+weaker than the deberta-v2-xlarge used in some prior work: our \emph{SE} replication
+reaches AUROC $0.787$ against the paper's SE figure of $0.828$, and the SRE target
+(paper $0.871$) depends further on the clustering backend we simplified. Because SRE
+re-paraphrases its input
 internally, the attacker's chosen $q'$ is only one input to a detector that then
 generates its own reformulations; the SRE threat model (whether the attacker controls
 the reformulation set) needs to be stated and matched to the implementation, which we

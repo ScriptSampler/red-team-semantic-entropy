@@ -164,6 +164,9 @@ def main() -> int:
             print(f"[load] model+NLI in {time.perf_counter()-t0:.0f}s", flush=True)
         want = "wrong" if attack == "hide" else "right"
         examples = campaign_pool("triviaqa", want, args.n, seed=args.seed)
+        if len(examples) < args.n:   # finding 12
+            print(f"[cell {key}] WARNING: undersized pool {len(examples)} < {args.n}",
+                  flush=True)
         sre_kwargs = (dict(n_reform=3, k_samples=8, temperature=0.8, seed=0)
                       if detector == "sre" else None)   # seed -> deterministic SRE (no winner's curse)
         print(f"[cell {key}] n={len(examples)} -> {out.name}", flush=True)

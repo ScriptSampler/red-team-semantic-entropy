@@ -91,6 +91,10 @@ def main() -> int:
         return _label_fresh(pool[: max(n * 6, 1000)], pair, gen, want, n)
 
     examples = campaign_pool(args.dataset, want, args.n, seed=args.seed, label_fresh=label_fresh)
+    if len(examples) < args.n:   # finding 12: fail loud on a silently undersized pool
+        print(f"WARNING: pool undersized: {len(examples)} < requested {args.n} for "
+              f"stratum '{want}' on {args.dataset} (rare in the scanned window). CIs will "
+              f"be wider and cross-cell n unequal — widen the scan or lower --n.", flush=True)
 
     print(f"campaign: attack={args.attack} detector={args.detector} "
           f"dataset={args.dataset} n={len(examples)} (pool seed={args.seed}, detector-blind) "

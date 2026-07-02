@@ -11,21 +11,25 @@ distribution, and hence the induced cluster structure and its entropy. The
 false-alarm direction exploits the detector's tendency to over-fragment a correct
 answer that can be expressed many ways; the hide direction exploits the mirror,
 collapsing a wrong answer's diverse phrasings toward apparent consensus. In both
-cases the manipulation lives in the gap between two notions of equivalence---the
-NLI gate's and the sampling distribution's---that the detector implicitly assumes
-coincide.
+cases we hypothesise the manipulation lives in the gap between two notions of
+equivalence---the NLI gate's and the sampling distribution's---that the detector
+implicitly assumes coincide; isolating that this gap is the cause (rather than a
+correlate) is exactly what the independent-clusterer check would establish.
 
-\paragraph{A structural, not incidental, weakness.}
-The mechanism generalises beyond one implementation. Any detector that
+\paragraph{Is the weakness structural?}
+We conjecture the mechanism generalises beyond one implementation: any detector that
 operationalises ``semantic equivalence'' through a learned model inherits that
-model's decision boundary as an attack surface: the very component that defines the
-score is the component an attacker steers. This is why we measure transfer between
-SE and a reformulation-based variant (SRE)---if a paraphrase optimised against one
-moves the other, the vulnerability is paradigm-level rather than a quirk of a single
-scorer. It is also why we are deliberately cautious in attribution: because our
-clusterer and our feasibility gate share an NLI model, part of any single-detector
-effect could be that model's self-inconsistency, and only an independent-clusterer
-check (Limitations) can fully separate the two.
+model's decision boundary as an attack surface---the very component that defines the
+score is the component an attacker steers. This \emph{a-priori} argument follows from
+the construction alone. Establishing it \emph{empirically} is harder than it first
+looks. Transfer between SE and a reformulation-based variant (SRE) is suggestive but
+confounded: in our setup both detectors share the same DeBERTa-large-MNLI backbone,
+so a paraphrase that moves both may be exploiting one model's shared blind spot
+rather than a paradigm-level property. The load-bearing test is therefore an
+\emph{independent} clustering oracle (Limitations): if the degradation survives a
+different equivalence model, the weakness is structural; if it does not, it is that
+NLI model's self-inconsistency. We report SE-to-SRE transfer as evidence
+\emph{consistent with} the structural hypothesis, not as proof of it.
 
 \paragraph{Why lead with false alarms.}
 Prior red-teaming of uncertainty estimators emphasises the hide direction (missed

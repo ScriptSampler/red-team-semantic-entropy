@@ -53,6 +53,12 @@ def summarize_cell(outcomes, *, cutoffs=(0.0, 0.1, 0.25, 0.5, 1.0)) -> dict:
     n_entropy_only = sum(entropy_only)
     attrition = n_entropy_only - sum(gated)   # >= 0 by construction
 
+    # B7 finding 16: the detector's SAMPLED fraction-correct under Q' (mean over the
+    # re-checked outcomes), reported beside the greedy status. -1 = not computed.
+    fracs = [getattr(o, "frac_correct_under_q_prime", -1.0) for o in ef]
+    fracs = [f for f in fracs if f >= 0.0]
+    mean_frac_correct_qp = (sum(fracs) / len(fracs)) if fracs else float("nan")
+
     moves = [_intended_move(o) for o in outcomes]
     feas_moves = [m for m, f in zip(moves, feasible) if f]
 
@@ -69,6 +75,7 @@ def summarize_cell(outcomes, *, cutoffs=(0.0, 0.1, 0.25, 0.5, 1.0)) -> dict:
         "status_held_rate_among_ef": (held / n_ef) if n_ef else float("nan"),
         "answer_flip_count": int(answer_flip),
         "answer_flip_rate_among_ef": (answer_flip / n_ef) if n_ef else float("nan"),
+        "mean_frac_correct_qp": mean_frac_correct_qp,   # sampled status (finding 16)
         "mean_move_feasible":
             (sum(feas_moves) / len(feas_moves)) if feas_moves else float("nan"),
         "success_over_cutoffs": success_rate_over_cutoffs(moves, feasible, cutoffs),
@@ -153,6 +160,11 @@ def render_cell_md(summary: dict) -> list[str]:
         f"- attrition from B2: {s['attrition_count']} of {s['n_entropy_only']} "
         f"would-be wins ({s['attrition_rate_of_would_be']:.0%})",
         f"- of those, answer-flip subcategory (meaning-shift suspect): {flip_str}",
+        (f"- sampled fraction-correct under Q' (finding 16): "
+         f"{s['mean_frac_correct_qp']:.0%}"
+         if s.get("mean_frac_correct_qp") == s.get("mean_frac_correct_qp")  # not nan
+         and s.get("mean_frac_correct_qp", -1) >= 0 else
+         "- sampled fraction-correct under Q' (finding 16): n/a (not yet computed)"),
         f"- feasible paraphrase rate: {_fmt_ci(s['feasible_rate'])}",
         f"- mean intended entropy move (feasible): {s['mean_move_feasible']:.3f} nats",
     ]

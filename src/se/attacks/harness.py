@@ -28,6 +28,7 @@ from ..config import GenConfig, ModelConfig
 from ..data import TriviaQAExample
 from ..nli import NLI
 from ..scoring import is_acceptable
+from ..se_pipeline import semantic_entropy
 from . import objectives, optimizer, proposer
 
 
@@ -72,8 +73,12 @@ class AttackOutcome:
     # B2 (external review §3): hold hallucination status fixed under Q'.
     entropy_and_feasible: bool = False   # the OLD criterion (entropy moved + feasible)
     answer_under_q_prime: str = ""        # greedy answer under Q' (audit; re-oracle later)
-    correct_under_q_prime: bool = False   # model correct under Q' (same rule as the label)
-    status_held: bool = True              # hallucination status unchanged under Q'
+    correct_under_q_prime: bool = False   # model GREEDY correct under Q' (same rule as label)
+    status_held: bool = True              # hallucination status unchanged under Q' (greedy)
+    # B7 finding 16: greedy status can disagree with the T=1.0 sampled set the detector
+    # actually clusters. Fraction of the N detector samples correct under Q' (-1 = not
+    # computed, i.e. the re-check did not run). Reported alongside the greedy status.
+    frac_correct_under_q_prime: float = -1.0
 
 
 def _entropy_moved(attack: str, entropy_before: float, entropy_after: float,
@@ -134,13 +139,22 @@ def run_attack_on_example(
     # entropy moved AND the paraphrase is feasible. The re-check uses the SAME rule
     # as the original greedy label (greedy generate_one) at the pinned generation
     # length, so it is on the same footing as the label the pool was stratified on.
-    answer_qp, correct_qp, status_held = "", False, True
+    answer_qp, correct_qp, status_held, frac_correct_qp = "", False, True, -1.0
     if entropy_and_feasible:
-        greedy_cfg = GenConfig(max_new_tokens=(gen_cfg or GenConfig()).max_new_tokens,
-                               n_samples=1)
-        answer_qp = M.generate_one(pair.lm, result.best_query, greedy_cfg)
-        correct_qp = is_acceptable(answer_qp, ex)
+        # One seeded SE evaluation under Q' yields BOTH the greedy status (same rule
+        # and pinned decode as the pool label) AND the fraction of the N detector
+        # samples that are correct (finding 16: the greedy status can disagree with
+        # the T=1.0 sampled set the detector actually clusters).
+        base = gen_cfg or GenConfig()
+        probe = GenConfig(max_new_tokens=base.max_new_tokens, temperature=base.temperature,
+                          top_p=base.top_p, n_samples=base.n_samples, seed=base.seed)
+        res = semantic_entropy(result.best_query, pair.lm, pair.nli, probe,
+                               example=ex, compute_greedy=True)
+        answer_qp = res.greedy or ""
+        correct_qp = bool(res.greedy_correct)
         status_held = _status_held(attack, correct_qp)
+        if res.samples_correct:
+            frac_correct_qp = sum(res.samples_correct) / len(res.samples_correct)
 
     success = bool(entropy_and_feasible and status_held)
     return AttackOutcome(
@@ -161,6 +175,7 @@ def run_attack_on_example(
         answer_under_q_prime=answer_qp,
         correct_under_q_prime=correct_qp,
         status_held=status_held,
+        frac_correct_under_q_prime=frac_correct_qp,
     )
 
 
