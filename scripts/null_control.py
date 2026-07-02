@@ -48,6 +48,24 @@ def _move(attack: str, before: float, after: float) -> float:
     return (before - after) if attack == "hide" else (after - before)
 
 
+def summarize_null(atk_moves, null_moves, seed_stds) -> dict:
+    """Pure aggregation (hermetic, testable): compare each target's attack move to
+    its benign noise-floor best, and summarise net effect + success net of floor."""
+    nets = [a - nb for a, nb in zip(atk_moves, null_moves)]
+    net_success = [n > 0 for n in nets]
+    nci = bootstrap_ci(nets, np.mean) if nets else None
+    sci = rate_ci(net_success) if net_success else None
+    valid_stds = [s for s in seed_stds if s == s]  # drop nan
+    return {
+        "n": len(atk_moves),
+        "mean_attack": float(np.mean(atk_moves)) if atk_moves else float("nan"),
+        "mean_null": float(np.mean(null_moves)) if null_moves else float("nan"),
+        "net_ci": nci,
+        "net_success_ci": sci,
+        "mean_seed_std": float(np.mean(valid_stds)) if valid_stds else float("nan"),
+    }
+
+
 def _benign_moves(question: str, before: float, attack: str, pair, gen,
                   K: int, seed: int) -> list[float]:
     """Intended-direction moves for K benign (unoptimized) feasible paraphrases."""
@@ -103,31 +121,29 @@ def main() -> int:
         if args.max_targets:
             outcomes = outcomes[: args.max_targets]
 
-        atk_moves, null_moves, nets, seed_stds = [], [], [], []
+        atk_moves, null_moves, seed_stds = [], [], []
         for o in outcomes:
             bm = _benign_moves(o.question, o.entropy_before, o.attack, pair, gen,
                                args.K, seed=_stable_seed("null:" + o.question_id))
             null_best = max(bm) if bm else 0.0
             atk = _move(o.attack, o.entropy_before, o.entropy_after)
             atk_moves.append(atk); null_moves.append(null_best)
-            nets.append(atk - null_best)
             seed_stds.append(_orig_seed_std(o.question, pair, gen, args.n_seeds))
             print(f"  {o.question_id}: attack {atk:+.3f} vs null_best {null_best:+.3f} "
                   f"-> net {atk-null_best:+.3f}", flush=True)
 
-        net_success = [n > 0 for n in nets]
-        L.append(f"## {detector.upper()} / {attack}  (n={len(outcomes)})")
+        agg = summarize_null(atk_moves, null_moves, seed_stds)
+        nci, sci = agg["net_ci"], agg["net_success_ci"]
+        L.append(f"## {detector.upper()} / {attack}  (n={agg['n']})")
         L.append("")
-        L.append(f"- mean attack move:      {np.mean(atk_moves):+.3f} nats")
-        L.append(f"- mean null-best move:   {np.mean(null_moves):+.3f} nats  "
+        L.append(f"- mean attack move:      {agg['mean_attack']:+.3f} nats")
+        L.append(f"- mean null-best move:   {agg['mean_null']:+.3f} nats  "
                  f"(benign paraphrase floor)")
-        nci = bootstrap_ci(nets, np.mean)
         L.append(f"- mean net (attack-floor): {nci.point:+.3f} [{nci.lo:+.3f}, {nci.hi:+.3f}] nats")
-        sci = rate_ci(net_success)
         L.append(f"- success NET of floor:  {sci.point:.0%} [{sci.lo:.0%}, {sci.hi:.0%}] "
                  f"(attack beats the best of {args.K} benign paraphrases)")
         L.append(f"- original entropy noise (std over {args.n_seeds} seeds): "
-                 f"mean {np.nanmean(seed_stds):.3f} nats")
+                 f"mean {agg['mean_seed_std']:.3f} nats")
         L.append("")
         L.append("Interpretation: if 'success NET of floor' and the net-move CI stay well "
                  "above 0, the attack is real signal, not selection-on-noise. If they "
