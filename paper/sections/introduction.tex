@@ -41,11 +41,13 @@ over many candidates can otherwise mistake sampling variance for a successful at
 (1) A bidirectional, NLI-constrained paraphrase attack on sampling-based hallucination
 detectors, foregrounding the induced-false-positive direction. (2) A circularity-free,
 null-controlled evaluation protocol---score-independent target selection, an
-answer-invariance success criterion, and a benign-paraphrase noise floor---that we
-argue is necessary to make claims about these attacks at all. (3) A measurement of
+answer-invariance success criterion, and a benign-paraphrase noise floor---whose
+three controls we show are each load-bearing: without them the clean detector looks
+perfect, sampling noise masquerades as attack success, and meaning-changing
+paraphrases are miscounted as wins. (3) A measurement of
 transferability across the detector family (SE$\leftrightarrow$SRE, and toward a
 hidden-state probe), with an explicit account of the shared-NLI confound that bounds
-what transfer can establish. (4) A first reformulation-averaging defense and an
+what transfer can establish. (4) A reformulation-averaging defense and an
 analysis of what it does and does not close. Our headline effect size on the fair,
 null-controlled pool is reported in Section~\ref{sec:experiments}. [Quantitative result
 placeholder --- pending the null-controlled recompute; the current pipeline yields a

@@ -3,10 +3,11 @@
 
 Sampling-based hallucination detectors treat semantic uncertainty as a property of the
 question, invariant to surface form. We tested that assumption adversarially, on the
-detector itself, and found it does not hold: a meaning-preserving paraphrase---verified
-equivalent by bidirectional NLI, leaving the model's correctness unchanged---can move a
-detector's score in either direction, including the under-explored direction that turns
-a correct answer into a false alarm. We were careful to make this claim only where the
+detector itself. Our evidence indicates it can be made to fail under a
+meaning-preserving paraphrase---verified equivalent by bidirectional NLI, leaving the
+model's correctness unchanged---which, reported net of a benign-paraphrase noise floor,
+moves a detector's score in either direction, including the under-explored direction
+that turns a correct answer into a false alarm. We were careful to make this claim only where the
 evidence supports it: targets are chosen without reference to the detector's own scores,
 success requires the hallucination status to survive the paraphrase, and effect sizes
 are reported net of a benign-paraphrase noise floor rather than as the raw output of an
