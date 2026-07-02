@@ -157,7 +157,10 @@ is weak evidence the paraphrase shifted meaning → feeds B5/NLI-fidelity); (2) 
 on `entropy_and_feasible` before aggregating `status_held` (default True dilutes the
 rate with never-re-checked attacks).
 
-## 7. 2026-07-02 — INFRA finding (does NOT gate B1/B2 code; GATES the headline).
+## 7. 2026-07-02 — INFRA finding. **[RETRACTED — FALSE ALARM. See entry 8.]**
+
+**This entry is WRONG.** The cache was never lost and the GPU was never down; I
+queried the wrong WSL distro. Retained for the record; superseded by entry 8.
 
 While attempting to re-run fair_pool_check for a fresh behavioral shared-pool print,
 found the entire Phase-1 cache **GONE**: `~/.cache/se-research/` does not exist on
@@ -174,5 +177,29 @@ correct but zero post-attack numbers exist yet — do not conflate "B1/B2 approv
 with "the degradation result is in." Morning priority: (1) diagnose the loss cause
 (WSL home reset? disk cleanup?) before spending GPU-hours; (2) decide restore-vs-
 regenerate; (3) reinstall torch-ROCm (user's infra decision, not done autonomously).
+
+---
+
+## 8. 2026-07-02 — RETRACTION of entry 7: cache + GPU are FINE (my error).
+
+Entry 7 was a **false alarm caused by testing the wrong WSL distro.** There are two
+distros: the DEFAULT `Ubuntu` (26.04, broken ROCm) and the research `Ubuntu-24.04`.
+Every "cache gone / no GPU" check I ran used `wsl -e bash` (→ default 26.04) or the
+Windows cpu-only `.venv`. In `Ubuntu-24.04` (which my own memory file names as the
+research env), verified 2026-07-02:
+- `rocminfo` sees the RX 9070 XT (**gfx1201**); `.venv-wsl` → **torch 2.9.1+rocm6.4,
+  torch.cuda.is_available() = True**. GPU fully working.
+- `~/.cache/se-research/samples/wk4_full_2000q/{samples,entropy,relabeled}.jsonl` =
+  **2000 lines each**; manifest confirms the 2000q Llama-3.1-8B run; all four wk9
+  attack JSONLs present (n=15/cell, the OLD pre-B1/B2 campaigns).
+
+Nothing was lost. Process failure on my part: I did not heed the memory that says
+research runs in `Ubuntu-24.04`, and I escalated a phantom crisis. Corrective
+actions: deleted the wrong `project_cache_loss` memory, reinforced the distro gotcha
+in `hardware_gpu` memory, corrected OVERNIGHT_2026-07-02.md, and preflight.py now
+passes in the correct distro. **Consequence for the work: the GPU recompute (task
+19) is UNBLOCKED.** The corrected B1/B2/B4 pipeline can now run the real fair-pool
+attack matrix. (Silver lining: the preflight.py cache-check from the false alarm is
+a genuine, kept improvement.)
 
 ---

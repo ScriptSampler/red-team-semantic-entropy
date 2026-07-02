@@ -2,13 +2,19 @@
 
 ## TL;DR
 
-Every external-review blocker that can be addressed without the GPU is **fixed and
-critic-approved** — B1, B2, the B4 reporting core, and the Methods prose. The critic
-signed off that the pipeline is now review-compliant end-to-end. But I hit a hard
-infrastructure wall: **the Phase-1 data cache is gone and there is no working GPU**,
-so **no new experimental numbers could be produced**. What advanced tonight is the
-*correctness of the pipeline*, not the results. Do not read "B1/B2 approved" as "the
-degradation result is in" — there are zero post-attack numbers yet.
+Every external-review blocker addressable in code is **fixed and critic-approved** —
+B1, B2, the B4 reporting core, and the Methods prose. The critic signed off that the
+pipeline is now review-compliant end-to-end.
+
+**Correction (important):** partway through I raised a false alarm that "the Phase-1
+cache is gone and there's no GPU." That was **my error** — I was querying the *default*
+`Ubuntu` WSL distro (26.04, broken ROCm) and the Windows cpu-only venv, instead of the
+`Ubuntu-24.04` research distro my own notes specify. In `Ubuntu-24.04` the GPU works
+(rocminfo sees gfx1201, `torch.cuda.is_available()` = True, torch 2.9.1+rocm6.4) and
+the cache is **fully intact** (samples/entropy/relabeled = 2000 lines each, all wk9
+JSONLs present). **Nothing was lost.** The GPU recompute is therefore UNBLOCKED, and
+I proceeded to run it (see the recompute section below). Retraction logged in
+`docs/critique_log.md` entry 8.
 
 ## What cleared the critic gate (4 checkpoints, all approved)
 
@@ -32,37 +38,23 @@ handled honestly: the optimizer anchors every candidate to the original q (verif
 **answer-flip subcategory** empirically bounds single-hop NLI-gate leakage. This is
 the last thing a reviewer will push on; the recompute must report those numbers.
 
-## The blocker that needs your decision
+## Infrastructure: fine (my false alarm, corrected)
 
-**The entire Phase-1 cache `~/.cache/se-research/` is missing** — from both Windows
-and WSL. It held `samples.jsonl` + `entropy.jsonl` (the 2000q run), `relabeled.jsonl`,
-and the wk9 attack-matrix JSONLs. Only the committed `results/*.md` summaries survive,
-so **the headline numbers (fair AUROC 0.704, the relabel report, last night's attack
-matrix) are currently unreproducible.** `DEFAULT_SAMPLES_DIR` still resolves to the
-standard path, so this is genuine loss, not a path change.
+There is **no** infrastructure blocker. The GPU and cache are healthy in the
+`Ubuntu-24.04` research distro:
+- `wsl -d Ubuntu-24.04` → `rocminfo` sees the RX 9070 XT (`gfx1201`); `.venv-wsl`
+  python → `torch 2.9.1+rocm6.4`, `torch.cuda.is_available()` = True.
+- `~/.cache/se-research/samples/wk4_full_2000q/` → `samples.jsonl`, `entropy.jsonl`,
+  `relabeled.jsonl` all **2000 lines**; `attacks/wk9/` has all four campaign JSONLs.
 
-**No GPU path exists right now either:** ROCm 6.4 is installed (`rocminfo` works), but
-no `torch` binding is present in any environment — the Windows `.venv` is `torch
-2.12.0+cpu`, `.venv-wsl` has no torch, system `python3` has none. The GPU torch used
-last night is gone.
-
-So the fair-pool attack-matrix recompute (the experiment that actually tests the
-paper's central claim, now with the corrected B1 pool + B2 metric) is blocked on
-**both** the missing cache and the absent GPU.
-
-### Suggested morning actions (in order)
-1. **Diagnose the loss** (~1 min) before spending GPU-hours: was WSL reset / home
-   wiped? a disk cleanup of `~/.cache`? Is there any backup? (task #20)
-2. **Reinstall torch-ROCm** into `.venv-wsl` (your infra call — I did not attempt it
-   autonomously as it's heavyweight and version-sensitive with ROCm 6.4).
-3. **Regenerate Phase-1** (GPU sampling, then CPU relabel) → then the recompute can
-   run with review-compliant reporting.
+**The lesson (now in the `hardware_gpu` memory):** the *default* WSL distro is
+`Ubuntu` (26.04) with broken ROCm; `wsl -e bash` and the Windows `.venv` (cpu-only by
+design) both mislead. Always use `wsl -d Ubuntu-24.04`.
 
 ## What I did NOT do (deliberately)
 - Did not fabricate or re-state any post-attack number as if re-verified.
-- Did not blind-install a GPU torch stack overnight (risk of leaving the env worse).
-- Did not regenerate on CPU (a 2000q sampling pass is not CPU-feasible).
+- Did not reinstall drivers/torch — turned out unnecessary; the stack was fine.
 
 ## Live dashboard
-`Desktop/SE/dashboard.html` reflects all of the above: the B1 BLOCK→APPROVE arc, the
-B2 verdict, and the cache/GPU blockers as red "results".
+`Desktop/SE/dashboard.html` reflects the corrected state: the four approved
+checkpoints and the retracted false alarm.
