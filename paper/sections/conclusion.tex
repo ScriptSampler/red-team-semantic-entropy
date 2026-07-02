@@ -1,5 +1,26 @@
-% Conclusion. See paper/skeleton.md section 8.
-% Sampling-based hallucination detection is not surface-form invariant; the
-% invariance claim is breakable in both directions and across the detector
-% family; a cheap reformulation defense helps but does not close the gap.
-\textit{Draft pending main results.}
+% Conclusion. Draft prose --- framing stable; keep claims scoped to null-controlled
+% evidence. Fill the final effect size at revision.
+
+Sampling-based hallucination detectors treat semantic uncertainty as a property of the
+question, invariant to surface form. We tested that assumption adversarially, on the
+detector itself, and found it does not hold: a meaning-preserving paraphrase---verified
+equivalent by bidirectional NLI, leaving the model's correctness unchanged---can move a
+detector's score in either direction, including the under-explored direction that turns
+a correct answer into a false alarm. We were careful to make this claim only where the
+evidence supports it: targets are chosen without reference to the detector's own scores,
+success requires the hallucination status to survive the paraphrase, and effect sizes
+are reported net of a benign-paraphrase noise floor rather than as the raw output of an
+optimiser that maximises a noisy estimate.
+
+Two boundaries remain, and we state them as the work to do rather than as caveats to
+wave away. First, our clusterer and our equivalence gate are the same NLI model, so
+whether the vulnerability is a property of the \emph{paradigm} or of one model's
+self-inconsistency is settled only by an independent clustering oracle---an experiment
+we motivate but do not yet run. Second, the meaning-preserving guarantee rests on an
+automatic gate; a human equivalence audit is needed before it is fully established. A
+simple reformulation-averaging defense raises the attacker's cost but does not close
+the gap, suggesting that robustness to paraphrase must be designed into these detectors
+rather than assumed. Taken together, the results argue that ``semantic'' uncertainty
+inherits the blind spots of whatever model defines its notion of meaning, and that
+detectors built on a learned equivalence relation should be evaluated as the
+adversarial targets they now are.

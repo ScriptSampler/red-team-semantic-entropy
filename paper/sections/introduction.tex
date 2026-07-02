@@ -1,7 +1,52 @@
-% Introduction. Draft after main numbers land; see paper/skeleton.md section 2.
-% Hook: deployed hallucination detectors are trusted but not adversarially
-% evaluated AS detectors. The surprising risk is induced false positives, not
-% evasion. Contributions: (i) bidirectional attack on sampling-based detectors
-% under a hard NLI-equivalence constraint; (ii) the false-alarm direction;
-% (iii) SE<->SRE (and SE->SEP) transferability; (iv) a first defense.
-\textit{Draft pending main results.}
+% Introduction. Draft prose --- motivation + contributions are stable; the single
+% quantitative finding is a placeholder until the null-controlled headline lands.
+
+Large language models are increasingly paired with \emph{hallucination detectors}
+that estimate whether a generated answer can be trusted. A prominent family is
+sampling-based: semantic entropy (SE)~\citep{kuhn2023semantic, farquhar2024detecting}
+samples several answers, clusters them by meaning with a natural-language-inference
+(NLI) equivalence check, and reports the entropy of the resulting cluster
+distribution; semantic reformulation entropy (SRE)~\citep{tong2025sre} extends this
+with input reformulations. These detectors are deployed on an implicit promise: that
+the uncertainty they report is a property of the \emph{question and answer}, invariant
+to how the question happens to be phrased.
+
+That invariance has been asserted but not adversarially tested \emph{on the detector
+itself}. Prior red-teaming of LLMs targets the model's answer---eliciting
+hallucinations~\citep{liang2025seca, liang2026realista}---or evades text-origin
+classifiers by paraphrasing~\citep{cheng2025advparaphrasing, fang2025copa}; work on
+uncertainty manipulation has used fine-tuning or backdoors rather than a
+meaning-preserving input change~\citep{uncertaintyfragile2024}, and the closest
+detector-side attack degrades a hidden-state probe model-side~\citep{corvus2026}. The
+question we ask is different: can an attacker who only \emph{rephrases the question},
+under a hard semantic-equivalence constraint, move a sampling-based detector's score
+in a chosen direction while the model's answer---and its correctness---stays put?
+
+We show the invariance promise is breakable, and we are deliberate about what
+``breakable'' requires evidence for. We attack in \emph{both} directions: the
+\emph{hide} attack suppresses the score of a wrong answer so a hallucination is
+missed, and the under-explored \emph{false-alarm} attack inflates the score of a
+\emph{correct} answer so it is flagged---arguably the more damaging failure for a
+deployed abstention system, and cheaper for an adversary who merely wants to make a
+model look unreliable. Crucially, we hold three things fixed that prior evaluations do
+not jointly control: (i) targets are selected \emph{score-independently} so the clean
+detector is not evaluated on a pool its own scores defined (a circularity that inflates
+clean AUROC to $1.0$); (ii) an attack counts only if the model's \emph{hallucination
+status} is unchanged under the paraphrase, checked with the same oracle that labelled
+the data; and (iii) effect sizes are reported \emph{net of a noise floor}, since the
+detector score is a finite-sample estimate and an optimiser that selects the extremum
+over many candidates can otherwise mistake sampling variance for a successful attack.
+
+\paragraph{Contributions.}
+(1) A bidirectional, NLI-constrained paraphrase attack on sampling-based hallucination
+detectors, foregrounding the induced-false-positive direction. (2) A circularity-free,
+null-controlled evaluation protocol---score-independent target selection, an
+answer-invariance success criterion, and a benign-paraphrase noise floor---that we
+argue is necessary to make claims about these attacks at all. (3) A measurement of
+transferability across the detector family (SE$\leftrightarrow$SRE, and toward a
+hidden-state probe), with an explicit account of the shared-NLI confound that bounds
+what transfer can establish. (4) A first reformulation-averaging defense and an
+analysis of what it does and does not close. Our headline effect size on the fair,
+null-controlled pool is reported in Section~\ref{sec:experiments}. [Quantitative result
+placeholder --- pending the null-controlled recompute; the current pipeline yields a
+preliminary false-alarm signal that we do not yet report as confirmatory.]
