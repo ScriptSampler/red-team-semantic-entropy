@@ -281,3 +281,26 @@ confirmatory SE headline remains BLOCKED pending the null control (finding 13,
 scripts/null_control.py) net-of-floor result on the fair pool.
 
 ---
+
+## 12. 2026-07-02 — Introduction + Conclusion: APPROVE-WITH-NITS; + null-control override.
+
+Critic verified the positioning against SECA/REALISTA/CORVUS/CoPA/Uncertainty-is-Fragile
+is fair (traces to docs/positioning.md, web-grounded 2026-06-25) and independent of the
+%TODO author metadata — understated, not misattributed. Placeholder discipline holds.
+Landed fixes (commit c66cbca): contribution (2) "necessary ... at all" -> "each control
+is load-bearing"; dropped "first" from contribution (4); Conclusion past tense softened
++ conditioned on the null floor; bib uncertaintyfragile2024 author={others} -> first
+author + VERIFY flag (camera-ready). Noise-floor NOVELTY claim stays a hedged Limitations
+"we are not aware of" to verify pre-submission (positioning.md verified the attack GAP,
+not that no prior eval used a floor — different claims).
+
+**Override (logged, per charter):** the critic said "don't kill the SE recompute; let it
+finish." I am overriding at the endgame: at ~40 min/attack it reached only 6/10 false-
+alarm in ~4h and cannot complete a cell by the hard 07:00 deadline. Running the null
+control (the headline DoD, and untested on GPU) on the 6 completed fa targets is a
+strictly higher-value GPU use — it yields the net-of-floor result the headline needs AND
+validates null_control.py end-to-end before the definitive run. The 6 attack outcomes are
+saved (not lost). Reasoning: the "don't kill" instruction assumed the run could achieve
+its purpose; the deadline makes that false, so the merits favor the blocker's experiment.
+
+---
