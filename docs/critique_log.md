@@ -258,3 +258,26 @@ one row per target); SRE seed threads into BOTH inner GenConfigs (reformulation 
 Minor nits deferred: finding 12 (SQuAD floor) before the SQuAD run.
 
 ---
+
+## 11. 2026-07-02 — Limitations + Discussion prose. Critic verdict: APPROVE-WITH-NITS.
+
+Critic verified every cited fact against the code (N=10, ~180 candidates, deberta-
+large-mnli shared as clusterer AND gate per config.py:21, 0.787/0.828 SE-replication
+gap, Llama-3.1-8B 4-bit, SRE exact-match+NLI-union-find) and confirmed Limitations
+discharges findings 13/14/15/16/9 at the prose level with no fabricated results. Two
+REQUIRED fixes landed (commit d039c0c): (1) ¶6 mislabelled "0.787 vs 0.828" inside the
+SRE paragraph — that is the SE replication gap; the paper's SRE figure is 0.871 —
+relabelled; (2) Discussion "structural, not incidental" front-loaded unearned
+certainty — SE->SRE transfer is CONFOUNDED by the shared DeBERTa backbone, so it
+cannot establish paradigm-level over single-NLI self-inconsistency; retitled to "Is
+the weakness structural?", led with the a-priori argument, named the independent-
+clusterer check as the settling test. Plus hedges ("we hypothesise ... the gap"; "we
+are not aware of" for the novelty claim). Also landed the code for finding 16
+(frac_correct_under_q_prime = detector's sampled fraction-correct under Q', reported
+beside the greedy status) and finding 12 (loud warning on an undersized stratum pool).
+
+Standing gate status: external-review B1–B6 cleared; B7 code remediation approved; the
+confirmatory SE headline remains BLOCKED pending the null control (finding 13,
+scripts/null_control.py) net-of-floor result on the fair pool.
+
+---
