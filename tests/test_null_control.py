@@ -1,7 +1,8 @@
-"""Tests for the null/noise-floor aggregation (finding 13 tooling). CPU-only.
+"""Tests for the three-band null-control aggregation (finding 13 / DoD). CPU-only.
 
-Validates the pure arithmetic that turns per-target (attack move, benign-floor move)
-pairs into the net-of-floor headline numbers, without the GPU scoring path.
+Validates the pure arithmetic that places the attack move as a percentile within the
+full benign-move distribution and orders the seed / benign / attack bands — without
+the GPU scoring path.
 """
 from __future__ import annotations
 
@@ -12,7 +13,7 @@ _root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_root / "src"))
 sys.path.insert(0, str(_root / "scripts"))
 
-from null_control import summarize_null, _move
+from null_control import summarize_bands, _percentile_below, _move
 
 
 def test_move_direction():
@@ -21,29 +22,50 @@ def test_move_direction():
     assert _move("hide", 1.0, 2.0) == -1.0         # wrong direction -> negative
 
 
-def test_attack_beats_floor():
-    atk = [1.0, 1.2, 0.9]
-    null = [0.2, 0.3, 0.1]
-    s = summarize_null(atk, null, [0.1, 0.1, 0.1])
-    assert s["n"] == 3
-    assert abs(s["mean_attack"] - (3.1 / 3)) < 1e-9
-    assert abs(s["mean_null"] - 0.2) < 1e-9
-    assert s["net_success_ci"].point == 1.0        # all nets > 0
-    assert s["net_ci"].point > 0                    # net effect clearly positive
+def test_percentile_below():
+    assert _percentile_below(0.5, [0.1, 0.2, 0.3]) == 1.0
+    assert _percentile_below(0.25, [0.1, 0.2, 0.3, 0.4]) == 0.5
+    assert _percentile_below(0.0, [0.1, 0.2]) == 0.0
 
 
-def test_attack_within_floor_is_not_success():
-    # attack move does NOT exceed the benign floor -> not success net of floor
-    atk = [0.3, 0.2]
-    null = [0.5, 0.4]
-    s = summarize_null(atk, null, [float("nan"), 0.2])
-    assert s["net_success_ci"].point == 0.0
-    assert s["net_ci"].point < 0
-    assert abs(s["mean_seed_std"] - 0.2) < 1e-9    # nan dropped from the noise band
+def test_bands_attack_clearly_beats_benign():
+    attack = [1.0, 1.2]
+    benign = [[0.1, 0.2, 0.3], [0.2, 0.3, 0.4]]
+    seed = [[0.0, 0.05], [0.0, 0.03]]
+    s = summarize_bands(attack, benign, seed)
+    assert s["n"] == 2
+    assert s["mean_attack_move"] > s["mean_benign_move"] > s["mean_seed_move"]
+    assert s["beats_benign_p90_ci"].point == 1.0
+    assert s["beats_benign_max_ci"].point == 1.0
+    assert abs(s["mean_attack_percentile"] - 1.0) < 1e-9
+    assert s["net_vs_benign_mean_ci"].point > 0
 
 
-def test_mixed_partial_success():
-    atk = [1.0, 0.1, 0.8, 0.05]
-    null = [0.2, 0.3, 0.2, 0.4]        # targets 0,2 beat floor; 1,3 do not
-    s = summarize_null(atk, null, [0.1] * 4)
-    assert abs(s["net_success_ci"].point - 0.5) < 1e-9
+def test_bands_attack_within_benign_distribution():
+    # attack sits in the middle of the benign spread -> not in the tail, net ~0
+    attack = [0.25, 0.25]
+    benign = [[0.0, 0.1, 0.2, 0.3, 0.4, 0.5]] * 2
+    seed = [[0.0, 0.1]] * 2
+    s = summarize_bands(attack, benign, seed)
+    assert s["beats_benign_p90_ci"].point == 0.0
+    assert 0.3 < s["mean_attack_percentile"] < 0.7
+
+
+def test_p90_and_max_success_can_differ():
+    # attack beats the benign 90th percentile (~0.45) but NOT the benign max (0.5):
+    # the strict max-vs-max metric is stricter and budget-biased toward the attack.
+    attack = [0.46]
+    benign = [[0.0, 0.1, 0.2, 0.3, 0.4, 0.5]]
+    seed = [[0.0]]
+    s = summarize_bands(attack, benign, seed)
+    assert s["beats_benign_max_ci"].point == 0.0
+    assert s["beats_benign_p90_ci"].point == 1.0
+
+
+def test_benign_over_seed_flags_reframe_b():
+    # benign paraphrasing moves the score clearly more than reseeding does
+    attack = [1.0]
+    benign = [[0.3, 0.4, 0.5]]
+    seed = [[0.0, 0.05, 0.02]]
+    s = summarize_bands(attack, benign, seed)
+    assert s["benign_over_seed_ci"].point == 1.0
