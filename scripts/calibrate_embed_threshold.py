@@ -19,6 +19,8 @@ case that separates a real semantic encoder from a bag-of-words matcher.
 from __future__ import annotations
 
 import argparse
+import itertools
+import random
 import sys
 from pathlib import Path
 
@@ -28,7 +30,38 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from se.config import RESULTS_DIR
 from se.embedding import load_embedder, E5_UNSUP
+from se.scoring import normalize_answer
 from se.stats import youden_j_threshold
+
+
+def _pairs_triviaqa_aliases(n):
+    """DOMAIN-MATCHED short-answer calibration: TriviaQA gold aliases of one question
+    are positives (same answer, different surface: "Broncos" ~ "Denver Broncos");
+    first-forms of different questions are negatives. Ground-truth from TriviaQA, not
+    the NLI -> not circular. This measures e5 at the ACTUAL task (clustering short
+    answer-spans), unlike sentence-level STS-B/PAWS. NOTE: negatives are random cross-
+    question answers (mostly easy); hard same-type negatives would be a stricter test."""
+    from se.data import load_triviaqa
+    exs = load_triviaqa(split="validation")
+    forms_by_ex = []
+    for ex in exs:
+        forms = [f for f in dict.fromkeys(ex.all_acceptable()) if f and len(f) < 60]
+        if forms:
+            forms_by_ex.append(forms)
+    pos = []
+    for forms in forms_by_ex:
+        for a, b in itertools.combinations(forms[:4], 2):
+            if normalize_answer(a) != normalize_answer(b):   # genuinely different surface
+                pos.append((a, b, 1))
+    firsts = [f[0] for f in forms_by_ex]
+    rng = random.Random(0)
+    neg = []
+    while len(neg) < len(pos):
+        i, j = rng.randrange(len(firsts)), rng.randrange(len(firsts))
+        if i != j and normalize_answer(firsts[i]) != normalize_answer(firsts[j]):
+            neg.append((firsts[i], firsts[j], 0))
+    rng.shuffle(pos); rng.shuffle(neg)
+    return pos[:n] + neg[:n]
 
 
 def _pairs_stsb(n):
@@ -61,16 +94,27 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default=E5_UNSUP)
     ap.add_argument("--n_per_source", type=int, default=1000)
+    ap.add_argument("--source", default="all", choices=["all", "sentence", "aliases"],
+                    help="aliases = domain-matched TriviaQA short-answer set (the real task)")
     args = ap.parse_args()
 
     prefix = "" if "gtr" in args.model else "query: "
     embed_fn = load_embedder(args.model, prefix=prefix)
     print(f"[embed] {args.model} loaded", flush=True)
 
+    sources = {"TriviaQA-aliases (SHORT ANSWER — the real task)": _pairs_triviaqa_aliases,
+               "STS-B (sentence)": _pairs_stsb, "PAWS (sentence, hard negatives)": _pairs_paws}
+    if args.source == "sentence":
+        sources.pop("TriviaQA-aliases (SHORT ANSWER — the real task)")
+    elif args.source == "aliases":
+        sources = {"TriviaQA-aliases (SHORT ANSWER — the real task)": _pairs_triviaqa_aliases}
+
     L = [f"# Embedding-threshold calibration ({args.model})", "",
-         "Threshold to FREEZE before the definitive embedding arm (critic entry 15). "
-         "AUROC = the encoder's paraphrase-discrimination power on disjoint labeled pairs.", ""]
-    for name, loader in [("STS-B", _pairs_stsb), ("PAWS", _pairs_paws)]:
+         "Threshold to FREEZE before the definitive embedding arm (critic entry 15). AUROC = "
+         "the encoder's paraphrase-discrimination power on disjoint labeled pairs. The "
+         "TriviaQA-aliases set is DOMAIN-MATCHED (short factoid spans, the actual clustering "
+         "task); the sentence sets (STS-B/PAWS) test general/adversarial sentence similarity.", ""]
+    for name, loader in sources.items():
         try:
             pairs = loader(args.n_per_source)
         except Exception as e:               # dataset unavailable offline -> skip loudly
