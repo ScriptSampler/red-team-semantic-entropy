@@ -172,9 +172,15 @@ def _benign_moves_arms(question, before, attack, pair, gen, K, seed, embed_fn, t
 
 
 def _seed_moves_arms(question, before, attack, pair, gen, n_seeds, embed_fn, threshold):
-    """Same question re-scored under n_seeds seeds -> (nli, exact, embed) move lists."""
+    """Same question re-scored under n_seeds seeds -> (nli, exact, embed) move lists.
+
+    Seeds start at 1, NOT 0: `before` is generated at the baseline gen.seed=0, so a seed-0
+    draw here reproduces `before` exactly (torch.manual_seed(0) resets the RNG identically)
+    and injects a structural 0.0 move into every target's seed band — deflating the noise
+    floor and biasing the seed<benign ordering + benign_over_seed reframe check toward the
+    attack. Excluding seed 0 keeps the seed band an honest estimate of estimator noise."""
     nm, xm, em = [], [], []
-    for s in range(n_seeds):
+    for s in range(1, n_seeds + 1):
         n, x, e = _moves(before, _arms(question, pair, gen, embed_fn, threshold, seed=s), attack)
         nm.append(n); xm.append(x)
         if e is not None:
@@ -201,6 +207,11 @@ def main() -> int:
 
     embed_fn = None
     if args.embedding_model:
+        import math as _math
+        if not _math.isfinite(args.embed_threshold):
+            raise SystemExit(f"--embed_threshold must be finite, got {args.embed_threshold}. "
+                             f"A nan/inf cut (e.g. from a below-chance calibration) would make "
+                             f"the embedding clusterer degenerate to all-singletons.")
         from se.embedding import load_embedder
         prefix = "" if "gtr" in args.embedding_model else "query: "
         embed_fn = load_embedder(args.embedding_model, prefix=prefix)

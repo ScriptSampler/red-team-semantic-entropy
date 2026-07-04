@@ -13,7 +13,20 @@ _root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_root / "src"))
 sys.path.insert(0, str(_root / "scripts"))
 
+import null_control
 from null_control import summarize_bands, _percentile_below, _move, survival_ratio
+
+
+def test_seed_band_excludes_baseline_seed(monkeypatch):
+    # BUG regression (verify workflow): `before` is generated at gen.seed=0, so a seed-0
+    # draw in the seed band reproduces it exactly -> a structural 0.0 that deflates the
+    # noise floor. The band must use seeds 1..n_seeds, never 0.
+    seen = []
+    monkeypatch.setattr(null_control, "_arms",
+                        lambda q, pair, gen, ef, thr, seed=None: (seen.append(seed) or (0.0, 0.0, None)))
+    null_control._seed_moves_arms("q", (1.0, 1.0, None), "hide", None, None, 3, None, 0.82)
+    assert 0 not in seen
+    assert seen == [1, 2, 3]
 
 
 def test_move_direction():

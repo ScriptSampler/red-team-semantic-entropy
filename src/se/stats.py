@@ -25,8 +25,17 @@ def youden_j_threshold(labels, scores):
         return float("nan"), float("nan"), float("nan")
     fpr, tpr, thr = roc_curve(y, s)
     j = tpr - fpr
-    k = int(np.argmax(j))
-    return float(thr[k]), float(roc_auc_score(y, s)), float(j[k])
+    # roc_curve prepends an inf threshold (fpr=tpr=0, J=0). If the encoder is at/below
+    # chance, that sentinel would win argmax and freeze thr=inf -> the embedding clusterer
+    # would never union (all singletons, max SE), silently corrupting the arm in exactly
+    # the near-chance regime this calibration exists to DETECT. Mask non-finite thresholds
+    # and report "no usable threshold" (nan) when the best Youden J is <= 0.
+    j_masked = np.where(np.isfinite(thr), j, -np.inf)
+    k = int(np.argmax(j_masked))
+    auroc = float(roc_auc_score(y, s))
+    if not np.isfinite(thr[k]) or j[k] <= 0.0:
+        return float("nan"), auroc, float(j[k])          # no usable threshold
+    return float(thr[k]), auroc, float(j[k])
 
 
 @dataclass

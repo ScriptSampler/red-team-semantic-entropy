@@ -35,6 +35,23 @@ def test_youden_j_picks_positive_j():
     assert 0.7 <= auroc <= 1.0 and j > 0
 
 
+def test_youden_j_below_chance_never_returns_inf():
+    # BUG regression (verify workflow): roc_curve prepends an inf threshold; if the encoder
+    # is at/below chance the inf sentinel would win argmax and freeze thr=inf, silently
+    # degenerating the embedding clusterer to all-singletons. Must return nan/finite, never inf.
+    import math
+    thr, auroc, j = youden_j_threshold([1, 1, 1, 0, 0, 0], [0.2, 0.3, 0.4, 0.7, 0.8, 0.9])
+    assert not math.isinf(thr)                       # never the inf sentinel
+    assert math.isnan(thr) or math.isfinite(thr)
+    assert auroc < 0.5                               # confirms the below-chance regime
+
+
+def test_youden_j_interleaved_nearchance_never_inf():
+    import math
+    thr, _, _ = youden_j_threshold([1, 0, 1, 0, 1, 0], [0.50, 0.51, 0.49, 0.52, 0.50, 0.50])
+    assert not math.isinf(thr)
+
+
 def test_bootstrap_ci_constant():
     ci = bootstrap_ci([5.0] * 20, np.mean)
     assert ci.point == 5.0 and ci.lo == 5.0 and ci.hi == 5.0
