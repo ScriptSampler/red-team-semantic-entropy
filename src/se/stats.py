@@ -10,7 +10,23 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, roc_curve
+
+
+def youden_j_threshold(labels, scores):
+    """Operating-point calibration for the embedding clusterer's cosine threshold
+    (critic entry 15): the threshold maximizing Youden's J = TPR - FPR on a labeled
+    paraphrase (1) vs non-paraphrase (0) set. Returns (threshold, auroc, j_at_threshold).
+    The AUROC is the encoder's paraphrase-discrimination power — report it so a reviewer
+    can judge whether the encoder is even a trustworthy equivalence oracle."""
+    y = np.asarray(labels)
+    s = np.asarray(scores, dtype=float)
+    if not (0 < y.sum() < len(y)):
+        return float("nan"), float("nan"), float("nan")
+    fpr, tpr, thr = roc_curve(y, s)
+    j = tpr - fpr
+    k = int(np.argmax(j))
+    return float(thr[k]), float(roc_auc_score(y, s)), float(j[k])
 
 
 @dataclass

@@ -10,8 +10,29 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from se.stats import (
     bootstrap_ci, auroc_ci, auroc_diff_ci, rate_ci, success_rate_over_cutoffs,
-    operating_point, flips_at_threshold,
+    operating_point, flips_at_threshold, youden_j_threshold,
 )
+
+
+def test_youden_j_separable():
+    labels = [0, 0, 0, 1, 1, 1]
+    scores = [0.2, 0.3, 0.4, 0.7, 0.8, 0.9]   # paraphrases high-cosine, non- low
+    thr, auroc, j = youden_j_threshold(labels, scores)
+    assert abs(auroc - 1.0) < 1e-9
+    assert abs(j - 1.0) < 1e-9
+    assert 0.4 < thr <= 0.9                     # separates the classes
+
+
+def test_youden_j_single_class_is_nan():
+    thr, auroc, j = youden_j_threshold([1, 1, 1], [0.5, 0.6, 0.7])
+    assert thr != thr and auroc != auroc         # nan
+
+
+def test_youden_j_picks_positive_j():
+    labels = [0, 0, 0, 0, 1, 1, 1, 1]
+    scores = [0.1, 0.2, 0.3, 0.55, 0.5, 0.7, 0.8, 0.9]
+    thr, auroc, j = youden_j_threshold(labels, scores)
+    assert 0.7 <= auroc <= 1.0 and j > 0
 
 
 def test_bootstrap_ci_constant():
