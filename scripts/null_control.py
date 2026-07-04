@@ -98,6 +98,36 @@ def summarize_bands(attack_moves, benign_lists, seed_lists) -> dict:
     }
 
 
+def _per_target_nets(attack_moves, benign_lists):
+    """Per-target net = attack move - mean benign move (paired within a target)."""
+    return [a - float(np.mean(b)) for a, b in zip(attack_moves, benign_lists) if b]
+
+
+def survival_ratio(nli_nets, embed_nets, *, n_boot: int = 3000, seed: int = 0):
+    """embedding_net / NLI_net with a paired bootstrap CI over targets (critic entry 15):
+    the fraction of the confounded NLI-measured effect that survives under the independent
+    encoder. ~1 -> attack is real (reframe a); ~0 -> attack was largely an NLI-clusterer
+    artifact. Returns a se.stats.CI or None."""
+    from se.stats import CI
+    if not nli_nets or not embed_nets:
+        return None
+    m = min(len(nli_nets), len(embed_nets))
+    a = np.asarray(nli_nets[:m], float)
+    b = np.asarray(embed_nets[:m], float)
+
+    def _ratio(idx):
+        na = a[idx].mean()
+        return (b[idx].mean() / na) if abs(na) > 1e-9 else float("nan")
+
+    point = _ratio(np.arange(m))
+    rng = np.random.default_rng(seed)
+    vals = [r for _ in range(n_boot)
+            if (r := _ratio(rng.integers(0, m, m))) == r]  # drop nan (near-zero NLI net)
+    if not vals:
+        return CI(point, float("nan"), float("nan"))
+    return CI(point, float(np.quantile(vals, 0.025)), float(np.quantile(vals, 0.975)))
+
+
 def _reseed(gen, seed: int):
     return GenConfig(max_new_tokens=gen.max_new_tokens, temperature=gen.temperature,
                      top_p=gen.top_p, n_samples=gen.n_samples, seed=seed)
@@ -255,11 +285,23 @@ def main() -> int:
                      f"net (attack - mean benign): {_ci(agg['net_vs_benign_mean_ci'])} nats")
             L.append(f"- benign clears seed floor (reframe b): {_pc(agg['benign_over_seed_ci'])}")
             L.append("")
-        L.append("Reading the 2x2 (finding 14): a targeted attack needs 'beats benign p90' + "
-                 "net CI > 0. Reframe (b) 'SE fragile to any paraphrase' needs the benign floor "
-                 "to clear the seed floor UNDER THE INDEPENDENT CLUSTERER — if it only clears it "
-                 "under the shared NLI, the 'fragility' was the NLI talking to itself, not a "
-                 "property of the model's answer distribution.")
+        if embed_fn is not None:
+            sr = survival_ratio(_per_target_nets(atk["nli"], ben["nli"]),
+                                _per_target_nets(atk["embed"], ben["embed"]))
+            if sr is not None:
+                L.append("### Survival ratio (embedding_net / NLI_net) — PRE-REGISTERED headline")
+                L.append(f"- embedding_net / NLI_net = {sr.point:+.2f} [{sr.lo:+.2f}, {sr.hi:+.2f}] "
+                         f"— fraction of the (confounded) NLI-measured effect that survives under "
+                         f"the independent encoder.")
+                L.append("- Rule (critique_log 15): claim reframe (a) IFF the EMBEDDING net CI > 0 "
+                         "at n>=80; ratio ~1 -> (a) survives; ~0 -> attack was largely an NLI-"
+                         "clusterer artifact (a real finding about SE, not a failure).")
+                L.append("")
+        L.append("Reading the 3 arms (finding 14): NLI is the confounded/permissive UPPER bound; "
+                 "exact-match the strict/saturated LOWER bound; EMBEDDING is the adjudicator. The "
+                 "reported effect is the embedding-arm net move; the NLI-arm beating benign is "
+                 "necessary but NOT sufficient (it cannot separate 'model answer-distribution "
+                 "changed' from 'the NLI clusterer partitioned the same answers differently').")
         L.append("")
 
     out = RESULTS_DIR / "null_control_report.md"

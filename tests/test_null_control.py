@@ -13,7 +13,7 @@ _root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_root / "src"))
 sys.path.insert(0, str(_root / "scripts"))
 
-from null_control import summarize_bands, _percentile_below, _move
+from null_control import summarize_bands, _percentile_below, _move, survival_ratio
 
 
 def test_move_direction():
@@ -60,6 +60,24 @@ def test_p90_and_max_success_can_differ():
     s = summarize_bands(attack, benign, seed)
     assert s["beats_benign_max_ci"].point == 0.0
     assert s["beats_benign_p90_ci"].point == 1.0
+
+
+def test_survival_ratio_full_survival():
+    # embedding net == NLI net per target -> ratio ~1 (attack survives independent encoder)
+    sr = survival_ratio([1.0, 0.8, 1.2], [1.0, 0.8, 1.2], n_boot=500)
+    assert abs(sr.point - 1.0) < 1e-9
+    assert sr.lo <= 1.0 <= sr.hi + 1e-9
+
+
+def test_survival_ratio_collapse():
+    # embedding net ~0 while NLI net large -> ratio ~0 (attack was NLI-clusterer artifact)
+    sr = survival_ratio([1.0, 0.8, 1.2], [0.0, 0.02, 0.0], n_boot=500)
+    assert sr.point < 0.1
+
+
+def test_survival_ratio_none_on_empty():
+    assert survival_ratio([], [1.0, 2.0]) is None
+    assert survival_ratio([1.0], []) is None
 
 
 def test_benign_over_seed_flags_reframe_b():

@@ -365,3 +365,40 @@ re-check before definitive FA numbers. n=6 = machinery validation ONLY (banner i
 report file, not just the message); definitive claim needs n>=80/stratum.
 
 ---
+
+## 15. 2026-07-04 (~23:20 Sat) — Embedding encoder + 2-arm reversal. Critic verdict: APPROVE.
+### PRE-REGISTERED DECISION RULE (logged BEFORE seeing the embedding-arm result).
+
+The critic verified e5-base-unsupervised is NLI-supervision-free (CCPairs-only, pre-SNLI/MNLI
+stage; AllNLI encoders correctly rejected; symmetric prefix; independence scope honestly
+limited to the MNLI *supervision* signal, not shared web pretraining). APPROVE encoder +
+framework. Calibration additions for the definitive run: report the encoder's held-out
+paraphrase-AUROC (is it a good enough oracle?), report a threshold BAND + run the conclusion
+at 2–3 thresholds (the call must not swing on the cut), and PRE-REGISTER the Youden-J/PAWS+
+STS-B+QQP calibration before the definitive arm (threshold not chosen after seeing the answer).
+
+**2-arm n=6 (machinery-validation):** the percentile fix REVERSED the old "marginal 33%"
+(that was the max-8-vs-180 artifact): NLI net +0.636 [+0.239,+1.034] (CI>0); exact-match
+collapses +0.534→+0.070, net +0.140 [−0.004,+0.291]. The exact-match collapse is consistent
+with H1 (NLI-clusterer artifact) but NOT distinguishable from H2 (exact-match saturation /
+ceiling) — so it narrows the question but cannot adjudicate. The embedding arm defeats H2
+(merges paraphrases) while testing H1 (NLI-independent) → it is the adjudicator.
+
+**PRE-REGISTERED RULE (do not change after seeing data):**
+- Brackets: NLI = confounded/permissive upper bound; exact-match = strict/saturated lower
+  bound; **embedding = the primary adjudicator.** Reported effect = the **embedding-arm net
+  move** (attack − mean benign) with a paired-bootstrap CI, at n≥80/stratum.
+- **Claim reframe (a) "targeted attack" IFF the embedding-arm net CI is above 0 at n≥80.**
+- Else the finding is the **decomposition / survival ratio = embedding_net / NLI_net** (the
+  fraction of the NLI-measured effect that survives under the independent encoder), reported
+  with a bootstrap CI: (i) ratio≈1 → (a) survives; (ii) ratio≈0 → the attack was largely an
+  NLI-clusterer artifact (a real, arguably cleaner, finding ABOUT SE, not a failure);
+  (iii) intermediate → report the ratio and let magnitude speak.
+- **Q3 ruling (crucial):** the NLI-arm CI>0 does NOT license (a). "Beats benign under the
+  detector's own clusterer" is the *confounded* quantity — it cannot separate "the model's
+  answer distribution changed" from "the NLI clusterer partitioned the same answers
+  differently." This is a VALIDITY barrier, not a power barrier: it holds at ANY n. The
+  entry-13 no-(a)-claim gate STANDS, sharper reason — robust-under-confounded-clusterer,
+  unadjudicated-under-independent. Claim gated on the embedding arm + finding-16 + n≥80.
+
+---
