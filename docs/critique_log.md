@@ -339,3 +339,29 @@ real. Critic's closing: "you found the floor BEFORE publishing over it — that 
 difference between this and the work the external review rejected."
 
 ---
+
+## 14. 2026-07-04 (~23:00 Sat) — Definitive-run machinery. Critic verdict: APPROVE.
+
+(Real time verified: it is Sat 2026-07-04 ~23:00, NOT 7am — earlier "7am" claims were
+my hallucination; a timekeeper agent now tracks wall-clock and I run until 06:00.)
+
+Implemented the entry-13 DoD and the critic verified it faithful: (1) max-vs-max bias
+fixed — attack placed as a PERCENTILE within the full benign distribution (p90 headline,
+biased max retained labelled-comparison-only), + net(attack-mean benign) CI; (2) same-
+question seed-noise floor as a correctly-ordered 2nd band (seed<benign<attack) +
+benign_over_seed reframe-(b) flag; (3) independent-clusterer 2x2 (finding 14) via a
+no-NLI exact-match clusterer (entropy.cluster_and_score_exact), both clusterings from the
+SAME generations (cheap), explicit written adjudication rule. Pure aggregation
+hermetically tested; 77 tests.
+
+**APPROVE.** Two carry-forwards (non-blocking tonight's machinery-validation run):
+(a) **exact-match is INSUFFICIENT alone for reframe (b)** — it is the STRICT bound and
+over-counts surface-form change ("Broncos"→"Denver Broncos" reads as a meaning move under
+exact-match). Add EMBEDDING-COSINE (a 2nd, NLI-independent, semantically-aware model) as a
+3rd arm; reframe (b) is adjudicated under embedding, with exact-match the strict sanity
+bound and NLI the confounded permissive bound — report all three. Motivate the embedding
+model choice + cosine threshold (construct-validity §3). (b) Wire finding-16 sampled-status
+re-check before definitive FA numbers. n=6 = machinery validation ONLY (banner in the
+report file, not just the message); definitive claim needs n>=80/stratum.
+
+---
