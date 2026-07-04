@@ -63,12 +63,22 @@ The null control is cheap (~(K+n_seeds) evals/target) and not the bottleneck —
    sentence pairs may not transfer to short-span cosines. Calibrate on (or at least include)
    SHORT-answer paraphrase pairs matching the clustering domain, and report the
    short-answer paraphrase-AUROC specifically.
-3. **Is e5 even a good oracle for short answers?** Sentence encoders are built for
-   sentences; their discrimination on short entity spans is unproven. If the short-answer
-   paraphrase-AUROC is mediocre, the embedding arm is not a trustworthy adjudicator and the
-   finding-14 conclusion is unsupported. This is the make-or-break check — report it first.
-   (Fallback if e5 fails on short spans: gtr-t5-base, or an LLM-judge equivalence oracle on
-   the answer samples, which is slower but domain-robust.)
+3. **Is e5 even a good oracle? Calibration says: NOT for the adversarial case.**
+   Measured (2026-07-04, results/embed_calibration.md): e5 paraphrase-AUROC = **0.989 on
+   STS-B** (easy semantic pairs) but **0.624 on PAWS** (hard high-lexical-overlap
+   non-paraphrases) — near-chance on exactly the case the attack produces (meaning-shifted
+   but word-preserving Q'). The Youden-J thresholds are irreconcilable (0.856 vs 0.990), so
+   there is no single defensible cut. **e5 is therefore NOT a trustworthy finding-14
+   adjudicator for the adversarial setting.** The finding-14 adjudicator is genuinely hard:
+   sentence embedders are fooled by lexical overlap, and truly MNLI-independent *semantic*
+   oracles are scarce. Options for the definitive run, none free: (a) an **LLM-judge
+   equivalence oracle** on the answer samples (domain-robust, slow, and must use a judge
+   independent of the victim Llama to avoid circularity); (b) a **different-architecture NLI**
+   model (still NLI-trained, so weaker independence, but a second data point); (c) report the
+   finding-14 conclusion as **bracketed/uncertain** and lean on the honest statement that no
+   cheap independent oracle cleanly adjudicates — which itself is a contribution about how
+   hard it is to attribute SE fragility. Note e5 could still cluster the EASY (STS-B-like)
+   cases fine; its failure is specifically on the adversarial hard negatives.
 
 ## Still owed before external submission
 - Embedding threshold calibration (Youden-J on short-answer + STS-B/PAWS; tool built) and
