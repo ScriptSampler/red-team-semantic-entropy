@@ -402,3 +402,35 @@ ceiling) — so it narrows the question but cannot adjudicate. The embedding arm
   unadjudicated-under-independent. Claim gated on the embedding arm + finding-16 + n≥80.
 
 ---
+
+## 16. 2026-07-04 (~23:25 Sat) — e5 calibration failure + adjudicator framework. Critic: BLOCK e5.
+
+e5-base-unsupervised paraphrase-AUROC: STS-B **0.989** (thr 0.856) / PAWS **0.624** (thr 0.990)
+— near-chance on high-lexical-overlap, meaning-shifted pairs, which is a structural
+description of what a paraphrase attack IS; irreconcilable thresholds. **BLOCK e5 as the
+finding-14 adjudicator on this calibration.**
+
+Rulings: (1) the TriviaQA-alias short-answer calibration is the right DOMAIN-MATCHED test,
+but the plain alias set is all-easy (alias positives are low-overlap-same-meaning; cross-
+question negatives are distant) — it SKIPS the hard case. **Must add a HARD-NEGATIVE stratum**
+(near-miss answers sharing tokens but differing: "1912"/"1921", "Denver Broncos"/"Denver
+Nuggets"). **e5's AUROC on the hard-negative stratum — not the pooled AUROC — is the
+rehabilitation criterion.** Critic predicts e5 fails it too (the deficiency is encoder-level,
+not span-length); run anyway (prediction ≠ result). (2) If e5 fails: the adjudicator is a
+**victim-independent (NOT Llama-3.1-8B) + NLI-independent + SELF-VALIDATED LLM-judge** on the
+answer samples — needs a 2nd model (not loadable tonight; definitive-run; now critical-path
+for the (a) claim; doubles as the finding-15 equivalence oracle). An unvalidated judge is not
+more trustworthy than e5, just less measured. (3) **The "NLI/exact-match bracket, attribution
+unresolved" fallback is ACCEPTABLE and NON-FATAL** — fatal ONLY to a targeted-attack claim
+(reframe a), not to the paper, IF: (i) framed as a DIRECTIONAL bracket with CIs (NLI net
++0.636 = confounded upper bound favoring "real"; exact-match net +0.140 = strict lower bound
+favoring "artifact") after a genuine LLM-judge attempt, not a shrug; and (ii) **the paper
+leads with contribution (2)** — the null-controlled protocol, where "the standard shared-NLI
+evaluation cannot distinguish attack-signal from clusterer-artifact" is ITSELF the finding.
+The adjudication difficulty STRENGTHENS contribution (2) (it shows prior single-NLI
+evaluations cannot support their claims) — arguably the stronger, more durable paper than a
+fragile "we broke SE." **Strategic pivot recorded: lead with the protocol + the negative/
+bracketed attribution; the targeted-attack claim is conditional on a validated independent
+oracle in the definitive run.**
+
+---

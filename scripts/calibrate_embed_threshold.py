@@ -34,34 +34,60 @@ from se.scoring import normalize_answer
 from se.stats import youden_j_threshold
 
 
-def _pairs_triviaqa_aliases(n):
-    """DOMAIN-MATCHED short-answer calibration: TriviaQA gold aliases of one question
-    are positives (same answer, different surface: "Broncos" ~ "Denver Broncos");
-    first-forms of different questions are negatives. Ground-truth from TriviaQA, not
-    the NLI -> not circular. This measures e5 at the ACTUAL task (clustering short
-    answer-spans), unlike sentence-level STS-B/PAWS. NOTE: negatives are random cross-
-    question answers (mostly easy); hard same-type negatives would be a stricter test."""
+def _content_tokens(s):
+    return {t for t in normalize_answer(s).split() if len(t) > 2}
+
+
+def _alias_strata(n):
+    """DOMAIN-MATCHED short-answer calibration with the critic's REQUIRED hard-negative
+    stratum (entry 16). Ground-truth from TriviaQA gold aliases (not the NLI). Returns
+    {pos, easy_neg, hard_neg}:
+      pos       aliases of one answer ("Broncos" ~ "Denver Broncos") — same meaning
+      easy_neg  answers of DIFFERENT questions, no shared token — distant, trivial
+      hard_neg  different answers sharing a content token ("Denver Broncos"/"Denver
+                Nuggets", "born 1912"/"born 1921") OR near-miss numbers ("1912"/"1921")
+    The pos-vs-HARD_NEG AUROC — not the pooled one — is the rehabilitation criterion:
+    hard negatives are the word-preserving/meaning-shifted case the attack produces."""
+    from collections import defaultdict
     from se.data import load_triviaqa
     exs = load_triviaqa(split="validation")
-    forms_by_ex = []
-    for ex in exs:
-        forms = [f for f in dict.fromkeys(ex.all_acceptable()) if f and len(f) < 60]
-        if forms:
-            forms_by_ex.append(forms)
-    pos = []
-    for forms in forms_by_ex:
-        for a, b in itertools.combinations(forms[:4], 2):
-            if normalize_answer(a) != normalize_answer(b):   # genuinely different surface
-                pos.append((a, b, 1))
-    firsts = [f[0] for f in forms_by_ex]
+    forms_by_ex = [[f for f in dict.fromkeys(ex.all_acceptable()) if f and len(f) < 60]
+                   for ex in exs]
+    forms_by_ex = [f for f in forms_by_ex if f]
     rng = random.Random(0)
-    neg = []
-    while len(neg) < len(pos):
+
+    pos = [(a, b, 1) for forms in forms_by_ex
+           for a, b in itertools.combinations(forms[:4], 2)
+           if normalize_answer(a) != normalize_answer(b)]
+
+    firsts = [f[0] for f in forms_by_ex]
+    tok2ids = defaultdict(list)
+    for i, f in enumerate(firsts):
+        for t in _content_tokens(f):
+            tok2ids[t].append(i)
+
+    hard, seen = [], set()
+    for t, ids in tok2ids.items():
+        if len(ids) < 2:
+            continue
+        for a, b in itertools.combinations(ids[:6], 2):
+            if normalize_answer(firsts[a]) != normalize_answer(firsts[b]) and (a, b) not in seen:
+                seen.add((a, b)); hard.append((firsts[a], firsts[b], 0))
+    nums = sorted((int(normalize_answer(f)), i) for i, f in enumerate(firsts)
+                  if normalize_answer(f).isdigit())
+    for (vi, i), (vj, j) in zip(nums, nums[1:]):
+        if 0 < abs(vi - vj) <= 20:
+            hard.append((firsts[i], firsts[j], 0))
+
+    easy = []
+    while len(easy) < len(pos):
         i, j = rng.randrange(len(firsts)), rng.randrange(len(firsts))
-        if i != j and normalize_answer(firsts[i]) != normalize_answer(firsts[j]):
-            neg.append((firsts[i], firsts[j], 0))
-    rng.shuffle(pos); rng.shuffle(neg)
-    return pos[:n] + neg[:n]
+        if i != j and not (_content_tokens(firsts[i]) & _content_tokens(firsts[j])) \
+                and normalize_answer(firsts[i]) != normalize_answer(firsts[j]):
+            easy.append((firsts[i], firsts[j], 0))
+
+    rng.shuffle(pos); rng.shuffle(easy); rng.shuffle(hard)
+    return {"pos": pos[:n], "easy_neg": easy[:n], "hard_neg": hard[:n]}
 
 
 def _pairs_stsb(n):
@@ -102,32 +128,47 @@ def main() -> int:
     embed_fn = load_embedder(args.model, prefix=prefix)
     print(f"[embed] {args.model} loaded", flush=True)
 
-    sources = {"TriviaQA-aliases (SHORT ANSWER — the real task)": _pairs_triviaqa_aliases,
-               "STS-B (sentence)": _pairs_stsb, "PAWS (sentence, hard negatives)": _pairs_paws}
-    if args.source == "sentence":
-        sources.pop("TriviaQA-aliases (SHORT ANSWER — the real task)")
-    elif args.source == "aliases":
-        sources = {"TriviaQA-aliases (SHORT ANSWER — the real task)": _pairs_triviaqa_aliases}
-
     L = [f"# Embedding-threshold calibration ({args.model})", "",
-         "Threshold to FREEZE before the definitive embedding arm (critic entry 15). AUROC = "
+         "Threshold to FREEZE before the definitive embedding arm (critic entry 15/16). AUROC = "
          "the encoder's paraphrase-discrimination power on disjoint labeled pairs. The "
          "TriviaQA-aliases set is DOMAIN-MATCHED (short factoid spans, the actual clustering "
          "task); the sentence sets (STS-B/PAWS) test general/adversarial sentence similarity.", ""]
-    for name, loader in sources.items():
-        try:
-            pairs = loader(args.n_per_source)
-        except Exception as e:               # dataset unavailable offline -> skip loudly
-            L.append(f"## {name}: unavailable ({type(e).__name__}: {e})"); L.append(""); continue
-        y = [p[2] for p in pairs]
-        cos = _cosines(pairs, embed_fn)
+
+    def _one(name, y, cos):
         thr, auroc, j = youden_j_threshold(y, cos)
-        L.append(f"## {name}  (n={len(pairs)}, paraphrase={sum(y)})")
+        L.append(f"### {name}  (n={len(y)}, paraphrase={int(sum(y))})")
         L.append(f"- paraphrase-discrimination AUROC: {auroc:.3f}")
-        L.append(f"- Youden-J cosine threshold: {thr:.3f}  (J={j:.3f})")
-        L.append(f"- suggested band: [{thr - 0.03:.3f}, {thr + 0.03:.3f}] "
-                 f"— run the null-control conclusion across it and show it does not swing.")
+        L.append(f"- Youden-J cosine threshold: {thr:.3f}  (J={j:.3f}); "
+                 f"band [{thr - 0.03:.3f}, {thr + 0.03:.3f}]")
         L.append("")
+
+    if args.source in ("all", "aliases"):
+        st = _alias_strata(args.n_per_source)
+        pc = _cosines(st["pos"], embed_fn)
+        ec = _cosines(st["easy_neg"], embed_fn)
+        hc = _cosines(st["hard_neg"], embed_fn)
+        L.append("## TriviaQA-aliases (SHORT ANSWER — the real clustering task)")
+        L.append(f"positives={len(pc)}, easy_neg={len(ec)}, hard_neg={len(hc)}")
+        L.append("")
+        _one("pos vs EASY negatives (distant answers — trivial)",
+             [1] * len(pc) + [0] * len(ec), np.concatenate([pc, ec]))
+        _one("pos vs HARD negatives (REHABILITATION CRITERION — near-miss shared-token/numeric)",
+             [1] * len(pc) + [0] * len(hc), np.concatenate([pc, hc]))
+        L.append("> Rehabilitation (critic entry 16): e5 is a usable finding-14 adjudicator ONLY "
+                 "IF the pos-vs-HARD AUROC is high. A high pos-vs-easy AUROC does NOT rehabilitate "
+                 "it — that is the STS-B/easy regime; the attack produces the HARD (word-preserving, "
+                 "meaning-shifted) case. If pos-vs-HARD is near-chance, the adjudicator must be a "
+                 "victim- and NLI-independent, self-validated LLM-judge (definitive-run).")
+        L.append("")
+
+    if args.source in ("all", "sentence"):
+        for name, loader in [("STS-B (sentence)", _pairs_stsb),
+                             ("PAWS (sentence, hard negatives)", _pairs_paws)]:
+            try:
+                pairs = loader(args.n_per_source)
+            except Exception as e:           # dataset unavailable offline -> skip loudly
+                L.append(f"### {name}: unavailable ({type(e).__name__}: {e})"); L.append(""); continue
+            _one(name, [p[2] for p in pairs], _cosines(pairs, embed_fn))
 
     out = RESULTS_DIR / "embed_calibration.md"
     out.write_text("\n".join(L) + "\n")
