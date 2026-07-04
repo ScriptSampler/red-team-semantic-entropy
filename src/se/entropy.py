@@ -120,3 +120,63 @@ def cluster_and_score_exact(samples: list[str]) -> ClusterResult:
         entropy_nats=discrete_entropy(assignments, "nats"),
         entropy_bits=discrete_entropy(assignments, "bits"),
     )
+
+
+def cluster_samples_embedding(samples: list[str], embed_fn, threshold: float = 0.85) -> list[int]:
+    """INDEPENDENT, semantically-aware clusterer (finding 14 adjudicator, critic entry
+    14): group samples whose sentence-embedding cosine similarity >= threshold, via the
+    same union-find skeleton as the NLI clusterer. `embed_fn(samples) -> array (n, d)`.
+
+    The encoder must be a model whose training is independent of the DeBERTa-large-MNLI
+    the detector uses (e.g. a sentence-transformer). This arm neither shares the NLI's
+    confound (unlike the detector's own clusterer) nor over-counts surface form (unlike
+    exact-match, which splits "Broncos" from "Denver Broncos"), so it is the arm that
+    adjudicates the "SE fragile to any paraphrase" reframe."""
+    import numpy as np
+    n = len(samples)
+    if n <= 1:
+        return list(range(n))
+    embs = np.asarray(embed_fn(samples), dtype=float)
+    norms = np.linalg.norm(embs, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    unit = embs / norms
+    sims = unit @ unit.T
+
+    parent = list(range(n))
+
+    def find(x: int) -> int:
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(x: int, y: int) -> None:
+        rx, ry = find(x), find(y)
+        if rx != ry:
+            parent[rx] = ry
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            if sims[i, j] >= threshold:
+                union(i, j)
+
+    roots = [find(i) for i in range(n)]
+    remap: dict[int, int] = {}
+    out: list[int] = []
+    for r in roots:
+        if r not in remap:
+            remap[r] = len(remap)
+        out.append(remap[r])
+    return out
+
+
+def cluster_and_score_embedding(samples: list[str], embed_fn,
+                                threshold: float = 0.85) -> ClusterResult:
+    """ClusterResult under the independent embedding-cosine clusterer."""
+    assignments = cluster_samples_embedding(samples, embed_fn, threshold)
+    return ClusterResult(
+        assignments=assignments,
+        n_clusters=len(set(assignments)),
+        entropy_nats=discrete_entropy(assignments, "nats"),
+        entropy_bits=discrete_entropy(assignments, "bits"),
+    )
