@@ -434,3 +434,28 @@ bracketed attribution; the targeted-attack claim is conditional on a validated i
 oracle in the definitive run.**
 
 ---
+
+## 17. 2026-07-05 (~00:00 Sun) — Verification workflow of tonight's tooling. 2 bugs fixed.
+
+Before trusting the finding-14 tooling with GPU-days, ran a 7-agent adversarial correctness
+verification (4 lenses → verify → synth) over the un-unit-covered glue. It found TWO
+confirmed correctness bugs that would have biased the definitive numbers — both now fixed +
+regression-tested (94 tests):
+1. **Seed=0 collision** (null_control._seed_moves_arms): the seed band iterated seeds 0..n-1,
+   but seed 0 reproduces the `before` generation exactly (torch.manual_seed(0) resets the
+   RNG) → a structural 0.0 in every target's seed band, deflating the noise floor and biasing
+   the seed<benign ordering + benign_over_seed reframe check toward the attack. Fix: seeds
+   1..n_seeds; regression test via monkeypatched _arms.
+2. **youden_j inf** (stats.youden_j_threshold): returned thr=inf (roc_curve's inf sentinel)
+   when max Youden J ≤ 0 — the near-chance regime the calibration exists to detect — which
+   would degenerate the embedding clusterer to all-singletons (max SE) instead of flagging
+   the encoder unusable. Fix: mask non-finite thresholds, return nan ("no usable threshold")
+   when J≤0; + null_control refuses a non-finite --embed_threshold. Regression test asserts
+   no inf below chance.
+The rest of the tooling verified CORRECT (percentile framing, paired survival_ratio +
+auroc_diff_ci, same-generations _arms, union-find clusterers). Re-ran the machinery-validation
+null control with the seed-fix to confirm the noise floor de-bias on real generations. The
+tooling is now trustworthy for the definitive run (pending the framing/2nd-model/compute
+decisions).
+
+---
