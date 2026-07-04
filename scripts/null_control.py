@@ -42,7 +42,7 @@ from se.sampling import DEFAULT_SAMPLES_DIR
 from se.attacks.harness import load_pair, read_outcomes, _stable_seed
 from se.attacks import proposer, feasibility
 from se.se_pipeline import semantic_entropy
-from se.entropy import cluster_and_score_exact
+from se.entropy import cluster_and_score_exact, cluster_and_score_embedding
 from se.stats import rate_ci, bootstrap_ci
 
 CELLS = [("false_alarm", "se"), ("hide", "se")]
@@ -103,39 +103,53 @@ def _reseed(gen, seed: int):
                      top_p=gen.top_p, n_samples=gen.n_samples, seed=seed)
 
 
-def _both(question: str, pair, gen, seed: int | None = None) -> tuple[float, float]:
-    """(NLI entropy, exact-match entropy) from the SAME seeded samples — the two
-    clusterings of one model output, isolating the shared-NLI confound (finding 14)."""
+def _arms(question, pair, gen, embed_fn, threshold, seed: int | None = None):
+    """(NLI, exact-match, embedding) entropy from the SAME seeded samples — up to three
+    clusterings of ONE model output (finding-14 2x2/3-arm). embedding is None if no
+    embed_fn (embedding requires the encoder model)."""
     g = gen if seed is None else _reseed(gen, seed)
     res = semantic_entropy(question, pair.lm, pair.nli, g)
-    return res.entropy_nats, cluster_and_score_exact(res.samples).entropy_nats
+    nli = res.entropy_nats
+    exact = cluster_and_score_exact(res.samples).entropy_nats
+    emb = (cluster_and_score_embedding(res.samples, embed_fn, threshold).entropy_nats
+           if embed_fn is not None else None)
+    return nli, exact, emb
 
 
-def _benign_moves_both(question, before_nli, before_exact, attack, pair, gen, K, seed):
-    """K benign feasible paraphrases -> (nli_moves, exact_moves), scored under BOTH
-    clusterers from the same generations."""
+def _moves(before, after, attack):
+    """(nli, exact, embed) intended-direction moves; embed move is None if not scored."""
+    n = _move(attack, before[0], after[0])
+    x = _move(attack, before[1], after[1])
+    e = _move(attack, before[2], after[2]) if before[2] is not None and after[2] is not None else None
+    return n, x, e
+
+
+def _benign_moves_arms(question, before, attack, pair, gen, K, seed, embed_fn, threshold):
+    """K benign feasible paraphrases -> (nli, exact, embed) move lists from the same
+    generations. embed list is empty if no embed_fn."""
     proposer.seed_proposer(seed)
-    nli_moves, exact_moves, tries = [], [], 0
-    while len(nli_moves) < K and tries < K * 5:
+    nm, xm, em, tries = [], [], [], 0
+    while len(nm) < K and tries < K * 5:
         tries += 1
         cand = proposer.propose(question, pair.lm)
         if not feasibility.check(cand, question, pair.nli).feasible:
             continue
-        en, ee = _both(cand, pair, gen)
-        nli_moves.append(_move(attack, before_nli, en))
-        exact_moves.append(_move(attack, before_exact, ee))
-    return nli_moves, exact_moves
+        n, x, e = _moves(before, _arms(cand, pair, gen, embed_fn, threshold), attack)
+        nm.append(n); xm.append(x)
+        if e is not None:
+            em.append(e)
+    return nm, xm, em
 
 
-def _seed_moves_both(question, before_nli, before_exact, attack, pair, gen, n_seeds):
-    """Same question re-scored under n_seeds seeds -> (nli_moves, exact_moves): the
-    pure N=10 estimator-noise floor under each clusterer."""
-    nli_moves, exact_moves = [], []
+def _seed_moves_arms(question, before, attack, pair, gen, n_seeds, embed_fn, threshold):
+    """Same question re-scored under n_seeds seeds -> (nli, exact, embed) move lists."""
+    nm, xm, em = [], [], []
     for s in range(n_seeds):
-        en, ee = _both(question, pair, gen, seed=s)
-        nli_moves.append(_move(attack, before_nli, en))
-        exact_moves.append(_move(attack, before_exact, ee))
-    return nli_moves, exact_moves
+        n, x, e = _moves(before, _arms(question, pair, gen, embed_fn, threshold, seed=s), attack)
+        nm.append(n); xm.append(x)
+        if e is not None:
+            em.append(e)
+    return nm, xm, em
 
 
 def main() -> int:
@@ -144,12 +158,23 @@ def main() -> int:
     ap.add_argument("--K", type=int, default=8, help="benign paraphrases per target")
     ap.add_argument("--n_seeds", type=int, default=3, help="seeds for the original noise band")
     ap.add_argument("--max_targets", type=int, default=0, help="0 = all completed targets")
+    ap.add_argument("--embedding_model", default="",
+                    help="e.g. intfloat/e5-base-unsupervised to add the embedding arm (finding 14)")
+    ap.add_argument("--embed_threshold", type=float, default=0.82,
+                    help="cosine threshold for the embedding clusterer (calibrate; default 0.82)")
     args = ap.parse_args()
 
     campaign_dir = DEFAULT_SAMPLES_DIR / "attacks" / f"wk9{args.tag}"
     gen = GenConfig(max_new_tokens=48, n_samples=10, temperature=1.0, seed=0)
     pair = load_pair()
     print(f"[load] pair ready; dir={campaign_dir}", flush=True)
+
+    embed_fn = None
+    if args.embedding_model:
+        from se.embedding import load_embedder
+        prefix = "" if "gtr" in args.embedding_model else "query: "
+        embed_fn = load_embedder(args.embedding_model, prefix=prefix)
+        print(f"[embed] {args.embedding_model} loaded (threshold {args.embed_threshold})", flush=True)
 
     def _ci(c):
         return "n/a" if c is None else f"{c.point:+.3f} [{c.lo:+.3f}, {c.hi:+.3f}]"
@@ -182,23 +207,39 @@ def main() -> int:
         if args.max_targets:
             outcomes = outcomes[: args.max_targets]
 
-        # Collect the three bands under BOTH clusterers (finding 14 2x2) from the
-        # same generations: NLI (shared, the detector's own) and exact-match (independent).
-        atk_nli, ben_nli, seed_nli = [], [], []
-        atk_ex, ben_ex, seed_ex = [], [], []
+        # Collect the three bands under up to THREE clusterers (finding-14 arms) from the
+        # same generations: NLI (shared/confounded), exact-match (independent, strict),
+        # embedding-cosine (independent, semantic — the reframe-(b) adjudicator).
+        atk = {"nli": [], "exact": [], "embed": []}
+        ben = {"nli": [], "exact": [], "embed": []}
+        sd = {"nli": [], "exact": [], "embed": []}
         for o in outcomes:
-            bn, be = _both(o.question, pair, gen)              # before, both clusterers
-            an, ae = _both(o.best_query, pair, gen)            # after
-            atk_nli.append(_move(o.attack, bn, an)); atk_ex.append(_move(o.attack, be, ae))
+            before = _arms(o.question, pair, gen, embed_fn, args.embed_threshold)
+            after = _arms(o.best_query, pair, gen, embed_fn, args.embed_threshold)
+            an, ax, ae = _moves(before, after, o.attack)
+            atk["nli"].append(an); atk["exact"].append(ax)
+            if ae is not None:
+                atk["embed"].append(ae)
             s = _stable_seed("null:" + o.question_id)
-            bnl, bel = _benign_moves_both(o.question, bn, be, o.attack, pair, gen, args.K, s)
-            snl, sel = _seed_moves_both(o.question, bn, be, o.attack, pair, gen, args.n_seeds)
-            ben_nli.append(bnl); ben_ex.append(bel); seed_nli.append(snl); seed_ex.append(sel)
-            print(f"  {o.question_id}: attack nli {atk_nli[-1]:+.3f} / exact {atk_ex[-1]:+.3f} | "
-                  f"benign nli-mean {np.mean(bnl):+.3f} / exact-mean {np.mean(bel):+.3f}", flush=True)
+            bnl, bxl, bel = _benign_moves_arms(o.question, before, o.attack, pair, gen,
+                                               args.K, s, embed_fn, args.embed_threshold)
+            snl, sxl, sel = _seed_moves_arms(o.question, before, o.attack, pair, gen,
+                                             args.n_seeds, embed_fn, args.embed_threshold)
+            ben["nli"].append(bnl); ben["exact"].append(bxl); sd["nli"].append(snl); sd["exact"].append(sxl)
+            if embed_fn is not None:
+                ben["embed"].append(bel); sd["embed"].append(sel)
+            print(f"  {o.question_id}: attack nli {an:+.3f} / exact {ax:+.3f}"
+                  + (f" / embed {ae:+.3f}" if ae is not None else "")
+                  + f" | benign nli-mean {np.mean(bnl):+.3f}", flush=True)
 
-        arms = [("shared NLI clusterer (the detector's own)", atk_nli, ben_nli, seed_nli),
-                ("independent exact-match clusterer (finding 14)", atk_ex, ben_ex, seed_ex)]
+        arms = [("shared NLI clusterer (the detector's own — confounded/permissive bound)",
+                 atk["nli"], ben["nli"], sd["nli"]),
+                ("independent exact-match clusterer (strict bound — over-counts surface form)",
+                 atk["exact"], ben["exact"], sd["exact"])]
+        if embed_fn is not None:
+            arms.append((f"independent embedding-cosine clusterer "
+                         f"({args.embedding_model} @ {args.embed_threshold}) — reframe-(b) ADJUDICATOR",
+                         atk["embed"], ben["embed"], sd["embed"]))
         L.append(f"## {detector.upper()} / {attack}  (n={len(outcomes)})")
         L.append("")
         for arm_name, am, bl, sl in arms:
