@@ -42,6 +42,7 @@ from se.sampling import DEFAULT_SAMPLES_DIR
 from se.attacks.harness import load_pair, read_outcomes, _stable_seed
 from se.attacks import proposer, feasibility
 from se.se_pipeline import semantic_entropy
+from se.entropy import cluster_and_score_exact
 from se.stats import rate_ci, bootstrap_ci
 
 CELLS = [("false_alarm", "se"), ("hide", "se")]
@@ -97,35 +98,44 @@ def summarize_bands(attack_moves, benign_lists, seed_lists) -> dict:
     }
 
 
-def _benign_moves(question: str, before: float, attack: str, pair, gen,
-                  K: int, seed: int) -> list[float]:
-    """Intended-direction moves for K benign (unoptimized) feasible paraphrases."""
+def _reseed(gen, seed: int):
+    return GenConfig(max_new_tokens=gen.max_new_tokens, temperature=gen.temperature,
+                     top_p=gen.top_p, n_samples=gen.n_samples, seed=seed)
+
+
+def _both(question: str, pair, gen, seed: int | None = None) -> tuple[float, float]:
+    """(NLI entropy, exact-match entropy) from the SAME seeded samples — the two
+    clusterings of one model output, isolating the shared-NLI confound (finding 14)."""
+    g = gen if seed is None else _reseed(gen, seed)
+    res = semantic_entropy(question, pair.lm, pair.nli, g)
+    return res.entropy_nats, cluster_and_score_exact(res.samples).entropy_nats
+
+
+def _benign_moves_both(question, before_nli, before_exact, attack, pair, gen, K, seed):
+    """K benign feasible paraphrases -> (nli_moves, exact_moves), scored under BOTH
+    clusterers from the same generations."""
     proposer.seed_proposer(seed)
-    moves: list[float] = []
-    tries = 0
-    while len(moves) < K and tries < K * 5:
+    nli_moves, exact_moves, tries = [], [], 0
+    while len(nli_moves) < K and tries < K * 5:
         tries += 1
         cand = proposer.propose(question, pair.lm)
         if not feasibility.check(cand, question, pair.nli).feasible:
             continue
-        ent = semantic_entropy(cand, pair.lm, pair.nli, gen).entropy_nats
-        moves.append(_move(attack, before, ent))
-    return moves
+        en, ee = _both(cand, pair, gen)
+        nli_moves.append(_move(attack, before_nli, en))
+        exact_moves.append(_move(attack, before_exact, ee))
+    return nli_moves, exact_moves
 
 
-def _seed_noise_moves(question: str, before: float, attack: str, pair,
-                      base_gen, n_seeds: int) -> list[float]:
-    """Intended-direction 'moves' of the SAME question re-scored under n_seeds seeds
-    — pure N=10 estimator noise with NO paraphrase, the floor below the benign floor.
-    (seed 0 reproduces `before`, so its move is ~0; other seeds expose the wobble.)"""
-    moves = []
+def _seed_moves_both(question, before_nli, before_exact, attack, pair, gen, n_seeds):
+    """Same question re-scored under n_seeds seeds -> (nli_moves, exact_moves): the
+    pure N=10 estimator-noise floor under each clusterer."""
+    nli_moves, exact_moves = [], []
     for s in range(n_seeds):
-        g = GenConfig(max_new_tokens=base_gen.max_new_tokens,
-                      temperature=base_gen.temperature, top_p=base_gen.top_p,
-                      n_samples=base_gen.n_samples, seed=s)
-        ent = semantic_entropy(question, pair.lm, pair.nli, g).entropy_nats
-        moves.append(_move(attack, before, ent))
-    return moves
+        en, ee = _both(question, pair, gen, seed=s)
+        nli_moves.append(_move(attack, before_nli, en))
+        exact_moves.append(_move(attack, before_exact, ee))
+    return nli_moves, exact_moves
 
 
 def main() -> int:
@@ -162,37 +172,43 @@ def main() -> int:
         if args.max_targets:
             outcomes = outcomes[: args.max_targets]
 
-        attack_moves, benign_lists, seed_lists = [], [], []
+        # Collect the three bands under BOTH clusterers (finding 14 2x2) from the
+        # same generations: NLI (shared, the detector's own) and exact-match (independent).
+        atk_nli, ben_nli, seed_nli = [], [], []
+        atk_ex, ben_ex, seed_ex = [], [], []
         for o in outcomes:
-            benign = _benign_moves(o.question, o.entropy_before, o.attack, pair, gen,
-                                   args.K, seed=_stable_seed("null:" + o.question_id))
-            seed = _seed_noise_moves(o.question, o.entropy_before, o.attack, pair, gen,
-                                     args.n_seeds)
-            atk = _move(o.attack, o.entropy_before, o.entropy_after)
-            attack_moves.append(atk); benign_lists.append(benign); seed_lists.append(seed)
-            pct = _percentile_below(atk, benign)
-            print(f"  {o.question_id}: attack {atk:+.3f} | benign(mean {np.mean(benign):+.3f}, "
-                  f"max {max(benign):+.3f}) | attack pctile {pct:.0%}", flush=True)
+            bn, be = _both(o.question, pair, gen)              # before, both clusterers
+            an, ae = _both(o.best_query, pair, gen)            # after
+            atk_nli.append(_move(o.attack, bn, an)); atk_ex.append(_move(o.attack, be, ae))
+            s = _stable_seed("null:" + o.question_id)
+            bnl, bel = _benign_moves_both(o.question, bn, be, o.attack, pair, gen, args.K, s)
+            snl, sel = _seed_moves_both(o.question, bn, be, o.attack, pair, gen, args.n_seeds)
+            ben_nli.append(bnl); ben_ex.append(bel); seed_nli.append(snl); seed_ex.append(sel)
+            print(f"  {o.question_id}: attack nli {atk_nli[-1]:+.3f} / exact {atk_ex[-1]:+.3f} | "
+                  f"benign nli-mean {np.mean(bnl):+.3f} / exact-mean {np.mean(bel):+.3f}", flush=True)
 
-        agg = summarize_bands(attack_moves, benign_lists, seed_lists)
-        L.append(f"## {detector.upper()} / {attack}  (n={agg['n']})")
+        arms = [("shared NLI clusterer (the detector's own)", atk_nli, ben_nli, seed_nli),
+                ("independent exact-match clusterer (finding 14)", atk_ex, ben_ex, seed_ex)]
+        L.append(f"## {detector.upper()} / {attack}  (n={len(outcomes)})")
         L.append("")
-        L.append("Three bands (mean intended move, nats) — expect seed < benign < attack:")
-        L.append(f"- seed-noise floor (same question):   {agg['mean_seed_move']:+.3f}")
-        L.append(f"- benign-paraphrase floor:            {agg['mean_benign_move']:+.3f}")
-        L.append(f"- optimised attack:                   {agg['mean_attack_move']:+.3f}")
-        L.append("")
-        L.append(f"- attack vs benign, headline (beats benign p90):  {_pc(agg['beats_benign_p90_ci'])}")
-        L.append(f"- attack vs benign, strict (beats benign max):    {_pc(agg['beats_benign_max_ci'])} "
-                 f"(budget-biased toward the attack; report for comparison only)")
-        L.append(f"- mean attack percentile within benign dist:      {agg['mean_attack_percentile']:.0%}")
-        L.append(f"- net move (attack - mean benign):                {_ci(agg['net_vs_benign_mean_ci'])} nats")
-        L.append(f"- benign clears the seed floor (reframe (b)):      {_pc(agg['benign_over_seed_ci'])}")
-        L.append("")
-        L.append("Reading: (a) targeted-attack claim needs 'beats benign p90' and the net-move "
-                 "CI well above 0. (b) 'SE fragile to any paraphrase' needs 'benign clears the "
-                 "seed floor' high — but that is confounded by the shared NLI until the "
-                 "independent-clusterer arm runs (finding 14).")
+        for arm_name, am, bl, sl in arms:
+            agg = summarize_bands(am, bl, sl)
+            L.append(f"### {arm_name}")
+            L.append("Three bands (mean intended move, nats) — expect seed < benign < attack:")
+            L.append(f"- seed-noise floor: {agg['mean_seed_move']:+.3f} · "
+                     f"benign floor: {agg['mean_benign_move']:+.3f} · "
+                     f"attack: {agg['mean_attack_move']:+.3f}")
+            L.append(f"- attack beats benign p90 (headline): {_pc(agg['beats_benign_p90_ci'])} · "
+                     f"beats benign max (budget-biased): {_pc(agg['beats_benign_max_ci'])}")
+            L.append(f"- mean attack percentile in benign: {agg['mean_attack_percentile']:.0%} · "
+                     f"net (attack - mean benign): {_ci(agg['net_vs_benign_mean_ci'])} nats")
+            L.append(f"- benign clears seed floor (reframe b): {_pc(agg['benign_over_seed_ci'])}")
+            L.append("")
+        L.append("Reading the 2x2 (finding 14): a targeted attack needs 'beats benign p90' + "
+                 "net CI > 0. Reframe (b) 'SE fragile to any paraphrase' needs the benign floor "
+                 "to clear the seed floor UNDER THE INDEPENDENT CLUSTERER — if it only clears it "
+                 "under the shared NLI, the 'fragility' was the NLI talking to itself, not a "
+                 "property of the model's answer distribution.")
         L.append("")
 
     out = RESULTS_DIR / "null_control_report.md"

@@ -91,3 +91,32 @@ def cluster_and_score(samples: list[str], nli: NLI,
         entropy_nats=discrete_entropy(assignments, "nats"),
         entropy_bits=discrete_entropy(assignments, "bits"),
     )
+
+
+def cluster_samples_exact(samples: list[str]) -> list[int]:
+    """INDEPENDENT clusterer (external review B5 / audit finding 14): group samples
+    by canonical-normalized string equality — NO NLI model. Used to separate "the
+    paraphrase genuinely changed the model's answer distribution" from "the shared
+    DeBERTa NLI is self-inconsistent": same model outputs, a different equivalence
+    relation. Deliberately stricter than NLI (it will not merge paraphrases of one
+    answer), so it is a lower-bound clusterer, not a drop-in replacement."""
+    from .scoring import normalize_answer
+    remap: dict[str, int] = {}
+    out: list[int] = []
+    for s in samples:
+        key = normalize_answer(s)
+        if key not in remap:
+            remap[key] = len(remap)
+        out.append(remap[key])
+    return out
+
+
+def cluster_and_score_exact(samples: list[str]) -> ClusterResult:
+    """ClusterResult under the independent exact-match clusterer (no NLI)."""
+    assignments = cluster_samples_exact(samples)
+    return ClusterResult(
+        assignments=assignments,
+        n_clusters=len(set(assignments)),
+        entropy_nats=discrete_entropy(assignments, "nats"),
+        entropy_bits=discrete_entropy(assignments, "bits"),
+    )
