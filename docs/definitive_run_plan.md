@@ -51,7 +51,27 @@ overnight. Options, in order of preference:
 The null control is cheap (~(K+n_seeds) evals/target) and not the bottleneck — the
 *attack* is. Decide the optimiser budget vs n trade-off before committing GPU-days.
 
+## Open risks discovered while running the machinery (2026-07-04)
+1. **Uncalibrated embedding threshold saturates.** At the default 0.82, e5 merges all
+   N=10 short factoid answer-samples into ONE cluster -> embedding entropy = 0 -> zero
+   signal (observed: embed move +0.000 on the first targets). So BOTH independent arms
+   are currently saturated (exact-match at high entropy, e5-at-0.82 at zero). **Threshold
+   calibration is a HARD prerequisite, not optional** — the embedding arm cannot adjudicate
+   until calibrated. Tool built: `scripts/calibrate_embed_threshold.py`.
+2. **Calibration domain-mismatch.** STS-B/PAWS are full sentences; the SE answer-samples
+   are SHORT factoid spans ("Denver Broncos" vs "the Broncos"). A threshold calibrated on
+   sentence pairs may not transfer to short-span cosines. Calibrate on (or at least include)
+   SHORT-answer paraphrase pairs matching the clustering domain, and report the
+   short-answer paraphrase-AUROC specifically.
+3. **Is e5 even a good oracle for short answers?** Sentence encoders are built for
+   sentences; their discrimination on short entity spans is unproven. If the short-answer
+   paraphrase-AUROC is mediocre, the embedding arm is not a trustworthy adjudicator and the
+   finding-14 conclusion is unsupported. This is the make-or-break check — report it first.
+   (Fallback if e5 fails on short spans: gtr-t5-base, or an LLM-judge equivalence oracle on
+   the answer samples, which is slower but domain-robust.)
+
 ## Still owed before external submission
-- Embedding model choice + threshold calibration (workflow in progress).
+- Embedding threshold calibration (Youden-J on short-answer + STS-B/PAWS; tool built) and
+  the short-answer paraphrase-AUROC that decides whether e5 can adjudicate at all.
 - Human / disclosed-LLM-judge equivalence audit of a sample of successful Q' (B5).
 - Verify the `%TODO` bib author lists against arXiv (camera-ready).
