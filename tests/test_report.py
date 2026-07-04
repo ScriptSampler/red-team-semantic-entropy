@@ -27,6 +27,7 @@ class FakeOutcome:
     success: bool
     status_held: bool
     correct_under_q_prime: bool = False   # only read by the matrix answer-flip split
+    frac_correct_under_q_prime: float = -1.0   # sampled status (finding 16); -1 = not computed
 
 
 def _hide_cell():
@@ -97,6 +98,23 @@ def test_matrix_operating_point_flips():
     assert f["n_false_alarm"] == 3 and f["fa_unflagged_to_flagged"] == 1
     assert abs(f["hide_flip_rate"] - 1 / 3) < 1e-9
     assert abs(f["fa_flip_rate"] - 1 / 3) < 1e-9
+
+
+def test_finding16_sampled_gate():
+    # FA cell: sampled fraction-correct decides "still right" (>0.5), among ent+feasible.
+    def fo(frac):
+        return FakeOutcome("false_alarm", "se", 1.0, 2.0, True, True, True, True,
+                           correct_under_q_prime=True, frac_correct_under_q_prime=frac)
+    cell = [fo(0.9), fo(0.3), fo(0.8)]        # 0.9 & 0.8 held; 0.3 not -> 2/3
+    s = summarize_cell(cell)
+    assert s["success_gated_sampled"] is not None
+    assert abs(s["success_gated_sampled"].point - 2 / 3) < 1e-9
+
+
+def test_finding16_none_without_frac():
+    # default FakeOutcomes carry frac = -1 -> the sampled gate is not defined
+    s = summarize_cell(_hide_cell())
+    assert s["success_gated_sampled"] is None
 
 
 def test_render_cell_md_smoke():

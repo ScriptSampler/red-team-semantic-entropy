@@ -59,6 +59,19 @@ def summarize_cell(outcomes, *, cutoffs=(0.0, 0.1, 0.25, 0.5, 1.0)) -> dict:
     fracs = [f for f in fracs if f >= 0.0]
     mean_frac_correct_qp = (sum(fracs) / len(fracs)) if fracs else float("nan")
 
+    # B7 finding 16 (critic entry 14, carry-forward b): a SAMPLED-status success gate.
+    # The greedy status can disagree with the T=1.0 set the detector clusters, so a FA
+    # "still correct" (or hide "still wrong") should hold on the MAJORITY of samples,
+    # not just the greedy answer. Only defined when frac was computed (else conservative).
+    def _sampled_held(o) -> bool | None:
+        f = getattr(o, "frac_correct_under_q_prime", -1.0)
+        if f < 0.0:
+            return None
+        return (f > 0.5) if attack == "false_alarm" else (f <= 0.5)
+    have_frac = any(_sampled_held(o) is not None for o in outcomes)
+    gated_sampled = [bool(o.entropy_and_feasible and _sampled_held(o) is True) for o in outcomes]
+    success_gated_sampled = rate_ci(gated_sampled) if have_frac else None
+
     moves = [_intended_move(o) for o in outcomes]
     feas_moves = [m for m, f in zip(moves, feasible) if f]
 
@@ -76,6 +89,7 @@ def summarize_cell(outcomes, *, cutoffs=(0.0, 0.1, 0.25, 0.5, 1.0)) -> dict:
         "answer_flip_count": int(answer_flip),
         "answer_flip_rate_among_ef": (answer_flip / n_ef) if n_ef else float("nan"),
         "mean_frac_correct_qp": mean_frac_correct_qp,   # sampled status (finding 16)
+        "success_gated_sampled": success_gated_sampled, # finding 16 gate (None if no frac)
         "mean_move_feasible":
             (sum(feas_moves) / len(feas_moves)) if feas_moves else float("nan"),
         "success_over_cutoffs": success_rate_over_cutoffs(moves, feasible, cutoffs),
@@ -155,7 +169,10 @@ def render_cell_md(summary: dict) -> list[str]:
     lines = [
         f"**{s['detector'].upper()} / {s['attack']}** (n={s['n']})",
         "",
-        f"- success (B2 invariance-gated): {_fmt_ci(s['success_gated'])}",
+        f"- success (B2 invariance-gated, greedy): {_fmt_ci(s['success_gated'])}",
+        (f"- success (finding 16, sampled status): {_fmt_ci(s['success_gated_sampled'])}"
+         if s.get("success_gated_sampled") is not None else
+         "- success (finding 16, sampled status): n/a (frac not computed)"),
         f"- success (entropy-only, pre-B2): {_fmt_ci(s['success_entropy_only'])}",
         f"- attrition from B2: {s['attrition_count']} of {s['n_entropy_only']} "
         f"would-be wins ({s['attrition_rate_of_would_be']:.0%})",
