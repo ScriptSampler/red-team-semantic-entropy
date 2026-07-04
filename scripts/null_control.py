@@ -218,9 +218,10 @@ def main() -> int:
         L.append(f"> ⚠ MACHINERY-VALIDATION ONLY (n={n_total} < 80). These numbers are NOT a "
                  f"result — they confirm the pipeline runs and reports correctly on real "
                  f"generations. A confirmatory claim needs n>=80/stratum (critique_log 13). "
-                 f"The exact-match arm is the STRICT bound (over-counts surface-form change); "
-                 f"reframe (b) is adjudicated only under an embedding-cosine clusterer, not "
-                 f"yet added. Do NOT lift these numbers into the paper.")
+                 f"NLI is the confounded/permissive bound; exact-match the strict bound "
+                 f"(over-counts surface-form change); the embedding arm ADJUDICATES but MUST be "
+                 f"threshold-calibrated first — an uncalibrated cosine cut saturates it "
+                 f"(scripts/calibrate_embed_threshold.py). Do NOT lift these numbers into the paper.")
         L.append("")
     L.append(f"K={args.K} benign feasible paraphrases + {args.n_seeds} same-question seeds "
              f"per target, on the fair pool ({campaign_dir.name}). The attack is placed as "
