@@ -180,3 +180,56 @@ def cluster_and_score_embedding(samples: list[str], embed_fn,
         entropy_nats=discrete_entropy(assignments, "nats"),
         entropy_bits=discrete_entropy(assignments, "bits"),
     )
+
+
+def cluster_samples_judge(samples: list[str], judge_fn) -> list[int]:
+    """INDEPENDENT clusterer via an injected PAIRWISE equivalence judge (finding-14/15
+    adjudicator of last resort, critic entry 16). `judge_fn(a, b) -> bool`. The judge
+    must be a model that is BOTH independent of the victim (not the Llama that produced
+    the samples — else circular) AND independent of the DeBERTa-MNLI (else it re-imports
+    finding-14's confound), and must be SELF-VALIDATED (its own agreement with labeled
+    paraphrase pairs reported) before it can adjudicate. Same union-find skeleton as the
+    NLI clusterer; O(n^2) judge calls. Because sentence embedders proved near-chance on
+    the adversarial case (AUROC 0.51 on hard short-answer negatives), a strong LLM-judge
+    is the remaining candidate independent oracle."""
+    n = len(samples)
+    if n <= 1:
+        return list(range(n))
+
+    parent = list(range(n))
+
+    def find(x: int) -> int:
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(x: int, y: int) -> None:
+        rx, ry = find(x), find(y)
+        if rx != ry:
+            parent[rx] = ry
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            if judge_fn(samples[i], samples[j]):
+                union(i, j)
+
+    roots = [find(i) for i in range(n)]
+    remap: dict[int, int] = {}
+    out: list[int] = []
+    for r in roots:
+        if r not in remap:
+            remap[r] = len(remap)
+        out.append(remap[r])
+    return out
+
+
+def cluster_and_score_judge(samples: list[str], judge_fn) -> ClusterResult:
+    """ClusterResult under the injected pairwise LLM-judge equivalence oracle."""
+    assignments = cluster_samples_judge(samples, judge_fn)
+    return ClusterResult(
+        assignments=assignments,
+        n_clusters=len(set(assignments)),
+        entropy_nats=discrete_entropy(assignments, "nats"),
+        entropy_bits=discrete_entropy(assignments, "bits"),
+    )

@@ -13,6 +13,7 @@ import numpy as np
 from se.entropy import (
     cluster_samples_exact, cluster_and_score_exact,
     cluster_samples_embedding, cluster_and_score_embedding,
+    cluster_samples_judge, cluster_and_score_judge,
 )
 
 
@@ -73,3 +74,28 @@ def test_embedding_threshold_controls_granularity():
 
 def test_embedding_clusterer_takes_no_nli():
     assert "nli" not in inspect.signature(cluster_samples_embedding).parameters
+
+
+# ---- LLM-judge clusterer (adjudicator of last resort) ------------------------
+
+def test_judge_clusterer_groups_by_injected_judge():
+    def judge(a, b):                       # equivalent iff same first word
+        return a.split()[0].lower() == b.split()[0].lower()
+    samples = ["Paris France", "Paris city", "London UK", "London town"]
+    a = cluster_samples_judge(samples, judge)
+    assert a[0] == a[1] and a[2] == a[3] and a[0] != a[2]
+    cs = cluster_and_score_judge(samples, judge)
+    assert cs.n_clusters == 2
+
+
+def test_judge_clusterer_transitive_union():
+    # a~b and b~c must force a~c (union-find transitivity)
+    def judge(a, b):
+        return abs(int(a) - int(b)) <= 1
+    a = cluster_samples_judge(["1", "2", "3", "9"], judge)
+    assert a[0] == a[1] == a[2]            # 1-2-3 chained into one cluster
+    assert a[3] != a[0]
+
+
+def test_judge_clusterer_signature_is_model_agnostic():
+    assert set(inspect.signature(cluster_samples_judge).parameters) == {"samples", "judge_fn"}
