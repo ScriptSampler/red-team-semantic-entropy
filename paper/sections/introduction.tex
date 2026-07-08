@@ -22,33 +22,49 @@ question we ask is different: can an attacker who only \emph{rephrases the quest
 under a hard semantic-equivalence constraint, move a sampling-based detector's score
 in a chosen direction while the model's answer---and its correctness---stays put?
 
-We show the invariance promise is breakable, and we are deliberate about what
-``breakable'' requires evidence for. We attack in \emph{both} directions: the
-\emph{hide} attack suppresses the score of a wrong answer so a hallucination is
-missed, and the under-explored \emph{false-alarm} attack inflates the score of a
-\emph{correct} answer so it is flagged---arguably the more damaging failure for a
-deployed abstention system, and cheaper for an adversary who merely wants to make a
-model look unreliable. Crucially, we hold three things fixed that prior evaluations do
-not jointly control: (i) targets are selected \emph{score-independently} so the clean
-detector is not evaluated on a pool its own scores defined (a circularity that inflates
-clean AUROC to $1.0$); (ii) an attack counts only if the model's \emph{hallucination
-status} is unchanged under the paraphrase, checked with the same oracle that labelled
-the data; and (iii) effect sizes are reported \emph{net of a noise floor}, since the
-detector score is a finite-sample estimate and an optimiser that selects the extremum
-over many candidates can otherwise mistake sampling variance for a successful attack.
+Answering this question rigorously turns out to require controls that prior
+evaluations do not jointly apply, and once they are applied the picture is more subtle
+than a clean ``we broke it.'' We contribute those controls as a protocol and report
+what they reveal. Three are load-bearing: (i) targets are selected
+\emph{score-independently}, or the clean detector is evaluated on a pool its own scores
+defined---a circularity that inflates clean AUROC to $1.0$; (ii) an attack counts only
+if the model's \emph{hallucination status} is unchanged under the paraphrase, checked
+with the same oracle that labelled the data; and (iii) effect sizes are reported
+\emph{net of a benign-paraphrase noise floor}, since the detector score is a
+finite-sample estimate and an optimiser selecting the extremum over many candidates
+otherwise mistakes sampling variance for success. Under these controls the optimised
+attack does move the detector---it robustly beats benign paraphrasing as measured by
+the detector's own NLI clusterer---but that measure is precisely the one that cannot
+separate a change in the model's answer distribution from an inconsistency of the NLI
+model that the detector's clustering and the attack's equivalence gate \emph{share}.
+The independent oracles one would reach for to break this tie---sentence embedders---turn
+out to be near-chance on exactly the word-preserving, meaning-shifted case an attack
+produces. On current evidence, then, the attribution is \emph{unresolved but bounded},
+and single-clusterer paraphrase-attack claims on these detectors are not adequately
+supported. We attack in \emph{both} directions---the \emph{hide} attack suppresses a
+wrong answer's score, the under-explored \emph{false-alarm} attack inflates a correct
+answer's---as the case study that exercises the protocol.
 
 \paragraph{Contributions.}
-(1) A bidirectional, NLI-constrained paraphrase attack on sampling-based hallucination
-detectors, foregrounding the induced-false-positive direction. (2) A circularity-free,
-null-controlled evaluation protocol---score-independent target selection, an
-answer-invariance success criterion, and a benign-paraphrase noise floor---whose
-three controls we show are each load-bearing: without them the clean detector looks
-perfect, sampling noise masquerades as attack success, and meaning-changing
-paraphrases are miscounted as wins. (3) A measurement of
-transferability across the detector family (SE$\leftrightarrow$SRE, and toward a
-hidden-state probe), with an explicit account of the shared-NLI confound that bounds
-what transfer can establish. (4) A reformulation-averaging defense and an
-analysis of what it does and does not close. Our headline effect size on the fair,
-null-controlled pool is reported in Section~\ref{sec:experiments}. [Quantitative result
-placeholder --- pending the null-controlled recompute; the current pipeline yields a
-preliminary false-alarm signal that we do not yet report as confirmatory.]
+(1) \textbf{A circularity-free, null-controlled evaluation protocol} for paraphrase
+attacks on sampling-based hallucination detectors: score-independent target selection,
+an answer-invariance success criterion, and a benign-paraphrase noise floor---the attack
+scored as a \emph{percentile within the benign-move distribution}, not a max-vs-max
+delta---whose three controls we show are each load-bearing (without them the clean
+detector looks perfect, sampling noise masquerades as attack success, and
+meaning-changing paraphrases are miscounted as wins). (2) \textbf{An independent-clusterer
+attribution analysis}: because the detector's NLI model both clusters answers and
+certifies paraphrase equivalence, the standard evaluation cannot attribute a measured
+attack to the model's answer distribution rather than to that shared model's
+self-inconsistency; we show cheap independent oracles (sentence embedders, near-chance
+on the adversarial case) do not resolve it, so existing single-clusterer attack claims
+are not adequately supported, and we specify the validated LLM-judge oracle under which
+attribution \emph{could} be settled. (3) \textbf{The attack itself}---bidirectional,
+NLI-constrained, foregrounding the under-explored induced-false-positive direction---as
+the case study that exercises the protocol, reported as a directional bracket (robust
+under the detector's own clusterer; unadjudicated under an independent one). (4) A
+reformulation-averaging defense and an analysis of what it does and does not close. Our
+effect-size bracket on the fair, null-controlled pool is reported in
+Section~\ref{sec:experiments}. [Quantitative bracket placeholder --- pending the
+definitive $n{\geq}80$ run; the current machinery-validation pass yields NLI-arm net
+$+0.64$ nats vs.\ a strict independent lower bound near zero.]

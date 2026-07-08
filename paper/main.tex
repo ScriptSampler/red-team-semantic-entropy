@@ -12,8 +12,11 @@
 \usepackage[margin=1in]{geometry}
 
 % Working title --- avoids collision with "Adversarial Paraphrasing" (2506.07001).
-\title{Crying Wolf: Meaning-Preserving Paraphrases Break Sampling-Based
-Hallucination Detectors in Both Directions}
+% PROPOSED Option-B title (protocol-led); the attack-led original is kept below, commented.
+\title{Crying Wolf, Carefully: What It Takes to Evaluate Paraphrase Attacks on
+Sampling-Based Hallucination Detectors}
+% \title{Crying Wolf: Meaning-Preserving Paraphrases Break Sampling-Based
+% Hallucination Detectors in Both Directions}   % attack-led (Option A) original
 \author{ScriptSampler\\ \texttt{(affiliation TBD)}}
 \date{\today}
 
@@ -21,15 +24,24 @@ Hallucination Detectors in Both Directions}
 \maketitle
 
 \begin{abstract}
-% <250 words, write last. See paper/skeleton.md section 1.
-Placeholder. Sampling-based hallucination detectors are deployed on the claim
-that they are invariant to surface form. We show that claim is breakable: a
-meaning-preserving paraphrase of the question, verified equivalent by
-bidirectional NLI, moves a detector's uncertainty score in either direction
-while the model's hallucination status (whether its answer is correct) is
-unchanged. We lead with the under-explored
-false-alarm direction, show transferability across SE and SRE, and probe a
-simple defense. [Numbers from results/.]
+% Option-B (protocol-led) draft, ~210 words. Numbers finalise after the n>=80 run.
+Sampling-based hallucination detectors such as semantic entropy are deployed on the
+claim that the uncertainty they report is invariant to how a question is phrased. We
+ask whether a meaning-preserving paraphrase can break that claim, and find that
+answering rigorously is harder than prior work assumed. We introduce a null-controlled
+evaluation protocol---score-independent target selection, an answer-invariance success
+criterion, and a benign-paraphrase noise floor---and show each control is necessary:
+without them a circular selection inflates the clean detector to perfect accuracy,
+sampling noise masquerades as attack success, and meaning-changing paraphrases are
+miscounted as wins. Under the protocol, an optimised paraphrase attack robustly moves
+the detector as measured by the detector's own NLI clusterer, in both the
+hallucination-hiding and the under-explored false-alarm direction. But that clusterer is
+shared with the attack's equivalence gate, so this measure cannot distinguish a real
+change in the model's answers from the clusterer's own inconsistency; and the cheap
+independent oracles one would use to break the tie are near-chance on exactly the
+adversarial case. We conclude that single-clusterer paraphrase-attack claims on these
+detectors are not yet adequately supported, report the effect as a directional bracket,
+and specify the validated LLM-judge oracle under which it could be settled.
 \end{abstract}
 
 \section{Introduction}
