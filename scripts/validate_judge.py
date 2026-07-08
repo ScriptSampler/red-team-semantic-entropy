@@ -20,14 +20,18 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))          # for _alias_s
 
 from se.config import RESULTS_DIR
 from se.judge import load_judge
+from se.stats import rate_ci
 from calibrate_embed_threshold import _alias_strata
 
 
 def _acc(judge, pairs, want):
+    """Accuracy + bootstrap CI (critic: a judge at 0.82 and one at 0.95 both pass the
+    0.8 bar but widen the bracket differently — propagate the CI, don't hide it)."""
     if not pairs:
-        return float("nan"), 0
-    ok = sum(1 for a, b, _ in pairs if judge(a, b) is want)
-    return ok / len(pairs), len(pairs)
+        return float("nan"), float("nan"), float("nan"), 0
+    flags = [judge(a, b) is want for a, b, _ in pairs]
+    ci = rate_ci(flags)
+    return ci.point, ci.lo, ci.hi, len(pairs)
 
 
 def main() -> int:
@@ -40,20 +44,23 @@ def main() -> int:
     print(f"[judge] {args.model} loaded", flush=True)
     st = _alias_strata(args.n_per_stratum)
 
-    pos_acc, npos = _acc(judge, st["pos"], True)          # should say YES
-    easy_acc, neasy = _acc(judge, st["easy_neg"], False)  # should say NO (easy)
-    hard_acc, nhard = _acc(judge, st["hard_neg"], False)  # should say NO (HARD — the test)
+    pos_p, pos_lo, pos_hi, npos = _acc(judge, st["pos"], True)          # should say YES
+    easy_p, easy_lo, easy_hi, neasy = _acc(judge, st["easy_neg"], False)  # should say NO
+    hard_p, hard_lo, hard_hi, nhard = _acc(judge, st["hard_neg"], False)  # HARD — the test
 
+    usable = (hard_p == hard_p and hard_p >= 0.8 and pos_p >= 0.8)
     L = [f"# LLM-judge self-validation ({args.model})", "",
-         "Accuracy on domain-matched short-answer strata (the set that disqualified e5). "
-         "The judge may adjudicate finding 14 ONLY IF hard-negative accuracy is high "
-         "(e5 was ~0.51 AUROC here).", "",
-         f"- positives (aliases -> should say SAME):        {pos_acc:.3f}  (n={npos})",
-         f"- easy negatives (distant -> should say NOT):    {easy_acc:.3f}  (n={neasy})",
-         f"- HARD negatives (near-miss -> should say NOT):  {hard_acc:.3f}  (n={nhard})  <-- REHABILITATION CRITERION",
+         "Accuracy (95% CI) on domain-matched short-answer strata (the set that disqualified "
+         "e5). The judge may adjudicate finding 14 ONLY IF hard-negative accuracy is high "
+         "(e5 was ~0.51 AUROC here). CAVEAT: these strata are clean gold aliases; the judge "
+         "will cluster messy real answer SAMPLES (hedges, sentences) — validate on realistic "
+         "sampled pairs too, and cross-check the judge against a human sample (finding 15) "
+         "before trusting it as the sole oracle.", "",
+         f"- positives (aliases -> SAME):          {pos_p:.3f} [{pos_lo:.3f}, {pos_hi:.3f}]  (n={npos})",
+         f"- easy negatives (distant -> NOT):      {easy_p:.3f} [{easy_lo:.3f}, {easy_hi:.3f}]  (n={neasy})",
+         f"- HARD negatives (near-miss -> NOT):    {hard_p:.3f} [{hard_lo:.3f}, {hard_hi:.3f}]  (n={nhard})  <-- CRITERION",
          "",
-         f"Balanced accuracy (pos vs HARD): {0.5 * (pos_acc + hard_acc):.3f}. "
-         f"{'USABLE adjudicator.' if (hard_acc == hard_acc and hard_acc >= 0.8 and pos_acc >= 0.8) else 'NOT usable -> keep the NLI/exact-match bracket.'}"]
+         f"Verdict: {'USABLE adjudicator (propagate the hard-negative CI into the bracket width).' if usable else 'NOT usable -> keep the NLI/exact-match bracket.'}"]
     out = RESULTS_DIR / "judge_validation.md"
     out.write_text("\n".join(L) + "\n")
     print(f"[report] wrote {out}", flush=True)
