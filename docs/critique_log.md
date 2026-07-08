@@ -459,3 +459,30 @@ tooling is now trustworthy for the definitive run (pending the framing/2nd-model
 decisions).
 
 ---
+
+## 18. 2026-07-05 — User decisions + Option-B reframe. Critic: APPROVE-WITH-NITS (fixed).
+
+User decisions: framing **B** (protocol-led); judge = "recommend + tell me the process";
+compute = **n≥80 multiday** ("most novel"). Acted on all three: n=80 SE attack matrix
+launched (bl7g479e0, ~39h, resumable, records finding-16); B folded into the paper; judge
+recommended + built.
+
+Critic APPROVE-WITH-NITS on the reframe (verified honest, free of Option-A *validity*
+overclaim; every number checked vs committed files: hard-neg 0.512, e5 arch, STS-B 0.99,
+NLI +0.64). Three required fixes applied (commit 3f7789f): (1) a **power/tense** overclaim —
+body prose stated the n=6 NLI signal as fact ("robustly beats"/"does move"), contradicting
+the paper's own placeholder → now "a preliminary evaluation ... quantify at scale"; (2)
+softened "not adequately supported" → "the standard single-clusterer evaluation cannot
+support such claims without an independent oracle" (methodological, holds at any n), and
+scoped "existing ... claims" → "any ... claim would be" (our positioning says the cell is
+open); (3) foregrounded the DEMONSTRATED protocol catches (clean AUROC 1.0→0.69; max-vs-max
+33%→80% flip) so contributions read as discovery, not failure.
+
+Judge: critic **concurs with Qwen2.5-7B-Instruct** and the self-validation gate (require
+hard_acc≥0.8 ∧ pos_acc≥0.8 on the SAME strata that killed e5, else keep the bracket —
+structurally verified correct). Gate refinements applied: per-stratum CIs; caveats to
+validate on messy real answer samples (not just clean gold aliases) and to cross-check the
+single judge against a human sample (finding 15). **Open gates on any attribution claim:
+the n≥80 run, finding-16 sampled-status, and judge validation.**
+
+---
