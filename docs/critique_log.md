@@ -486,3 +486,34 @@ single judge against a human sample (finding 15). **Open gates on any attributio
 the n≥80 run, finding-16 sampled-status, and judge validation.**
 
 ---
+
+## 19. 2026-07-09 — Judge-adjudicated finding-14 result (n=6). Critic: APPROVE (machinery).
+
+Built + validated Qwen2.5-7B-Instruct as the judge: it CLEARS the e5-killer hard-negative
+case (0.92 vs e5 0.51). Its low positive rate (0.39) was TriviaQA LABEL NOISE (alias lists
+group different entities — 'Orange (album)'/'Orange (film)' — which Qwen correctly rejects);
+clean-positive filter -> 0.66-0.70; it slightly over-splits (conservative on FA). First
+judge-adjudicated null control (SE/FA, n=6, machinery, results/null_control_3arm_judge_n6.md):
+NLI attack +0.456 / exact +0.047 (saturated collapse) / **JUDGE +0.373 SURVIVES**;
+percentile-in-benign NLI 80th ~ judge 76th >> exact 56th; survival ratio 1.12 [-0.09,+2.53].
+**REVERSES the overnight "clusterer-artifact" read** — the exact-match collapse was
+saturation (H2), not the confound (H1), exactly as the 3-arm design was built to show.
+
+Critic APPROVE as machinery-validation; both my flagged concerns confirmed correct. Rulings:
+(1) "preliminary, leans (a), pending n>=80, NOT confirmed" is honest — the lean is in the
+POINT estimates; the CIs are near-uninformative at n=6, and the run-to-run swing (+0.534 ->
++0.456 just from changing K/tag) proves n=6 is not a result; do not let "leans" harden.
+(2) The net-ratio is inflated by the judge's low benign floor (-0.19); FIX (applied) = lead
+with the PERCENTILE (null-controlled AND scale-free), demote the net-ratio to supplementary,
+and DIAGNOSE the -0.19 floor before n>=80 (regression-to-mean of high-baseline FA targets? a
+Qwen over-split interaction?). Raw attack-move is NOT a clean headline (winner's-curse biased).
+(3) Option (i): keep Option B but UPDATE the paper (applied) — the oracle now exists +
+validated + preliminary-lean, so "we specify an oracle" was stale; this STRENGTHENS Option B.
+Do NOT rotate to A; the pre-registered rule (adjudicator net CI>0 at n>=80) is NOT met at n=6.
+Remaining nits for the definitive run: re-examine "conservative" PER-DIRECTION (over-split
+OVERstates the hide attack); quantify the TriviaQA label-noise rate when reporting the judge's
+0.7 positive rate; reconcile per-target-net vs pooled-mean-diff in the report text (done).
+**Open gates on any (a) claim: the n>=80 matrix (resuming), the judge re-run on it, the
+benign-floor diagnosis.**
+
+---
