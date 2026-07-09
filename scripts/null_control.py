@@ -42,7 +42,7 @@ from se.sampling import DEFAULT_SAMPLES_DIR
 from se.attacks.harness import load_pair, read_outcomes, _stable_seed
 from se.attacks import proposer, feasibility
 from se.se_pipeline import semantic_entropy
-from se.entropy import cluster_and_score_exact, cluster_and_score_embedding
+from se.entropy import cluster_and_score_exact, cluster_and_score_embedding, cluster_and_score_judge
 from se.stats import rate_ci, bootstrap_ci
 
 CELLS = [("false_alarm", "se"), ("hide", "se")]
@@ -133,45 +133,48 @@ def _reseed(gen, seed: int):
                      top_p=gen.top_p, n_samples=gen.n_samples, seed=seed)
 
 
-def _arms(question, pair, gen, embed_fn, threshold, seed: int | None = None):
-    """(NLI, exact-match, embedding) entropy from the SAME seeded samples — up to three
-    clusterings of ONE model output (finding-14 2x2/3-arm). embedding is None if no
-    embed_fn (embedding requires the encoder model)."""
+def _arms(question, pair, gen, embed_fn, threshold, judge_fn=None, seed: int | None = None):
+    """(NLI, exact-match, embedding, judge) entropy from the SAME seeded samples — up to
+    four clusterings of ONE model output (finding-14). embedding/judge are None if their
+    oracle is not supplied. The judge arm is O(n^2) LLM calls, so it is opt-in."""
     g = gen if seed is None else _reseed(gen, seed)
     res = semantic_entropy(question, pair.lm, pair.nli, g)
     nli = res.entropy_nats
     exact = cluster_and_score_exact(res.samples).entropy_nats
     emb = (cluster_and_score_embedding(res.samples, embed_fn, threshold).entropy_nats
            if embed_fn is not None else None)
-    return nli, exact, emb
+    jud = (cluster_and_score_judge(res.samples, judge_fn).entropy_nats
+           if judge_fn is not None else None)
+    return nli, exact, emb, jud
 
 
 def _moves(before, after, attack):
-    """(nli, exact, embed) intended-direction moves; embed move is None if not scored."""
-    n = _move(attack, before[0], after[0])
-    x = _move(attack, before[1], after[1])
-    e = _move(attack, before[2], after[2]) if before[2] is not None and after[2] is not None else None
-    return n, x, e
+    """(nli, exact, embed, judge) intended-direction moves; embed/judge None if not scored."""
+    def _m(i):
+        return _move(attack, before[i], after[i]) if before[i] is not None and after[i] is not None else None
+    return _move(attack, before[0], after[0]), _m(1), _m(2), _m(3)
 
 
-def _benign_moves_arms(question, before, attack, pair, gen, K, seed, embed_fn, threshold):
-    """K benign feasible paraphrases -> (nli, exact, embed) move lists from the same
-    generations. embed list is empty if no embed_fn."""
+def _benign_moves_arms(question, before, attack, pair, gen, K, seed, embed_fn, threshold, judge_fn=None):
+    """K benign feasible paraphrases -> (nli, exact, embed, judge) move lists from the same
+    generations. embed/judge lists are empty if their oracle is absent."""
     proposer.seed_proposer(seed)
-    nm, xm, em, tries = [], [], [], 0
+    nm, xm, em, jm, tries = [], [], [], [], 0
     while len(nm) < K and tries < K * 5:
         tries += 1
         cand = proposer.propose(question, pair.lm)
         if not feasibility.check(cand, question, pair.nli).feasible:
             continue
-        n, x, e = _moves(before, _arms(cand, pair, gen, embed_fn, threshold), attack)
+        n, x, e, j = _moves(before, _arms(cand, pair, gen, embed_fn, threshold, judge_fn), attack)
         nm.append(n); xm.append(x)
         if e is not None:
             em.append(e)
-    return nm, xm, em
+        if j is not None:
+            jm.append(j)
+    return nm, xm, em, jm
 
 
-def _seed_moves_arms(question, before, attack, pair, gen, n_seeds, embed_fn, threshold):
+def _seed_moves_arms(question, before, attack, pair, gen, n_seeds, embed_fn, threshold, judge_fn=None):
     """Same question re-scored under n_seeds seeds -> (nli, exact, embed) move lists.
 
     Seeds start at 1, NOT 0: `before` is generated at the baseline gen.seed=0, so a seed-0
@@ -179,13 +182,15 @@ def _seed_moves_arms(question, before, attack, pair, gen, n_seeds, embed_fn, thr
     and injects a structural 0.0 move into every target's seed band — deflating the noise
     floor and biasing the seed<benign ordering + benign_over_seed reframe check toward the
     attack. Excluding seed 0 keeps the seed band an honest estimate of estimator noise."""
-    nm, xm, em = [], [], []
+    nm, xm, em, jm = [], [], [], []
     for s in range(1, n_seeds + 1):
-        n, x, e = _moves(before, _arms(question, pair, gen, embed_fn, threshold, seed=s), attack)
+        n, x, e, j = _moves(before, _arms(question, pair, gen, embed_fn, threshold, judge_fn, seed=s), attack)
         nm.append(n); xm.append(x)
         if e is not None:
             em.append(e)
-    return nm, xm, em
+        if j is not None:
+            jm.append(j)
+    return nm, xm, em, jm
 
 
 def main() -> int:
@@ -198,6 +203,8 @@ def main() -> int:
                     help="e.g. intfloat/e5-base-unsupervised to add the embedding arm (finding 14)")
     ap.add_argument("--embed_threshold", type=float, default=0.82,
                     help="cosine threshold for the embedding clusterer (calibrate; default 0.82)")
+    ap.add_argument("--judge_model", default="",
+                    help="e.g. Qwen/Qwen2.5-7B-Instruct to add the LLM-judge arm (finding 14, O(n^2))")
     args = ap.parse_args()
 
     campaign_dir = DEFAULT_SAMPLES_DIR / "attacks" / f"wk9{args.tag}"
@@ -216,6 +223,12 @@ def main() -> int:
         prefix = "" if "gtr" in args.embedding_model else "query: "
         embed_fn = load_embedder(args.embedding_model, prefix=prefix)
         print(f"[embed] {args.embedding_model} loaded (threshold {args.embed_threshold})", flush=True)
+
+    judge_fn = None
+    if args.judge_model:
+        from se.judge import load_judge
+        judge_fn = load_judge(args.judge_model)
+        print(f"[judge] {args.judge_model} loaded (O(n^2) LLM calls per candidate)", flush=True)
 
     def _ci(c):
         return "n/a" if c is None else f"{c.point:+.3f} [{c.lo:+.3f}, {c.hi:+.3f}]"
@@ -252,26 +265,29 @@ def main() -> int:
         # Collect the three bands under up to THREE clusterers (finding-14 arms) from the
         # same generations: NLI (shared/confounded), exact-match (independent, strict),
         # embedding-cosine (independent, semantic — the reframe-(b) adjudicator).
-        atk = {"nli": [], "exact": [], "embed": []}
-        ben = {"nli": [], "exact": [], "embed": []}
-        sd = {"nli": [], "exact": [], "embed": []}
+        atk = {"nli": [], "exact": [], "embed": [], "judge": []}
+        ben = {"nli": [], "exact": [], "embed": [], "judge": []}
+        sd = {"nli": [], "exact": [], "embed": [], "judge": []}
         for o in outcomes:
-            before = _arms(o.question, pair, gen, embed_fn, args.embed_threshold)
-            after = _arms(o.best_query, pair, gen, embed_fn, args.embed_threshold)
-            an, ax, ae = _moves(before, after, o.attack)
+            before = _arms(o.question, pair, gen, embed_fn, args.embed_threshold, judge_fn)
+            after = _arms(o.best_query, pair, gen, embed_fn, args.embed_threshold, judge_fn)
+            an, ax, ae, aj = _moves(before, after, o.attack)
             atk["nli"].append(an); atk["exact"].append(ax)
-            if ae is not None:
-                atk["embed"].append(ae)
+            if ae is not None: atk["embed"].append(ae)
+            if aj is not None: atk["judge"].append(aj)
             s = _stable_seed("null:" + o.question_id)
-            bnl, bxl, bel = _benign_moves_arms(o.question, before, o.attack, pair, gen,
-                                               args.K, s, embed_fn, args.embed_threshold)
-            snl, sxl, sel = _seed_moves_arms(o.question, before, o.attack, pair, gen,
-                                             args.n_seeds, embed_fn, args.embed_threshold)
+            bnl, bxl, bel, bjl = _benign_moves_arms(o.question, before, o.attack, pair, gen,
+                                                    args.K, s, embed_fn, args.embed_threshold, judge_fn)
+            snl, sxl, sel, sjl = _seed_moves_arms(o.question, before, o.attack, pair, gen,
+                                                  args.n_seeds, embed_fn, args.embed_threshold, judge_fn)
             ben["nli"].append(bnl); ben["exact"].append(bxl); sd["nli"].append(snl); sd["exact"].append(sxl)
             if embed_fn is not None:
                 ben["embed"].append(bel); sd["embed"].append(sel)
+            if judge_fn is not None:
+                ben["judge"].append(bjl); sd["judge"].append(sjl)
             print(f"  {o.question_id}: attack nli {an:+.3f} / exact {ax:+.3f}"
                   + (f" / embed {ae:+.3f}" if ae is not None else "")
+                  + (f" / judge {aj:+.3f}" if aj is not None else "")
                   + f" | benign nli-mean {np.mean(bnl):+.3f}", flush=True)
 
         arms = [("shared NLI clusterer (the detector's own — confounded/permissive bound)",
@@ -282,6 +298,10 @@ def main() -> int:
             arms.append((f"independent embedding-cosine clusterer "
                          f"({args.embedding_model} @ {args.embed_threshold}) — reframe-(b) ADJUDICATOR",
                          atk["embed"], ben["embed"], sd["embed"]))
+        if judge_fn is not None:
+            arms.append((f"independent LLM-judge clusterer ({args.judge_model}) — finding-14 ADJUDICATOR "
+                         f"(hard-neg-validated; positive-recognition ~0.7 -> slightly over-splits)",
+                         atk["judge"], ben["judge"], sd["judge"]))
         L.append(f"## {detector.upper()} / {attack}  (n={len(outcomes)})")
         L.append("")
         for arm_name, am, bl, sl in arms:
@@ -297,17 +317,20 @@ def main() -> int:
                      f"net (attack - mean benign): {_ci(agg['net_vs_benign_mean_ci'])} nats")
             L.append(f"- benign clears seed floor (reframe b): {_pc(agg['benign_over_seed_ci'])}")
             L.append("")
-        if embed_fn is not None:
+        for arm_key, arm_label, present in [("embed", "embedding", embed_fn is not None),
+                                            ("judge", "LLM-judge", judge_fn is not None)]:
+            if not present:
+                continue
             sr = survival_ratio(_per_target_nets(atk["nli"], ben["nli"]),
-                                _per_target_nets(atk["embed"], ben["embed"]))
+                                _per_target_nets(atk[arm_key], ben[arm_key]))
             if sr is not None:
-                L.append("### Survival ratio (embedding_net / NLI_net) — PRE-REGISTERED headline")
-                L.append(f"- embedding_net / NLI_net = {sr.point:+.2f} [{sr.lo:+.2f}, {sr.hi:+.2f}] "
-                         f"— fraction of the (confounded) NLI-measured effect that survives under "
-                         f"the independent encoder.")
-                L.append("- Rule (critique_log 15): claim reframe (a) IFF the EMBEDDING net CI > 0 "
-                         "at n>=80; ratio ~1 -> (a) survives; ~0 -> attack was largely an NLI-"
-                         "clusterer artifact (a real finding about SE, not a failure).")
+                L.append(f"### Survival ratio ({arm_label}_net / NLI_net) — PRE-REGISTERED headline")
+                L.append(f"- {arm_label}_net / NLI_net = {sr.point:+.2f} [{sr.lo:+.2f}, {sr.hi:+.2f}] "
+                         f"— fraction of the (confounded) NLI-measured effect that survives under the "
+                         f"independent {arm_label} clusterer.")
+                L.append("- Rule (critique_log 15): claim reframe (a) IFF the independent-arm net CI > 0 "
+                         "at n>=80; ratio ~1 -> (a) survives; ~0 -> attack was largely an NLI-clusterer "
+                         "artifact (a real finding about SE, not a failure).")
                 L.append("")
         L.append("Reading the 3 arms (finding 14): NLI is the confounded/permissive UPPER bound; "
                  "exact-match the strict/saturated LOWER bound; EMBEDDING is the adjudicator. The "
