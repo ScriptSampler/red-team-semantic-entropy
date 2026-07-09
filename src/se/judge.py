@@ -66,7 +66,7 @@ def make_judge_fn(generate_fn, *, symmetric: bool = True):
 
 
 def load_judge(model_id: str = "Qwen/Qwen2.5-7B-Instruct", device: str = "cuda",
-               max_new_tokens: int = 3, load_in_4bit: bool = True):
+               max_new_tokens: int = 3, load_in_4bit: bool = True, symmetric: bool = True):
     """Load an instruct model and return judge_fn. 4-bit keeps a 7B/14B judge within
     16 GB alongside nothing else (run the judge AFTER the attack matrix frees the GPU)."""
     import torch
@@ -87,4 +87,4 @@ def load_judge(model_id: str = "Qwen/Qwen2.5-7B-Instruct", device: str = "cuda",
                            pad_token_id=tok.eos_token_id)
         return tok.decode(out[0, ids.shape[1]:], skip_special_tokens=True)
 
-    return make_judge_fn(generate_fn)
+    return make_judge_fn(generate_fn, symmetric=symmetric)

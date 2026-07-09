@@ -38,9 +38,11 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="Qwen/Qwen2.5-7B-Instruct")
     ap.add_argument("--n_per_stratum", type=int, default=300)
+    ap.add_argument("--asymmetric", action="store_true",
+                    help="judge a single ordering only (default: symmetric, both must agree)")
     args = ap.parse_args()
 
-    judge = load_judge(args.model)
+    judge = load_judge(args.model, symmetric=not args.asymmetric)
     print(f"[judge] {args.model} loaded", flush=True)
     st = _alias_strata(args.n_per_stratum)
 

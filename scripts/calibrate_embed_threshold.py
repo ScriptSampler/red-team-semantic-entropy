@@ -38,6 +38,23 @@ def _content_tokens(s):
     return {t for t in normalize_answer(s).split() if len(t) > 2}
 
 
+def _clean_positive(a, b):
+    """A RELIABLE same-answer positive: TriviaQA alias lists are noisy (they group
+    genuinely different entities, e.g. 'Orange (album)' / 'Orange (film)'), so we keep
+    only surface variants we can trust as equivalent ground truth: token-set nesting
+    ('Broncos' subset of 'Denver Broncos') or a near-identical string (typo/case/spacing,
+    e.g. 'Ennio Morricone' / 'Ennio Moricone'). Conservative: drops hard-but-true aliases,
+    which is correct for a validation set."""
+    from difflib import SequenceMatcher
+    na, nb = normalize_answer(a), normalize_answer(b)
+    ta, tb = set(na.split()), set(nb.split())
+    if not ta or not tb:
+        return False
+    if ta <= tb or tb <= ta:
+        return True
+    return SequenceMatcher(None, na, nb).ratio() >= 0.85
+
+
 def _alias_strata(n):
     """DOMAIN-MATCHED short-answer calibration with the critic's REQUIRED hard-negative
     stratum (entry 16). Ground-truth from TriviaQA gold aliases (not the NLI). Returns
@@ -58,7 +75,7 @@ def _alias_strata(n):
 
     pos = [(a, b, 1) for forms in forms_by_ex
            for a, b in itertools.combinations(forms[:4], 2)
-           if normalize_answer(a) != normalize_answer(b)]
+           if normalize_answer(a) != normalize_answer(b) and _clean_positive(a, b)]
 
     firsts = [f[0] for f in forms_by_ex]
     tok2ids = defaultdict(list)
