@@ -324,19 +324,24 @@ def main() -> int:
             sr = survival_ratio(_per_target_nets(atk["nli"], ben["nli"]),
                                 _per_target_nets(atk[arm_key], ben[arm_key]))
             if sr is not None:
-                L.append(f"### Survival ratio ({arm_label}_net / NLI_net) — PRE-REGISTERED headline")
-                L.append(f"- {arm_label}_net / NLI_net = {sr.point:+.2f} [{sr.lo:+.2f}, {sr.hi:+.2f}] "
-                         f"— fraction of the (confounded) NLI-measured effect that survives under the "
-                         f"independent {arm_label} clusterer.")
-                L.append("- Rule (critique_log 15): claim reframe (a) IFF the independent-arm net CI > 0 "
-                         "at n>=80; ratio ~1 -> (a) survives; ~0 -> attack was largely an NLI-clusterer "
-                         "artifact (a real finding about SE, not a failure).")
+                L.append(f"### Survival ratio ({arm_label}_net / NLI_net) — SUPPLEMENTARY (not headline)")
+                L.append(f"- {arm_label}_net / NLI_net = {sr.point:+.2f} [{sr.lo:+.2f}, {sr.hi:+.2f}]. "
+                         f"CAVEAT: a ratio of two nets is inflated when the {arm_label} benign floor is "
+                         f"low; read the PERCENTILE comparison above as the headline, not this ratio.")
+                L.append("- Net is per-target: mean_i(attack_i - mean(benign_i)), which differs from "
+                         "(pooled mean attack - pooled mean benign) when per-target benign counts vary.")
                 L.append("")
-        L.append("Reading the 3 arms (finding 14): NLI is the confounded/permissive UPPER bound; "
-                 "exact-match the strict/saturated LOWER bound; EMBEDDING is the adjudicator. The "
-                 "reported effect is the embedding-arm net move; the NLI-arm beating benign is "
-                 "necessary but NOT sufficient (it cannot separate 'model answer-distribution "
-                 "changed' from 'the NLI clusterer partitioned the same answers differently').")
+        L.append("Reading the arms (finding 14): NLI is the confounded/permissive bound; exact-match "
+                 "the strict/saturated bound; a VALIDATED LLM-judge (if present) is the ADJUDICATOR. "
+                 "HEADLINE INDICATOR = the attack's PERCENTILE within the benign distribution under "
+                 "each clusterer (beats-benign-p90 + mean-percentile): it is null-controlled AND "
+                 "scale-free, so it is robust to a clusterer's benign-floor LEVEL. The net-ratio "
+                 "below is a SUPPLEMENTARY view only — it is inflated when a clusterer's benign floor "
+                 "is low (e.g. the judge's -0.19), so do NOT read it as the headline. The raw "
+                 "attack-move is NOT null-controlled (winner's-curse biased). Claim reframe (a) IFF "
+                 "the ADJUDICATOR's net CI > 0 at n>=80 (critique_log 15); the NLI-arm alone is "
+                 "necessary but NOT sufficient (it cannot separate a real answer-distribution change "
+                 "from the NLI clusterer partitioning the same answers differently).")
         L.append("")
 
     out = RESULTS_DIR / "null_control_report.md"

@@ -118,9 +118,20 @@ them. We find that no cheap independent oracle adjudicates cleanly: exact-match 
 on short factoid answers, and the embedding oracle, though excellent on easy paraphrase
 pairs (STS-B AUROC $0.99$), is near-chance on the word-preserving, meaning-shifted pairs
 the attack produces (hard-negative AUROC $0.51$), so its clustering cannot be trusted to
-adjudicate. We therefore specify a victim- and NLI-independent LLM-judge equivalence
-oracle, validated on the same labelled pairs, as the instrument required to attribute the
-effect; absent it, attribution is reported as an explicit bracket rather than a claim.
+adjudicate. We therefore build and validate a victim- and NLI-independent LLM-judge
+equivalence oracle (Qwen2.5-7B-Instruct), which on the same labelled pairs reaches
+hard-negative accuracy $0.92$ where the embedder is near-chance ($0.51$). Re-clustering
+the answer samples under this validated judge, a preliminary $n{=}6$ machinery-validation
+pass indicates the attack's effect \emph{largely survives} the independent oracle: the
+attack sits at the $76$th percentile of the benign-move distribution under the judge,
+essentially matching the confounded NLI arm ($80$th) and far above the saturated
+exact-match ($56$th)---in contrast to the exact-match collapse, which we thus attribute to
+that oracle's saturation rather than to a clusterer artifact. At this sample size the
+interval is uninformative (the net confidence interval includes zero), so we do \emph{not}
+claim the effect real; the confirmatory $n{\geq}80$ run under the validated judge is the
+gate on that claim. We report the percentile-in-benign indicator as the headline (it is
+null-controlled and scale-free); absent a cleared claim, attribution is an explicit
+bracket, not an assertion.
 
 \paragraph{Transfer and defense.}
 To test whether the vulnerability is paradigm-level rather than implementation-
