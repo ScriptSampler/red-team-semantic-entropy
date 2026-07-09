@@ -19,11 +19,19 @@ make_judge_fn's `symmetric` option).
 from __future__ import annotations
 
 _PROMPT = (
-    "You are judging whether two answers to the SAME trivia question refer to the same "
-    "thing. Consider aliases and surface variants the same (e.g. 'Broncos' and 'Denver "
-    "Broncos'), but different entities or values different (e.g. 'Denver Broncos' vs "
-    "'Denver Nuggets', or '1912' vs '1921'). Answer with only 'yes' or 'no'.\n"
-    "Answer 1: {a}\nAnswer 2: {b}\nSame?"
+    "Two short answers to the same trivia question are given. Decide whether they refer "
+    "to the SAME answer. Count an alias, nickname, abbreviation, partial name, or surface "
+    "variant as the SAME (they name the same entity). Count different entities or "
+    "different values as DIFFERENT. Reply with ONLY 'yes' (same) or 'no' (different).\n"
+    "Examples:\n"
+    "Answer 1: Broncos | Answer 2: Denver Broncos -> yes\n"
+    "Answer 1: JFK | Answer 2: John F. Kennedy -> yes\n"
+    "Answer 1: the Nile | Answer 2: Nile River -> yes\n"
+    "Answer 1: Denver Broncos | Answer 2: Denver Nuggets -> no\n"
+    "Answer 1: 1912 | Answer 2: 1921 -> no\n"
+    "Answer 1: Paris | Answer 2: Paris, Texas -> no\n"
+    "Now decide.\n"
+    "Answer 1: {a} | Answer 2: {b} -> "
 )
 
 
