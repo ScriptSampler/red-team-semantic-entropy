@@ -47,12 +47,13 @@ Closest on the ``manipulate uncertainty'' axis, \citet{uncertaintyfragile2024}
 shift answer confidence via a fine-tuned backdoor trigger on multiple-choice
 self-evaluation --- a different threat model (weight access, not input
 paraphrase). Most relevant of all, CORVUS red-teams single-pass hallucination
-detectors and degrades SEP~\citep{corvus2026}; we differentiate it on five
-points: CORVUS is model-side (LoRA fine-tuning with fixed inputs), suppression-
-only, uses no semantic-equivalence constraint, targets single-pass telemetry
-rather than the sampling-based SE detector, and evaluates on Alpaca/FAVA rather
-than TriviaQA/SQuAD. Our attack is input-side, bidirectional, NLI-constrained,
-and targets the sampling-based detectors directly. A weaker neighbour prompts
+detectors and degrades SEP~\citep{corvus2026} --- establishing that SE-\emph{family}
+detectors can be attacked, which we do not claim as our novelty. Our distinction is
+substantive rather than a label: CORVUS perturbs a frozen hidden-state probe
+\emph{model-side} (LoRA fine-tuning, fixed inputs, suppression-only, no
+semantic-equivalence constraint, Alpaca/FAVA), whereas we perturb the \emph{input} under a
+hard equivalence constraint and target the sampling-and-NLI-clustering pipeline itself --- a
+different attack surface --- in both directions, on TriviaQA/SQuAD. A weaker neighbour prompts
 LLMs to fool generic activation probes~\citep{blandfort2025redteamprobes}, but
 not in the hallucination-detection setting. To our knowledge, no prior work \emph{formulates} an
 input-side, bidirectional meaning-preserving paraphrase attack on sampling-based
