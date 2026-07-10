@@ -94,12 +94,18 @@ def make_batched_judge_fn(generate_batch_fn, *, symmetric: bool = True):
 
 def load_judge(model_id: str = "Qwen/Qwen2.5-7B-Instruct", device: str = "cuda",
                max_new_tokens: int = 3, load_in_4bit: bool = True, symmetric: bool = True,
-               batched: bool = False):
+               batched: bool = False, judge_batch_size: int = 12):
     """Load an instruct model and return the judge callable. 4-bit keeps a 7B/14B judge
     within 16 GB alongside nothing else (run the judge AFTER the attack matrix frees the
     GPU). With batched=False (default) returns judge_fn(a, b) -> bool (the validated path,
     used by validate_judge.py). With batched=True returns judge_pairs(pairs) -> list[bool]
-    (the fast path for the scale run; plug into entropy.cluster_samples_judge_batched)."""
+    (the fast path for the scale run; plug into entropy.cluster_samples_judge_batched).
+
+    judge_batch_size caps how many prompts go into ONE generate() forward pass. The full
+    O(n^2) set (up to ~90 for N=10 symmetric) OOMs a 16 GB GPU that is ALSO holding the
+    victim + DeBERTa, so we sub-batch. Per-prompt greedy output is invariant to which other
+    prompts share its chunk (pad tokens are attention-masked), so chunking stays
+    verdict-identical to both the single-call batch and the unbatched judge."""
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
@@ -127,19 +133,25 @@ def load_judge(model_id: str = "Qwen/Qwen2.5-7B-Instruct", device: str = "cuda",
     def generate_batch_fn(prompts: list[str]) -> list[str]:
         # Decoder-only batched generation needs LEFT padding so the generated tokens of
         # every row start at the same position; attention_mask masks the pad tokens out.
+        # Sub-batch to judge_batch_size so the activation for one chunk fits alongside the
+        # victim + DeBERTa; per-prompt output does not depend on chunk composition.
         texts = [tok.apply_chat_template([{"role": "user", "content": p}],
                                          add_generation_prompt=True, tokenize=False)
                  for p in prompts]
+        outs: list[str] = []
         old_side = tok.padding_side
         tok.padding_side = "left"
         try:
-            enc = tok(texts, return_tensors="pt", padding=True,
-                      add_special_tokens=False).to(mdl.device)
+            for i in range(0, len(texts), judge_batch_size):
+                chunk = texts[i:i + judge_batch_size]
+                enc = tok(chunk, return_tensors="pt", padding=True,
+                          add_special_tokens=False).to(mdl.device)
+                out = mdl.generate(**enc, max_new_tokens=max_new_tokens, do_sample=False,
+                                   pad_token_id=tok.eos_token_id)
+                gen = out[:, enc["input_ids"].shape[1]:]
+                outs.extend(tok.decode(g, skip_special_tokens=True) for g in gen)
         finally:
             tok.padding_side = old_side
-        out = mdl.generate(**enc, max_new_tokens=max_new_tokens, do_sample=False,
-                           pad_token_id=tok.eos_token_id)
-        gen = out[:, enc["input_ids"].shape[1]:]
-        return [tok.decode(g, skip_special_tokens=True) for g in gen]
+        return outs
 
     return make_batched_judge_fn(generate_batch_fn, symmetric=symmetric)

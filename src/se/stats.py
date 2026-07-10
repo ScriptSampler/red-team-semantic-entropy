@@ -138,6 +138,49 @@ def rate_ci(flags, *, n_boot: int = 2000, alpha: float = 0.05, seed: int = 0) ->
                         n_boot=n_boot, alpha=alpha, seed=seed)
 
 
+def analytic_max_percentile(m: int) -> float:
+    """H0 expected percentile of a MAX-of-m within a reference sample drawn from the SAME
+    distribution (critique_log 21, B2). By exchangeability, for one reference draw B and m
+    iid candidates, P(B < max of the m) = 1 - 1/(m+1) = m/(m+1) — distribution-free.
+
+    This is the null baseline the attack's percentile-in-benign must be read against: the
+    attack move is a max over ~m=180 optimiser candidates, so even with ZERO adversarial
+    signal it sits at ~m/(m+1) ~ 99.4% of the benign INDIVIDUAL-draw distribution, not 50%.
+    An observed percentile below this baseline is evidence of NO targeted effect. Companion
+    only — the optimiser's candidates are dependent/concentrated, not iid, so the honest
+    control is the budget-matched benign-MAX (paired_max_net), not this baseline."""
+    if m < 1:
+        raise ValueError("m must be >= 1")
+    return m / (m + 1)
+
+
+def paired_max_net(attack_max, benign_lists, *, n_boot: int = 3000, seed: int = 0) -> dict:
+    """Budget-matched winner's-curse control (critique_log 21, B2). Compares each target's
+    attack-max to its BENIGN-MAX (max over that target's benign draws), PAIRED per target —
+    the only comparison immune to the selection-budget asymmetry that inflates
+    attack-max-vs-benign-individual. Under H0 (optimiser guidance carries no signal and the
+    benign budget matches the attack's), E[attack_max - benign_max] = 0.
+
+    attack_max[i] = the attack's (max) move for target i; benign_lists[i] = that target's
+    benign move list (take its max). Returns the paired net CI (bootstrap of mean
+    attack_max_i - benign_max_i) and the sign-test rate (fraction of targets with
+    attack_max > benign_max, CI). Reframe-(a) is supported iff the net CI is strictly > 0.
+    NOTE: benign_lists must be generated at a budget comparable to the attack's (~180); a
+    small K under-estimates benign_max and inflates this net (report the benign budget)."""
+    pairs = [(a, max(b)) for a, b in zip(attack_max, benign_lists) if b]
+    if not pairs:
+        return {"n": 0, "net_ci": None, "sign_ci": None, "mean_benign_max": float("nan")}
+    diffs = [a - bm for a, bm in pairs]
+    wins = [a > bm for a, bm in pairs]
+    return {
+        "n": len(pairs),
+        "net_ci": bootstrap_ci(diffs, np.mean, n_boot=n_boot, seed=seed),
+        "sign_ci": rate_ci(wins, n_boot=n_boot, seed=seed),
+        "mean_benign_max": float(np.mean([bm for _, bm in pairs])),
+        "mean_attack_max": float(np.mean([a for a, _ in pairs])),
+    }
+
+
 def success_rate_over_cutoffs(intended_moves, feasible, cutoffs) -> list[tuple[float, float]]:
     """Success rate as a function of the entropy-move cutoff (§6 sensitivity).
 

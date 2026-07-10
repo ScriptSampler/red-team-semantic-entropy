@@ -44,7 +44,7 @@ from se.attacks import proposer, feasibility
 from se.se_pipeline import semantic_entropy
 from se.entropy import (cluster_and_score_exact, cluster_and_score_embedding,
                         cluster_and_score_judge, cluster_and_score_judge_batched)
-from se.stats import rate_ci, bootstrap_ci
+from se.stats import rate_ci, bootstrap_ci, paired_max_net, analytic_max_percentile
 
 CELLS = [("false_alarm", "se"), ("hide", "se")]
 
@@ -218,8 +218,11 @@ def main() -> int:
     ap.add_argument("--judge_model", default="",
                     help="e.g. Qwen/Qwen2.5-7B-Instruct to add the LLM-judge arm (finding 14, O(n^2))")
     ap.add_argument("--judge_batched", action="store_true",
-                    help="score all pairs of a clustering in ONE GPU batch (identical "
-                         "clusters, ~10-20x faster; GPU-verify with scripts/probe_batched_judge.py)")
+                    help="score pairs of a clustering in GPU batches (identical clusters, "
+                         "~10-20x faster; GPU-verify with scripts/probe_batched_judge.py)")
+    ap.add_argument("--judge_batch_size", type=int, default=12,
+                    help="prompts per judge forward pass when --judge_batched (lower if OOM; "
+                         "the victim+DeBERTa+judge share 16GB)")
     ap.add_argument("--dump_diag", default="",
                     help="optional JSON path: dump per-target, per-arm baseline entropy + "
                          "attack/benign/seed move lists, for the benign-floor diagnosis "
@@ -246,7 +249,8 @@ def main() -> int:
     judge_fn = None
     if args.judge_model:
         from se.judge import load_judge
-        judge_fn = load_judge(args.judge_model, batched=args.judge_batched)
+        judge_fn = load_judge(args.judge_model, batched=args.judge_batched,
+                              judge_batch_size=args.judge_batch_size)
         mode = "BATCHED (one GPU batch per clustering)" if args.judge_batched else "O(n^2) per candidate"
         print(f"[judge] {args.judge_model} loaded ({mode})", flush=True)
 
@@ -338,6 +342,8 @@ def main() -> int:
                          atk["judge"], ben["judge"], sd["judge"]))
         L.append(f"## {detector.upper()} / {attack}  (n={len(outcomes)})")
         L.append("")
+        budgets = [getattr(o, "n_objective_calls", 0) for o in outcomes]
+        attack_budget = int(np.median([b for b in budgets if b] or [180]))
         for arm_name, am, bl, sl in arms:
             agg = summarize_bands(am, bl, sl)
             L.append(f"### {arm_name}")
@@ -350,6 +356,19 @@ def main() -> int:
             L.append(f"- mean attack percentile in benign: {agg['mean_attack_percentile']:.0%} · "
                      f"net (attack - mean benign): {_ci(agg['net_vs_benign_mean_ci'])} nats")
             L.append(f"- benign clears seed floor (reframe b): {_pc(agg['benign_over_seed_ci'])}")
+            L.append(f"- ⚠ the percentile + net-vs-MEAN above are winner's-curse BIASED (B2): "
+                     f"attack-max over ~{attack_budget} candidates vs benign INDIVIDUAL draws; "
+                     f"the H0 percentile baseline is ~{analytic_max_percentile(attack_budget):.1%}, "
+                     f"NOT 50% (critique_log 21). Read the budget-matched line as the headline:")
+            bm = paired_max_net(am, bl)
+            if bm["net_ci"] is not None:
+                L.append(f"- **BUDGET-MATCHED (B2 HEADLINE)**: attack-max − benign-MAX, paired "
+                         f"per target: net {_ci(bm['net_ci'])} nats · sign-test {_pc(bm['sign_ci'])} "
+                         f"(fraction of targets attack-max > benign-max). Benign budget K={args.K} "
+                         f"vs attack ~{attack_budget}: H0 net=0 IFF K≈attack budget; K≪budget "
+                         f"under-estimates benign-max and INFLATES this net (run K~{attack_budget}).")
+            else:
+                L.append("- BUDGET-MATCHED (B2): no benign draws to form a benign-max.")
             L.append("")
         for arm_key, arm_label, present in [("embed", "embedding", embed_fn is not None),
                                             ("judge", "LLM-judge", judge_fn is not None)]:
