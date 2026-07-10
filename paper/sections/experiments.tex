@@ -1,5 +1,68 @@
-% Experiments. Fill from results/ once wk9 campaigns + wk10 matrix complete.
-% Setup: Llama 3.1 8B 4-bit; TriviaQA + SQuAD; SE N=10 T=1.0; SRE R=3,K=8,T=0.8;
-% NLI deberta-large-mnli. Replication: SE TriviaQA AUROC 0.787 (lit. 0.828).
-% Main matrix (false-alarm first), transferability table, SEP-transfer + defense.
-\textit{Draft pending main results.}
+% Experiments. SKELETON (2026-07-10) --- structure fixed by scripts/null_control.py's
+% output; DATA CELLS ARE PLACEHOLDERS ("--"). Fill from results/null_control_*_def.md
+% when the definitive run lands. Discipline: no confirmatory claim until n>=80/stratum;
+% an interim n=53 pass may be reported as explicitly preliminary.
+\label{sec:experiments}
+
+\paragraph{Setup.}
+The victim model is Llama-3.1-8B-Instruct in 4-bit quantisation on a single 16\,GB GPU.
+Semantic entropy draws $N{=}10$ answers at temperature $1.0$ and clusters them by
+bidirectional DeBERTa-large-MNLI entailment; semantic reformulation entropy uses
+$R{=}3$ reformulations, $K{=}8$, temperature $0.8$. Our SE replication on TriviaQA
+reaches AUROC $0.787$ (published SE figure $0.828$; the gap is the NLI backend, see
+Limitations). Targets are drawn by the stratified score-independent sampler; on the
+resulting fair pool the clean detector scores AUROC $0.69$, against the $1.0$ that
+score-dependent selection manufactures by construction.
+
+\paragraph{Reading the null control.}
+Table~\ref{tab:nullcontrol} places the optimised attack against two null bands---a
+same-question \emph{seed-noise} floor and a \emph{benign-paraphrase} floor of $K$
+NLI-passing non-adversarial rephrasings---under each of four clustering relations. The
+shared-NLI arm is the detector's own clusterer and is the \emph{confounded upper bound}:
+it cannot separate a real change in the answer distribution from the NLI model's own
+inconsistency, because that same model gates the attack's paraphrases. Exact-match is a
+\emph{strict lower bound} that saturates on short factoid answers. The
+\texttt{e5-base-unsupervised} embedding relation is NLI-supervision-free but near-chance
+on the adversarial, word-preserving case (hard-negative AUROC $0.51$), so it cannot
+adjudicate. The LLM-judge (Qwen2.5-7B-Instruct), victim- and NLI-independent and
+validated to $0.92$ on exactly that discrimination, is the \textbf{adjudicator}. The
+\textbf{headline} is the attack's \emph{percentile within the benign-move distribution}
+(null-controlled and scale-free); the net move (attack $-$ mean benign) and the
+pre-registered survival ratio (judge-net~$/$~NLI-net) are supplementary, since the net is
+inflated wherever an arm's benign floor is low.
+
+\begin{table}[t]
+\centering
+\caption{Null-controlled attack effect, SE / false-alarm direction, per clustering
+relation. Bands are mean intended move (nats); expect seed~$<$~benign~$<$~attack. The
+percentile-in-benign row is the headline. \emph{Placeholder cells pending the definitive
+run}; interim $n{=}53$ then confirmatory $n{\geq}80$.}
+\label{tab:nullcontrol}
+\begin{tabular}{lcccc}
+\toprule
+ & Shared NLI & Exact-match & Embedding & LLM-judge \\
+ & (confounded) & (strict LB) & (e5, cannot adj.) & (adjudicator) \\
+\midrule
+Seed-noise floor (nats)        & -- & -- & -- & -- \\
+Benign floor (nats)            & -- & -- & -- & -- \\
+Attack (nats)                  & -- & -- & -- & -- \\
+\midrule
+\textbf{Attack pctile in benign} & \textbf{--} & \textbf{--} & \textbf{--} & \textbf{--} \\
+Beats benign p90 (\%)          & -- & -- & -- & -- \\
+Net (attack $-$ mean benign)   & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Survival ratio (judge-net~$/$~NLI-net), pre-registered supplementary: \emph{--}
+[--,\,--]. Decision rule (critique log 15): reframe~(a) ``the attack targets the
+detector'' is claimed iff the adjudicator's net confidence interval exceeds zero at
+$n{\geq}80$; a ratio near $1$ means the effect survives the independent clusterer, near
+$0$ means it was largely an NLI-clusterer artifact (itself a finding about SE, not a null
+result).
+
+\paragraph{Transfer and defense.}
+[Pending.] The SE$\leftrightarrow$SRE transfer table and the reformulation-averaging
+defense curve fill from the same campaign; both are reported net of the benign floor and
+read as corroborating rather than independent evidence (the two detectors share the
+DeBERTa backbone).
