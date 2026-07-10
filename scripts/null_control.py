@@ -205,6 +205,10 @@ def main() -> int:
                     help="cosine threshold for the embedding clusterer (calibrate; default 0.82)")
     ap.add_argument("--judge_model", default="",
                     help="e.g. Qwen/Qwen2.5-7B-Instruct to add the LLM-judge arm (finding 14, O(n^2))")
+    ap.add_argument("--dump_diag", default="",
+                    help="optional JSON path: dump per-target, per-arm baseline entropy + "
+                         "attack/benign/seed move lists, for the benign-floor diagnosis "
+                         "(critique_log open gate; e.g. why the judge benign floor is -0.19)")
     args = ap.parse_args()
 
     campaign_dir = DEFAULT_SAMPLES_DIR / "attacks" / f"wk9{args.tag}"
@@ -254,6 +258,7 @@ def main() -> int:
              f"= attack move exceeds the benign 90th percentile. See docs/critique_log.md 13.")
     L.append("")
 
+    diag: list[dict] = []  # per-target diagnostic records (dumped iff --dump_diag)
     for attack, detector in CELLS:
         f = campaign_dir / f"triviaqa_{detector}_{attack}.jsonl"
         if not f.exists():
@@ -289,6 +294,15 @@ def main() -> int:
                   + (f" / embed {ae:+.3f}" if ae is not None else "")
                   + (f" / judge {aj:+.3f}" if aj is not None else "")
                   + f" | benign nli-mean {np.mean(bnl):+.3f}", flush=True)
+            if args.dump_diag:
+                diag.append({
+                    "detector": detector, "attack": attack, "question_id": o.question_id,
+                    "baseline": {"nli": before[0], "exact": before[1],
+                                 "embed": before[2], "judge": before[3]},
+                    "attack_move": {"nli": an, "exact": ax, "embed": ae, "judge": aj},
+                    "benign": {"nli": bnl, "exact": bxl, "embed": bel, "judge": bjl},
+                    "seed": {"nli": snl, "exact": sxl, "embed": sel, "judge": sjl},
+                })
 
         arms = [("shared NLI clusterer (the detector's own — confounded/permissive bound)",
                  atk["nli"], ben["nli"], sd["nli"]),
@@ -343,6 +357,13 @@ def main() -> int:
                  "necessary but NOT sufficient (it cannot separate a real answer-distribution change "
                  "from the NLI clusterer partitioning the same answers differently).")
         L.append("")
+
+    if args.dump_diag:
+        import json
+        from pathlib import Path
+        dp = Path(args.dump_diag)
+        dp.write_text(json.dumps(diag, indent=2, default=float))
+        print(f"[diag] wrote {len(diag)} per-target records -> {dp}", flush=True)
 
     out = RESULTS_DIR / "null_control_report.md"
     out.write_text("\n".join(L) + "\n")
