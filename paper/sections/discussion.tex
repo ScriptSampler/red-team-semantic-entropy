@@ -21,15 +21,19 @@ We conjecture the mechanism generalises beyond one implementation: any detector 
 operationalises ``semantic equivalence'' through a learned model inherits that
 model's decision boundary as an attack surface---the very component that defines the
 score is the component an attacker steers. This \emph{a-priori} argument follows from
-the construction alone. Establishing it \emph{empirically} is harder than it first
-looks. Transfer between SE and a reformulation-based variant (SRE) is suggestive but
-confounded: in our setup both detectors share the same DeBERTa-large-MNLI backbone,
-so a paraphrase that moves both may be exploiting one model's shared blind spot
-rather than a paradigm-level property. The load-bearing test is therefore an
-\emph{independent} clustering oracle (Limitations): if the degradation survives a
-different equivalence model, the weakness is structural; if it does not, it is that
-NLI model's self-inconsistency. We report SE-to-SRE transfer as evidence
-\emph{consistent with} the structural hypothesis, not as proof of it.
+the construction alone; the load-bearing \emph{empirical} test is whether the effect
+survives an equivalence oracle independent of the detector's own NLI. We run that test.
+Cheap independent oracles do not settle it---exact-match saturates on short factoid
+answers and sentence embedders are near-chance on the adversarial, word-preserving case
+(Methods)---but a victim- and NLI-independent LLM-judge, validated to $0.92$ accuracy on
+exactly that adversarial discrimination where the embedder scores $0.51$, does: under it
+a preliminary pass finds the attack \emph{largely survives}, sitting at nearly the same
+rank within the benign-move distribution as under the detector's own clusterer. That is
+evidence for the structural reading rather than for the NLI model's mere
+self-inconsistency. We stress the preliminary status---at the current sample size the
+interval is uninformative, and the confirmatory $n{\geq}80$ run is the gate on the
+claim---and that a single validated judge, however independent, is not the last word;
+SE-to-SRE transfer, confounded by the shared DeBERTa backbone, is at best corroborating.
 
 \paragraph{Why lead with false alarms.}
 Prior red-teaming of uncertainty estimators emphasises the hide direction (missed

@@ -18,13 +18,20 @@ we will verify against the literature at revision).
 
 \paragraph{The clusterer and the equivalence gate share one NLI model.}
 Semantic entropy is \emph{defined} by DeBERTa-large-MNLI bidirectional clustering,
-and our attack's feasibility constraint uses the same model. A measured degradation
-can therefore reflect, in part, the self-inconsistency of a single NLI model rather
-than a paradigm-level weakness: the optimiser is free to find phrasings that this
-model both clusters differently and still calls equivalent. Establishing that the
-vulnerability survives an \emph{independent} clustering oracle (a different NLI model,
-embedding similarity, or exact match) is important future work; we currently bound
-only the question-side gate leakage, not the answer-clustering side.
+and our attack's feasibility constraint uses the same model, so a measured degradation
+could in part reflect that one model's self-inconsistency rather than a paradigm-level
+weakness. We address this directly by re-clustering the answer samples under equivalence
+oracles independent of the DeBERTa-MNLI supervision (Methods), but two caveats bound the
+check. First, the cheap independent oracles are unreliable on the adversarial case
+(exact-match saturates; the sentence embedder is near-chance), so the adjudication rests
+on a single LLM-judge; while that judge is validated ($0.92$) on the hard discrimination
+the others fail, one oracle---even independent and validated---is not dispositive, and a
+human or multi-judge equivalence audit remains owed. Second, the judge's own
+positive-recognition is imperfect (it slightly over-splits genuine aliases), which makes
+its adjudication \emph{conservative} for the false-alarm direction but not necessarily for
+hide; and our validation labels (TriviaQA alias lists) carry noise the judge in places
+more than corrects. The independent-clusterer result is therefore reported as preliminary
+evidence, pending the confirmatory $n{\geq}80$ run.
 
 \paragraph{Equivalence is certified automatically, not by humans.}
 Feasibility is a bidirectional-entailment judgement, and our answer-flip

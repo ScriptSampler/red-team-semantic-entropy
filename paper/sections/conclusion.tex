@@ -16,9 +16,13 @@ optimiser that maximises a noisy estimate.
 Two boundaries remain, and we state them as the work to do rather than as caveats to
 wave away. First, our clusterer and our equivalence gate are the same NLI model, so
 whether the vulnerability is a property of the \emph{paradigm} or of one model's
-self-inconsistency is settled only by an independent clustering oracle---an experiment
-we motivate but do not yet run. Second, the meaning-preserving guarantee rests on an
-automatic gate; a human equivalence audit is needed before it is fully established. A
+self-inconsistency turns on an independent clustering oracle. We build one: the cheap
+candidates (exact match, sentence embeddings) fail on the adversarial case, but a
+victim- and NLI-independent LLM-judge, validated on exactly that case, preliminarily
+indicates the effect survives---evidence the vulnerability is real rather than a
+clustering artifact---which the confirmatory large-$n$ run is set to settle. Second,
+the meaning-preserving guarantee rests on an automatic gate; a human equivalence audit
+is needed before it is fully established. A
 simple reformulation-averaging defense raises the attacker's cost but does not close
 the gap, suggesting that robustness to paraphrase must be designed into these detectors
 rather than assumed. Taken together, the results argue that ``semantic'' uncertainty
