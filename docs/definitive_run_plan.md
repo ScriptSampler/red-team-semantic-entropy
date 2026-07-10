@@ -17,19 +17,27 @@ Distinguish, on the circularity-free fair pool, null-controlled:
    fair pool via `campaign_pool` (detector-blind, shared seed). SE fa + hide first;
    SRE (now seeded) and SQuAD as extensions. The harness records `frac_correct_under_q_prime`
    (finding 16). `scripts/recompute_fair.py --n 80 --tag _def`.
-2. **Three-arm null control** on all targets: `scripts/null_control.py --tag _def`
-   (already the 2×2; add the embedding arm — see below). Produces, per clusterer
-   {shared NLI, exact-match, embedding-cosine}, the three bands seed < benign < attack.
+2. **Four-arm null control** on all targets, WITH the diagnostic dump:
+   `scripts/null_control.py --tag _def --K 8 --n_seeds 3 --judge_model Qwen/Qwen2.5-7B-Instruct --dump_diag results/diag_def.json`
+   Produces, per clusterer {shared NLI, exact-match, embedding-cosine, LLM-judge}, the
+   three bands seed < benign < attack. The **LLM-judge is the adjudicator** (validated
+   0.92 vs e5's 0.51 on the adversarial case — risk #3 below vindicated: e5 is NOT
+   trustworthy there). The `--dump_diag` JSON feeds `scripts/diagnose_benign_floor.py`
+   to close the benign-floor gate (docs/benign_floor_diagnosis.md).
 3. **Report (all already wired):** attack as a *percentile within the full benign
    distribution* (p90 headline, not max-vs-max); three-band ordering; `benign_over_seed`;
    finding-16 sampled-status gate; paired-bootstrap CIs (`auroc_diff_ci`); a
    multiple-comparisons note across the cells/FPR-sweep/cutoff-sweep.
 
 ## Decision rule
-- attack > benign p90 **and** net(attack − mean benign) CI > 0  →  **(a)**.
-- benign floor clears the seed floor **under the EMBEDDING clusterer** (not just NLI or
+- attack > benign p90 **and** the ADJUDICATOR's (LLM-judge) net(attack − mean benign)
+  CI > 0 at n≥80  →  **(a)** (critique_log 15). Lead with the percentile (scale-free,
+  null-controlled); the net carries the benign-floor caveat that
+  `diagnose_benign_floor.py` resolves.
+- benign floor clears the seed floor **under the LLM-judge clusterer** (not just NLI or
   exact-match)  →  **(b)**. NLI arm is the confounded permissive bound; exact-match the
-  strict bound (over-counts surface form); embedding is the adjudicator.
+  strict bound (over-counts surface form); the **validated LLM-judge is the adjudicator**
+  (e5 embedding failed the adversarial case — risk #3).
 - both collapse  →  negative result; lead with the protocol.
 
 ## Embedding clusterer (finding-14 adjudicator) — model choice pending
