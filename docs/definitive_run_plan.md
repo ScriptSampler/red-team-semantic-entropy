@@ -17,23 +17,31 @@ Distinguish, on the circularity-free fair pool, null-controlled:
    fair pool via `campaign_pool` (detector-blind, shared seed). SE fa + hide first;
    SRE (now seeded) and SQuAD as extensions. The harness records `frac_correct_under_q_prime`
    (finding 16). `scripts/recompute_fair.py --n 80 --tag _def`.
-2. **Four-arm null control** on all targets, WITH the diagnostic dump:
-   `scripts/null_control.py --tag _def --K 8 --n_seeds 3 --judge_model Qwen/Qwen2.5-7B-Instruct --dump_diag results/diag_def.json`
-   Produces, per clusterer {shared NLI, exact-match, embedding-cosine, LLM-judge}, the
-   three bands seed < benign < attack. The **LLM-judge is the adjudicator** (validated
-   0.92 vs e5's 0.51 on the adversarial case — risk #3 below vindicated: e5 is NOT
-   trustworthy there). The `--dump_diag` JSON feeds `scripts/diagnose_benign_floor.py`
-   to close the benign-floor gate (docs/benign_floor_diagnosis.md).
-3. **Report (all already wired):** attack as a *percentile within the full benign
-   distribution* (p90 headline, not max-vs-max); three-band ordering; `benign_over_seed`;
-   finding-16 sampled-status gate; paired-bootstrap CIs (`auroc_diff_ci`); a
-   multiple-comparisons note across the cells/FPR-sweep/cutoff-sweep.
+2. **Four-arm null control** on all targets, BUDGET-MATCHED, WITH the diagnostic dump.
+   Critical (critique_log 21, B2): the benign floor must be a **budget-matched benign-MAX**
+   — run at `--K ~180` so each target's benign-max is a max over the attacker's own search
+   budget, not `K=8` individual draws (attack-max vs individual draws is winner's-curse
+   biased; the batched judge, `--judge_batched --judge_batch_size 6`, makes K~180 tractable):
+   `scripts/null_control.py --tag _def --K 180 --n_seeds 3 --judge_model Qwen/Qwen2.5-7B-Instruct --judge_batched --judge_batch_size 6 --dump_diag results/diag_def.json`
+   The **LLM-judge is the FA adjudicator** under the disclosed hard-neg-primary re-spec
+   (critique_log 21, B3; e5 fails at 0.51). Report the NLI/exact bracket ALONGSIDE. Feeds
+   `scripts/diagnose_benign_floor.py`.
+2b. **Null-objective beam ablation** (~10-15 targets): run the identical optimiser with a
+   scrambled objective and compare its max to the random-180 benign-max — bounds how much
+   of the attack−benign gap is the beam's concentration-on-noise vs the adversarial
+   objective (diffuse random-180 alone is anti-conservative). [task 23 — design owed.]
+3. **Report:** budget-matched paired net (attack-max − benign-max) with paired-bootstrap
+   CI + sign test = HEADLINE; analytic IID baseline (m/(m+1)) as a labeled companion;
+   percentile/net-vs-mean shown as diagnostics only (budget-biased); reframe-b seed-vs-benign
+   (budget-matched, valid); finding-16 sampled-status gate; multiple-comparisons note.
 
-## Decision rule
-- attack > benign p90 **and** the ADJUDICATOR's (LLM-judge) net(attack − mean benign)
-  CI > 0 at n≥80  →  **(a)** (critique_log 15). Lead with the percentile (scale-free,
-  null-controlled); the net carries the benign-floor caveat that
-  `diagnose_benign_floor.py` resolves.
+## Decision rule (single; identical in Experiments, Methods, here — critique_log 21, M1)
+- Reframe-(a) claimed IFF, at n≥80, the ADJUDICATOR's (LLM-judge) per-target PAIRED net
+  (attack-max − budget-matched benign-max) has a paired-bootstrap 95% CI strictly > 0,
+  corroborated by the sign test and read against the analytic IID null baseline. If the CI
+  includes 0, (a) is NOT claimed; report the NLI/exact bracket + judge point estimate as the
+  honest bounded result. Two deviations disclosed as triggered: embedding→judge (e5 0.51);
+  individual-benign→budget-matched-max (B2).
 - benign floor clears the seed floor **under the LLM-judge clusterer** (not just NLI or
   exact-match)  →  **(b)**. NLI arm is the confounded permissive bound; exact-match the
   strict bound (over-counts surface form); the **validated LLM-judge is the adjudicator**

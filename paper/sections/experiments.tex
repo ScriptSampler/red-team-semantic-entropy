@@ -26,10 +26,12 @@ inconsistency, because that same model gates the attack's paraphrases. Exact-mat
 on the adversarial, word-preserving case (hard-negative AUROC $0.51$), so it cannot
 adjudicate. The LLM-judge (Qwen2.5-7B-Instruct), victim- and NLI-independent and
 validated to $0.92$ on exactly that discrimination, is the \textbf{adjudicator}. The
-\textbf{headline} is the attack's \emph{percentile within the benign-move distribution}
-(null-controlled and scale-free); the net move (attack $-$ mean benign) and the
-pre-registered survival ratio (judge-net~$/$~NLI-net) are supplementary, since the net is
-inflated wherever an arm's benign floor is low.
+\textbf{headline} is the per-target \emph{paired} comparison of attack-max to a
+\emph{budget-matched} benign-max (the max over a benign search of the attacker's own size),
+which is the only winner's-curse-honest statistic; the percentile-within-individual-draws
+and the net-vs-mean are shown as diagnostics but are budget-biased upward (a max over the
+attacker's $\sim$180 candidates beats individual benign draws by construction) and are not
+the claim statistic.
 
 \begin{table}[t]
 \centering
@@ -54,12 +56,24 @@ Net (attack $-$ mean benign)   & -- & -- & -- & -- \\
 \end{tabular}
 \end{table}
 
-\noindent Survival ratio (judge-net~$/$~NLI-net), pre-registered supplementary: \emph{--}
-[--,\,--]. Decision rule (critique log 15): reframe~(a) ``the attack targets the
-detector'' is claimed iff the adjudicator's net confidence interval exceeds zero at
-$n{\geq}80$; a ratio near $1$ means the effect survives the independent clusterer, near
-$0$ means it was largely an NLI-clusterer artifact (itself a finding about SE, not a null
-result).
+\paragraph{Decision rule (single, pre-registered, with disclosed deviations).}
+Reframe~(a)---``the attack targets the detector''---is claimed iff, at $n{\geq}80$, the
+adjudicator clusterer's per-target \emph{paired} net (attack-max minus the
+\emph{budget-matched} benign-max, i.e.\ the max over $\sim$180 random feasible paraphrases,
+matching the attacker's search budget) has a paired-bootstrap $95\%$ CI strictly above
+zero, corroborated by the sign test (fraction of targets with attack-max $>$ benign-max)
+and read against the analytic IID null baseline ($\approx m/(m{+}1)$ for a max over $m$
+candidates). The adjudicator is the validated LLM-judge. If the CI includes zero, (a) is
+not claimed and the NLI/exact-match bracket plus the judge point estimate is reported as
+the honest bounded result. We retire the earlier percentile-within-individual-draws and
+survival-ratio statistics as headlines: both are winner's-curse-biased, since the attack
+move is a max over $\sim$180 candidates while the individual benign draws are not (a
+max-of-180 sits at $\sim$$99\%$ of an individual-draw distribution under $H_0$, not
+$50\%$). Two deviations from the original pre-registration are disclosed as
+outcome-triggered: the adjudicator moved from the sentence embedder to the LLM-judge
+(triggered by the embedder's $0.51$ hard-negative AUROC), and the benign floor moved from
+individual draws to the budget-matched max (triggered by the winner's-curse budget mismatch
+surfaced in adversarial review).
 
 \paragraph{Transfer and defense.}
 [Pending.] The SE$\leftrightarrow$SRE transfer table and the reformulation-averaging
