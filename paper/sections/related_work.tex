@@ -11,9 +11,14 @@ Subsequent work improves the estimator. Semantic Reformulation Entropy (SRE)
 adds input-side reformulations and energy-based hybrid clustering for
 robustness~\citep{tong2025sre}, and Semantic Entropy Probes (SEPs) approximate
 the entropy from a single hidden state, removing the sampling
-cost~\citep{kossen2024seps}. We treat all three as \emph{detectors to be
-attacked}: our contribution is to test the invariance claim adversarially, a
-question none of these papers ask of themselves.
+cost~\citep{kossen2024seps}. A parallel line questions the \emph{clustering} step
+itself: Kernel Language Entropy replaces hard NLI equivalence-class clustering with a
+semantic-graph kernel, precisely because hard-NLI clustering is
+brittle~\citep{nikitin2024kle} --- the very sensitivity our attack exploits. We treat
+these as \emph{detectors to be attacked}: our contribution is to test the invariance claim
+adversarially, a question none of these papers ask of themselves. Whether the attack
+transfers to such richer-clustering variants, or is specific to hard-NLI-equivalence
+clustering, is an open question our null-controlled protocol is designed to pose.
 
 \paragraph{Hallucination-elicitation attacks on models.}
 The closest methodological neighbours attack the \emph{generating model}, not a
@@ -49,6 +54,9 @@ rather than the sampling-based SE detector, and evaluates on Alpaca/FAVA rather
 than TriviaQA/SQuAD. Our attack is input-side, bidirectional, NLI-constrained,
 and targets the sampling-based detectors directly. A weaker neighbour prompts
 LLMs to fool generic activation probes~\citep{blandfort2025redteamprobes}, but
-not in the hallucination-detection setting. To our knowledge, no prior work
-moves a sampling-based hallucination-detector score in both directions via
-meaning-preserving input paraphrases under a bidirectional-NLI constraint.
+not in the hallucination-detection setting. To our knowledge, no prior work \emph{formulates} an
+input-side, bidirectional meaning-preserving paraphrase attack on sampling-based
+hallucination detectors (we evaluate the false-alarm direction here and build the hide
+direction as its mirror). The bidirectional-NLI equivalence gate is our design choice for
+certifying meaning-preservation, not itself a novelty axis --- indeed our own analysis
+treats the detector's reliance on that same NLI model as the central confound.
