@@ -6,8 +6,10 @@ question, invariant to surface form. We tested that assumption adversarially, on
 detector itself. Our evidence indicates it can be made to fail under a
 meaning-preserving paraphrase---verified equivalent by bidirectional NLI, leaving the
 model's correctness unchanged---which, reported net of a benign-paraphrase noise floor,
-moves a detector's score in either direction, including the under-explored direction
-that turns a correct answer into a false alarm. We were careful to make this claim only where the
+inflates the score of a \emph{correct} answer into an apparent false alarm, the
+under-explored direction we foreground. The mirror \emph{hide} direction, which
+suppresses a wrong answer's score, the attack is built to exercise but we do not yet
+report under the same null control. We were careful to make this claim only where the
 evidence supports it: targets are chosen without reference to the detector's own scores,
 success requires the hallucination status to survive the paraphrase, and effect sizes
 are reported net of a benign-paraphrase noise floor rather than as the raw output of an
@@ -18,9 +20,10 @@ wave away. First, our clusterer and our equivalence gate are the same NLI model,
 whether the vulnerability is a property of the \emph{paradigm} or of one model's
 self-inconsistency turns on an independent clustering oracle. We build one: the cheap
 candidates (exact match, sentence embeddings) fail on the adversarial case, but a
-victim- and NLI-independent LLM-judge, validated on exactly that case, preliminarily
-indicates the effect survives---evidence the vulnerability is real rather than a
-clustering artifact---which the confirmatory large-$n$ run is set to settle. Second,
+victim- and NLI-independent LLM-judge, validated on exactly that case ($0.92$ vs.\
+$0.51$), clears it---and it is under this judge that the confirmatory large-$n$ run,
+now under way, adjudicates whether the effect survives the independent clusterer, a
+verdict we draw from that run rather than from the machinery-validation sample. Second,
 the meaning-preserving guarantee rests on an automatic gate; a human equivalence audit
 is needed before it is fully established. A
 simple reformulation-averaging defense raises the attacker's cost but does not close

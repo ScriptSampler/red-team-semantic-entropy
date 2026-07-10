@@ -122,7 +122,7 @@ adjudicate. We therefore build and validate a victim- and NLI-independent LLM-ju
 equivalence oracle (Qwen2.5-7B-Instruct), which on the same labelled pairs reaches
 hard-negative accuracy $0.92$ where the embedder is near-chance ($0.51$). Re-clustering
 the answer samples under this validated judge, a preliminary $n{=}6$ machinery-validation
-pass indicates the attack's effect \emph{largely survives} the independent oracle: the
+pass leaves the attack's effect largely intact in the point estimates: the
 attack sits at the $76$th percentile of the benign-move distribution under the judge,
 essentially matching the confounded NLI arm ($80$th) and far above the saturated
 exact-match ($56$th)---in contrast to the exact-match collapse, which we thus attribute to

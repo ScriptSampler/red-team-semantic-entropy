@@ -517,3 +517,49 @@ OVERstates the hide attack); quantify the TriviaQA label-noise rate when reporti
 benign-floor diagnosis.**
 
 ---
+
+## 20. 2026-07-10 (Fri overnight) — Paper reconciliation to the judge result
+
+Author claim (commit 0e3af7a): reconciled Discussion/Limitations/Conclusion, which
+still said the independent-clusterer test was "future work we don't run," to reflect
+the built+validated judge showing a preliminary lean.
+
+Critic verdict: **APPROVE-WITH-NITS, 2 must-fix overclaims.** Instrument prose honest;
+prior nits correctly incorporated (0.787/0.828 fix, "we are not aware of"+verify hedge,
+FA-specific conservative caveat, percentile/rank framing). MUST-FIX:
+(a) Conclusion "moves score in EITHER direction" claimed an UNRUN hide result (report:
+`se_hide: no outcomes yet`) — scope to FA, keep hide as conjecture (matches Discussion
+"we hypothesise").
+(b) "evidence the vulnerability is real / for structural reading rather than
+self-inconsistency" CONTRADICTS the adjacent "interval uninformative" and overstates at
+n=6 — soften to "point estimates lean structural (judge +0.37 ~ NLI +0.46 >> exact
++0.05, same benign-rank); first evidence bearing on the question, n>=80 pending."
+Q3 — ABSTRACT + INTRO flagged stale ("specified... could be settled"); in fact both had
+already moved to "build+validate... largely survives", i.e. carried the SAME strategic
+overclaim, not the understatement the critic recalled.
+STRATEGIC (the load-bearing point): commit only the INSTRUMENT-built prose tonight; leave
+the RESULT as a deferred verdict — n=53 lands in ~4h and replaces the n=6 lean; do not
+write "survives" prose against a number about to move. Discipline intact: the n>=80
+net-CI>0 rule still gates any (a) claim. Minor: Limitations "noise the judge in places
+more than corrects" reword.
+
+Resolution (commit pending): all fixes applied, and extended for consistency to the two
+sections the critic did not name but which carried the same verb —
+- Abstract: verdict deferred ("Whether the effect survives... is the question... we draw
+  the verdict from the confirmatory evaluation"), instrument fact (0.92 vs 0.51) kept.
+- Intro contrib (2)/(3): judge = "instrument under which attribution can finally be
+  adjudicated; confirmatory n>=80 supplies the verdict"; bracket adjudication "deferred
+  to that run."
+- Discussion: critic's paste-ready non-contradictory prose ("point estimates lean...
+  first evidence bearing on... not a resolution... n>=80 is the gate").
+- Conclusion: hide scoped to conjecture ("built to exercise but we do not yet report
+  under the same null control"); verdict deferred ("drawn from that run rather than the
+  machinery-validation sample").
+- Methods: "indicates the effect largely survives" -> "leaves the effect largely intact
+  in the point estimates"; the caveated n=6 percentiles (76/80/56) + "interval
+  uninformative, we do NOT claim real" retained here as the detailed locus.
+Docx regen DEFERRED until n=53 lands + Experiments filled (avoid double work per the
+strategic point). Open gates unchanged: n>=80 matrix, judge re-run on it (RUNNING at
+n=53, bc6kfdy9d), benign-floor diagnosis.
+
+---
