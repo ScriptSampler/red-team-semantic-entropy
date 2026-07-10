@@ -42,9 +42,10 @@ The independent oracles one would reach for to break this tie---sentence embedde
 out to be near-chance on exactly the word-preserving, meaning-shifted case an attack
 produces. On current evidence, then, the attribution is \emph{unresolved but bounded},
 and single-clusterer paraphrase-attack claims on these detectors are not adequately
-supported. We attack in \emph{both} directions---the \emph{hide} attack suppresses a
-wrong answer's score, the under-explored \emph{false-alarm} attack inflates a correct
-answer's---as the case study that exercises the protocol.
+supported. We formulate the attack in \emph{both} directions---\emph{hide} designed to
+suppress a wrong answer's score, the under-explored \emph{false-alarm} to inflate a
+correct answer's---as the case study that exercises the protocol; only the false-alarm
+direction is evaluated under the null control in this work.
 
 \paragraph{Contributions.}
 (1) \textbf{A circularity-free, null-controlled evaluation protocol} for paraphrase
@@ -53,7 +54,7 @@ an answer-invariance success criterion, and a benign-paraphrase noise floor---th
 scored as a \emph{percentile within the benign-move distribution}, not a max-vs-max
 delta---whose three controls we show are each load-bearing, and demonstrably so:
 without score-independent selection the clean detector looks perfect (clean AUROC
-$1.0$ by construction vs.\ $0.69$ under fair selection); without the noise floor the
+$1.0$ by construction vs.\ $0.70$ [$0.653$, $0.753$] under fair selection); without the noise floor the
 budget-biased max-vs-max comparison flips the same data from a $33\%$ to an $80\%$
 apparent success rate; and without the answer-invariance check meaning-changing
 paraphrases are miscounted as wins. (2) \textbf{An independent-clusterer
@@ -74,6 +75,6 @@ clusterer, with its adjudication under the independent judge deferred to that
 confirmatory run). (4) A
 reformulation-averaging defense and an analysis of what it does and does not close. Our
 effect-size bracket on the fair, null-controlled pool is reported in
-Section~\ref{sec:experiments}. [Quantitative bracket placeholder --- pending the
-definitive $n{\geq}80$ run; the current machinery-validation pass yields NLI-arm net
-$+0.64$ nats vs.\ a strict independent lower bound near zero.]
+Section~\ref{sec:experiments}; no effect size enters the body until the definitive
+$n{\geq}80$ run lands under the budget-matched null control, and the small-sample
+machinery pass is treated as pipeline-validation only.

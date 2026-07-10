@@ -563,3 +563,62 @@ strategic point). Open gates unchanged: n>=80 matrix, judge re-run on it (RUNNIN
 n=53, bc6kfdy9d), benign-floor diagnosis.
 
 ---
+
+## 21. 2026-07-10 (Fri overnight) — 4-dim review surfaces B2+B3; definitive run BLOCKED
+
+A 4-dimension adversarial review workflow (overclaim/stats/positioning/consistency, 5
+agents, docs/paper_review_punchlist.md) surfaced two methodology-critical blockers.
+Critic VERIFIED both against the committed artifacts and BLOCKED the definitive-run
+launch until fixed (right time to rule — before the multiday budget is spent).
+
+**B2 — winner's-curse null is NOT budget-matched (VERIFIED).** Attack move = max over
+~180 optimiser candidates; benign floor = K=8 INDIVIDUAL draws. H0 expected percentile of
+a max-of-180 within 8 draws is ~99%, not 50% — so "beats benign p90 = 80%" may sit BELOW
+the null. Entry-13's percentile fix removed max-vs-max(8) but left max-vs-individual.
+RULING:
+- Primary control = budget-matched benign-MAX (max over ~180 RANDOM feasible paraphrases/
+  target), PER-TARGET PAIRED vs attack-max; paired-bootstrap net-CI + sign test (fraction
+  of targets attack-max > benign-max). Net IS the primary statistic IF paired and
+  max-matched (subtrahend = benign-MAX, never mean-of-individuals). Immune to benign-floor
+  level (retires the -0.19 concern for the headline).
+- REQUIRED addition the coordinator missed: a NULL-OBJECTIVE BEAM ABLATION on ~10-15
+  targets — run the IDENTICAL optimiser (same beam/budget/proposer) with a scrambled
+  objective and compare its max to random-180 benign-max. The beam CONCENTRATES on
+  high-noise candidates under H0, so diffuse random-180 UNDER-estimates the null and (a)
+  alone is ANTI-conservative. If null-objective beam-max ≈ random-180 benign-max, (a) is
+  safe; if materially above, null-objective beam-max becomes the required floor.
+- Analytic baseline (expected percentile of max-of-m within K) = labeled IID companion
+  only (mis-specified as primary: optimiser candidates are dependent/concentrated).
+- reframe-b seed-vs-benign leg is individual-vs-individual, budget-matched — stays valid.
+
+**B3 — the judge FAILS its own pre-registered, critic-approved gate (VERIFIED).**
+validate_judge.py gate = hard>=0.8 AND pos>=0.8; measured hard-neg 0.884 (pass), pos 0.700
+(FAIL); committed judge_validation.md:9 = "Verdict: NOT usable -> keep the NLI/exact-match
+bracket." Paper treats it as "the validated adjudicator" = undisclosed post-hoc override of
+a gate the critic approved two rounds ago = HARKing/integrity issue. Also 0.92(sym) cited
+!= 0.884(asym) committed. RULING: hard-neg-primary re-spec is DEFENSIBLE (over-splitting is
+conservative-for-FA + TriviaQA label noise = outcome-INDEPENDENT rationale) ONLY with ALL:
+ (1) MAIN-TEXT disclosure of the outcome-triggered deviation + UPDATE the committed
+     judge_validation.md so the repo has no standing "NOT usable" contradiction;
+ (2) FA-ONLY scope (over-split OVERSTATES hide — do not adjudicate hide under this rationale);
+ (3) differential-over-splitting check (attack vs benign cluster counts must not diverge);
+ (4) ONE reconciled number from the DEPLOYED (batched) config + validation on MESSY real
+     sampled pairs (not just clean gold aliases); kill the 0.92/0.884 inconsistency;
+ (5) report the NLI/exact-match bracket ALONGSIDE so the headline never rests solely on the
+     re-spec'd gate. Absent (1)+(5): REVERT to the bracket.
+
+**M1 — one decision rule, stated identically everywhere.** Reframe-(a) claimed IFF, at
+n>=80, the adjudicator's PER-TARGET PAIRED net (attack-max − budget-matched benign-max) has
+a paired-bootstrap 95% CI strictly above 0, corroborated by the sign test and read against
+the analytic IID null baseline; adjudicator = validated LLM-judge; if the CI includes 0,
+(a) is NOT claimed and the NLI/exact bracket + judge point estimate is the honest bounded
+result. Document BOTH entry-15 deviations as TRIGGERED (not silently rewritten):
+(1) embedding->judge, triggered by e5's 0.51 hard-neg AUROC; (2) individual-benign ->
+budget-matched-benign-max, triggered by the B2 finding.
+
+n=53 diagnostic run correctly scoped (attack-max + judge-scale-validation + reframe-b +
+--dump_diag; NOT the K8 attack-vs-benign percentile). ~20 prose/positioning fixes proceed
+ungated. VERDICT: BLOCK definitive n>=80 launch until B2 (budget-matched floor + null-obj
+beam ablation + analytic companion) and B3 (5 conditions) land.
+
+---
