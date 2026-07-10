@@ -233,3 +233,57 @@ def cluster_and_score_judge(samples: list[str], judge_fn) -> ClusterResult:
         entropy_nats=discrete_entropy(assignments, "nats"),
         entropy_bits=discrete_entropy(assignments, "bits"),
     )
+
+
+def cluster_samples_judge_batched(samples: list[str], judge_pairs_fn) -> list[int]:
+    """Identical clustering to cluster_samples_judge, but evaluates ALL C(n,2) pairs in a
+    SINGLE `judge_pairs_fn(pairs) -> list[bool]` call (one GPU batch) instead of O(n^2)
+    sequential judge calls. The unbatched loop already evaluates every pair (union-find has
+    no early-exit), and union-find is order-independent, so for a deterministic judge the
+    resulting clusters are exactly those of cluster_samples_judge. This is the scale path;
+    pair it with judge.make_batched_judge_fn / load_judge(batched=True)."""
+    n = len(samples)
+    if n <= 1:
+        return list(range(n))
+
+    idx = list(combinations(range(n), 2))
+    verdicts = judge_pairs_fn([(samples[i], samples[j]) for i, j in idx])
+    if len(verdicts) != len(idx):
+        raise ValueError(f"judge_pairs_fn returned {len(verdicts)} verdicts for {len(idx)} pairs")
+
+    parent = list(range(n))
+
+    def find(x: int) -> int:
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(x: int, y: int) -> None:
+        rx, ry = find(x), find(y)
+        if rx != ry:
+            parent[rx] = ry
+
+    for (i, j), v in zip(idx, verdicts):
+        if v:
+            union(i, j)
+
+    roots = [find(i) for i in range(n)]
+    remap: dict[int, int] = {}
+    out: list[int] = []
+    for r in roots:
+        if r not in remap:
+            remap[r] = len(remap)
+        out.append(remap[r])
+    return out
+
+
+def cluster_and_score_judge_batched(samples: list[str], judge_pairs_fn) -> ClusterResult:
+    """ClusterResult under the batched LLM-judge oracle (see cluster_samples_judge_batched)."""
+    assignments = cluster_samples_judge_batched(samples, judge_pairs_fn)
+    return ClusterResult(
+        assignments=assignments,
+        n_clusters=len(set(assignments)),
+        entropy_nats=discrete_entropy(assignments, "nats"),
+        entropy_bits=discrete_entropy(assignments, "bits"),
+    )

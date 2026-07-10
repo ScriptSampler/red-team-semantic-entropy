@@ -42,7 +42,8 @@ from se.sampling import DEFAULT_SAMPLES_DIR
 from se.attacks.harness import load_pair, read_outcomes, _stable_seed
 from se.attacks import proposer, feasibility
 from se.se_pipeline import semantic_entropy
-from se.entropy import cluster_and_score_exact, cluster_and_score_embedding, cluster_and_score_judge
+from se.entropy import (cluster_and_score_exact, cluster_and_score_embedding,
+                        cluster_and_score_judge, cluster_and_score_judge_batched)
 from se.stats import rate_ci, bootstrap_ci
 
 CELLS = [("false_alarm", "se"), ("hide", "se")]
@@ -133,18 +134,25 @@ def _reseed(gen, seed: int):
                      top_p=gen.top_p, n_samples=gen.n_samples, seed=seed)
 
 
-def _arms(question, pair, gen, embed_fn, threshold, judge_fn=None, seed: int | None = None):
+def _arms(question, pair, gen, embed_fn, threshold, judge_fn=None, seed: int | None = None,
+          judge_batched: bool = False):
     """(NLI, exact-match, embedding, judge) entropy from the SAME seeded samples — up to
     four clusterings of ONE model output (finding-14). embedding/judge are None if their
-    oracle is not supplied. The judge arm is O(n^2) LLM calls, so it is opt-in."""
+    oracle is not supplied. The judge arm is O(n^2) LLM calls, so it is opt-in; when
+    judge_batched, judge_fn is a judge_pairs(pairs)->list[bool] callable and all pairs are
+    scored in one GPU batch (identical clusters, ~10-20x faster — see judge.load_judge)."""
     g = gen if seed is None else _reseed(gen, seed)
     res = semantic_entropy(question, pair.lm, pair.nli, g)
     nli = res.entropy_nats
     exact = cluster_and_score_exact(res.samples).entropy_nats
     emb = (cluster_and_score_embedding(res.samples, embed_fn, threshold).entropy_nats
            if embed_fn is not None else None)
-    jud = (cluster_and_score_judge(res.samples, judge_fn).entropy_nats
-           if judge_fn is not None else None)
+    if judge_fn is None:
+        jud = None
+    elif judge_batched:
+        jud = cluster_and_score_judge_batched(res.samples, judge_fn).entropy_nats
+    else:
+        jud = cluster_and_score_judge(res.samples, judge_fn).entropy_nats
     return nli, exact, emb, jud
 
 
@@ -155,7 +163,8 @@ def _moves(before, after, attack):
     return _move(attack, before[0], after[0]), _m(1), _m(2), _m(3)
 
 
-def _benign_moves_arms(question, before, attack, pair, gen, K, seed, embed_fn, threshold, judge_fn=None):
+def _benign_moves_arms(question, before, attack, pair, gen, K, seed, embed_fn, threshold,
+                       judge_fn=None, judge_batched: bool = False):
     """K benign feasible paraphrases -> (nli, exact, embed, judge) move lists from the same
     generations. embed/judge lists are empty if their oracle is absent."""
     proposer.seed_proposer(seed)
@@ -165,7 +174,8 @@ def _benign_moves_arms(question, before, attack, pair, gen, K, seed, embed_fn, t
         cand = proposer.propose(question, pair.lm)
         if not feasibility.check(cand, question, pair.nli).feasible:
             continue
-        n, x, e, j = _moves(before, _arms(cand, pair, gen, embed_fn, threshold, judge_fn), attack)
+        n, x, e, j = _moves(before, _arms(cand, pair, gen, embed_fn, threshold, judge_fn,
+                                          judge_batched=judge_batched), attack)
         nm.append(n); xm.append(x)
         if e is not None:
             em.append(e)
@@ -174,7 +184,8 @@ def _benign_moves_arms(question, before, attack, pair, gen, K, seed, embed_fn, t
     return nm, xm, em, jm
 
 
-def _seed_moves_arms(question, before, attack, pair, gen, n_seeds, embed_fn, threshold, judge_fn=None):
+def _seed_moves_arms(question, before, attack, pair, gen, n_seeds, embed_fn, threshold,
+                     judge_fn=None, judge_batched: bool = False):
     """Same question re-scored under n_seeds seeds -> (nli, exact, embed) move lists.
 
     Seeds start at 1, NOT 0: `before` is generated at the baseline gen.seed=0, so a seed-0
@@ -184,7 +195,8 @@ def _seed_moves_arms(question, before, attack, pair, gen, n_seeds, embed_fn, thr
     attack. Excluding seed 0 keeps the seed band an honest estimate of estimator noise."""
     nm, xm, em, jm = [], [], [], []
     for s in range(1, n_seeds + 1):
-        n, x, e, j = _moves(before, _arms(question, pair, gen, embed_fn, threshold, judge_fn, seed=s), attack)
+        n, x, e, j = _moves(before, _arms(question, pair, gen, embed_fn, threshold, judge_fn,
+                                          seed=s, judge_batched=judge_batched), attack)
         nm.append(n); xm.append(x)
         if e is not None:
             em.append(e)
@@ -205,6 +217,9 @@ def main() -> int:
                     help="cosine threshold for the embedding clusterer (calibrate; default 0.82)")
     ap.add_argument("--judge_model", default="",
                     help="e.g. Qwen/Qwen2.5-7B-Instruct to add the LLM-judge arm (finding 14, O(n^2))")
+    ap.add_argument("--judge_batched", action="store_true",
+                    help="score all pairs of a clustering in ONE GPU batch (identical "
+                         "clusters, ~10-20x faster; GPU-verify with scripts/probe_batched_judge.py)")
     ap.add_argument("--dump_diag", default="",
                     help="optional JSON path: dump per-target, per-arm baseline entropy + "
                          "attack/benign/seed move lists, for the benign-floor diagnosis "
@@ -231,8 +246,9 @@ def main() -> int:
     judge_fn = None
     if args.judge_model:
         from se.judge import load_judge
-        judge_fn = load_judge(args.judge_model)
-        print(f"[judge] {args.judge_model} loaded (O(n^2) LLM calls per candidate)", flush=True)
+        judge_fn = load_judge(args.judge_model, batched=args.judge_batched)
+        mode = "BATCHED (one GPU batch per clustering)" if args.judge_batched else "O(n^2) per candidate"
+        print(f"[judge] {args.judge_model} loaded ({mode})", flush=True)
 
     def _ci(c):
         return "n/a" if c is None else f"{c.point:+.3f} [{c.lo:+.3f}, {c.hi:+.3f}]"
@@ -274,17 +290,21 @@ def main() -> int:
         ben = {"nli": [], "exact": [], "embed": [], "judge": []}
         sd = {"nli": [], "exact": [], "embed": [], "judge": []}
         for o in outcomes:
-            before = _arms(o.question, pair, gen, embed_fn, args.embed_threshold, judge_fn)
-            after = _arms(o.best_query, pair, gen, embed_fn, args.embed_threshold, judge_fn)
+            before = _arms(o.question, pair, gen, embed_fn, args.embed_threshold, judge_fn,
+                           judge_batched=args.judge_batched)
+            after = _arms(o.best_query, pair, gen, embed_fn, args.embed_threshold, judge_fn,
+                          judge_batched=args.judge_batched)
             an, ax, ae, aj = _moves(before, after, o.attack)
             atk["nli"].append(an); atk["exact"].append(ax)
             if ae is not None: atk["embed"].append(ae)
             if aj is not None: atk["judge"].append(aj)
             s = _stable_seed("null:" + o.question_id)
             bnl, bxl, bel, bjl = _benign_moves_arms(o.question, before, o.attack, pair, gen,
-                                                    args.K, s, embed_fn, args.embed_threshold, judge_fn)
+                                                    args.K, s, embed_fn, args.embed_threshold,
+                                                    judge_fn, judge_batched=args.judge_batched)
             snl, sxl, sel, sjl = _seed_moves_arms(o.question, before, o.attack, pair, gen,
-                                                  args.n_seeds, embed_fn, args.embed_threshold, judge_fn)
+                                                  args.n_seeds, embed_fn, args.embed_threshold,
+                                                  judge_fn, judge_batched=args.judge_batched)
             ben["nli"].append(bnl); ben["exact"].append(bxl); sd["nli"].append(snl); sd["exact"].append(sxl)
             if embed_fn is not None:
                 ben["embed"].append(bel); sd["embed"].append(sel)

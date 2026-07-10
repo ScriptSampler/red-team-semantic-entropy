@@ -23,7 +23,7 @@ def test_seed_band_excludes_baseline_seed(monkeypatch):
     # noise floor. The band must use seeds 1..n_seeds, never 0.
     seen = []
     monkeypatch.setattr(null_control, "_arms",
-                        lambda q, pair, gen, ef, thr, jf=None, seed=None: (seen.append(seed) or (0.0, 0.0, None, None)))
+                        lambda q, pair, gen, ef, thr, jf=None, seed=None, judge_batched=False: (seen.append(seed) or (0.0, 0.0, None, None)))
     null_control._seed_moves_arms("q", (1.0, 1.0, None, None), "hide", None, None, 3, None, 0.82)
     assert 0 not in seen
     assert seen == [1, 2, 3]

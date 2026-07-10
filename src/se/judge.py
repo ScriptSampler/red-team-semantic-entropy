@@ -65,14 +65,47 @@ def make_judge_fn(generate_fn, *, symmetric: bool = True):
     return judge
 
 
+def make_batched_judge_fn(generate_batch_fn, *, symmetric: bool = True):
+    """Wrap a batched `generate_batch_fn(prompts) -> list[str]` into
+    judge_pairs(pairs) -> list[bool], one bool per (a, b). Both orderings (if symmetric)
+    for ALL pairs go into ONE generate call, so clustering a set of N samples costs one
+    GPU batch instead of O(N^2) sequential forwards.
+
+    Semantics are identical to applying make_judge_fn per pair, PROVIDED batched greedy
+    generation returns the same per-prompt output as single-prompt generation (verified by
+    scripts/probe_batched_judge.py before this path is trusted). The judge is deterministic
+    (do_sample=False), so batching cannot change a verdict except through that numerics
+    equivalence, which the probe checks."""
+    def judge_pairs(pairs):
+        if not pairs:
+            return []
+        prompts = [_PROMPT.format(a=a, b=b) for a, b in pairs]
+        if symmetric:
+            prompts += [_PROMPT.format(a=b, b=a) for a, b in pairs]
+        outs = generate_batch_fn(prompts)
+        m = len(pairs)
+        ab = [_parse_yes_no(outs[k]) for k in range(m)]
+        if not symmetric:
+            return ab
+        ba = [_parse_yes_no(outs[m + k]) for k in range(m)]
+        return [ab[k] and ba[k] for k in range(m)]
+    return judge_pairs
+
+
 def load_judge(model_id: str = "Qwen/Qwen2.5-7B-Instruct", device: str = "cuda",
-               max_new_tokens: int = 3, load_in_4bit: bool = True, symmetric: bool = True):
-    """Load an instruct model and return judge_fn. 4-bit keeps a 7B/14B judge within
-    16 GB alongside nothing else (run the judge AFTER the attack matrix frees the GPU)."""
+               max_new_tokens: int = 3, load_in_4bit: bool = True, symmetric: bool = True,
+               batched: bool = False):
+    """Load an instruct model and return the judge callable. 4-bit keeps a 7B/14B judge
+    within 16 GB alongside nothing else (run the judge AFTER the attack matrix frees the
+    GPU). With batched=False (default) returns judge_fn(a, b) -> bool (the validated path,
+    used by validate_judge.py). With batched=True returns judge_pairs(pairs) -> list[bool]
+    (the fast path for the scale run; plug into entropy.cluster_samples_judge_batched)."""
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
     tok = AutoTokenizer.from_pretrained(model_id)
+    if tok.pad_token_id is None:
+        tok.pad_token = tok.eos_token
     qcfg = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16,
                               bnb_4bit_quant_type="nf4") if load_in_4bit else None
     mdl = AutoModelForCausalLM.from_pretrained(
@@ -87,4 +120,26 @@ def load_judge(model_id: str = "Qwen/Qwen2.5-7B-Instruct", device: str = "cuda",
                            pad_token_id=tok.eos_token_id)
         return tok.decode(out[0, ids.shape[1]:], skip_special_tokens=True)
 
-    return make_judge_fn(generate_fn, symmetric=symmetric)
+    if not batched:
+        return make_judge_fn(generate_fn, symmetric=symmetric)
+
+    @torch.no_grad()
+    def generate_batch_fn(prompts: list[str]) -> list[str]:
+        # Decoder-only batched generation needs LEFT padding so the generated tokens of
+        # every row start at the same position; attention_mask masks the pad tokens out.
+        texts = [tok.apply_chat_template([{"role": "user", "content": p}],
+                                         add_generation_prompt=True, tokenize=False)
+                 for p in prompts]
+        old_side = tok.padding_side
+        tok.padding_side = "left"
+        try:
+            enc = tok(texts, return_tensors="pt", padding=True,
+                      add_special_tokens=False).to(mdl.device)
+        finally:
+            tok.padding_side = old_side
+        out = mdl.generate(**enc, max_new_tokens=max_new_tokens, do_sample=False,
+                           pad_token_id=tok.eos_token_id)
+        gen = out[:, enc["input_ids"].shape[1]:]
+        return [tok.decode(g, skip_special_tokens=True) for g in gen]
+
+    return make_batched_judge_fn(generate_batch_fn, symmetric=symmetric)
