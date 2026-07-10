@@ -10,6 +10,15 @@ subagents/workflows/wf_a59c1057-3ec/journal.jsonl.
 **Two findings (B2, B3) are methodology-critical and reshape the definitive run — gate the
 fix DESIGN through the critic before implementing/running.**
 
+**DONE this session (2026-07-11):** B1, M3, M4, M5, N1, N2, N4, M7, M10, M11, mi1, mi2,
+mi4, M2 (prose/positioning/leaks); B2 code + reporting (paired_max_net + analytic baseline,
+run K~180 owed); B3 code + committed artifact + main-text disclosure (deployed-config
+re-validation owed); M1 single decision rule (Experiments+Methods+run-plan).
+**STILL OPEN:** M6 (0.92 CI in more loci), M8, M9 (RW strands: LLM-as-judge, selection-bias;
+CORVUS concede), M12 (name paraphraser + hyperparams), mi3, mi5, mi6; and the GPU-owed
+B2/B3 items (K~180 budget-matched run, null-objective ablation, deployed-config judge
+re-validation on messy samples + differential-over-splitting check).
+
 ---
 
 ## BLOCKER
