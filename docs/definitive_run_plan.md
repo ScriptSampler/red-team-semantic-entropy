@@ -90,6 +90,12 @@ The null control is cheap (~(K+n_seeds) evals/target) and not the bottleneck —
 
 ## Still owed before external submission
 - Embedding threshold calibration (Youden-J on short-answer + STS-B/PAWS; tool built) and
-  the short-answer paraphrase-AUROC that decides whether e5 can adjudicate at all.
-- Human / disclosed-LLM-judge equivalence audit of a sample of successful Q' (B5).
-- Verify the `%TODO` bib author lists against arXiv (camera-ready).
+  the short-answer paraphrase-AUROC that decides whether e5 can adjudicate at all. DONE:
+  e5 fails the adversarial case (0.51), superseded by the validated LLM-judge (0.92).
+- Human equivalence audit of a sample of successful Q' (B5). Harness built
+  (`scripts/prepare_equivalence_audit.py`) — run it on the definitive pool to emit the
+  fill-in CSV; the human rating + inter-annotator agreement is the remaining owed step.
+- Benign-floor diagnosis: tooled (`--dump_diag` + `scripts/diagnose_benign_floor.py`,
+  pre-registered in docs/benign_floor_diagnosis.md) — run on the n>=80 dump.
+- Bib `%TODO` author lists: DONE 2026-07-10 (5 verified vs arXiv; 3 titles corrected).
+  Remaining: confirm the copa/realista venues (EMNLP/ICML) before camera-ready.
