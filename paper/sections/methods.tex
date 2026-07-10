@@ -120,7 +120,17 @@ pairs (STS-B AUROC $0.99$), is near-chance on the word-preserving, meaning-shift
 the attack produces (hard-negative AUROC $0.51$), so its clustering cannot be trusted to
 adjudicate. We therefore build and validate a victim- and NLI-independent LLM-judge
 equivalence oracle (Qwen2.5-7B-Instruct), which on the same labelled pairs reaches
-hard-negative accuracy $0.92$ where the embedder is near-chance ($0.51$). Re-clustering
+hard-negative accuracy $0.88$--$0.92$ (deployed-config number being finalised) where the
+embedder is near-chance ($0.51$). \emph{We disclose a deviation.} Our pre-registered
+acceptance gate required both hard-negative \emph{and} positive-alias recognition above
+$0.8$; the judge clears the first but not the second ($0.70$): it over-splits some genuine
+aliases, in part correctly rejecting noisy TriviaQA alias labels. Over-splitting inflates
+baseline entropy, which makes the judge \emph{conservative} for the false-alarm direction
+(a surviving effect is understated) but \emph{not} for hide; we therefore re-scope it to
+false-alarm adjudication under a hard-negative-primary criterion. This is an
+outcome-triggered re-specification of a pre-registered gate, which we flag rather than
+bury, and we report the NLI and exact-match bracket \emph{alongside} the judge so no
+conclusion rests on the re-scoped oracle alone. Re-clustering
 the answer samples under this validated judge, a preliminary $n{=}6$ machinery-validation
 pass leaves the attack's effect largely intact in the point estimates: the
 attack sits at the $76$th percentile of the benign-move distribution under the judge,

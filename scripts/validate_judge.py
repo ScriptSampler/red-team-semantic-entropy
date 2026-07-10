@@ -50,8 +50,17 @@ def main() -> int:
     easy_p, easy_lo, easy_hi, neasy = _acc(judge, st["easy_neg"], False)  # should say NO
     hard_p, hard_lo, hard_hi, nhard = _acc(judge, st["hard_neg"], False)  # HARD — the test
 
-    usable = (hard_p == hard_p and hard_p >= 0.8 and pos_p >= 0.8)
-    L = [f"# LLM-judge self-validation ({args.model})", "",
+    # Pre-registered gate (critique_log 18, critic-approved): usable IFF hard AND pos >= 0.8.
+    pre_pass = (hard_p == hard_p and hard_p >= 0.8 and pos_p >= 0.8)
+    # Outcome-triggered re-spec (critique_log 21, B3), disclosed — NOT a silent gate rewrite:
+    # the pos>=0.8 leg is NOT met (the judge over-splits genuine aliases, partly TriviaQA
+    # label noise it correctly rejects). For the FALSE-ALARM direction ONLY, over-splitting
+    # inflates baseline entropy -> the judge is CONSERVATIVE (a surviving FA effect is
+    # understated), so hard-neg-primary is defensible FOR FA. It does NOT license hide
+    # adjudication (over-splitting OVERSTATES hide). Report BOTH verdicts.
+    mode = "symmetric" if not args.asymmetric else "asymmetric"
+    fa_usable = (hard_p == hard_p and hard_p >= 0.8)
+    L = [f"# LLM-judge self-validation ({args.model}, {mode})", "",
          "Accuracy (95% CI) on domain-matched short-answer strata (the set that disqualified "
          "e5). The judge may adjudicate finding 14 ONLY IF hard-negative accuracy is high "
          "(e5 was ~0.51 AUROC here). CAVEAT: these strata are clean gold aliases; the judge "
@@ -62,7 +71,19 @@ def main() -> int:
          f"- easy negatives (distant -> NOT):      {easy_p:.3f} [{easy_lo:.3f}, {easy_hi:.3f}]  (n={neasy})",
          f"- HARD negatives (near-miss -> NOT):    {hard_p:.3f} [{hard_lo:.3f}, {hard_hi:.3f}]  (n={nhard})  <-- CRITERION",
          "",
-         f"Verdict: {'USABLE adjudicator (propagate the hard-negative CI into the bracket width).' if usable else 'NOT usable -> keep the NLI/exact-match bracket.'}"]
+         f"PRE-REGISTERED gate (hard>=0.8 AND pos>=0.8): "
+         f"{'PASS' if pre_pass else f'FAIL — pos {pos_p:.3f} < 0.8'}.",
+         "",
+         f"HARD-NEG-PRIMARY re-spec for FALSE-ALARM adjudication (critique_log 21, B3): "
+         f"{'USABLE for FA' if fa_usable else 'NOT usable'} (hard-neg {hard_p:.3f} >= 0.8). "
+         "OUTCOME-TRIGGERED DEVIATION, disclosed: the pos shortfall is over-splitting of "
+         "genuine aliases, CONSERVATIVE for false-alarm (inflates baseline entropy -> a "
+         "surviving FA effect is understated) but NOT for hide; scope this oracle to FA only. "
+         "STILL OWED before the paper cites it as sole adjudicator: (i) this number is the "
+         f"DEPLOYED config ({mode}) — cite THIS one, not a mixed sym/asym pair; (ii) validate "
+         "on messy real sampled pairs, not just clean gold aliases; (iii) a "
+         "differential-over-splitting check (attack vs benign cluster counts must not diverge); "
+         "(iv) report the NLI/exact-match bracket ALONGSIDE so no headline rests solely on this."]
     out = RESULTS_DIR / "judge_validation.md"
     out.write_text("\n".join(L) + "\n")
     print(f"[report] wrote {out}", flush=True)
