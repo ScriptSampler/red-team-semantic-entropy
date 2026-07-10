@@ -1,7 +1,10 @@
 % Related-work bibliography for the Red-Teaming Semantic Entropy preprint.
 % arXiv ids verified 2026-06-25 (see docs/positioning.md).
-% VERIFY-BEFORE-SUBMIT: author lists marked with %TODO were not fully
-% confirmed during verification; check on arXiv before the camera-ready.
+% 2026-07-10: the 5 %TODO title/author lists (realista, copa, corvus,
+% uncertaintyfragile, redteamprobes) verified against arXiv abstract pages and
+% corrected (three titles were wrong; copa/realista downgraded to preprint since
+% their EMNLP/ICML venues are unconfirmed). VERIFY-BEFORE-SUBMIT: the remaining
+% %TODO markers flag those two unconfirmed venues; confirm before camera-ready.
 
 % ---- Detectors we attack (victims) ----------------------------------------
 
@@ -49,11 +52,11 @@
 }
 
 @article{liang2026realista,
-  title   = {{REALISTA}: Realistic Semantically-Equivalent Attacks on Large Reasoning Models},
-  author  = {Liang, Buyun and Peng, Liangzu and Luo, Jinqi and Kinfu, Kaleab A. and Tian, Fengrui and Hassani, Hamed and Vidal, Ren{\'e}},
-  journal = {International Conference on Machine Learning (ICML)},
+  title   = {{REALISTA}: Realistic Latent Adversarial Attacks that Elicit LLM Hallucinations},
+  author  = {Liang, Buyun and Luo, Jinqi and Peng, Liangzu and Chan, Kwan Ho Ryan and Thaker, Darshan and Kinfu, Kaleab A. and Tian, Fengrui and Hassani, Hamed and Vidal, Ren{\'e}},
+  journal = {arXiv preprint arXiv:2605.12813},
   year    = {2026},
-  note    = {arXiv:2605.12813. SECA successor, continuous latent edit directions. Attacks the model, not a detector. Cite-and-distinguish. %TODO confirm exact title and full author order.}
+  note    = {SECA successor, continuous latent edit directions. Attacks the model, not a detector. Cite-and-distinguish. Title+authors verified on arXiv 2026-07-10; %TODO venue (ICML 2026?) unconfirmed — cited as preprint.}
 }
 
 % ---- Paraphrase-evasion of text-origin detectors (different victim class) ---
@@ -66,36 +69,36 @@
   note      = {arXiv:2506.07001. Detector-guided paraphrase to evade AI-text classifiers. Evasion-only, different victim. Avoid title collision.}
 }
 
-@inproceedings{fang2025copa,
-  title     = {{CoPA}: Contrastive Paraphrase Attacks on LLM-Generated Text Detectors},
-  author    = {Fang, Hao and others},
-  booktitle = {Conference on Empirical Methods in Natural Language Processing (EMNLP)},
-  year      = {2025},
-  note      = {arXiv:2505.15337. Contrastive-decoding paraphrase, soft >90\% similarity. Contrast with our hard bidirectional-NLI gate. %TODO full author list.}
+@article{fang2025copa,
+  title   = {Your Language Model Can Secretly Write Like Humans: Contrastive Paraphrase Attacks on {LLM}-Generated Text Detectors},
+  author  = {Fang, Hao and Kong, Jiawei and Zhuang, Tianqu and Qiu, Yixiang and Gao, Kuofeng and Chen, Bin and Xia, Shu-Tao and Wang, Yaowei and Zhang, Min},
+  journal = {arXiv preprint arXiv:2505.15337},
+  year    = {2025},
+  note    = {Contrastive-decoding paraphrase (``CoPA''), soft >90\% similarity. Contrast with our hard bidirectional-NLI gate. Title+authors verified on arXiv 2026-07-10; %TODO venue (EMNLP 2025?) unconfirmed — cited as preprint.}
 }
 
 % ---- Attacks on uncertainty / probes (differentiate threat model) ----------
 
 @article{corvus2026,
-  title   = {{CORVUS}: Red-Teaming Single-Pass Hallucination Detectors},
+  title   = {{CORVUS}: Red-Teaming Hallucination Detectors via Internal Signal Camouflage in Large Language Models},
   author  = {Min, Nay Myat and Pham, Long H. and Zhang, Hongyu and Sun, Jun},
   journal = {arXiv preprint arXiv:2601.14310},
   year    = {2026},
-  note    = {Degrades SEP, but MODEL-SIDE (LoRA), suppression-only, no NLI constraint, Alpaca/FAVA. The closest adjacent attack; differentiate head-on if pursuing SEP transfer. %TODO confirm exact title.}
+  note    = {Degrades SEP, but MODEL-SIDE (LoRA), suppression-only, no NLI constraint, Alpaca/FAVA. The closest adjacent attack; differentiate head-on if pursuing SEP transfer. Title+authors verified on arXiv 2026-07-10.}
 }
 
 @article{uncertaintyfragile2024,
   title   = {Uncertainty is Fragile: Manipulating Uncertainty in Large Language Models},
-  author  = {Zeng, Qingcheng and others},
+  author  = {Zeng, Qingcheng and Jin, Mingyu and Yu, Qinkai and Wang, Zhenting and Hua, Wenyue and Zhou, Zihao and Sun, Guangyan and Meng, Yanda and Ma, Shiqing and Wang, Qifan and Juefei-Xu, Felix and Ding, Kaize and Yang, Fan and Tang, Ruixiang and Zhang, Yongfeng},
   journal = {arXiv preprint arXiv:2407.11282},
   year    = {2024},
-  note    = {Backdoor-trigger manipulation of MCQ self-evaluation confidence. Different threat model (fine-tuning, not input paraphrase). %TODO VERIFY full author list vs arXiv:2407.11282; first author from memory, not yet confirmed.}
+  note    = {Backdoor-trigger manipulation of MCQ self-evaluation confidence. Different threat model (fine-tuning, not input paraphrase). Full author list verified on arXiv 2026-07-10 (first author Zeng, Qingcheng confirmed).}
 }
 
 @article{blandfort2025redteamprobes,
-  title   = {Red-Teaming Activation Probes using Prompted LLMs},
-  author  = {Blandfort, Philipp and Graham, others},
+  title   = {Red-teaming Activation Probes using Prompted LLMs},
+  author  = {Blandfort, Phil and Graham, Robert},
   journal = {arXiv preprint arXiv:2511.00554},
   year    = {2025},
-  note    = {Prompts to fool safety/behavior activation probes; not SE/hallucination. Weak overlap. %TODO confirm authors.}
+  note    = {Prompts to fool safety/behavior activation probes; not SE/hallucination. Weak overlap. Title+authors verified on arXiv 2026-07-10.}
 }
