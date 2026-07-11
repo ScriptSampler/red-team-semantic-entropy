@@ -65,9 +65,23 @@ positioning (add Kernel Language Entropy + LLM-as-judge + selection-bias RW stra
 the over-stacked novelty sentence; concede CORVUS), reproducibility (name the paraphraser +
 hyperparameters), notation overloads. All data-independent; see the punch-list.
 
-## Decisions that may want your input
-1. **B2 ablation semantics** — the critic specified a null-objective beam ablation; the exact
-   "scrambled objective" implementation is a design choice I'd like to confirm before coding.
-2. **The multiday budget** — the budget-matched K~180 run is genuinely multi-day (~180×
-   more benign generation). Worth confirming you want to spend it, vs. a moderate budget
-   (~40) + the analytic correction.
+## Decisions — RESOLVED by user (2026-07-11)
+1. **Benign budget: FULL ~180 (most rigorous).** The definitive run uses the true
+   budget-matched benign-max (max over ~180 random feasible paraphrases/target). Multi-day,
+   accepted. Run command in `definitive_run_plan.md` step 2 already sets `--K 180`.
+2. **Null-objective beam ablation: my discretion** ("take the best course of action"). Plan:
+   implement my best interpretation — run the identical optimiser with a per-candidate
+   RANDOM objective (deterministic per query, same beam/budget/proposer), then measure the
+   entropy MOVE of its selected trajectory-max, compared to the random-180 benign-max — with
+   a short critic sanity-check on the semantics before it drives any claim. ~10–15 targets.
+
+## When we resume — next actions
+- Implement the budget-matched benign-max generation at K~180 in `null_control.py` (the
+  reporting is already wired; the run just needs K=180) and the null-objective ablation
+  (task 23); then launch the definitive run per `definitive_run_plan.md`.
+- Do the B3 GPU-owed items (task 24): re-validate the judge on the deployed symmetric config
+  + messy real sampled pairs; differential-over-splitting check.
+- The n=53 diagnostic (PID left running Fri night) should have written
+  `results/null_control_report.md` + `results/diag_n53_diag.json` — read them first; run
+  `diagnose_benign_floor.py` on the dump.
+- Remaining ungated polish: M6, M8, M12, mi3/mi5/mi6 (see paper_review_punchlist.md).
