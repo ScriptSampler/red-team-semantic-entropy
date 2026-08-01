@@ -16,8 +16,10 @@ the $1.0$ that score-dependent selection manufactures by construction.
 
 \paragraph{Reading the null control.}
 Table~\ref{tab:nullcontrol} places the optimised attack against two null bands---a
-same-question \emph{seed-noise} floor and a \emph{benign-paraphrase} floor of $K$
-NLI-passing non-adversarial rephrasings---under each of four clustering relations. The
+same-question \emph{seed-noise} floor and a \emph{benign-paraphrase} floor of $m$
+NLI-passing non-adversarial rephrasings, with $m$ matched to the attacker's
+$\sim$181-candidate search budget---under each of four clustering relations. ($m$ is
+distinct from SRE's samples-per-reformulation $K$.) The
 shared-NLI arm is the detector's own clusterer and is the \emph{confounded upper bound}:
 it cannot separate a real change in the answer distribution from the NLI model's own
 inconsistency, because that same model gates the attack's paraphrases. Exact-match is a

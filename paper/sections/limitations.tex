@@ -9,9 +9,10 @@ candidate paraphrases, and the extremum of many noisy-but-unbiased estimates is
 biased in the attacker's favour even when, as here, sampling is seeded so each
 estimate is \emph{reproducible}. Reproducibility is not the same as noise-freeness.
 We therefore do not report raw attack effect sizes as the headline; we report attack
-success and AUROC degradation \emph{net of a noise floor} obtained by scoring $K$
-random, non-adversarial NLI-passing paraphrases of each target and taking the best
-move they achieve by chance. An effect that does not exceed this floor is not
+success and AUROC degradation \emph{net of a noise floor} obtained by scoring $m$
+random, non-adversarial NLI-passing paraphrases of each target---with $m$ matched to
+the attacker's own search budget, so the comparison of maxima is like-for-like---and
+taking the best move they achieve by chance. An effect that does not exceed this floor is not
 claimed. This control distinguishes genuine manipulation from selection-on-noise; we are
 not aware of it in prior paraphrase-attack evaluations of these detectors (a claim
 we will verify against the literature at revision).

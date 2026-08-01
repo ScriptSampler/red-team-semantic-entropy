@@ -44,17 +44,24 @@ cross-detector transfer measurement well-defined.
 \paragraph{Optimizer.}
 We adapt the constraint-respecting zeroth-order search of
 SECA~\citep{liang2025seca}. The search maintains a beam of the top-$P$ paraphrase
-candidates; each round proposes $M$ further paraphrases per beam member via an
-LLM paraphraser, scores them with the objective, keeps those that improve on the
+candidates ($P{=}3$); each round proposes $B{=}3$ further paraphrases per beam member,
+scores them with the objective, keeps those that improve on the
 running best, and admits a candidate only if it passes the bidirectional-NLI gate
-against the \emph{original} $q$ rather than the parent. Anchoring every candidate
+against the \emph{original} $q$ rather than the parent. The paraphrase proposer is the
+victim model itself (Llama-3.1-8B-Instruct) decoding \emph{greedily}; candidate diversity
+comes from a seeded randomisation of the paraphrase instruction (verb, style, and template
+drawn per call), so a campaign's candidate set is reproducible. Reusing the victim as
+paraphraser adds no access assumption beyond the black-box query access already assumed,
+and any capable paraphraser would serve. Anchoring every candidate
 to the original means equivalence error cannot \emph{accumulate} across rounds;
 it does not eliminate it. Because the optimizer searches many candidates for the
 one that maximizes the objective while passing the gate, it will preferentially
 surface single-hop NLI false positives---so the residual fidelity of that one
 gate hop is not assumed away but measured directly (the answer-flip subcategory
 of the evaluation below). The search terminates on a score threshold or an
-iteration budget. We swap SECA's objective (confidence in a wrong
+iteration budget of $20$ rounds ($1 + 20 \times P \times B \approx 181$ objective
+evaluations per target --- the attacker's search budget, which the benign noise floor
+must match). We swap SECA's objective (confidence in a wrong
 multiple-choice token) for the detector entropy above, and its LLM-judge
 feasibility check for the NLI gate.
 
@@ -77,7 +84,9 @@ degradation against the clean AUROC of the \emph{fair} pool, not the extreme one
 An attack on a question succeeds only if all three conditions hold: (i) the
 paraphrase $q'$ passes the bidirectional-NLI equivalence gate; (ii) the detector
 score moves in the intended direction by at least $\delta$ nats past its clean
-value; and (iii) the model's hallucination \emph{status} is unchanged under
+value ($\delta{=}0.25$; the cutoff is a convention, so we also report the success-rate
+curve over a sweep of $\delta$ rather than letting one value carry the result); and
+(iii) the model's hallucination \emph{status} is unchanged under
 $q'$---still wrong for the hide attack, still correct for the false-alarm
 attack---checked with the same greedy decode and span oracle used to label the
 pool. Condition (iii) is essential: a score can fall because the paraphrase
@@ -148,7 +157,8 @@ To test whether the vulnerability is paradigm-level rather than implementation-
 specific, we take a paraphrase optimized against one detector and measure the
 score change it induces on another (SE$\leftrightarrow$SRE), and, as a stretch,
 on a hidden-state probe (SEP~\citep{kossen2024seps}) that never samples. As a
-first defense we average the detector score over $k$ paraphrases of whatever
-input is received, on the intuition that a single adversarial phrasing is diluted
+first defense we average the detector score over $d$ paraphrases of whatever
+input is received ($d$ distinct from SRE's samples-per-reformulation $K$ and the
+benign-floor budget $m$), on the intuition that a single adversarial phrasing is diluted
 by its own paraphrases; this mirrors SRE's built-in reformulation and lets us ask
 whether that mechanism confers attack resistance.
