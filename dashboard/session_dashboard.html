@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SE Research — session dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #0f1115; --panel: #161a22; --panel2: #1c2230;
+    --text: #d7dde7; --dim: #8a93a5; --accent: #4da3ff;
+    --ok: #3fb96f; --warn: #e0a63c; --stop: #e0524a; --stop-hover: #f06a62;
+    --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, "Segoe UI", sans-serif; max-width: 860px;
+    margin-inline: auto;
+  }
+  h1 { font-size: 18px; margin: 0 0 2px; font-weight: 600; }
+  .sub { color: var(--dim); font-size: 13px; margin-bottom: 18px; }
+  .card {
+    background: var(--panel); border: 1px solid #232a38; border-radius: 10px;
+    padding: 16px 18px; margin-bottom: 14px;
+  }
+  .phase { font-size: 16px; font-weight: 600; color: var(--accent); }
+  .headline { margin-top: 4px; }
+  .meta { color: var(--dim); font-size: 13px; margin-top: 8px; font-family: var(--mono); }
+  .stale { color: var(--warn); font-weight: 600; }
+  ul.tasks { list-style: none; margin: 0; padding: 0; }
+  ul.tasks li { padding: 5px 0; border-bottom: 1px solid #202634; display: flex; gap: 10px; align-items: baseline; }
+  ul.tasks li:last-child { border-bottom: none; }
+  .badge {
+    font: 11px/1 var(--mono); padding: 3px 7px; border-radius: 20px; flex-shrink: 0;
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  .todo  { background: #262d3d; color: var(--dim); }
+  .doing { background: #1d3a5c; color: var(--accent); }
+  .done  { background: #1c3a2a; color: var(--ok); }
+  .blocked { background: #3d2426; color: var(--stop); }
+  pre.log {
+    margin: 0; font: 12.5px/1.7 var(--mono); color: var(--dim);
+    white-space: pre-wrap; max-height: 260px; overflow-y: auto;
+  }
+  .stopzone { border-color: #3a2a2a; }
+  .stopzone h2 { font-size: 14px; margin: 0 0 10px; color: var(--stop); }
+  button.stop {
+    background: var(--stop); color: #fff; border: 0; border-radius: 8px;
+    padding: 12px 18px; font: 600 15px system-ui; cursor: pointer; margin-right: 10px;
+  }
+  button.stop:hover { background: var(--stop-hover); }
+  button.stop.soft { background: #3d3126; color: #f0c37a; }
+  button.stop.soft:hover { background: #4a3c2e; }
+  .stopnote { color: var(--dim); font-size: 12.5px; margin-top: 10px; }
+  #confirm {
+    display: none; margin-top: 12px; padding: 10px 12px; border-radius: 8px;
+    background: #1c3a2a; color: #7fd8a4; font-size: 13.5px;
+  }
+</style>
+</head>
+<body>
+  <h1>Red-Teaming Semantic Entropy — live session</h1>
+  <div class="sub">Auto-refreshes every 20 s · reads <code>session_status.js</code> (updated by Claude at each checkpoint)</div>
+
+  <div class="card">
+    <div class="phase" id="phase">…</div>
+    <div class="headline" id="headline"></div>
+    <div class="meta" id="gpu"></div>
+    <div class="meta" id="updated"></div>
+  </div>
+
+  <div class="card">
+    <ul class="tasks" id="tasks"></ul>
+  </div>
+
+  <div class="card">
+    <pre class="log" id="log"></pre>
+  </div>
+
+  <div class="card stopzone">
+    <h2>Stop the session</h2>
+    <button class="stop" onclick="signalStop('stop-and-free-gpu')">■ Stop &amp; free GPU</button>
+    <button class="stop soft" onclick="signalStop('stop')">Stop (let GPU jobs finish)</button>
+    <div class="stopnote">
+      Clicking saves <code>STOP_SESSION.txt</code> to your <b>Downloads</b> folder. Claude checks for it
+      continuously and at every checkpoint: it commits in-progress work, then stops (and, with the red button,
+      also kills GPU jobs). Fallback if the download is blocked: create a file named <code>STOP.txt</code>
+      in the repo root (<code>I:\GITHUBPROJECTS\SE Research</code>).
+    </div>
+    <div id="confirm"></div>
+  </div>
+
+  <script src="session_status.js"></script>
+  <script>
+    (function render() {
+      var s = window.SESSION_STATUS || {};
+      document.getElementById('phase').textContent = s.phase || 'unknown';
+      document.getElementById('headline').textContent = s.headline || '';
+      document.getElementById('gpu').textContent = s.gpu ? ('GPU: ' + s.gpu.job + ' — ' + s.gpu.detail) : '';
+      var upd = document.getElementById('updated');
+      if (s.updated) {
+        var age = (Date.now() - new Date(s.updated).getTime()) / 60000;
+        upd.innerHTML = 'last update: ' + new Date(s.updated).toLocaleTimeString() +
+          (age > 20 ? ' <span class="stale">(' + Math.round(age) + ' min ago — may be between checkpoints)</span>'
+                    : ' (' + Math.max(0, Math.round(age)) + ' min ago)');
+      }
+      var ul = document.getElementById('tasks');
+      (s.tasks || []).forEach(function (t) {
+        var li = document.createElement('li');
+        var b = document.createElement('span');
+        b.className = 'badge ' + (t.state || 'todo');
+        b.textContent = t.state || 'todo';
+        li.appendChild(b);
+        li.appendChild(document.createTextNode(t.name));
+        ul.appendChild(li);
+      });
+      document.getElementById('log').textContent = (s.log || []).join('\n');
+    })();
+
+    function signalStop(mode) {
+      var blob = new Blob([mode + ' @ ' + new Date().toISOString()], { type: 'text/plain' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'STOP_SESSION.txt';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      var c = document.getElementById('confirm');
+      c.style.display = 'block';
+      c.textContent = 'Stop signal saved to Downloads (' + mode + '). Claude will wind down at the next checkpoint — usually within a couple of minutes.';
+    }
+
+    setTimeout(function () { location.reload(); }, 20000);
+  </script>
+</body>
+</html>
