@@ -99,7 +99,8 @@ The null control is cheap (~(K+n_seeds) evals/target) and not the bottleneck —
 ## Still owed before external submission
 - Embedding threshold calibration (Youden-J on short-answer + STS-B/PAWS; tool built) and
   the short-answer paraphrase-AUROC that decides whether e5 can adjudicate at all. DONE:
-  e5 fails the adversarial case (0.51), superseded by the validated LLM-judge (0.92).
+  e5 fails the adversarial case (0.51), superseded by the validated LLM-judge (0.93
+  [0.90, 0.96], n=300, deployed symmetric config, 2026-07-11 — the ONE citation number).
 - Human equivalence audit of a sample of successful Q' (B5). Harness built
   (`scripts/prepare_equivalence_audit.py`) — run it on the definitive pool to emit the
   fill-in CSV; the human rating + inter-annotator agreement is the remaining owed step.

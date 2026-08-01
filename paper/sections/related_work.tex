@@ -61,3 +61,20 @@ hallucination detectors (we evaluate the false-alarm direction here and build th
 direction as its mirror). The bidirectional-NLI equivalence gate is our design choice for
 certifying meaning-preservation, not itself a novelty axis --- indeed our own analysis
 treats the detector's reliance on that same NLI model as the central confound.
+
+\paragraph{Evaluating the evaluation.}
+Because our framing is protocol-led, two methodological strands matter beyond the attack
+neighbours. First, the individual failure modes our controls target are classical ---
+selection on the evaluated system's own scores, selection of an extremum of a noisy
+estimate, and success criteria that drift from the construct --- but we are not aware of a
+prior paraphrase-attack evaluation of sampling-based hallucination detectors that applies
+score-independent selection, answer-invariance checking, and a \emph{budget-matched}
+noise floor jointly (a claim we will verify against the literature at revision); our
+contribution is assembling them into a pre-registered protocol with a decision rule.
+Second, using an LLM as an equivalence oracle inherits the LLM-as-judge literature's
+lesson that judges track humans well yet carry biases and must be validated per
+task~\citep{zheng2023judging}. Our judge contribution is accordingly not the concept but
+the \emph{adversarial-case} validation: the oracle is accepted only on the hard-negative
+discrimination where the cheap embedding oracle demonstrably fails ($0.93$ vs.\ $0.51$),
+with its pre-registered acceptance gate, the failed positive-recognition leg, and the
+consequent false-alarm-only re-scoping disclosed rather than assumed away (Methods).

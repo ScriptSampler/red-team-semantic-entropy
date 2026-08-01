@@ -25,7 +25,7 @@ weakness. We address this directly by re-clustering the answer samples under equ
 oracles independent of the DeBERTa-MNLI supervision (Methods), but two caveats bound the
 check. First, the cheap independent oracles are unreliable on the adversarial case
 (exact-match saturates; the sentence embedder is near-chance), so the adjudication rests
-on a single LLM-judge; while that judge is validated ($0.92$) on the hard discrimination
+on a single LLM-judge; while that judge is validated ($0.93$) on the hard discrimination
 the others fail, one oracle---even independent and validated---is not dispositive, and a
 human or multi-judge equivalence audit remains owed. Second, the judge's own
 positive-recognition is imperfect (it slightly over-splits genuine aliases), which makes

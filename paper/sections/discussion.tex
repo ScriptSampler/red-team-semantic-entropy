@@ -25,8 +25,9 @@ the construction alone; the load-bearing \emph{empirical} test is whether the ef
 survives an equivalence oracle independent of the detector's own NLI. We run that test.
 Cheap independent oracles do not settle it---exact-match saturates on short factoid
 answers and sentence embedders are near-chance on the adversarial, word-preserving case
-(Methods)---but a victim- and NLI-independent LLM-judge, validated to $0.92$ accuracy on
-exactly that adversarial discrimination where the embedder scores $0.51$, can. Under it,
+(Methods)---but a victim- and NLI-independent LLM-judge, validated to $0.93$ accuracy on
+the gold-alias hard negatives that proxy that adversarial discrimination (where the
+embedder scores $0.51$), can. Under it,
 the point estimates lean toward the structural reading: the attack's move ($+0.37$ nats)
 sits close to its move under the detector's own NLI ($+0.46$) and far above the saturated
 exact-match ($+0.05$), placing it at nearly the same rank within the benign-move

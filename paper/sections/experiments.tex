@@ -27,7 +27,9 @@ inconsistency, because that same model gates the attack's paraphrases. Exact-mat
 \texttt{e5-base-unsupervised} embedding relation is NLI-supervision-free but near-chance
 on the adversarial, word-preserving case (hard-negative AUROC $0.51$), so it cannot
 adjudicate. The LLM-judge (Qwen2.5-7B-Instruct), victim- and NLI-independent and
-validated to $0.92$ on exactly that discrimination, is the \textbf{adjudicator}. The
+validated to $0.93$ [$0.90$, $0.96$] ($n{=}300$) on domain-matched gold-alias hard
+negatives---a proxy for the deployed clustering decision---is the \textbf{adjudicator}
+(for the false-alarm direction, under the disclosed re-scoped gate; Methods). The
 \textbf{headline} is the per-target \emph{paired} comparison of attack-max to a
 \emph{budget-matched} benign-max (the max over a benign search of the attacker's own size),
 which is the only winner's-curse-honest statistic; the percentile-within-individual-draws
