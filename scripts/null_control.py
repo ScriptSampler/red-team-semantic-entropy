@@ -205,6 +205,48 @@ def _seed_moves_arms(question, before, attack, pair, gen, n_seeds, embed_fn, thr
     return nm, xm, em, jm
 
 
+# ---- per-target checkpointing (multiday K~180 runs MUST be resumable) --------------
+# Each completed target is appended as one JSONL record (the diag record + the run cfg).
+# On startup, records whose cfg matches the current run are reused and their targets
+# skipped; a cfg change (different K, seeds, or oracle models) invalidates reuse so a
+# resumed run can never silently mix budgets or oracles.
+
+def _ckpt_key(detector: str, attack: str, question_id: str) -> str:
+    return f"{detector}|{attack}|{question_id}"
+
+
+def _ckpt_load(path, cfg: dict) -> dict:
+    """key -> record for records whose cfg matches the current run. Corrupt/partial
+    trailing lines (a crash mid-write) are skipped, not fatal."""
+    import json as _json
+    out: dict = {}
+    if path is None or not path.exists():
+        return out
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            rec = _json.loads(line)
+        except Exception:
+            continue  # torn write at crash — recompute that target
+        if rec.get("cfg") == cfg:
+            out[_ckpt_key(rec["detector"], rec["attack"], rec["question_id"])] = rec
+    return out
+
+
+def _ckpt_complete(rec: dict, embed_active: bool, judge_active: bool) -> bool:
+    """A record is reusable iff every ACTIVE arm has a scored attack move. (A run resumed
+    WITH an arm the checkpoint lacks must recompute; inactive arms are ignored.)"""
+    am = rec.get("attack_move", {})
+    if am.get("nli") is None or am.get("exact") is None:
+        return False
+    if embed_active and am.get("embed") is None:
+        return False
+    if judge_active and am.get("judge") is None:
+        return False
+    return True
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", default="_fair")
@@ -227,6 +269,10 @@ def main() -> int:
                     help="optional JSON path: dump per-target, per-arm baseline entropy + "
                          "attack/benign/seed move lists, for the benign-floor diagnosis "
                          "(critique_log open gate; e.g. why the judge benign floor is -0.19)")
+    ap.add_argument("--checkpoint", default="auto",
+                    help="per-target resume JSONL ('auto' = results/null_control_ckpt<tag>.jsonl; "
+                         "'' disables). A crash mid-run loses at most one target; records from a "
+                         "different cfg (K/seeds/oracles) are ignored, never silently mixed.")
     args = ap.parse_args()
 
     campaign_dir = DEFAULT_SAMPLES_DIR / "attacks" / f"wk9{args.tag}"
@@ -278,6 +324,24 @@ def main() -> int:
              f"= attack move exceeds the benign 90th percentile. See docs/critique_log.md 13.")
     L.append("")
 
+    # Per-target checkpoint: reuse completed targets from a prior run of the SAME cfg.
+    import json as _json
+    ckpt_cfg = {"K": args.K, "n_seeds": args.n_seeds,
+                "embedding_model": args.embedding_model,
+                "embed_threshold": args.embed_threshold,
+                "judge_model": args.judge_model}
+    if args.checkpoint == "auto":
+        ckpt_path = RESULTS_DIR / f"null_control_ckpt{args.tag}.jsonl"
+    elif args.checkpoint:
+        from pathlib import Path as _Path
+        ckpt_path = _Path(args.checkpoint)
+    else:
+        ckpt_path = None
+    ckpt = _ckpt_load(ckpt_path, ckpt_cfg)
+    if ckpt_path is not None:
+        print(f"[ckpt] {ckpt_path} — {len(ckpt)} reusable target(s) for this cfg", flush=True)
+        ckpt_path.parent.mkdir(parents=True, exist_ok=True)
+
     diag: list[dict] = []  # per-target diagnostic records (dumped iff --dump_diag)
     for attack, detector in CELLS:
         f = campaign_dir / f"triviaqa_{detector}_{attack}.jsonl"
@@ -294,39 +358,57 @@ def main() -> int:
         ben = {"nli": [], "exact": [], "embed": [], "judge": []}
         sd = {"nli": [], "exact": [], "embed": [], "judge": []}
         for o in outcomes:
-            before = _arms(o.question, pair, gen, embed_fn, args.embed_threshold, judge_fn,
-                           judge_batched=args.judge_batched)
-            after = _arms(o.best_query, pair, gen, embed_fn, args.embed_threshold, judge_fn,
-                          judge_batched=args.judge_batched)
-            an, ax, ae, aj = _moves(before, after, o.attack)
-            atk["nli"].append(an); atk["exact"].append(ax)
-            if ae is not None: atk["embed"].append(ae)
-            if aj is not None: atk["judge"].append(aj)
-            s = _stable_seed("null:" + o.question_id)
-            bnl, bxl, bel, bjl = _benign_moves_arms(o.question, before, o.attack, pair, gen,
-                                                    args.K, s, embed_fn, args.embed_threshold,
-                                                    judge_fn, judge_batched=args.judge_batched)
-            snl, sxl, sel, sjl = _seed_moves_arms(o.question, before, o.attack, pair, gen,
-                                                  args.n_seeds, embed_fn, args.embed_threshold,
-                                                  judge_fn, judge_batched=args.judge_batched)
-            ben["nli"].append(bnl); ben["exact"].append(bxl); sd["nli"].append(snl); sd["exact"].append(sxl)
-            if embed_fn is not None:
-                ben["embed"].append(bel); sd["embed"].append(sel)
-            if judge_fn is not None:
-                ben["judge"].append(bjl); sd["judge"].append(sjl)
-            print(f"  {o.question_id}: attack nli {an:+.3f} / exact {ax:+.3f}"
-                  + (f" / embed {ae:+.3f}" if ae is not None else "")
-                  + (f" / judge {aj:+.3f}" if aj is not None else "")
-                  + f" | benign nli-mean {np.mean(bnl):+.3f}", flush=True)
-            if args.dump_diag:
-                diag.append({
+            rec = ckpt.get(_ckpt_key(detector, attack, o.question_id))
+            if rec is not None and _ckpt_complete(rec, embed_fn is not None, judge_fn is not None):
+                an, ax = rec["attack_move"]["nli"], rec["attack_move"]["exact"]
+                ae, aj = rec["attack_move"].get("embed"), rec["attack_move"].get("judge")
+                bnl, bxl = rec["benign"].get("nli", []), rec["benign"].get("exact", [])
+                bel, bjl = rec["benign"].get("embed", []), rec["benign"].get("judge", [])
+                snl, sxl = rec["seed"].get("nli", []), rec["seed"].get("exact", [])
+                sel, sjl = rec["seed"].get("embed", []), rec["seed"].get("judge", [])
+                print(f"  {o.question_id}: (checkpoint) attack nli {an:+.3f} / exact {ax:+.3f}",
+                      flush=True)
+            else:
+                before = _arms(o.question, pair, gen, embed_fn, args.embed_threshold, judge_fn,
+                               judge_batched=args.judge_batched)
+                after = _arms(o.best_query, pair, gen, embed_fn, args.embed_threshold, judge_fn,
+                              judge_batched=args.judge_batched)
+                an, ax, ae, aj = _moves(before, after, o.attack)
+                s = _stable_seed("null:" + o.question_id)
+                bnl, bxl, bel, bjl = _benign_moves_arms(o.question, before, o.attack, pair, gen,
+                                                        args.K, s, embed_fn, args.embed_threshold,
+                                                        judge_fn, judge_batched=args.judge_batched)
+                snl, sxl, sel, sjl = _seed_moves_arms(o.question, before, o.attack, pair, gen,
+                                                      args.n_seeds, embed_fn, args.embed_threshold,
+                                                      judge_fn, judge_batched=args.judge_batched)
+                rec = {
                     "detector": detector, "attack": attack, "question_id": o.question_id,
+                    "cfg": ckpt_cfg,
                     "baseline": {"nli": before[0], "exact": before[1],
                                  "embed": before[2], "judge": before[3]},
                     "attack_move": {"nli": an, "exact": ax, "embed": ae, "judge": aj},
                     "benign": {"nli": bnl, "exact": bxl, "embed": bel, "judge": bjl},
                     "seed": {"nli": snl, "exact": sxl, "embed": sel, "judge": sjl},
-                })
+                }
+                if ckpt_path is not None:
+                    with ckpt_path.open("a", encoding="utf-8") as cf:
+                        cf.write(_json.dumps(rec, default=float) + "\n")
+                        cf.flush()
+                print(f"  {o.question_id}: attack nli {an:+.3f} / exact {ax:+.3f}"
+                      + (f" / embed {ae:+.3f}" if ae is not None else "")
+                      + (f" / judge {aj:+.3f}" if aj is not None else "")
+                      + f" | benign nli-mean {np.mean(bnl):+.3f}", flush=True)
+
+            atk["nli"].append(an); atk["exact"].append(ax)
+            if ae is not None: atk["embed"].append(ae)
+            if aj is not None: atk["judge"].append(aj)
+            ben["nli"].append(bnl); ben["exact"].append(bxl); sd["nli"].append(snl); sd["exact"].append(sxl)
+            if embed_fn is not None:
+                ben["embed"].append(bel); sd["embed"].append(sel)
+            if judge_fn is not None:
+                ben["judge"].append(bjl); sd["judge"].append(sjl)
+            if args.dump_diag:
+                diag.append(rec)
 
         arms = [("shared NLI clusterer (the detector's own — confounded/permissive bound)",
                  atk["nli"], ben["nli"], sd["nli"]),

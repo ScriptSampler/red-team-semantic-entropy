@@ -100,3 +100,46 @@ def test_benign_over_seed_flags_reframe_b():
     seed = [[0.0, 0.05, 0.02]]
     s = summarize_bands(attack, benign, seed)
     assert s["benign_over_seed_ci"].point == 1.0
+
+
+def _mk_rec(cfg, judge=True):
+    return {
+        "detector": "se", "attack": "false_alarm", "question_id": "qb_1",
+        "cfg": cfg,
+        "baseline": {"nli": 0.5, "exact": 0.2, "embed": None, "judge": 0.7 if judge else None},
+        "attack_move": {"nli": 0.4, "exact": 0.1, "embed": None, "judge": 0.3 if judge else None},
+        "benign": {"nli": [-0.02], "exact": [-0.06], "embed": [], "judge": [-0.2] if judge else []},
+        "seed": {"nli": [-0.08], "exact": [-0.06], "embed": [], "judge": [-0.1] if judge else []},
+    }
+
+
+def test_ckpt_load_filters_cfg_and_torn_lines(tmp_path):
+    import json
+    cfg = {"K": 180, "n_seeds": 3, "embedding_model": "", "embed_threshold": 0.82,
+           "judge_model": "Qwen/Qwen2.5-7B-Instruct"}
+    other = dict(cfg, K=8)  # different budget -> must NOT be reused
+    p = tmp_path / "ckpt.jsonl"
+    p.write_text(json.dumps(_mk_rec(cfg)) + "\n"
+                 + json.dumps(_mk_rec(other)) + "\n"
+                 + '{"torn": ', encoding="utf-8")   # crash mid-write
+    got = null_control._ckpt_load(p, cfg)
+    assert list(got) == ["se|false_alarm|qb_1"]
+    assert got["se|false_alarm|qb_1"]["cfg"]["K"] == 180
+    assert null_control._ckpt_load(None, cfg) == {}
+    assert null_control._ckpt_load(tmp_path / "missing.jsonl", cfg) == {}
+
+
+def test_ckpt_complete_respects_active_arms():
+    cfg = {"K": 8}
+    with_judge = _mk_rec(cfg, judge=True)
+    without_judge = _mk_rec(cfg, judge=False)
+    # judge arm ACTIVE: record lacking a judge attack move must be recomputed
+    assert null_control._ckpt_complete(with_judge, embed_active=False, judge_active=True)
+    assert not null_control._ckpt_complete(without_judge, embed_active=False, judge_active=True)
+    # judge arm INACTIVE: both are fine
+    assert null_control._ckpt_complete(without_judge, embed_active=False, judge_active=False)
+    # embed active but never scored -> incomplete
+    assert not null_control._ckpt_complete(with_judge, embed_active=True, judge_active=True)
+    # nli missing -> never complete
+    broken = _mk_rec(cfg); broken["attack_move"]["nli"] = None
+    assert not null_control._ckpt_complete(broken, embed_active=False, judge_active=False)
