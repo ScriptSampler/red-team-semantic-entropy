@@ -1,87 +1,54 @@
-# START HERE — overnight session (Fri 21:30 → Sat ~06:00)
+# START HERE — session state as of Sat 2026-08-02 ~05:30 (wound down at 6:00)
 
-## The headline: the night found and fixed two methodology-critical flaws before they shipped
+## Headline: FA reached the pre-registered n=80 — the definitive pipeline is executing
 
-The plan was to land the n≥80 "multiday" judge result and polish the paper. Instead, a
-4-dimension adversarial review of the whole paper (a workflow I ran) surfaced **two blockers
-that would have sunk the paper at review**, the critic **verified both and BLOCKED the
-definitive-run launch**, and I built the honest fixes. Catching these *before* spending the
-multiday GPU budget on a biased control is the most valuable outcome available tonight.
+The **false-alarm attack matrix is COMPLETE at 80/80** (first time at the pre-registered
+scale; the resumed 27 ran at ~60% raw success). The **hide cell is running** (15/80 when
+the session wound down, ~11 min/target ⇒ ~12h left; `recompute_fair.py` is per-target
+resumable, so interrupting it loses nothing). All blockers' *engineering* is done and
+committed; what remains is GPU hours + two owed validations.
 
-### B2 — the winner's-curse null control was not budget-matched (the big one)
-The attack move is the optimiser's **max over ~180 candidates**; the benign floor was only
-**K=8 individual draws**. A max-of-180 beats individual draws *by construction* — under H₀
-its expected percentile is **~99%, not 50%** (closed form m/(m+1)). So the old "attack at
-80th percentile / net > 0" headline was **upward-biased and possibly below the null**.
-- FIX BUILT: `se.stats.paired_max_net` (per-target paired attack-max vs **budget-matched
-  benign-max**, bootstrap net-CI + sign test) + `analytic_max_percentile` companion. The
-  null_control report now flags the old stats as biased and prints the budget-matched
-  control as the headline. Tests pass (Monte-Carlo-verified).
-- STILL OWED (task 23): the definitive run must use **K~180** (budget-matched), plus a
-  **null-objective beam ablation** the critic required (the beam concentrates on noise, so
-  even random-180 is anti-conservative). Design of the ablation is owed + needs a quick
-  critic confirm.
+## If the attack matrix is still running
+Leave it — it appends per target. To stop it manually:
+`wsl -d Ubuntu-24.04 pkill -f recompute_fair` (safe; resumes exactly where it stopped).
+NOTE: the dashboard's STOP button only signals Claude DURING a session; between sessions
+use the command above.
 
-### B3 — the LLM-judge FAILED its own pre-registered gate (an integrity issue)
-The gate was `hard≥0.8 AND pos≥0.8`; the judge gets hard-neg **0.884** (pass) but pos
-**0.700** (FAIL), and `results/judge_validation.md` literally said **"NOT usable"** — while
-the paper promoted it as "the validated adjudicator." Also **0.92 (cited) ≠ 0.884
-(committed)**.
-- FIX BUILT: re-spec'd `validate_judge.py` to report BOTH the pre-registered verdict (FAIL)
-  and a **disclosed, outcome-triggered hard-neg-primary re-spec for FA only** (over-splitting
-  is conservative for false-alarm, not hide); rewrote the committed artifact (no standing
-  "NOT usable"); added the deviation **in the Methods main text**; report the NLI/exact
-  bracket alongside.
-- STILL OWED (task 24): re-run validation on the **deployed (symmetric) config** to lock ONE
-  number (kill 0.92-vs-0.884), validate on **messy real sampled pairs**, and do the
-  **differential-over-splitting check** (attack vs benign cluster counts) — all GPU.
+## The definitive-run sequence (per docs/definitive_run_plan.md, all decisions locked)
+1. **[RUNNING] Attack matrix** `--only se_false_alarm,se_hide --n 80 --tag _def`
+   — FA 80/80 done, hide in progress.
+2. **[NEXT] Null-objective beam ablation** (~4 GPU-h, 10 targets, resumable):
+   `./.venv-wsl/bin/python scripts/null_objective_ablation.py --tag _def --n_targets 10`
+   Verdict semantics are in the script header; it gates how the K=180 floor is read.
+3. **[THEN] K=180 budget-matched null control** (multiday, per-target checkpointed):
+   `./.venv-wsl/bin/python scripts/null_control.py --tag _def --K 180 --n_seeds 3
+    --judge_model Qwen/Qwen2.5-7B-Instruct --judge_batched --judge_batch_size 6
+    --dump_diag results/diag_def.json`
+   (checkpoint auto-writes results/null_control_ckpt_def.jsonl; safe to kill/resume.)
+4. **[AFTER] Analysis**: `diagnose_benign_floor.py results/diag_def.json` (pre-registered
+   H_split/H_rtm/H_noise); `prepare_equivalence_audit.py` on the 80-target pool for the
+   human audit CSV; fill Experiments from the budget-matched paired net (the ONLY headline:
+   attack-max − benign-max, paired CI + sign test; percentile/net-vs-mean are diagnostics).
 
-## The other big win: found + fixed the GPU bottleneck (batched judge)
-The judge null control ran at **~35 min/target** (n≥80 would be ~33h — intractable) because
-the judge scored 90 sample-pairs one at a time. I built a **batched judge** (`load_judge(
-batched=True)` + `cluster_samples_judge_batched`), proved it **verdict- and
-entropy-identical** to the unbatched path (GPU probe 18/18; and the n=53 run's target-1
-matches the old run exactly), and it runs **~10× faster**. Memory tuning: 3 models in 16GB is
-tight — use `--judge_batched --judge_batch_size 6` (12 OOMs). **Running now:** an n=53
-K=8 *diagnostic* (PID 366; NOT the headline — correctly scoped to attack-max +
-reframe-b + `--dump_diag`; writes `results/null_control_report.md` + `diag_n53_diag.json`).
+## Locked numbers + decisions (do not re-litigate)
+- **Judge = 0.93 [0.90, 0.96] (n=300, symmetric deployed config, 2026-07-11).** The one
+  citation number everywhere. Pre-registered gate FAIL on pos (0.65) is DISCLOSED in
+  Methods main text; FA-only re-scope; NLI/exact bracket reported alongside.
+- **Benign budget = full ~180** (user 2026-07-11); **decision rule** = adjudicator's
+  per-target paired net (attack-max − budget-matched benign-max) CI > 0 at n≥80
+  (identical wording in Experiments/Methods/run-plan; both entry-15 deviations disclosed).
+- Still owed before any (a) claim: ablation verdict, messy-real-sample judge validation,
+  differential over-splitting check, benign-floor diagnosis, human equivalence audit.
 
-## What's BLOCKED and the path to the definitive result
-The definitive n≥80 run is BLOCKED (task 22) until: B2 budget-matched run (K~180) + the
-null-objective ablation, and B3's deployed-config re-validation. Run recipe is in
-`docs/definitive_run_plan.md` (updated). Decision rule is now single + identical in
-Experiments/Methods/run-plan (critique_log 21, M1).
+## Session log (this session)
+Dashboard + STOP button committed (602ffe6; watcher pattern: Downloads/STOP_SESSION*.txt
+or repo STOP.txt). Null-control per-target checkpointing (627206a). Null-objective beam
+ablation built + 4 tests (a9fc986). Judge re-validated on deployed config → 0.93 locked,
+paper swept with CI+n at the validation locus (a86ca69). M12 paraphraser disclosure
+(victim Llama itself, greedy, seeded instructions) + hyperparameter values + $M$/$K$/$k$
+notation fixes (f77ddeb). RW "Evaluating the evaluation" strand, zheng2023judging verified
+(a86ca69). Attack matrix launched and FA completed at 80/80. All tests green.
 
-## Also done tonight (ungated)
-Paper honesty fixes (Abstract scoped to FA — hide was overclaimed; Conclusion/Intro deferred
-the verdict; +0.64 stale number removed; fair-pool AUROC 0.69→0.704+CI; "affiliation TBD"
-gone); bib `%TODO` citations verified vs arXiv (3 wrong TITLES fixed) + `note→annote` so
-scaffolding won't leak into References; the `--dump_diag` + `diagnose_benign_floor.py`
-benign-floor tooling; the `prepare_equivalence_audit.py` B5 audit harness. Full punch-list
-(25 issues) in `docs/paper_review_punchlist.md` with checkboxes.
-
-## Still-open punch-list items (not yet done): M2, M6, M7–M10, M12, mi3/mi5/mi6 —
-positioning (add Kernel Language Entropy + LLM-as-judge + selection-bias RW strands; reframe
-the over-stacked novelty sentence; concede CORVUS), reproducibility (name the paraphraser +
-hyperparameters), notation overloads. All data-independent; see the punch-list.
-
-## Decisions — RESOLVED by user (2026-07-11)
-1. **Benign budget: FULL ~180 (most rigorous).** The definitive run uses the true
-   budget-matched benign-max (max over ~180 random feasible paraphrases/target). Multi-day,
-   accepted. Run command in `definitive_run_plan.md` step 2 already sets `--K 180`.
-2. **Null-objective beam ablation: my discretion** ("take the best course of action"). Plan:
-   implement my best interpretation — run the identical optimiser with a per-candidate
-   RANDOM objective (deterministic per query, same beam/budget/proposer), then measure the
-   entropy MOVE of its selected trajectory-max, compared to the random-180 benign-max — with
-   a short critic sanity-check on the semantics before it drives any claim. ~10–15 targets.
-
-## When we resume — next actions
-- Implement the budget-matched benign-max generation at K~180 in `null_control.py` (the
-  reporting is already wired; the run just needs K=180) and the null-objective ablation
-  (task 23); then launch the definitive run per `definitive_run_plan.md`.
-- Do the B3 GPU-owed items (task 24): re-validate the judge on the deployed symmetric config
-  + messy real sampled pairs; differential-over-splitting check.
-- The n=53 diagnostic (PID left running Fri night) should have written
-  `results/null_control_report.md` + `results/diag_n53_diag.json` — read them first; run
-  `diagnose_benign_floor.py` on the dump.
-- Remaining ungated polish: M6, M8, M12, mi3/mi5/mi6 (see paper_review_punchlist.md).
+## Punch-list state: docs/paper_review_punchlist.md
+Remaining open: number-landing items (gated on the runs) + the owed validations above.
+Everything data-independent is done.
