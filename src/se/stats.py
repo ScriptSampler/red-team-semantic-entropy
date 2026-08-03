@@ -179,6 +179,130 @@ def attack_move_at_budget(trajectory_best_obj, budget: int, *,
     return float(traj[t]) - float(traj[0])
 
 
+def expected_max_at_budget(values, b: int) -> float:
+    """EXACT expected maximum of a uniformly random size-`b` subset of `values`, i.e. what
+    a benign search of budget b would have achieved on average, computed from the empirical
+    sample with NO distributional assumption (critique_log 22, refinement 4).
+
+    For sorted v_(1) <= ... <= v_(M), the max of a random b-subset equals v_(i) with
+    probability C(i-1, b-1) / C(M, b) — choose the other b-1 members from the i-1 values
+    below it. So E[max_b] = sum_i v_(i) * C(i-1, b-1) / C(M, b).
+
+    This is preferable to fitting an extreme-value tail whenever b <= M: it is unbiased,
+    assumption-free, and cheap. (Extrapolating ABOVE M is where EVT would be needed — and
+    is exactly what we avoid by matching budgets instead.) Requires 1 <= b <= len(values).
+    """
+    from math import comb
+    v = sorted(float(x) for x in values)
+    M = len(v)
+    if M == 0:
+        return float("nan")
+    b = int(b)
+    if b < 1:
+        raise ValueError("budget must be >= 1")
+    if b >= M:
+        return v[-1]                      # the whole sample: the observed max
+    denom = comb(M, b)
+    total = 0.0
+    for i in range(b, M + 1):             # 1-indexed order statistic i
+        total += v[i - 1] * comb(i - 1, b - 1)
+    return total / denom
+
+
+def benign_equivalent_budget(attack_move: float, benign_values, *, max_budget: int | None = None):
+    """The smallest benign search budget b whose EXPECTED max reaches the attack's move —
+    "how many random paraphrases would it take to match this attack by chance?".
+
+    Returns an int b, or None if even the full benign sample never reaches it (report as
+    '> len(benign_values)'). This is the scale-free way to read the budget curve: b* far
+    ABOVE the attacker's own budget means the attack genuinely beats budget-matched benign
+    search; b* far BELOW it means the "attack" is doing no better than cheap random
+    rephrasing. It needs no attack trajectory, so it works on outcome records that predate
+    trajectory logging."""
+    v = [float(x) for x in benign_values]
+    if not v:
+        return None
+    hi = min(len(v), max_budget or len(v))
+    if max(v) < float(attack_move):
+        return None                        # even the full-sample max falls short
+    for b in range(1, hi + 1):             # E[max_b] is nondecreasing in b
+        if expected_max_at_budget(v, b) >= float(attack_move):
+            return b
+    return None
+
+
+def exceedance_counts(attack_max, benign_lists):
+    """Per target, how many benign draws EXCEED the attack's max: K_j = #{b in benign_j :
+    b > attack_max_j}, plus the benign sample size m_j. The sufficient statistic for the
+    exact budget-corrected test below."""
+    out = []
+    for a, bl in zip(attack_max, benign_lists):
+        if not bl:
+            continue
+        out.append((sum(1 for b in bl if float(b) > float(a)), len(bl)))
+    return out
+
+
+def exceedance_test(counts, n_attack_candidates: int) -> dict:
+    """EXACT, distribution-free test that the attack beats random paraphrasing, with the
+    attacker's larger search budget priced into the NULL rather than matched by brute force
+    (critique_log 23).
+
+    H0: the optimiser carries no signal, so a target's N attack candidates and its m benign
+    draws are exchangeable draws from one distribution F_j. Then F_j(attack-max) ~ Beta(N,1)
+    and, conditionally, the number of benign draws above it is Binomial(m, 1-p), so
+        K_j ~ BetaBinomial(m; a=1, b=N),  E[K_j] = m/(N+1),
+        P(attack-max beats ALL m benign) = N/(N+m).
+    The budget asymmetry that biased the old percentile statistic is thus EXACTLY accounted
+    for: a max-of-181 is *expected* to sit above m benign draws under H0, and the null says
+    by precisely how much. FEWER exceedances than expected is evidence for the attack, so
+    the one-sided p-value is P(S <= s_obs) for S = sum_j K_j.
+
+    The null distribution of S is obtained by EXACT discrete convolution of the per-target
+    beta-binomials (each has finite support 0..m_j) — no simulation, no asymptotics.
+
+    `counts` is the [(K_j, m_j), ...] from exceedance_counts. Returns the observed and
+    expected totals, the exact one-sided p-value, and the effective benign budget
+    n_eff = m/Kbar - 1 ("the beam search is worth n_eff random paraphrases"), which is
+    method-of-moments and upward-biased when Kbar is small — treat as indicative.
+
+    ASSUMPTION TO CHECK, NOT ASSUME: exchangeability requires the beam's candidates to be
+    drawn from the same distribution as single-step benign paraphrases under H0. Multi-hop
+    beam paraphrases could drift further and be more dispersed even with a null objective —
+    which is exactly what scripts/null_objective_ablation.py measures. Read that ablation
+    before trusting this test."""
+    from scipy.stats import betabinom
+    counts = [(int(k), int(m)) for k, m in counts if m > 0]
+    if not counts:
+        return {"n_targets": 0, "p_value": float("nan"), "observed": 0,
+                "expected": float("nan"), "n_eff": float("nan")}
+    N = int(n_attack_candidates)
+    obs = sum(k for k, _ in counts)
+    exp = sum(m / (N + 1) for _, m in counts)
+
+    # Exact null of S = sum_j K_j by convolving the per-target pmfs.
+    dist = np.array([1.0])
+    for _, m in counts:
+        pmf = betabinom.pmf(np.arange(m + 1), m, 1, N)
+        pmf = np.asarray(pmf, dtype=float)
+        pmf = pmf / pmf.sum()
+        dist = np.convolve(dist, pmf)
+    p_le = float(dist[: obs + 1].sum()) if obs < len(dist) else 1.0
+
+    m_tot = sum(m for _, m in counts)
+    kbar = obs / len(counts)
+    m_bar = m_tot / len(counts)
+    n_eff = (m_bar / kbar - 1.0) if kbar > 0 else float("inf")
+    return {
+        "n_targets": len(counts),
+        "observed": obs,
+        "expected": float(exp),
+        "p_value": min(1.0, max(0.0, p_le)),
+        "n_eff": n_eff,
+        "p_attack_beats_all_per_target": N / (N + m_bar),
+    }
+
+
 def paired_max_net(attack_max, benign_lists, *, n_boot: int = 3000, seed: int = 0) -> dict:
     """Budget-matched winner's-curse control (critique_log 21, B2). Compares each target's
     attack-max to its BENIGN-MAX (max over that target's benign draws), PAIRED per target —
