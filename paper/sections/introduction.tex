@@ -17,8 +17,14 @@ hallucinations~\citep{liang2025seca, liang2026realista}---or evades text-origin
 classifiers by paraphrasing~\citep{cheng2025advparaphrasing, fang2025copa}; work on
 uncertainty manipulation has used fine-tuning or backdoors rather than a
 meaning-preserving input change~\citep{uncertaintyfragile2024}, and the closest
-detector-side attack degrades a hidden-state probe model-side~\citep{corvus2026}. The
-question we ask is different: can an attacker who only \emph{rephrases the question},
+detector-side attack degrades a hidden-state probe model-side~\citep{corvus2026}.
+Uncertainty \emph{is} attackable from the input side: \citet{obadinma2025verbal} show that
+semantics-preserving perturbations degrade an LLM's \emph{verbal} confidence. We therefore
+scope the gap narrowly. What remains untested is the \emph{sampling-based} family, whose
+score is not a self-report but a statistic of an answer distribution partitioned by a
+learned equivalence relation---so the attack surface is that sampling-and-clustering
+pipeline rather than a model's self-assessment. The
+question we ask is accordingly: can an attacker who only \emph{rephrases the question},
 under a hard semantic-equivalence constraint, move a sampling-based detector's score
 in a chosen direction while the model's answer---and its correctness---stays put?
 
