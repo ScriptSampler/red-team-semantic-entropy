@@ -30,7 +30,11 @@ Anchored to the real data, not to a convenient model:
 | 30 | 7% | 0.022 | 0.46 | 0.77 |
 | 50 | 7% | 0.045 | **0.71** | **0.96** |
 
-## Why power collapses (the mechanism, not the model)
+## Why the test is DEGENERATE (not merely underpowered)
+
+The H0 level is 0.000 alongside the zero power: the statistic cannot reject under the null
+either. This is degeneracy, not a sample-size problem, and no increase in n fixes it.
+
 
 On a saturated target the benign draws reach the ceiling too — confirmed on real data
 (`dpql_1059`: the attack, a null-objective beam, and plain random paraphrasing all landed

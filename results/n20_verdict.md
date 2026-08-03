@@ -38,10 +38,29 @@ saturation against the observed 49%):
 | N=20 | 50 | 41% | 0.000 | 0.00 | 0.00 |
 
 **VERDICT: do not proceed.** Power stays at zero because saturation barely moves (46% → 41%).
+Note the precise word: the test is **degenerate**, not underpowered. The H0 level is also
+0.000 — with conservative ties and ~46% saturation the statistic cannot reject *under the
+null either*, so no increase in n would rescue it.
 Per the pre-commitment, false-alarm effect sizes in nats and the false-alarm exceedance test
 are **not identifiable at any feasible sample budget**, and false-alarm results are reported
 via censoring-robust statistics only: operating-point flips, rank statistics on the
 uncensored subset, headroom fraction, and the ratio-to-detector-signal framing.
+
+## The identifiable false-alarm number: operating-point flips
+
+Effect sizes in nats are censored, but a **threshold crossing is not** — once the attacked
+score is past the operating point it does not matter how far past. So the deployment-relevant
+quantity survives the ceiling intact:
+
+> At a threshold set to a **10% false-positive rate on clean data**, **31 of 80 correct
+> answers (39% [29%, 49%]) flip from unflagged to flagged** under a meaning-preserving
+> paraphrase.
+
+This number is valid *now*, despite the hide cell being incomplete: the threshold is set on
+the clean **negatives**, which are exactly the false-alarm targets, so including or excluding
+the 17 hide targets leaves it unchanged at 2.1778 (verified). It remains the **raw** attack
+figure — the benign floor must still tell us what fraction random paraphrasing flips — but it
+is identifiable, censoring-proof, and operationally meaningful in a way nats are not.
 
 ## What this is, positively
 

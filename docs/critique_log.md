@@ -802,3 +802,76 @@ Lesson for future pre-registration: name the POPULATION and the DECISION QUANTIT
 a threshold. A bar without a population is not a pre-commitment.
 
 ---
+
+## 24. 2026-08-02 — N=20 verdict accepted; FA reframed; rule SCOPE moves to hide
+
+Critic verified results/n20_verdict.md and APPROVED all four rulings. The pre-commitment
+held: the decision was made on a power criterion fixed in writing before the data.
+
+**(a) The FA-led framing SURVIVES, with a reframed lead claim.** The defense against "this
+is a dodge" is that we demonstrated the censoring is **STRUCTURAL, not a budget artifact**:
+raising N does not help because the baseline rises with the ceiling (+0.110 median realized
+gain vs the naive +0.693), and power stays at zero at every feasible budget. "We used too
+few samples" would be a dodge; "more samples provably does not help" is a measurement result
+about the detector. Lead with that. The FA-led choice is documented in framing_decision.md
+BEFORE the saturation finding, so the reframe follows the evidence rather than retrofitting
+it — cite that trail.
+Two additions that make the reframe quantitative rather than merely negative:
+  1. **Operating-point FLIPS are the identifiable FA headline.** Ceiling-immune (only the
+     threshold crossing matters). Measured and VERIFIED valid despite the incomplete hide
+     cell — the threshold is set on the clean NEGATIVES, which ARE the FA targets, so it is
+     2.1778 with or without the 17 hide targets: **at a 10% clean-data FPR, 31/80 = 39%
+     [29%, 49%] of correct answers flip from unflagged to FLAGGED.** Still the RAW attack
+     figure; the benign floor must still say what fraction random paraphrasing flips.
+  2. **Quantify how often BENIGN paraphrases reach the ceiling** (from the --dump_diag
+     benign lists). dpql_1059 already showed attack, null-objective beam and plain random
+     rephrasing all landing on exactly 2.3026. If benign paraphrases reach the ceiling
+     often, the sharpest honest claim is that **inducing a false alarm needs no adversarial
+     optimisation at all** — evidenced rather than asserted. OWED.
+**CORRECTION adopted:** the test is **DEGENERATE, not underpowered** — the H0 level is also
+0.000, so it cannot reject under the null either and no increase in n would rescue it. Both
+write-ups patched.
+
+**(b) FINISH THE HIDE CELL (17 -> 80, ~12 GPU-h).** Hide is uncensored (0/17 at the floor,
+1.661 nats of headroom vs FA's 0.826), the pre-registered rule can actually execute there,
+and it unblocks the AUROC quarantine that needs both classes. My own power simulation
+(same calibrated scale, so the comparison isolates headroom): hide saturation 7% vs FA 47%,
+H0 level non-degenerate, but power is still only 0.04/0.08 at a 2x effect and 0.25/0.40 at
+5x/10x with m=50. So hide is FUNCTIONAL but only detects LARGE effects — n_eff of roughly 5x
+and up. That must be pre-committed as hide's detectable-effect floor before its data lands.
+**CRITICAL CONSTRAINT:** the B3 judge re-spec is **FA-ONLY** — over-splitting is conservative
+for false-alarm but OVERSTATES hide. If hide becomes the anchor direction, either
+re-validate the judge for hide or report hide attribution via the NLI/exact **bracket only**.
+Hide must not silently inherit the FA-scoped judge. Also budget for hide's 22% B2 attrition
+(vs FA's 4%).
+
+**(c) DEVIATION #4 (triggered).** The decision rule's CONTENT is unchanged; its SCOPE moves
+to the hide direction, where the quantity is identifiable. Trigger: FA non-identifiability,
+demonstrated by the N=20 pilot plus the power simulation. Alongside #1 e5->judge (trigger:
+e5 hard-neg 0.51), #2 individual-benign -> budget-matched-max (trigger: B2 winner's curse),
+#3 budget-matched-max -> exact beta-binomial at pre-committed m (trigger: 9.5-GPU-day
+intractability).
+**FORKING-PATH RISK, and the required mitigation:** "led with FA, FA turned out unmeasurable,
+so the confirmatory rule moved to hide" is exactly what a reviewer flags as outcome-driven
+direction-shopping. The defense is the timestamped pre-registration trail, and it only works
+if the WHOLE SEQUENCE is in the MAIN TEXT, not an appendix: FA-led choice -> ceiling
+discovery -> pre-committed power bar -> verdict -> scope move. Same disclosure discipline as
+B3. Pre-commit hide's power and decision parameters BEFORE the hide data lands.
+
+**(d) The winner's-curse re-evaluation is APPROVED and correctly scoped.** Re-scoring the
+SELECTED paraphrase at the same N=10 with a different seed isolates the selection-on-noise
+component with no scale confound and needs neither judge nor benign floor. It BOUNDS one
+component of B2 and is NOT a substitute for the null control — it says nothing about whether
+benign paraphrasing achieves the same move. Present it exactly that way. Verifying that a
+seeded 20-sample draw is not a prefix-superset of the seeded 10-sample draw BEFORE believing
+the pilot-based retention figure was the right instinct; the clean same-N figure supersedes
+it. Optional refinement: apply the same re-score to each target's benign-max paraphrase, to
+compare retention under attack-selection vs benign-selection.
+
+**Critic's assessment:** "The ceiling finding plus the N=20 verdict is now the strongest
+single result in this project — a detector whose score a meaning-preserving rephrase
+saturates on half of correct answers, where more sampling does not help because ceiling and
+baseline rise together, and whose whole correct-vs-wrong separation is 0.184 nats. That is a
+finding about semantic entropy, not about your experiment."
+
+---
