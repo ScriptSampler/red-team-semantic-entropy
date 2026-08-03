@@ -55,3 +55,33 @@ def test_paired_max_net_empty():
     # targets with empty benign lists are skipped, not crashed
     d2 = paired_max_net([0.5, 0.6], [[], [0.1]], n_boot=100)
     assert d2["n"] == 1
+
+
+def test_attack_move_at_budget_prefix_semantics():
+    from se.stats import attack_move_at_budget as amb
+    # traj[0]=baseline objective; each iteration adds top_N*M = 9 candidates.
+    traj = [1.00, 1.20, 1.35, 1.35, 1.60]      # best-so-far after iters 0..4
+    assert amb(traj, 1) == pytest.approx(0.0)          # only the original scored
+    assert amb(traj, 10) == pytest.approx(0.20)        # 1 + 1*9 -> iteration 1
+    assert amb(traj, 19) == pytest.approx(0.35)        # 1 + 2*9 -> iteration 2
+    assert amb(traj, 28) == pytest.approx(0.35)        # plateau preserved
+    assert amb(traj, 181) == pytest.approx(0.60)       # clamps to the full run
+    assert amb(traj, 100000) == pytest.approx(0.60)    # past the end clamps
+    assert amb([], 50) is None
+    assert amb(None, 50) is None
+
+
+def test_attack_move_at_budget_is_monotone_nondecreasing():
+    from se.stats import attack_move_at_budget as amb
+    traj = [0.5, 0.7, 0.7, 0.9, 1.4, 1.4]
+    moves = [amb(traj, b) for b in range(1, 200, 7)]
+    assert all(b >= a for a, b in zip(moves, moves[1:]))   # running max never decreases
+    assert min(moves) >= 0.0                                # never below the baseline
+
+
+def test_attack_move_at_budget_respects_beam_shape():
+    from se.stats import attack_move_at_budget as amb
+    traj = [0.0, 0.3, 0.6]
+    # with a 2x2 beam only 4 candidates per iteration, so budget 5 reaches iteration 1
+    assert amb(traj, 5, top_N=2, candidate_size_M=2) == pytest.approx(0.3)
+    assert amb(traj, 9, top_N=2, candidate_size_M=2) == pytest.approx(0.6)

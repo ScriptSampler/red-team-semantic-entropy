@@ -154,6 +154,31 @@ def analytic_max_percentile(m: int) -> float:
     return m / (m + 1)
 
 
+def attack_move_at_budget(trajectory_best_obj, budget: int, *,
+                          top_N: int = 3, candidate_size_M: int = 3):
+    """The intended-direction move the attack had achieved using only its FIRST `budget`
+    candidates (critique_log 21, B2 budget-matching).
+
+    `trajectory_best_obj[t]` is the optimiser's running-best FEASIBLE objective after
+    iteration t, i.e. after `1 + t*top_N*candidate_size_M` objective calls; index 0 is the
+    original query's objective. Because the objective is signed so that larger is better
+    for the attacker, `traj[t] - traj[0]` IS the intended-direction move.
+
+    This is a genuine PREFIX (what a true budget-`budget` attack run achieved), not a
+    random subsample of the trajectory: the first t iterations of a beam search are exactly
+    the run a smaller budget would have produced, since later iterations cannot influence
+    earlier ones. It therefore supports an honest like-for-like comparison against a benign
+    floor drawn at the same budget, with no re-running of the attack. Returns None if the
+    trajectory is empty; budgets past the end clamp to the full run."""
+    traj = list(trajectory_best_obj or [])
+    if not traj:
+        return None
+    per_iter = max(1, int(top_N) * int(candidate_size_M))
+    t = (int(budget) - 1) // per_iter
+    t = max(0, min(t, len(traj) - 1))
+    return float(traj[t]) - float(traj[0])
+
+
 def paired_max_net(attack_max, benign_lists, *, n_boot: int = 3000, seed: int = 0) -> dict:
     """Budget-matched winner's-curse control (critique_log 21, B2). Compares each target's
     attack-max to its BENIGN-MAX (max over that target's benign draws), PAIRED per target —

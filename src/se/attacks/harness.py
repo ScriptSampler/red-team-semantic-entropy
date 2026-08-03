@@ -19,7 +19,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Iterable
 
@@ -79,6 +79,13 @@ class AttackOutcome:
     # actually clusters. Fraction of the N detector samples correct under Q' (-1 = not
     # computed, i.e. the re-check did not run). Reported alongside the greedy status.
     frac_correct_under_q_prime: float = -1.0
+    # B2 budget-matching (critique_log 21): the optimiser's running-best FEASIBLE objective
+    # after each iteration. trajectory_best_obj[t] is the best the attack had achieved using
+    # only its first 1 + t*top_N*candidate_size_M candidates, so the attack's move at ANY
+    # smaller budget is recoverable post-hoc (attack_move_at_budget) and can be compared
+    # against a benign floor drawn at that same budget — without re-running the attack.
+    # Defaulted so records written before this field remain readable.
+    trajectory_best_obj: list[float] = field(default_factory=list)
 
 
 def _entropy_moved(attack: str, entropy_before: float, entropy_after: float,
@@ -176,6 +183,7 @@ def run_attack_on_example(
         correct_under_q_prime=correct_qp,
         status_held=status_held,
         frac_correct_under_q_prime=frac_correct_qp,
+        trajectory_best_obj=list(result.trajectory_best_obj),
     )
 
 
