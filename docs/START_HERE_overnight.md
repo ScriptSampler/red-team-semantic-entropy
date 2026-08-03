@@ -1,5 +1,19 @@
 # START HERE — state as of Sun 2026-08-02 05:15
 
+> ## ⚠ READ THIS FIRST (added 05:35, after independent verification)
+> A 4-agent verification re-derived every number from raw data. **All arithmetic reproduced,
+> but seven reasoning flaws are invalidating** — see `results/CORRECTIONS_2026-08-02.md`.
+> **The headline verdict below is overturned:** the "conservative" tie rule is a ~61x
+> overcorrection (exchangeable credit is a/(b+1) with b>=1; measured mean b=60.4), and *that*,
+> not the ceiling, made the test degenerate. With a correct randomized rule the test is
+> calibrated and powerful **at N=10** (0.40/0.82/0.99 at m=30/50/60) — better than the N=20 fix
+> at zero GPU cost — and power RISES with m. So finding 2 ("more samples don't help ⇒ FA not
+> identifiable") does **not** follow; the N=20 *measurement* stands, the *inference* falls.
+> Finding 3's numbers are also overstated (separation not significant, p=0.296; "2.8x" is
+> ~2.1x censoring-corrected with a CI spanning zero). **First task next session: implement the
+> exchangeable tie rule and re-open the verdict.**
+
+
 ## The night rewrote what this paper is about
 
 We set out to run the definitive judge experiment. We found instead that **the measurement
