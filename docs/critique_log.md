@@ -765,3 +765,40 @@ gate selection):**
 > feasible N and we report censoring-robust statistics only.
 
 ---
+
+## 23a. 2026-08-02 03:20 — my own pre-commitment was ambiguous; tightening it BEFORE the data
+
+Entry 23 pre-committed: "the FA analysis proceeds at N=20, m=50, iff the pilot shows
+residual saturation below 20%." Mid-pilot I noticed that wording is **ambiguous about the
+population**, and the ambiguity is exactly the kind that lets a result be argued either way
+after the fact. Recording the tightening now, with 7/15 targets in and the outcome still
+open, rather than resolving it afterwards.
+
+The pilot deliberately samples the WORST CASE: only targets that saturate at N=10. So:
+- "residual saturation" of the PILOT population (previously-saturated targets that stay
+  saturated) is a conditional rate. At 7/15 it is 2/7 = 29%.
+- the decision-relevant quantity is the OVERALL saturation rate at N=20 across all 80 FA
+  targets, which is roughly (49% x conditional rate) if previously-unsaturated targets stay
+  unsaturated — about 14% at the current conditional rate.
+Read literally, the entry-23 bar is on the first quantity and would FAIL at 29%. Read by
+intent, it is about whether the ceiling still cripples the analysis, which is the second.
+
+**I am not going to pick whichever reading suits the number.** Both are reported, and the
+decision moves to the quantity that is not gameable and that the bar was a proxy for in the
+first place:
+
+> **TIGHTENED PRE-COMMITMENT (written 03:20, before the pilot completed).** Re-run
+> `scripts/power_sim_ceiling.py` using the pilot's EMPIRICAL per-target headroom gains
+> (not the uniform +0.693 the first simulation assumed — the pilot shows baselines rise with
+> N too, so realized gains are heterogeneous: +0.11, +1.61, +0.49 on the first three).
+> Proceed with the FA exceedance analysis at N=20 IFF that simulation gives **power >= 0.60
+> at a 2x effect with m <= 50**. Below that, FA nats and the FA exceedance test are declared
+> not identifiable at feasible N, and false-alarm results are reported via censoring-robust
+> statistics only (operating-point flips, rank statistics on the uncensored subset, headroom
+> fraction, and the ratio-to-detector-signal framing).
+> Report BOTH saturation rates (conditional and overall) whatever happens.
+
+Lesson for future pre-registration: name the POPULATION and the DECISION QUANTITY, not just
+a threshold. A bar without a population is not a pre-commitment.
+
+---
