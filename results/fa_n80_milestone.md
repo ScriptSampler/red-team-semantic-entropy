@@ -16,18 +16,26 @@ carries the winner's-curse bias that control exists to remove (critique_log 21, 
 | attrition from the B2 status gate | 2 of 49 would-be wins (**4%**) |
 | answer-flip subcategory (meaning-shift suspects) | 2/49 (4%) |
 | sampled fraction-correct under q' | 81% |
-| feasible-paraphrase rate | 1.000 [1.000, 1.000] |
-| mean intended entropy move (feasible) | 0.524 nats |
+| ~~feasible-paraphrase rate 1.000~~ | **WITHDRAWN — vacuous, see below** |
+| mean intended entropy move | 0.524 nats |
 
 Reading, conservatively:
 - **The B2 status gate costs little in the FA direction** (4% attrition; 0.613 → 0.588).
   Contrast the partial hide cell, where attrition is 22% — consistent with the design
   intuition that hiding is more prone to accidentally *fixing* the answer. This is a
   genuine, null-control-independent finding about the criterion's bite per direction.
-- **Feasibility is saturated at 1.000**: every reported win passed the bidirectional-NLI
-  gate. That is exactly why the gate's fidelity is load-bearing and why the human
-  equivalence audit (B5, harness built) is owed — a 100% pass rate is a statement about
-  the gate, not about meaning preservation.
+- **CORRECTION (critique_log 22): the "feasible rate 1.000" is an artifact, not a
+  measurement, and my first reading of it was wrong.** `optimizer.best_is_feasible` is
+  initialised `True` and never set `False` (the final `best_query` is either the original,
+  trivially self-equivalent, or a candidate that already passed the gate), so
+  `AttackOutcome.feasible` is `True` by construction and any rate over it is vacuous. It
+  has been withdrawn from the report; a real per-candidate gate pass rate
+  (`n_feasibility_passed / n_feasibility_checks`) is now recorded, but only for runs from
+  2026-08-02 onward — the n=80 FA cell predates it, so we have NO gate-fidelity number for
+  this cell. The human equivalence audit (B5) is correspondingly more load-bearing, not
+  less. Two knock-ons in the same report were silently vacuous for the same reason: the
+  "mean move (feasible)" was really the mean over all outcomes (relabelled), and the
+  success-vs-cutoff sweep was ungated by feasibility.
 - **The raw success rate is NOT the effect size.** Benign paraphrasing at the same search
   budget may achieve much of it; that comparison is the K=180 null control's job.
 

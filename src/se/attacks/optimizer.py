@@ -52,7 +52,13 @@ class AttackResult:
     n_iterations_run: int
     n_objective_calls: int
     trajectory_best_obj: list[float] = field(default_factory=list)
+    # NOTE: best_is_feasible is True BY CONSTRUCTION — the final best_query is either the
+    # original (trivially equivalent to itself) or a candidate that already passed the gate,
+    # so this flag can never be False. It is NOT a measurement of gate behaviour; use the
+    # per-candidate counters below for that (critique_log 22).
     best_is_feasible: bool = False
+    n_feasibility_checks: int = 0     # candidates submitted to the equivalence gate
+    n_feasibility_passed: int = 0     # of those, how many the gate admitted
 
 
 def optimize(
@@ -84,6 +90,8 @@ def optimize(
     parents: list[tuple[str, float, int]] = [(original_query, base_obj, -1)] * top_N
     traj = [best_obj]
     self_index = 0
+    n_checks = 0
+    n_passed = 0
 
     for it in range(max_iteration):
         children: list[Candidate] = []
@@ -106,6 +114,8 @@ def optimize(
         for c in improved_children:
             fr = feasibility.check(c.query, original_query, nli, **feas_kw)
             c.feasible = fr.feasible
+            n_checks += 1
+            n_passed += int(bool(fr.feasible))
             if fr.feasible:
                 feasible_candidates.append(c)
                 # This guard is NOT redundant with the improved_children filter
@@ -148,4 +158,6 @@ def optimize(
         n_objective_calls=n_calls,
         trajectory_best_obj=traj,
         best_is_feasible=best_feasible,
+        n_feasibility_checks=n_checks,
+        n_feasibility_passed=n_passed,
     )

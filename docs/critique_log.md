@@ -622,3 +622,78 @@ ungated. VERDICT: BLOCK definitive n>=80 launch until B2 (budget-matched floor +
 beam ablation + analytic companion) and B3 (5 conditions) land.
 
 ---
+
+## 22. 2026-08-02 — B2 TRACTABILITY: judge arm at K=180 is ~9.5 GPU-days. Ruling: prefix.
+
+The budget-matched control ruled in entry 21 prices out with the judge arm: null_control
+scores 2 + K + n_seeds candidates per target, each costing an SE sampling pass + a
+judge clustering (45 pairs x 2 orderings = 90 short generations). Measured at K=8 with the
+batched judge: 13 calls ~ 12 min/target. At K=180: 185 calls ~ 171 min/target x 80 targets
+= ~228 GPU-h ~ 9.5 DAYS for the FA cell alone. The cheap arms (NLI+exact, no judge) at
+K=180 are ~25h for n=80 — affordable.
+
+**RULING (critic): adopt (B)-PREFIX + (A). Launch cleared once m is fixed in writing.**
+- **Decision-rule statistic = attack-max-over-the-FIRST-m candidates vs benign-max-over-m,
+  both matched at m, under the JUDGE.** PREFIX, not random subsample: the optimiser is
+  deterministic given seeds, so the first m candidates ARE the complete output of a
+  budget-m run; a random m-subset contains late-beam candidates a budget-m run never
+  reaches => anti-conservative => DISQUALIFIED.
+- **m must sit on an iteration boundary**: top_N=3 x candidate_size_M=3 = 9 candidates per
+  iteration, so m = 9k and the prefix is exactly "the attack run for k iterations".
+- **Halve judge cost** via single-ordering + an explicit symmetrisation rule (90 -> 45
+  generations/candidate, ~2x the affordable m), THEN RE-VALIDATE hard-neg accuracy under
+  that exact deployed config and cite that one number everywhere (this also discharges B3
+  condition 4). Do not switch orderings without re-validating.
+- **REJECTED — judge-arm pre-screening** (rank 180 benign by the cheap NLI arm, judge only
+  the top-j): the judge-max may be a candidate NLI ranked low, so pre-screening returns a
+  LOWER bound on the benign floor => understates the floor => inflates the gap => the same
+  direction as the bias B2 exists to remove.
+- **DESIGN UPGRADE (refinement 4):** the cheap arms give the full BUDGET-DEPENDENCE CURVE
+  of attack-max and benign-max from 9 to 180, answering "does the attack's advantage grow,
+  shrink, or vanish with budget?" — which the judge arm cannot afford to answer. The judge
+  then anchors ATTRIBUTION at the single budget m. (A)+(B) are complementary, not a split.
+- **(C) tail extrapolation: companion only, AND validate it** — fit the tail on 30 NLI
+  benign draws, extrapolate to 181, and check against the OBSERVED NLI max-at-180 we
+  actually have. That converts an unvalidated modelling assumption into an extrapolation
+  with a measured error rate. Never the headline.
+- **(D) reduce n instead of m: REJECTED.** Power is the binding constraint; n drives CI
+  width and is not recoverable by argument, whereas m is (via the budget curve). Preserve
+  n>=80.
+
+**CLAIM SCOPE (obligatory disclosures).** The adjudicated attack is a budget-m attack —
+a complete, internally valid experiment, not a degraded control — so the claim becomes
+"an attack with budget m beats a budget-matched benign floor under an independent
+adjudicator." Must also (i) report the full 181-budget attack DESCRIPTIVELY alongside,
+labelled as not budget-matched under the judge, and (ii) state the FALSE-NEGATIVE risk in
+Limitations: if the attack's advantage accrues in late-beam refinement, a budget-m prefix
+may under-detect a real effect, so a null at m does NOT rule out an effect at 181 (the
+NLI budget curve is what speaks to that regime).
+
+**M1 INTACT: m is a pre-committed PARAMETER of the locked rule, not a change to it.**
+Logged as the THIRD triggered deviation (trigger: judge-arm compute intractability, with
+the arithmetic above), alongside e5->judge (trigger: e5 hard-neg 0.51) and
+individual-benign->budget-matched-max (trigger: the B2 winner's-curse mismatch).
+
+**PRE-COMMITTED BUDGET (fixed here, in writing, BEFORE any result is seen):**
+> **m = 36** (k=4 iterations x 9 candidates) under the symmetric judge as deployed today.
+> If the single-ordering halving lands AND re-validates at hard-neg >= 0.8, m is raised to
+> **m = 72** (k=8) and that becomes the reported budget. No other value of m may be
+> selected after seeing results; if compute forces a smaller m, the shortfall is reported
+> as such rather than the budget being re-chosen to suit the outcome.
+
+**n=80 FA cell:** both quarantines CONFIRMED (the AUROC row pooling 80 FA negatives with
+17 hide positives is invalid until hide completes; clean AUROC 0.579 is over the ATTACKED
+SUBSET and must never be conflated with the fair-pool 0.704). Raw 0.588 correctly not
+lifted. **NEW CATCH (verified in code and FIXED this session): "feasible rate 1.000" is
+TRUE BY CONSTRUCTION** — optimizer.best_is_feasible is initialised True and never set
+False, so AttackOutcome.feasible is always True and any rate over it measures nothing;
+two further statistics silently inherited the defect (mean-move-"feasible" was the mean
+over all outcomes; the success-vs-cutoff sweep was ungated). Withdrawn from the report;
+real per-candidate gate counters (n_feasibility_checks / n_feasibility_passed) now
+recorded at the optimiser, so runs from 2026-08-02 carry a genuine gate pass rate. The
+n=80 FA cell predates them and therefore has NO gate-fidelity number — which makes the
+owed human equivalence audit (B5) more load-bearing, not less. **KEEP** the 4% (FA) vs
+22% (hide) B2 attrition asymmetry: a genuine finding that independently supports the
+FA-only scoping of the judge.
+
+---

@@ -86,6 +86,11 @@ class AttackOutcome:
     # against a benign floor drawn at that same budget — without re-running the attack.
     # Defaulted so records written before this field remain readable.
     trajectory_best_obj: list[float] = field(default_factory=list)
+    # Real equivalence-gate statistics (critique_log 22). `feasible` above is True BY
+    # CONSTRUCTION and is NOT a gate measurement; these count the candidates actually
+    # submitted to the gate and how many it admitted. 0/0 on records written earlier.
+    n_feasibility_checks: int = 0
+    n_feasibility_passed: int = 0
 
 
 def _entropy_moved(attack: str, entropy_before: float, entropy_after: float,
@@ -184,6 +189,8 @@ def run_attack_on_example(
         status_held=status_held,
         frac_correct_under_q_prime=frac_correct_qp,
         trajectory_best_obj=list(result.trajectory_best_obj),
+        n_feasibility_checks=result.n_feasibility_checks,
+        n_feasibility_passed=result.n_feasibility_passed,
     )
 
 

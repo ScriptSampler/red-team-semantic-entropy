@@ -75,9 +75,18 @@ def summarize_cell(outcomes, *, cutoffs=(0.0, 0.1, 0.25, 0.5, 1.0)) -> dict:
     moves = [_intended_move(o) for o in outcomes]
     feas_moves = [m for m, f in zip(moves, feasible) if f]
 
+    # REAL equivalence-gate statistic (critique_log 22): `o.feasible` is True BY
+    # CONSTRUCTION (optimizer.best_is_feasible is initialised True and never set False),
+    # so a "feasible rate" over it is vacuous and must NOT be reported as gate fidelity.
+    # These counters are the per-candidate pass rate; 0 on records predating them.
+    checks = sum(getattr(o, "n_feasibility_checks", 0) or 0 for o in outcomes)
+    passed = sum(getattr(o, "n_feasibility_passed", 0) or 0 for o in outcomes)
+
     return {
         "attack": attack, "detector": detector, "n": n,
-        "feasible_rate": rate_ci(feasible),
+        "gate_checks": int(checks),
+        "gate_passed": int(passed),
+        "gate_pass_rate": (passed / checks) if checks else float("nan"),
         "success_entropy_only": rate_ci(entropy_only),     # old (pre-B2) headline
         "success_gated": rate_ci(gated),                   # B2 headline
         "n_entropy_only": int(n_entropy_only),             # exact count (not rate*n)
@@ -182,7 +191,11 @@ def render_cell_md(summary: dict) -> list[str]:
          if s.get("mean_frac_correct_qp") == s.get("mean_frac_correct_qp")  # not nan
          and s.get("mean_frac_correct_qp", -1) >= 0 else
          "- sampled fraction-correct under Q' (finding 16): n/a (not yet computed)"),
-        f"- feasible paraphrase rate: {_fmt_ci(s['feasible_rate'])}",
-        f"- mean intended entropy move (feasible): {s['mean_move_feasible']:.3f} nats",
+        (f"- equivalence-gate pass rate (per candidate): {s['gate_pass_rate']:.1%} "
+         f"({s['gate_passed']}/{s['gate_checks']} candidates admitted)"
+         if s.get("gate_checks") else
+         "- equivalence-gate pass rate: n/a (not recorded for this run; the old "
+         "\"feasible rate\" was True by construction and has been withdrawn)"),
+        f"- mean intended entropy move: {s['mean_move_feasible']:.3f} nats",
     ]
     return lines

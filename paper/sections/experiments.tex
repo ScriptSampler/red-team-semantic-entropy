@@ -18,7 +18,7 @@ the $1.0$ that score-dependent selection manufactures by construction.
 Table~\ref{tab:nullcontrol} places the optimised attack against two null bands---a
 same-question \emph{seed-noise} floor and a \emph{benign-paraphrase} floor of $m$
 NLI-passing non-adversarial rephrasings, with $m$ matched to the attacker's
-$\sim$181-candidate search budget---under each of four clustering relations. ($m$ is
+$\sim$180-candidate ($\sim$181-evaluation) search budget---under each of four clustering relations. ($m$ is
 distinct from SRE's samples-per-reformulation $K$.) The
 shared-NLI arm is the detector's own clusterer and is the \emph{confounded upper bound}:
 it cannot separate a real change in the answer distribution from the NLI model's own
@@ -83,7 +83,7 @@ individual draws to the budget-matched max (triggered by the winner's-curse budg
 surfaced in adversarial review).
 
 \paragraph{Transfer and defense.}
-[Pending.] The SE$\leftrightarrow$SRE transfer table and the reformulation-averaging
-defense curve fill from the same campaign; both are reported net of the benign floor and
+These results are pending: the SE$\leftrightarrow$SRE transfer table and the
+reformulation-averaging defense curve fill from the same campaign; both are reported net of the benign floor and
 read as corroborating rather than independent evidence (the two detectors share the
 DeBERTa backbone).

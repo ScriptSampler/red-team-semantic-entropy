@@ -50,13 +50,14 @@ direction is evaluated under the null control in this work.
 \paragraph{Contributions.}
 (1) \textbf{A circularity-free, null-controlled evaluation protocol} for paraphrase
 attacks on sampling-based hallucination detectors: score-independent target selection,
-an answer-invariance success criterion, and a benign-paraphrase noise floor---the attack
-scored as a \emph{percentile within the benign-move distribution}, not a max-vs-max
-delta---whose three controls we show are each load-bearing, and demonstrably so:
-without score-independent selection the clean detector looks perfect (clean AUROC
-$1.0$ by construction vs.\ $0.70$ [$0.653$, $0.753$] under fair selection); without the noise floor the
-budget-biased max-vs-max comparison flips the same data from a $33\%$ to an $80\%$
-apparent success rate; and without the answer-invariance check meaning-changing
+an answer-invariance success criterion, and a benign-paraphrase noise floor---the
+attack-max scored as a paired net against a \emph{budget-matched} benign-max, the best
+move a benign search of the attacker's own size achieves, rather than against unmatched
+individual benign draws---whose three controls we show are each load-bearing, and
+demonstrably so: without score-independent selection the clean detector looks perfect
+(clean AUROC $1.0$ by construction vs.\ $0.704$ [$0.653$, $0.753$] under fair selection);
+without the noise floor a budget-\emph{mismatched} comparison flips the same data from a
+$33\%$ to an $80\%$ apparent success rate; and without the answer-invariance check meaning-changing
 paraphrases are miscounted as wins. (2) \textbf{An independent-clusterer
 attribution analysis}: because the detector's NLI model both clusters answers and
 certifies paraphrase equivalence, the standard evaluation cannot attribute a measured

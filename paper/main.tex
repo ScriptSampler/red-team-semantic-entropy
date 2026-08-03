@@ -35,10 +35,10 @@ criterion, and a benign-paraphrase noise floor---and show each control is necess
 without them a circular selection inflates the clean detector to perfect accuracy,
 sampling noise masquerades as attack success, and meaning-changing paraphrases are
 miscounted as wins. Under the protocol, a preliminary evaluation finds that an optimised
-paraphrase attack moves the detector as measured by the detector's own NLI clusterer, in
-the under-explored false-alarm direction (inflating the reported uncertainty of a correct
-answer); the mirror hide direction the attack is built to exercise but we do not yet
-evaluate under the null control. But that
+paraphrase attack moves the detector as measured by the detector's own
+natural-language-inference (NLI) clusterer, in the under-explored false-alarm direction
+(inflating the reported uncertainty of a correct answer); the attack also formulates the
+mirror hide direction, which we do not yet evaluate under the null control. But that
 clusterer is shared with the attack's equivalence gate, so this measure cannot
 distinguish a real change in the model's answers from the clusterer's own inconsistency;
 and the cheap independent oracles one would use to break the tie are near-chance on

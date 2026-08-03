@@ -49,7 +49,11 @@ def _hide_cell():
 def test_summarize_cell_counts_and_rates():
     s = summarize_cell(_hide_cell())
     assert s["n"] == 5
-    assert abs(s["feasible_rate"].point - 0.8) < 1e-9
+    # NOTE: the old "feasible_rate" was withdrawn (critique_log 22) — o.feasible is True
+    # BY CONSTRUCTION in real runs, so a rate over it measured nothing. The real gate
+    # statistic is the per-candidate pass rate; these synthetic outcomes predate it.
+    assert s["gate_checks"] == 0
+    assert s["gate_pass_rate"] != s["gate_pass_rate"]      # nan when unrecorded
     assert abs(s["success_entropy_only"].point - 0.6) < 1e-9    # 3/5
     assert abs(s["success_gated"].point - 0.4) < 1e-9           # 2/5
     assert s["attrition_count"] == 1
