@@ -3,3 +3,5 @@
 {"question_id": "dpql_259", "entropy_before_old": 1.8343719702816235, "entropy_after_old": 2.3025850929940455, "entropy_before_new": 2.0374048491606533, "entropy_after_new": 2.4547433593334764, "saturated_new": false}
 {"question_id": "dpql_3015", "entropy_before_old": 1.2275294114572126, "entropy_after_old": 2.3025850929940455, "entropy_before_new": 2.8571028374420018, "entropy_after_new": 2.9264175554979963, "saturated_new": false}
 {"question_id": "dpql_447", "entropy_before_old": 2.1639556568820564, "entropy_after_old": 2.3025850929940455, "entropy_before_new": 2.8571028374420018, "entropy_after_new": 2.9264175554979963, "saturated_new": false}
+{"question_id": "dpql_907", "entropy_before_old": 1.6434177197931796, "entropy_after_old": 2.3025850929940455, "entropy_before_new": 1.9376664956966976, "entropy_after_new": 2.4582044327855743, "saturated_new": false}
+{"question_id": "qb_1253", "entropy_before_old": 2.3025850929940455, "entropy_after_old": 2.3025850929940455, "entropy_before_new": 2.995732273553991, "entropy_after_new": 2.995732273553991, "saturated_new": true}

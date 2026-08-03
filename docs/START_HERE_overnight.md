@@ -1,54 +1,68 @@
-# START HERE — session state as of Sat 2026-08-02 ~05:30 (wound down at 6:00)
+# START HERE — state as of Sun 2026-08-02 ~03:00
 
-## Headline: FA reached the pre-registered n=80 — the definitive pipeline is executing
+## The night changed the paper's centre of gravity
 
-The **false-alarm attack matrix is COMPLETE at 80/80** (first time at the pre-registered
-scale; the resumed 27 ran at ~60% raw success). The **hide cell is running** (15/80 when
-the session wound down, ~11 min/target ⇒ ~12h left; `recompute_fair.py` is per-target
-resumable, so interrupting it loses nothing). All blockers' *engineering* is done and
-committed; what remains is GPU hours + two owed validations.
+We came in to run the definitive judge experiment. Instead we found that **the measurement
+itself is the problem**, and that is a better paper. Three findings, all committed with
+tests and independently verified:
 
-## If the attack matrix is still running
-Leave it — it appends per target. To stop it manually:
-`wsl -d Ubuntu-24.04 pkill -f recompute_fair` (safe; resumes exactly where it stopped).
-NOTE: the dashboard's STOP button only signals Claude DURING a session; between sessions
-use the command above.
+1. **The false-alarm attack saturates the metric.** Semantic entropy over N samples is
+   capped at log(N) = 2.3026 at N=10. **39/80 (49%) of attacked FA targets finish exactly at
+   that cap**; 8/80 baselines are already there (structurally unattackable). Attack, a
+   null-objective beam, and plain random paraphrasing all landed on exactly 2.3026 on the
+   first ablation target. → `results/ceiling_saturation_finding.md`
+2. **That ceiling kills the planned analysis.** The exact test I built has **ZERO power at
+   N=10** at every affordable benign budget (m=30/50/60, for effects worth 2x/3x/5x): on a
+   saturated target the benign draws also hit the cap, conservative ties count them, and the
+   statistic can never reject. Raising m makes it *worse*. → `results/power_under_ceiling.md`
+3. **The detector has almost no dynamic range where the attack operates.** On clean data the
+   entire correct-vs-wrong separation is **0.184 nats (Cohen's d = 0.28)**, 26% of *correct*
+   answers already sit in the top 10% of the scale, and the estimator takes only 22 distinct
+   values. The attack's mean move is ~**2.8x the detector's whole signal**. →
+   `results/dynamic_range_finding.md`
 
-## The definitive-run sequence (per docs/definitive_run_plan.md, all decisions locked)
-1. **[RUNNING] Attack matrix** `--only se_false_alarm,se_hide --n 80 --tag _def`
-   — FA 80/80 done, hide in progress.
-2. **[NEXT] Null-objective beam ablation** (~4 GPU-h, 10 targets, resumable):
-   `./.venv-wsl/bin/python scripts/null_objective_ablation.py --tag _def --n_targets 10`
-   Verdict semantics are in the script header; it gates how the K=180 floor is read.
-3. **[THEN] K=180 budget-matched null control** (multiday, per-target checkpointed):
-   `./.venv-wsl/bin/python scripts/null_control.py --tag _def --K 180 --n_seeds 3
-    --judge_model Qwen/Qwen2.5-7B-Instruct --judge_batched --judge_batch_size 6
-    --dump_diag results/diag_def.json`
-   (checkpoint auto-writes results/null_control_ckpt_def.jsonl; safe to kill/resume.)
-4. **[AFTER] Analysis**: `diagnose_benign_floor.py results/diag_def.json` (pre-registered
-   H_split/H_rtm/H_noise); `prepare_equivalence_audit.py` on the 80-target pool for the
-   human audit CSV; fill Experiments from the budget-matched paired net (the ONLY headline:
-   attack-max − benign-max, paired CI + sign test; percentile/net-vs-mean are diagnostics).
+Together: it is less "we built a clever attack" and more "**the score has nowhere to go, and
+getting it there is easy**" — a paradigm-level statement, which is exactly what the
+protocol-led framing exists to carry.
 
-## Locked numbers + decisions (do not re-litigate)
-- **Judge = 0.93 [0.90, 0.96] (n=300, symmetric deployed config, 2026-07-11).** The one
-  citation number everywhere. Pre-registered gate FAIL on pos (0.65) is DISCLOSED in
-  Methods main text; FA-only re-scope; NLI/exact bracket reported alongside.
-- **Benign budget = full ~180** (user 2026-07-11); **decision rule** = adjudicator's
-  per-target paired net (attack-max − budget-matched benign-max) CI > 0 at n≥80
-  (identical wording in Experiments/Methods/run-plan; both entry-15 deviations disclosed).
-- Still owed before any (a) claim: ablation verdict, messy-real-sample judge validation,
-  differential over-splitting check, benign-floor diagnosis, human equivalence audit.
+## What is running / what to do first
 
-## Session log (this session)
-Dashboard + STOP button committed (602ffe6; watcher pattern: Downloads/STOP_SESSION*.txt
-or repo STOP.txt). Null-control per-target checkpointing (627206a). Null-objective beam
-ablation built + 4 tests (a9fc986). Judge re-validated on deployed config → 0.93 locked,
-paper swept with CI+n at the validation locus (a86ca69). M12 paraphraser disclosure
-(victim Llama itself, greedy, seeded instructions) + hyperparameter values + $M$/$K$/$k$
-notation fixes (f77ddeb). RW "Evaluating the evaluation" strand, zheng2023judging verified
-(a86ca69). Attack matrix launched and FA completed at 80/80. All tests green.
+- **N=20 ceiling pilot** (`scripts/pilot_n20_ceiling.py`, per-target checkpointed, resume by
+  re-running the same command). At last check 5/15 done, 1 still saturated. **This decides
+  everything**: if residual saturation < 20%, the FA analysis proceeds at **N=20, m=50**
+  (simulated power 0.71 @2x, 0.96 @3x). If >= 20%, FA nats are declared NOT identifiable at
+  feasible N and we report censoring-robust statistics only. THIS BAR WAS PRE-COMMITTED
+  BEFORE THE DATA (critique_log 23) — do not renegotiate it after seeing the result.
+  ⚠ Caveat found mid-pilot: **baselines rise with N too**, so headroom grows far less than
+  log(20)−log(10)=0.693 (observed gains: +0.11, +1.61, +0.49). Re-run the power simulation
+  with the pilot's EMPIRICAL headroom gains before trusting the N=20 power numbers.
+- **Null-objective ablation** paused at 1/10 (`results/null_objective_ablation_ckpt_def.jsonl`),
+  resumable. It is now the **validity gate** for the exact test's exchangeability null, and
+  the critic ruled 10 targets underpowered for that — run the exchangeability check on the
+  cheap NLI arm with many more targets instead, then transfer to the judge.
+- **Hide cell** at 17/80 (`recompute_fair.py --only se_hide --n 80 --tag _def`), resumable.
 
-## Punch-list state: docs/paper_review_punchlist.md
-Remaining open: number-landing items (gated on the runs) + the owed validations above.
-Everything data-independent is done.
+## Locked decisions (do not re-litigate)
+
+- **Judge = 0.93 [0.90, 0.96], n=300, symmetric deployed config.** The one citation number.
+  Pre-registered gate FAILS on positives (0.65) — disclosed in Methods main text, FA-only
+  scope, NLI/exact bracket reported alongside.
+- **Claim statistic = the exact beta-binomial exceedance test** (rank-based, hence
+  censoring-robust), CONDITIONAL on the ablation validating exchangeability; **prefix is the
+  pre-registered fallback**. Pre-committed switch: exact test is primary iff the ablation's
+  mean exceedance count lies within [0.5x, 2.0x] of m/(N+1).
+- **Ties: conservative primary, mid-p secondary, strict = disqualified diagnostic.** The
+  strict-vs-conservative disagreement is itself a publishable diagnostic.
+- **No cross-direction comparisons in nats.** FA has half the headroom of hide (0.826 vs
+  1.661) — now a Methods section, not a caveat.
+- Effect sizes to report as a triple: saturation rate + uncensored-subset nats + headroom
+  fraction, with the 0/0 exclusion rule stated; plus the ratio-to-detector-signal framing.
+
+## Still owed
+Messy-real-sample judge validation; differential over-splitting check; human equivalence
+audit (harness built: `prepare_equivalence_audit.py`); benign-floor diagnosis
+(`diagnose_benign_floor.py`); the venue re-checks flagged in `related_work.bib` annotes.
+
+## Reference
+`docs/critique_log.md` entries 21-23 hold the rulings and both pre-commitments.
+`docs/paper_review_punchlist.md` tracks the 25-item review. Tests: 129 passing.
