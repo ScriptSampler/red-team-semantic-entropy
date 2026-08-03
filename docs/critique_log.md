@@ -697,3 +697,71 @@ owed human equivalence audit (B5) more load-bearing, not less. **KEEP** the 4% (
 FA-only scoping of the judge.
 
 ---
+
+## 23. 2026-08-02 (overnight) — the ceiling KILLS the exact test's power at N=10
+
+Two developments went to the critic: (1) an EXACT beta-binomial exceedance test that prices
+the attacker's search budget into the null analytically (replacing brute-force budget
+matching; 228 GPU-h -> ~21-43h), and (2) the finding that the FA attack saturates the
+log(N) ceiling on 49% of targets.
+
+**CRITIC'S LEAD CATCH — the two interact, and nobody had priced it.** The exact test's power
+figures (0.66/0.92 at 2x/3x) assumed CONTINUOUS scores. Under the ceiling, benign draws
+reach the cap too, so with conservative ties a saturated target contributes a large K_j —
+ANTI-evidence — regardless of attack quality. Effective FA sample ~41, not 80; the
+pre-registered n>=80 is not met for this statistic. He BLOCKED launch pending a re-run of
+the power simulation with the empirical saturation rate.
+
+**I RAN IT (results/power_under_ceiling.md, scripts/power_sim_ceiling.py), anchored to the
+empirical n=80 headroom distribution with conservative ties, calibrated to 48% simulated
+saturation vs the observed 49%:**
+- **N=10: power 0.00 at m=30, 50 AND 60, for effects worth 2x, 3x, 5x the budget. H0 level
+  0.000. The test is degenerate — it can never reject.**
+- Raising m makes it WORSE (more benign draws -> more ties). The binding constraint is the
+  ceiling, not the sample size.
+- With the ceiling lifted (N=20): saturation 7%, level 0.022-0.045, **power 0.71 @2x and
+  0.96 @3x at m=50**.
+The zero-power conclusion is model-robust: it follows from ties at an atom, not from the
+assumed move distribution.
+
+**CONSEQUENCE: N=20 is not a refinement of the effect size, it is the ENABLING CONDITION
+for the FA analysis to exist at all.** Design that clears the bar: N=20, m=50.
+
+**Critic's other rulings, adopted:**
+- Exact test APPROVED as primary, CONDITIONAL on the ablation validating exchangeability;
+  prefix stays as the PRE-REGISTERED FALLBACK (not merely a robustness view). The trade must
+  be stated: prefix is assumption-light, the exact test buys tractability by ASSUMING
+  exchangeability.
+- The ablation is now the VALIDITY GATE, with two opposing failure modes (multi-hop drift ->
+  anti-conservative; beam clustering -> conservative); net sign is empirical.
+- 10 ablation targets are UNDERPOWERED for that check (E[S] ~ 1.65). Run the exchangeability
+  check on the CHEAP NLI arm with many more targets, then transfer to the judge.
+- Ties: CONSERVATIVE primary, mid-p secondary, strict as the DISQUALIFIED diagnostic; the
+  strict-vs-conservative disagreement is itself publishable.
+- The claim statistic does NOT change: the exceedance test is RANK-based, hence invariant to
+  monotone transforms and censoring-robust; the ceiling breaks the NATS EFFECT SIZE, not the
+  test. Report the TRIPLE: saturation rate + non-saturated nats + headroom fraction, with the
+  0/0 exclusion rule stated (8/80 targets have zero headroom).
+- N=20 PILOT on ~10-15 saturated targets REQUIRED before any FA effect-size claim, because
+  saturation MAY PERSIST (all-distinct at N=20 -> cap 2.9957). Running now.
+- FA/hide asymmetry belongs in METHODS, not Limitations, and must be sharpened: entropy is
+  bounded on BOTH sides [0, log N]; the asymmetry is HEADROOM (FA ~0.92 nats to the ceiling
+  vs hide 1.843 to the floor, roughly half). The bidirectional framing SURVIVES, but every
+  cross-direction comparison of effect magnitudes IN NATS must be dropped.
+- OPPORTUNITY the critic flagged: SE having no dynamic range at the top of its scale — 10% of
+  CLEAN baselines already pinned at the cap — is arguably a stronger finding about the
+  detector than any nats effect size, and it sits naturally inside the protocol-led framing.
+
+**PRE-COMMITMENT (written BEFORE the ablation/pilot land, per the B3 lesson — no post-hoc
+gate selection):**
+> The exact test is PRIMARY iff the null-objective ablation's mean exceedance count Kbar
+> falls within [0.5x, 2.0x] of the theoretical m/(N+1). If Kbar is materially BELOW that
+> band (the null-objective beam beats benign more than chance), the theoretical null is
+> anti-conservative and we fall back to the PREFIX statistic or to an empirically-calibrated
+> null built from the ablation's own K distribution. If ABOVE, the test is conservative and
+> may be used as-is with that noted.
+> The FA analysis proceeds at N=20, m=50, iff the pilot shows residual saturation below 20%.
+> If residual saturation is >= 20%, nats effect sizes for FA are declared NOT IDENTIFIABLE at
+> feasible N and we report censoring-robust statistics only.
+
+---
