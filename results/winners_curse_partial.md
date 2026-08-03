@@ -1,6 +1,7 @@
 # Winner's curse measured directly: ~2/3 of the raw FA effect is selection-on-noise
 
-**PARTIAL (n = 10 of 80; the run is checkpointed and continuing).** Direction is stark
+**PARTIAL (n = 22 of 80 banked when the session ended; checkpointed and resumable —
+re-run the same command). The n=10 table below is superseded by the n=22 line beneath it.** Direction is stark
 enough to record now; the final number replaces this one.
 
 ## Design
