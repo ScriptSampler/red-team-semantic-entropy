@@ -43,7 +43,15 @@ bidirectional-NLI gate we require. We adopt a distinct name to avoid confusion
 with~\citet{cheng2025advparaphrasing}.
 
 \paragraph{Manipulating uncertainty and probes.}
-Closest on the ``manipulate uncertainty'' axis, \citet{uncertaintyfragile2024}
+The closest input-side neighbour is \citet{obadinma2025verbal}, who show that
+semantics-preserving perturbations degrade an LLM's \emph{verbal} confidence. The victim
+differs in the way that matters here: verbal confidence is the model's prompted
+self-report, whereas semantic entropy is computed from a sampled answer set clustered by
+meaning, so the attack surface is the sampling-and-clustering pipeline rather than a
+self-assessment; we also impose a bidirectional-NLI equivalence gate they do not, and our
+success criterion \emph{requires} the model's answer status to survive the paraphrase,
+whereas their attacks frequently change the answer. Also on the ``manipulate uncertainty''
+axis, \citet{uncertaintyfragile2024}
 shift answer confidence via a fine-tuned backdoor trigger on multiple-choice
 self-evaluation --- a different threat model (weight access, not input
 paraphrase). Most relevant of all, CORVUS red-teams single-pass hallucination
@@ -66,11 +74,17 @@ treats the detector's reliance on that same NLI model as the central confound.
 Because our framing is protocol-led, two methodological strands matter beyond the attack
 neighbours. First, the individual failure modes our controls target are classical ---
 selection on the evaluated system's own scores, selection of an extremum of a noisy
-estimate, and success criteria that drift from the construct --- but we are not aware of a
-prior paraphrase-attack evaluation of sampling-based hallucination detectors that applies
-score-independent selection, answer-invariance checking, and a \emph{budget-matched}
-noise floor jointly (a claim we will verify against the literature at revision); our
-contribution is assembling them into a pre-registered protocol with a decision rule.
+estimate, and success criteria that drift from the construct --- and so are the individual
+remedies: comparing an adversarial perturbation against a random one of equivalent
+magnitude is established practice in vision robustness
+evaluation~\citep{rossolini2026worstcase}, and plain-paraphrase baselines are routine in
+AI-text-detector evasion~\citep{cheng2025advparaphrasing}. We claim neither as new. What we
+are not aware of, for a paraphrase attack on a sampling-based hallucination detector, is
+the \emph{joint} application of score-independent selection, answer-invariance checking,
+and a noise floor that is \emph{budget-matched} to the attacker's own search --- the
+quantity the attack's maximum is actually compared against. Our contribution is assembling
+these into a pre-registered protocol with a decision rule, and we state the gap as ``to our
+knowledge'' rather than as priority.
 Second, using an LLM as an equivalence oracle inherits the LLM-as-judge literature's
 lesson that judges track humans well yet carry biases and must be validated per
 task~\citep{zheng2023judging}. Our judge contribution is accordingly not the concept but

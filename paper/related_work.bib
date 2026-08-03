@@ -33,20 +33,20 @@
   annote    = {SRE = Semantic Reformulation Entropy. Input reformulations + energy-based hybrid clustering. Second victim method. (NOT "Self-Reflective Entropy".)}
 }
 
-@article{kossen2024seps,
+@inproceedings{kossen2024seps,
   title   = {Semantic Entropy Probes: Robust and Cheap Hallucination Detection in LLMs},
   author  = {Kossen, Jannik and Han, Jiatong and Razzak, Muhammed and Schut, Lisa and Malik, Shreshth and Gal, Yarin},
-  journal = {Conference on Language Modeling (COLM)},
+  booktitle = {ICML Workshop on Foundation Models in the Wild},
   year    = {2024},
-  annote    = {arXiv:2406.15927. Linear probe approximating SE from one hidden state. Transfer target for the SEP-transfer stretch.}
+  annote    = {arXiv:2406.15927. Linear probe approximating SE from one hidden state. Transfer target for the SEP-transfer stretch. VENUE CORRECTED 2026-08-03: we had cited COLM 2024, which is WRONG — OATML's own publication page lists the ICML 2024 Workshop on Foundation Models in the Wild (https://oatml.cs.ox.ac.uk/publications/20240621_KossenSemantic.html). Re-check OpenReview before camera-ready in case of a later archival venue.}
 }
 
-@article{nikitin2024kle,
-  title   = {Kernel Language Entropy: Fine-grained Uncertainty Quantification for {LLMs} from Semantic Similarities},
-  author  = {Nikitin, Alexander and Kossen, Jannik and Gal, Yarin and Marttinen, Pekka},
-  journal = {arXiv preprint arXiv:2405.20003},
-  year    = {2024},
-  annote  = {Replaces hard NLI equivalence-class clustering with a semantic-graph kernel BECAUSE hard-NLI clustering is brittle — the SE-clustering-sensitivity neighbour closest to our thesis. Title+authors verified on arXiv 2026-07-10; NeurIPS 2024 venue unconfirmed on the abstract page, cited as preprint.}
+@inproceedings{nikitin2024kle,
+  title     = {Kernel Language Entropy: Fine-grained Uncertainty Quantification for {LLMs} from Semantic Similarities},
+  author    = {Nikitin, Alexander and Kossen, Jannik and Gal, Yarin and Marttinen, Pekka},
+  booktitle = {Advances in Neural Information Processing Systems 37 (NeurIPS)},
+  year      = {2024},
+  annote    = {arXiv:2405.20003. Replaces hard NLI equivalence-class clustering with a semantic-graph kernel BECAUSE hard-NLI clustering is brittle — the SE-clustering-sensitivity neighbour closest to our thesis. Venue verified on the NeurIPS 2024 proceedings site 2026-08-03.}
 }
 
 % ---- Hallucination-elicitation attacks on models (shared tooling) ----------
@@ -59,12 +59,12 @@
   annote      = {arXiv:2510.04398. Forked optimizer. Attacks the model's answer (MMLU), not a detector.}
 }
 
-@article{liang2026realista,
-  title   = {{REALISTA}: Realistic Latent Adversarial Attacks that Elicit LLM Hallucinations},
-  author  = {Liang, Buyun and Luo, Jinqi and Peng, Liangzu and Chan, Kwan Ho Ryan and Thaker, Darshan and Kinfu, Kaleab A. and Tian, Fengrui and Hassani, Hamed and Vidal, Ren{\'e}},
-  journal = {arXiv preprint arXiv:2605.12813},
-  year    = {2026},
-  annote    = {SECA successor, continuous latent edit directions. Attacks the model, not a detector. Cite-and-distinguish. Title+authors verified on arXiv 2026-07-10; %TODO venue (ICML 2026?) unconfirmed — cited as preprint.}
+@inproceedings{liang2026realista,
+  title     = {{REALISTA}: Realistic Latent Adversarial Attacks that Elicit LLM Hallucinations},
+  author    = {Liang, Buyun and Luo, Jinqi and Peng, Liangzu and Chan, Kwan Ho Ryan and Thaker, Darshan and Kinfu, Kaleab A. and Tian, Fengrui and Hassani, Hamed and Vidal, Ren{\'e}},
+  booktitle = {International Conference on Machine Learning (ICML)},
+  year      = {2026},
+  annote    = {arXiv:2605.12813. SECA successor, continuous latent edit directions. Attacks the model, not a detector. Cite-and-distinguish. Venue verified via the ICML 2026 virtual site 2026-08-03; PMLR volume/pages NOT yet verified — add at camera-ready.}
 }
 
 % ---- Paraphrase-evasion of text-origin detectors (different victim class) ---
@@ -77,12 +77,14 @@
   annote      = {arXiv:2506.07001. Detector-guided paraphrase to evade AI-text classifiers. Evasion-only, different victim. Avoid title collision.}
 }
 
-@article{fang2025copa,
-  title   = {Your Language Model Can Secretly Write Like Humans: Contrastive Paraphrase Attacks on {LLM}-Generated Text Detectors},
-  author  = {Fang, Hao and Kong, Jiawei and Zhuang, Tianqu and Qiu, Yixiang and Gao, Kuofeng and Chen, Bin and Xia, Shu-Tao and Wang, Yaowei and Zhang, Min},
-  journal = {arXiv preprint arXiv:2505.15337},
-  year    = {2025},
-  annote    = {Contrastive-decoding paraphrase (``CoPA''), soft >90\% similarity. Contrast with our hard bidirectional-NLI gate. Title+authors verified on arXiv 2026-07-10; %TODO venue (EMNLP 2025?) unconfirmed — cited as preprint.}
+@inproceedings{fang2025copa,
+  title     = {Your Language Model Can Secretly Write Like Humans: Contrastive Paraphrase Attacks on {LLM}-Generated Text Detectors},
+  author    = {Fang, Hao and Kong, Jiawei and Zhuang, Tianqu and Qiu, Yixiang and Gao, Kuofeng and Chen, Bin and Xia, Shu-Tao and Wang, Yaowei and Zhang, Min},
+  booktitle = {Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  pages     = {8585--8602},
+  year      = {2025},
+  doi       = {10.18653/v1/2025.emnlp-main.433},
+  annote    = {arXiv:2505.15337. Contrastive-decoding paraphrase (``CoPA''), soft >90\% similarity. Contrast with our hard bidirectional-NLI gate. Venue+pages+DOI verified on ACL Anthology 2026-08-03.}
 }
 
 % ---- Attacks on uncertainty / probes (differentiate threat model) ----------
@@ -93,6 +95,22 @@
   journal = {arXiv preprint arXiv:2601.14310},
   year    = {2026},
   annote    = {Degrades SEP, but MODEL-SIDE (LoRA), suppression-only, no NLI constraint, Alpaca/FAVA. The closest adjacent attack; differentiate head-on if pursuing SEP transfer. Title+authors verified on arXiv 2026-07-10.}
+}
+
+@inproceedings{obadinma2025verbal,
+  title     = {On the Robustness of Verbal Confidence of {LLMs} in Adversarial Attacks},
+  author    = {Obadinma, Stephen and Zhu, Xiaodan},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2025},
+  annote    = {arXiv:2507.06489. THE CLOSEST INPUT-SIDE NEIGHBOUR and the most likely reviewer objection to our novelty claim: semantic-preserving perturbations that degrade an LLM's uncertainty estimate. DISTINGUISH: the victim is the model's PROMPTED SELF-REPORTED (verbal) confidence, not entropy over a sampled answer set clustered by meaning; there is no bidirectional-NLI equivalence gate; and their attacks change answers frequently whereas our success criterion REQUIRES the hallucination status to survive. Title/authors/venue verified on arXiv 2026-08-03.}
+}
+
+@article{rossolini2026worstcase,
+  title   = {Worst-case vs.\ random perturbations in robustness evaluation},
+  author  = {Rossolini, Giulio},
+  journal = {arXiv preprint arXiv:2601.14519},
+  year    = {2026},
+  annote  = {PRECEDENT for our benign noise floor: compares adversarial perturbations against equivalent-magnitude RANDOM ones. Means we must NOT claim the adversarial-vs-random control as unprecedented — we port it from continuous vision perturbations to DISCRETE paraphrase search and additionally budget-match the number of candidate draws. %TODO verify exact title/authors against arXiv before camera-ready (surfaced by the literature sweep, not yet page-verified).}
 }
 
 @article{uncertaintyfragile2024,
