@@ -242,9 +242,19 @@ def exceedance_counts(attack_max, benign_lists, *, ties: str = "conservative"):
     which ties have probability zero; with an atom at the ceiling, counting only strict
     exceedances (b > a) scores a benign draw that MATCHED the attack as a non-exceedance,
     which inflates the evidence for the attack. Policies:
-      'conservative' (default) — b >= a counts. Ties count AGAINST the attack; the honest
-                                 choice when atoms are known to exist.
+      'conservative' (default) — b >= a counts. Ties count AGAINST the attack.
       'strict'                 — b > a only. Anti-conservative under atoms; for comparison.
+
+    ⚠ BOTH POLICIES ARE WRONG, AND 'conservative' IS BADLY WRONG (verified 2026-08-02, see
+    results/CORRECTIONS_2026-08-02.md). Under exchangeability the credit for a ties is itself
+    random: T ~ BetaBinomial(a; 1, b) where b is the number of ATTACK candidates also at that
+    value, so E[T] = a/(b+1). Since the attack's own max is one of the tied values, b >= 1
+    always and the maximum defensible credit is a/2 — never a. Measured mean b on saturated
+    targets is 60.4, so 'conservative' overcounts ties by ~61x. That artifact, not the
+    ceiling, is what made the test degenerate: with a correct randomized rule the test is
+    calibrated and powerful at N=10 (power 0.40/0.82/0.99 at m=30/50/60) and power RISES with
+    m rather than falling. Do not use these policies for a claim statistic until the
+    exchangeable rule is implemented (it needs the attack-side tie count recorded too).
     Report both; if they disagree, the effect is driven by ceiling saturation, not by the
     attack outperforming chance."""
     if ties not in ("conservative", "strict"):

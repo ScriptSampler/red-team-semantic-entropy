@@ -1,5 +1,14 @@
 # Semantic entropy has very little dynamic range where it matters (2026-08-02)
 
+> ⚠ **CORRECTED — see `results/CORRECTIONS_2026-08-02.md`.** Three claims below are
+> overstated. (1) d=0.28 does NOT correspond to AUROC 0.704 — it implies 0.579, which is
+> what this pool measures; that reconciliation is withdrawn. (2) The +0.184-nat separation
+> is NOT significant (95% CI [-0.136, +0.488], permutation p=0.296) and is a sample
+> statistic, not a fixed detector property. (3) The "2.8x the detector's signal" headline
+> has CI [-24, +28]; censoring-corrected it is ~2.13x, and ~1.13x on fair-pool strata —
+> honestly, roughly ONE class separation, not three.
+
+
 Measured on the **clean, unattacked** scores of the definitive pool (SE, N=10, TriviaQA,
 Llama-3.1-8B-Instruct 4-bit): 80 targets the model answers correctly, 17 it answers wrongly.
 Nothing here depends on any pending run, and none of it depends on our attack working.

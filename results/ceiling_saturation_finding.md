@@ -1,5 +1,13 @@
 # The false-alarm attack saturates the metric's ceiling (2026-08-02)
 
+> ⚠ **DENOMINATORS CORRECTED — see `results/CORRECTIONS_2026-08-02.md`.** The 49% is the
+> TOTAL at-ceiling rate; ATTACK-INDUCED saturation is 31/80 = 38.75% (8 targets were
+> already pinned). The "66%/83% of headroom consumed" was computed on n=72, not 80, with
+> the estimand unstated; on the 41 UNCENSORED targets it is 39.9% mean / 38.6% median.
+> The ceiling itself, and corr(headroom, move)=+0.70 (+0.67 within the uncensored subset),
+> are confirmed.
+
+
 **Semantic entropy over N sampled answers is bounded above by log(N)** — the value attained
 when every sample forms its own cluster. With the deployed N=10 that ceiling is
 **ln(10) = 2.3026 nats**. This is not a modelling nicety: it censors the false-alarm effect

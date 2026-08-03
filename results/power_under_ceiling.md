@@ -1,5 +1,14 @@
 # Power of the exact exceedance test UNDER the ceiling — the FA analysis does not work at N=10
 
+> ⚠ **SUPERSEDED IN PART — see `results/CORRECTIONS_2026-08-02.md` (2026-08-02).**
+> Independent verification found the "conservative" tie rule is a ~61x OVERCORRECTION
+> (exchangeable tie credit is a/(b+1) with b>=1, and measured mean b = 60.4), and that it
+> is what produced the degeneracy. With a correct randomized tie rule the test is
+> calibrated and powerful AT N=10 (power 0.40/0.82/0.99 at m=30/50/60) — better than
+> lifting to N=20 under the broken rule, at zero GPU cost. The conclusion below does NOT
+> follow; re-run with the corrected statistic before relying on it.
+
+
 Critic ruling (critique_log 23) demanded the power calculation be redone with the empirical
 saturation rate instead of the continuous-score assumption. Result: **at N=10 the test has
 zero power at every budget we could afford.** This is the decisive design finding of the

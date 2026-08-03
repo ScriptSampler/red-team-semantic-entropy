@@ -875,3 +875,69 @@ baseline rise together, and whose whole correct-vs-wrong separation is 0.184 nat
 finding about semantic entropy, not about your experiment."
 
 ---
+
+## 25. 2026-08-02 05:30 — INDEPENDENT VERIFICATION OVERTURNS TONIGHT'S MAIN VERDICT
+
+A 4-agent verification workflow re-derived every number in tonight's three findings from the
+raw JSONL. **Every arithmetic figure reproduced exactly — not one raw calculation was
+wrong.** All the damage is in denominators, estimands and derived claims: 32 checks, 21
+confirmed, 7 refuted, 7 of them invalidating. Full detail:
+results/CORRECTIONS_2026-08-02.md.
+
+**THE BIG ONE (C9/C11): the "conservative" tie rule I adopted — and that the critic approved
+— is wrong by construction, and it is what produced the degeneracy.** Under exchangeability
+the credit for `a` tied benign draws is itself random, T ~ BetaBinomial(a; 1, b) where b is
+the number of ATTACK candidates also at that value, so E[T] = a/(b+1). The attack's own
+maximum is one of the tied values, so **b >= 1 always** and the maximum defensible credit is
+a/2, never a. Measured mean b on saturated targets is **60.4** => 'conservative' overcounts
+ties by **~61x**.
+With a correct randomized/exchangeable rule the test is calibrated AND powerful **at N=10**:
+power **0.403 / 0.823 / 0.993** at m = 30/50/60 — which BEATS lifting to N=20 under the
+broken rule (0.46/0.77) **at zero GPU cost**. And "increasing m makes it worse" is
+**backwards**: under the corrected rule power RISES with m (0.535 -> 0.778 -> 0.800 at 2x).
+=> **The entry-24 verdict ("FA not identifiable at any feasible N") does NOT follow.** The
+obstacle was the STATISTIC, not the ceiling. n20_verdict.md and power_under_ceiling.md are
+bannered SUPERSEDED pending a re-run with the corrected rule. The N=20 pilot MEASUREMENT
+stands (+0.11 median headroom gain); the INFERENCE from it falls.
+Also **C10**: the score is atomic EVERYWHERE, not just at the ceiling — SE at N=10 lives on a
+39-point lattice, P(two draws tie) = 0.203 with only 41% of that from the ceiling atom. So
+ties matter for HIDE too, which I wrongly treated as immune.
+
+**Dynamic-range claims overstated (C3/C4/C5, all invalidating):**
+- I wrote that d=0.28 "is what AUROC 0.704 looks like". FALSE and backwards: d=0.28 =>
+  AUROC 0.579 (exactly what this pool measures); AUROC 0.704 => d=0.758. Worse,
+  fa_n80_milestone.md explicitly warned against reconciling the attacked-subset AUROC with
+  the fair-pool figure — and I then did exactly that. Reconciliation withdrawn.
+- The +0.184-nat separation is NOT significant: 95% CI [-0.136, +0.488], permutation
+  p = 0.296. It is a sample statistic from n=17 wrong answers, not "a fixed property of the
+  detector". On the repo's own fair-pool strata it is +0.463 (2.5x larger).
+- "The attack moves ~2.8x the detector's whole signal" has bootstrap CI [-24, +28] (12.6% of
+  draws negative). Censoring-corrected (Tobit) 2.13x; on fair-pool strata 1.13x. Honest
+  version: **roughly ONE class separation, not three.**
+- C6/C7: the WRONG-answer group is censored 2.4x more than the correct group (23.5% vs 10%
+  at cap), which biases the separation downward; and all 22 distinct values come from the 80
+  correct targets, the 17 wrong ones contributing 10 values, every one a subset.
+
+**Ceiling finding: arithmetic right, two denominators wrong (C1/C2).** 49% is the TOTAL
+at-ceiling rate; ATTACK-INDUCED saturation is 31/80 = 38.75%. The "66%/83% headroom
+consumed" was computed on n=72 (the 8 zero-headroom targets silently dropped) with the
+estimand never stated; on the 41 UNCENSORED targets it is 39.9% mean / 38.6% median.
+CONFIRMED and strengthened: corr(headroom, move) = +0.70 holds WITHIN the uncensored subset
+(+0.67), so it is not a censoring artifact.
+
+**What survives:** the ceiling itself (39/80 exactly at ln(10); 8/80 baselines pinned, all
+with move exactly 0.000 and zero successes); the beta-binomial null derivation (verified to
+3e-13 against scipy and by Monte Carlo across gamma/Cauchy/exponential); the
+headroom-success relationship; the N=20 headroom-gain measurement; and the winner's-curse
+re-evaluation DESIGN (its 32% number is still partial at n=10/80).
+
+**Lesson.** Both the critic and I reasoned that counting ties against the attack must be the
+safe direction. It sounded conservative and was not — "conservative" is a claim about a
+distribution, and it needed the distribution written down. Verification against raw data
+caught what two rounds of careful reasoning did not.
+
+**Required next actions:** (1) implement the exchangeable tie rule (needs the attack-side
+tie count recorded); (2) re-run every power simulation and RE-OPEN the N=20 verdict; (3) fix
+C3/C4/C5 in dynamic_range_finding.md; (4) restate C1/C2 with explicit denominators.
+
+---
