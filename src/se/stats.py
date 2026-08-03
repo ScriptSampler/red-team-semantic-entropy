@@ -231,16 +231,45 @@ def benign_equivalent_budget(attack_move: float, benign_values, *, max_budget: i
     return None
 
 
-def exceedance_counts(attack_max, benign_lists):
-    """Per target, how many benign draws EXCEED the attack's max: K_j = #{b in benign_j :
-    b > attack_max_j}, plus the benign sample size m_j. The sufficient statistic for the
-    exact budget-corrected test below."""
+def exceedance_counts(attack_max, benign_lists, *, ties: str = "conservative"):
+    """Per target, how many benign draws reach the attack's max: K_j, plus the benign
+    sample size m_j — the sufficient statistic for exceedance_test.
+
+    TIES MATTER HERE AND ARE NOT HYPOTHETICAL. Semantic entropy over N samples is bounded
+    by log(N) (every sample its own cluster), and real targets DO saturate: on the first
+    ablation target the attack, a null-objective beam, and plain random paraphrasing all
+    landed on exactly log(10)=2.3026. The exchangeability null assumes a continuous F, under
+    which ties have probability zero; with an atom at the ceiling, counting only strict
+    exceedances (b > a) scores a benign draw that MATCHED the attack as a non-exceedance,
+    which inflates the evidence for the attack. Policies:
+      'conservative' (default) — b >= a counts. Ties count AGAINST the attack; the honest
+                                 choice when atoms are known to exist.
+      'strict'                 — b > a only. Anti-conservative under atoms; for comparison.
+    Report both; if they disagree, the effect is driven by ceiling saturation, not by the
+    attack outperforming chance."""
+    if ties not in ("conservative", "strict"):
+        raise ValueError("ties must be 'conservative' or 'strict'")
     out = []
     for a, bl in zip(attack_max, benign_lists):
         if not bl:
             continue
-        out.append((sum(1 for b in bl if float(b) > float(a)), len(bl)))
+        a = float(a)
+        k = (sum(1 for b in bl if float(b) >= a) if ties == "conservative"
+             else sum(1 for b in bl if float(b) > a))
+        out.append((k, len(bl)))
     return out
+
+
+def ceiling_saturation(values, n_samples: int = 10, *, tol: float = 1e-6) -> float:
+    """Fraction of `values` (entropies, nats) sitting at the log(n_samples) ceiling — the
+    maximum semantic entropy attainable when every one of the N sampled answers forms its
+    own cluster. A high rate means the score is saturated and differences between an
+    optimised attack and random paraphrasing are censored, not absent."""
+    v = [float(x) for x in values]
+    if not v:
+        return float("nan")
+    cap = float(np.log(n_samples))
+    return sum(1 for x in v if x >= cap - tol) / len(v)
 
 
 def exceedance_test(counts, n_attack_candidates: int) -> dict:

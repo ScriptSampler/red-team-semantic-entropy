@@ -65,3 +65,36 @@ def test_no_effect_gives_large_p_and_finite_n_eff():
     assert res["p_value"] > 0.5
     assert res["n_eff"] == pytest.approx(m / 2 - 1)      # 30/2 - 1 = 14 random paraphrases
     assert exceedance_test([], N)["n_targets"] == 0
+
+
+def test_tie_policy_matters_at_the_ceiling():
+    """Real targets saturate at log(N). A benign draw that MATCHES the attack must not be
+    scored as evidence FOR the attack (that is the anti-conservative direction)."""
+    import math
+    cap = math.log(10)
+    attack = [cap, cap]
+    benign = [[cap, cap, 0.1], [cap, 0.2, 0.3]]      # benign also reaches the ceiling
+    strict = exceedance_counts(attack, benign, ties="strict")
+    cons = exceedance_counts(attack, benign, ties="conservative")
+    assert strict == [(0, 3), (0, 3)]                 # ties invisible -> looks like a clean win
+    assert cons == [(2, 3), (1, 3)]                   # ties counted against the attack
+
+    # At a realistic budget the two policies reach OPPOSITE conclusions on the same data:
+    # 40 targets where the attack sits at the ceiling and 8 of 30 benign draws match it.
+    strict40 = [(0, 30)] * 40
+    cons40 = [(8, 30)] * 40
+    assert exceedance_test(strict40, 181)["p_value"] < 0.05     # "the attack wins"
+    assert exceedance_test(cons40, 181)["p_value"] > 0.99       # ...it did not
+    with pytest.raises(ValueError):
+        exceedance_counts(attack, benign, ties="nonsense")
+
+
+def test_ceiling_saturation():
+    import math
+    from se.stats import ceiling_saturation
+    cap = math.log(10)
+    assert ceiling_saturation([cap, cap, 1.0, 0.5]) == pytest.approx(0.5)
+    assert ceiling_saturation([0.1, 0.2]) == 0.0
+    assert ceiling_saturation([]) != ceiling_saturation([])       # nan
+    # a smaller sample budget lowers the ceiling
+    assert ceiling_saturation([math.log(5)], n_samples=5) == pytest.approx(1.0)
