@@ -59,6 +59,14 @@ class AttackResult:
     best_is_feasible: bool = False
     n_feasibility_checks: int = 0     # candidates submitted to the equivalence gate
     n_feasibility_passed: int = 0     # of those, how many the gate admitted
+    # TIE MULTIPLICITY AT THE MAXIMUM (critique_log 26). Under the log(N) ceiling the
+    # attack's max VALUE is pinned and carries no signal, but the NUMBER of feasible
+    # candidates achieving it does: a stronger attack puts more candidates on the ceiling,
+    # which shrinks the 1/(b+1) credit each tied benign draw receives in the exceedance
+    # test. This count is `b`, and it cannot be estimated from benign data without
+    # assuming H0 and destroying the signal — so it must be recorded here.
+    n_feasible_at_best: int = 0       # feasible candidates whose objective == best_obj
+    feasible_objs: list[float] = field(default_factory=list)   # all feasible objectives
 
 
 def optimize(
@@ -92,6 +100,7 @@ def optimize(
     self_index = 0
     n_checks = 0
     n_passed = 0
+    feasible_objs: list[float] = []
 
     for it in range(max_iteration):
         children: list[Candidate] = []
@@ -106,8 +115,13 @@ def optimize(
                                           parent_own_idx if parent_own_idx >= 0 else 0,
                                           self_index))
 
-        # Keep only children that beat the running best objective.
-        improved_children = [c for c in children if c.obj > best_obj]
+        # Candidates that MATCH the running best are kept, not just those that beat it.
+        # Under the log(N) ceiling the best is pinned early and everything afterwards ties
+        # it; the old strict `>` discarded those before the feasibility gate, which is why
+        # the tie multiplicity `b` was unobservable. Ties cost one extra NLI check each
+        # (cheap next to the 10 generations already spent scoring the candidate) and they
+        # are the signal-carrying quantity (critique_log 26).
+        improved_children = [c for c in children if c.obj >= best_obj]
 
         # Feasibility-check survivors against the ORIGINAL query.
         feasible_candidates: list[Candidate] = []
@@ -118,6 +132,7 @@ def optimize(
             n_passed += int(bool(fr.feasible))
             if fr.feasible:
                 feasible_candidates.append(c)
+                feasible_objs.append(float(c.obj))
                 # This guard is NOT redundant with the improved_children filter
                 # above: that filter used best_obj's PRE-LOOP value, but best_obj
                 # rises as we accept candidates within this loop. The guard keeps
@@ -160,4 +175,6 @@ def optimize(
         best_is_feasible=best_feasible,
         n_feasibility_checks=n_checks,
         n_feasibility_passed=n_passed,
+        n_feasible_at_best=sum(1 for o in feasible_objs if abs(o - best_obj) <= 1e-9),
+        feasible_objs=feasible_objs,
     )

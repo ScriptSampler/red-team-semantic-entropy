@@ -231,6 +231,73 @@ def benign_equivalent_budget(attack_move: float, benign_values, *, max_budget: i
     return None
 
 
+def flip_test(attack_crossed, benign_crossed, benign_n, n_attack_candidates: int,
+              *, n_sim: int = 20000, seed: int = 0) -> dict:
+    """⚠ NOT CALIBRATED — DO NOT USE AS A CLAIM STATISTIC (measured 2026-08-04).
+
+    Simulated H0 rejection rate at nominal 0.05: **0.81 (m=30), 0.78 (m=60), 0.48 (m=120),
+    0.35 (m=181)** — anti-conservative at every benign budget, so raising m does not fix it.
+    Cause: P(attack crosses) = 1-(1-pi)^N is CONCAVE in pi, so integrating it over a
+    posterior for pi that is wide (pi is small and estimated from few crossings) gives
+    E[f(pi)] < f(E[pi]) by Jensen — the null systematically under-predicts crossings, and
+    the observed count beats it for free. A correct version needs a test that CONDITIONS on
+    the observed benign crossings (permutation / conditional-exact) rather than plugging an
+    estimated rate into a nonlinear transform. Left in place because the underlying idea is
+    sound and endorsed — threshold crossing is genuinely immune to the log(N) ceiling — but
+    the null must be rebuilt before it is used. See tests/test_flip_test.py, which asserts
+    the failure so a silent "fix" cannot slip through unvalidated.
+
+    Budget-corrected test on OPERATING-POINT CROSSINGS.
+
+    WHY THIS EXISTS. The entropy-magnitude statistic dies under the log(N) ceiling: once a
+    meaningful fraction of paraphrases can saturate, the attack's MAX is at the ceiling under
+    both H0 and H1, so a max-based comparison carries no information and no tie convention
+    recovers it (see results/ and the derivation in critique_log). Threshold CROSSING is
+    binary — past the operating point is past it — so the ceiling cannot censor it.
+
+    THE NULL, with the search budget priced in. Let pi_j be the probability that a single
+    meaning-preserving paraphrase of target j pushes the score across the detector's
+    operating point. Under H0 the attack is just the best of N exchangeable draws, so
+        P(attack crosses | pi_j) = 1 - (1 - pi_j)^N,
+    which is large even for small pi_j -- exactly the winner's-curse correction, in the
+    binary setting. pi_j is ESTIMATED from that target's benign draws (k_j of m_j crossed)
+    with a Jeffreys Beta(k+1/2, m-k+1/2) posterior, so k_j = 0 does not collapse the null to
+    zero and estimation uncertainty is carried rather than ignored.
+
+    The null distribution of the total number of targets where the attack crosses is
+    obtained by Monte Carlo over that posterior (a Poisson-binomial with uncertain rates).
+    Evidence FOR the attack is MORE crossings than the budget-corrected null predicts, so
+    the one-sided p-value is P(S_null >= observed).
+
+    Returns observed/expected counts, the p-value, and the per-target null rates.
+    """
+    a = [bool(x) for x in attack_crossed]
+    k = [int(x) for x in benign_crossed]
+    m = [int(x) for x in benign_n]
+    if not (len(a) == len(k) == len(m)) or not a:
+        return {"n_targets": 0, "observed": 0, "expected": float("nan"),
+                "p_value": float("nan")}
+    N = int(n_attack_candidates)
+    rng = np.random.default_rng(seed)
+
+    # Posterior draws of pi_j, then the H0 crossing probability for the attack.
+    pi = np.column_stack([rng.beta(kj + 0.5, mj - kj + 0.5, n_sim)
+                          for kj, mj in zip(k, m)])          # (n_sim, n_targets)
+    p_cross_h0 = 1.0 - (1.0 - pi) ** N
+    sim = (rng.random(p_cross_h0.shape) < p_cross_h0).sum(axis=1)
+
+    obs = int(sum(a))
+    p_val = float((sim >= obs).mean())
+    return {
+        "n_targets": len(a),
+        "observed": obs,
+        "expected": float(sim.mean()),
+        "p_value": p_val,
+        "mean_null_rate": float(p_cross_h0.mean()),
+        "benign_crossing_rate": float(sum(k) / max(1, sum(m))),
+    }
+
+
 def exceedance_counts(attack_max, benign_lists, *, ties: str = "conservative"):
     """Per target, how many benign draws reach the attack's max: K_j, plus the benign
     sample size m_j — the sufficient statistic for exceedance_test.
@@ -280,6 +347,44 @@ def ceiling_saturation(values, n_samples: int = 10, *, tol: float = 1e-6) -> flo
         return float("nan")
     cap = float(np.log(n_samples))
     return sum(1 for x in v if x >= cap - tol) / len(v)
+
+
+def exceedance_counts_randomized(attack_max, benign_lists, tie_multiplicity, *,
+                                 seed: int = 0, n_rep: int = 200):
+    """Exceedance counts with EXCHANGEABLE (randomized) tie-breaking — the only tie rule
+    that stays calibrated AND powerful once the score has an atom at the log(N) ceiling
+    (critique_log 26; simulation in results/tie_rule_showdown.md).
+
+    For each target: benign draws strictly above the attack max always count. Benign draws
+    EQUAL to it are tied with the `b` attack candidates that also achieve the max, and under
+    exchangeability each such benign draw outranks all of them with probability 1/(b+1).
+
+    `tie_multiplicity[j]` is that b — the number of FEASIBLE attack candidates at the
+    maximum, recorded by the optimiser (`n_feasible_at_best`). It must be MEASURED, not
+    estimated from benign data: b is precisely where the attack's strength shows up once
+    the max value is pinned by the ceiling, so estimating it under H0 would erase the
+    signal. b is clamped to >= 1 because the attack's own maximum is one of the tied values.
+
+    Averaging over `n_rep` tie-break draws removes the dependence on a single coin flip
+    (the counts become fractional; callers wanting integer counts should use the returned
+    per-target means with a Monte-Carlo null rather than the exact convolution).
+    Returns [(mean_k_j, m_j), ...]."""
+    rng = np.random.default_rng(seed)
+    out = []
+    for a, bl, b in zip(attack_max, benign_lists, tie_multiplicity):
+        if not bl:
+            continue
+        a = float(a)
+        vals = np.asarray([float(x) for x in bl], dtype=float)
+        strict = int((vals > a).sum())
+        tied = int(np.isclose(vals, a).sum())
+        b = max(1, int(b))
+        if tied:
+            extra = rng.binomial(tied, 1.0 / (b + 1), size=n_rep).mean()
+        else:
+            extra = 0.0
+        out.append((strict + float(extra), len(vals)))
+    return out
 
 
 def exceedance_test(counts, n_attack_candidates: int) -> dict:

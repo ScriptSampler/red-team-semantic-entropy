@@ -91,6 +91,10 @@ class AttackOutcome:
     # submitted to the gate and how many it admitted. 0/0 on records written earlier.
     n_feasibility_checks: int = 0
     n_feasibility_passed: int = 0
+    # Tie multiplicity at the attack's maximum (critique_log 26) — the quantity that
+    # carries the signal once the log(N) ceiling pins the max VALUE. 0 on older records.
+    n_feasible_at_best: int = 0
+    feasible_objs: list[float] = field(default_factory=list)
 
 
 def _entropy_moved(attack: str, entropy_before: float, entropy_after: float,
@@ -191,6 +195,8 @@ def run_attack_on_example(
         trajectory_best_obj=list(result.trajectory_best_obj),
         n_feasibility_checks=result.n_feasibility_checks,
         n_feasibility_passed=result.n_feasibility_passed,
+        n_feasible_at_best=result.n_feasible_at_best,
+        feasible_objs=list(result.feasible_objs),
     )
 
 
