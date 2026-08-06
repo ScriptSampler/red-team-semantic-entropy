@@ -941,3 +941,56 @@ tie count recorded); (2) re-run every power simulation and RE-OPEN the N=20 verd
 C3/C4/C5 in dynamic_range_finding.md; (4) restate C1/C2 with explicit denominators.
 
 ---
+
+## 26. 2026-08-04 — the tie question settled; I was wrong, the verification was right
+
+**Result (scripts/tie_rule_showdown.py, results/tie_rule_showdown.md).** Each rule's null
+simulated with the SAME rule as its observed statistic — the consistency entry 25 showed my
+first attempt lacked. At FULL saturation (q=0.05, the attack's max always pinned at the
+ceiling), n=80, m=30:
+  strict:       H0 level **0.995** — broken; with S≈0 always it rejects under H0 too.
+  conservative: level 0.050, power **0.05** @2x — calibrated but DEAD. This is what I shipped.
+  randomized:   level 0.093, power **0.71** @2x, **0.99** @5x — works.
+With no atom all three agree (power 0.67/0.99). So the verification's claim was correct and
+the entry-23/24 verdict built on the conservative rule falls.
+
+**WHY I ERRED — worth recording, because the derivation was right and the conclusion wrong.**
+I derived, and verified against simulation to 3 decimals (scripts/tie_derivation.py):
+    P(benign > attack-max) = (1-q)^N · [q + (1-q)/(N+1)]  ->  0 as q grows
+and concluded that no max-based statistic could distinguish H0 from H1 under a ceiling. That
+is a true statement about the max's **VALUE**, which is pinned under both hypotheses. But the
+signal lives in the **MULTIPLICITY at the max**: a stronger attack lands MORE of its
+candidates on the ceiling, shrinking the 1/(b+1) credit each tied benign draw earns. I
+reasoned about the wrong quantity and stopped. Twice now the error has been the same shape —
+a confident argument about the object I happened to be looking at, rather than the object
+carrying the information.
+
+**CONSEQUENCE: b must be MEASURED, and was UNRECORDABLE.** b = feasible attack candidates at
+the max. It cannot be estimated from benign data: b is precisely where attack strength shows
+up once the value is pinned, so an H0-based estimate erases the signal. And optimizer.py
+filtered candidates with `c.obj > best_obj`, discarding everything tied to the ceiling before
+the feasibility gate ever saw it — so the quantity was not merely unlogged but impossible to
+recover from any past run. FIXED: filter is now `>=`, feasible objectives retained,
+`n_feasible_at_best` persisted on every outcome (defaulted; old records still load).
+
+**OBLIGATION: the FA cell must be re-run** (n=80, ~13 GPU-h) under the instrumented
+optimiser to obtain b. Use a NEW TAG (_defb) so the existing _def data is preserved for
+comparison rather than silently skipped by the resume logic. The hide cell, launched today,
+picks up the instrumentation automatically — the chained command starts a fresh interpreter
+after the winner's-curse step, so it loads the corrected optimiser from disk.
+
+**SECOND STATISTIC QUARANTINED.** I built a budget-corrected operating-point FLIP test today
+(the critic's suggested censoring-immune statistic). Measured H0 level: **0.81 / 0.78 / 0.48
+/ 0.35** at m = 30/60/120/181 — anti-conservative at every budget, so more benign draws do
+not fix it. Cause: P(cross) = 1-(1-pi)^N is CONCAVE in pi, so integrating over a wide
+posterior for pi under-predicts crossings (Jensen) and the observed count beats the null for
+free. A correct version must CONDITION on the observed benign crossings
+(permutation/conditional-exact) rather than plug an estimated rate into a nonlinear
+transform. Kept in the codebase because the idea is sound, but marked NOT CALIBRATED, and
+its test now ASSERTS the failure so an unvalidated "fix" cannot pass silently. OWED.
+
+**Standing lesson, third instance:** every tie/censoring intuition I have had in this project
+("conservative must be safe", "the ceiling must kill it") has been wrong until simulated.
+Simulate the null before believing any argument about it.
+
+---
