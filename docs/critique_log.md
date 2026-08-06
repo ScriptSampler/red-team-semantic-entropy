@@ -994,3 +994,34 @@ its test now ASSERTS the failure so an unvalidated "fix" cannot pass silently. O
 Simulate the null before believing any argument about it.
 
 ---
+
+## 26a. 2026-08-04 — PRE-COMMITMENT: definitive-run budget, fixed before any data
+
+With the randomized tie rule and the empirical n=80 headroom distribution
+(scripts/power_sim_randomized.py, results/power_randomized.md), the test is CALIBRATED and
+POWERFUL at N=10 — no N=20 re-run is needed, contrary to entry 23/24:
+
+| m | level | power @2x | power @3x |
+|---|-------|-----------|-----------|
+| 20 | 0.058 | 0.51 | 0.83 |
+| 30 | 0.052 | 0.67 | 0.92 |
+| 50 | 0.068 | 0.84 | 0.99 |
+| 80 | 0.058 | 0.94 | 1.00 |
+
+**PRE-COMMITTED, before the null control runs and before any result is seen:**
+> **m = 50 benign paraphrases per target, N = 10 samples, n >= 80 targets, randomized
+> (exchangeable) tie-breaking, LLM-judge as the false-alarm adjudicator.**
+> Chosen for power **0.84 at a 2x effect** rather than the cheaper m=30 (0.67), because the
+> winner's-curse measurement (~40% retention at n=22) indicates the true effect is modest,
+> so the design must be able to see a SMALL one. Cost: (2 + 50 + 3) = 55 clusterings per
+> target at ~55s => ~50 min/target => **~67 GPU-hours** for n=80. Affordable within the
+> remaining window; the symmetric judge is retained (validated 0.93) rather than halving
+> cost with the asymmetric variant, which would require its own re-validation.
+> If compute forces a smaller m, the shortfall is REPORTED as such — m is not re-chosen
+> after seeing results, and no other m may be substituted post hoc.
+
+Also pre-committed: **the decision rule's statistic is the randomized-tie exceedance test**;
+strict is disqualified (H0 level 0.995) and conservative is disqualified (power 0.05). Both
+are reported as diagnostics, and any disagreement between the three is disclosed.
+
+---

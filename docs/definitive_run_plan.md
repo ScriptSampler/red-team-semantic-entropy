@@ -1,5 +1,16 @@
 # Definitive-run plan (the confirmatory SE result)
 
+> ## ⚠ UPDATED 2026-08-04 — read this before the commands below
+> The N=20 detour is CANCELLED. The zero-power result that motivated it was an artifact of
+> the conservative tie rule, not of the log(N) ceiling (critique_log 26). With randomized
+> (exchangeable) tie-breaking the test is calibrated and powerful **at N=10**.
+> **PRE-COMMITTED DESIGN (critique_log 26a): N=10, m=50 benign/target, n>=80, randomized
+> ties, judge as the FA adjudicator. ~67 GPU-hours.**
+> Prerequisite: the FA cell must be RE-RUN under the instrumented optimiser (new tag
+> `_defb`) to record `n_feasible_at_best`, the tie multiplicity the statistic needs and
+> which no existing run contains.
+
+
 Consolidates the critic's DoDs (critique_log entries 13–14) into one runnable recipe.
 Tonight built and validated all the *machinery*; this is what produces the *claim*.
 
