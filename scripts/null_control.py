@@ -44,7 +44,8 @@ from se.attacks import proposer, feasibility
 from se.se_pipeline import semantic_entropy
 from se.entropy import (cluster_and_score_exact, cluster_and_score_embedding,
                         cluster_and_score_judge, cluster_and_score_judge_batched)
-from se.stats import rate_ci, bootstrap_ci, paired_max_net, analytic_max_percentile
+from se.stats import (rate_ci, bootstrap_ci, paired_max_net, analytic_max_percentile,
+                      exceedance_counts, exceedance_counts_randomized, exceedance_test)
 
 CELLS = [("false_alarm", "se"), ("hide", "se")]
 
@@ -444,13 +445,39 @@ def main() -> int:
                      f"NOT 50% (critique_log 21). Read the budget-matched line as the headline:")
             bm = paired_max_net(am, bl)
             if bm["net_ci"] is not None:
-                L.append(f"- **BUDGET-MATCHED (B2 HEADLINE)**: attack-max − benign-MAX, paired "
-                         f"per target: net {_ci(bm['net_ci'])} nats · sign-test {_pc(bm['sign_ci'])} "
-                         f"(fraction of targets attack-max > benign-max). Benign budget K={args.K} "
-                         f"vs attack ~{attack_budget}: H0 net=0 IFF K≈attack budget; K≪budget "
-                         f"under-estimates benign-max and INFLATES this net (run K~{attack_budget}).")
-            else:
-                L.append("- BUDGET-MATCHED (B2): no benign draws to form a benign-max.")
+                L.append(f"- budget-matched paired net (supplementary): attack-max − benign-MAX "
+                         f"{_ci(bm['net_ci'])} nats · sign-test {_pc(bm['sign_ci'])}. Benign "
+                         f"budget K={args.K} vs attack ~{attack_budget}: K≪budget "
+                         f"under-estimates benign-max and INFLATES this net.")
+
+            # ---- THE CLAIM STATISTIC (critique_log 26/26a) --------------------------------
+            # Randomized (exchangeable) tie-breaking. Strict is disqualified (H0 level 0.995
+            # under a ceiling) and conservative is disqualified (power 0.05); both are shown
+            # as diagnostics so any disagreement between them is visible. `b` is the measured
+            # tie multiplicity from the instrumented optimiser — it CANNOT be estimated from
+            # benign data without assuming H0 and erasing the signal.
+            tie_b = [max(1, int(getattr(o, "n_feasible_at_best", 0) or 1)) for o in outcomes]
+            have_b = any(int(getattr(o, "n_feasible_at_best", 0) or 0) > 0 for o in outcomes)
+            rnd = exceedance_test(
+                [(int(round(k)), m) for k, m in
+                 exceedance_counts_randomized(am, bl, tie_b)], attack_budget)
+            strict_t = exceedance_test(exceedance_counts(am, bl, ties="strict"), attack_budget)
+            cons_t = exceedance_test(exceedance_counts(am, bl, ties="conservative"), attack_budget)
+            if rnd.get("n_targets"):
+                L.append(f"- **EXCEEDANCE TEST (CLAIM STATISTIC, randomized ties)**: "
+                         f"observed {rnd['observed']} vs H0-expected {rnd['expected']:.1f}, "
+                         f"p={rnd['p_value']:.4f}, effective benign budget n_eff="
+                         f"{rnd['n_eff']:.1f} (\"the attack is worth n_eff random "
+                         f"paraphrases\").")
+                L.append(f"  - diagnostics: strict p={strict_t['p_value']:.4f} · "
+                         f"conservative p={cons_t['p_value']:.4f}. Disagreement between these "
+                         f"indicates ceiling saturation is driving the comparison, not attack "
+                         f"superiority (both are disqualified as claim statistics).")
+                if not have_b:
+                    L.append("  - ⚠ **TIE MULTIPLICITY NOT RECORDED** for this campaign: every "
+                             "b defaulted to 1, the most generous possible tie credit, so this "
+                             "p-value is NOT valid. Re-run the attack under the instrumented "
+                             "optimiser (n_feasible_at_best) before using it.")
             L.append("")
         for arm_key, arm_label, present in [("embed", "embedding", embed_fn is not None),
                                             ("judge", "LLM-judge", judge_fn is not None)]:
