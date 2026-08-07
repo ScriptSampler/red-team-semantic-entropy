@@ -1,8 +1,22 @@
-# Winner's curse measured directly: ~2/3 of the raw FA effect is selection-on-noise
+# Winner's curse measured: 55% of the raw FA effect is selection-on-noise
 
-**PARTIAL (n = 22 of 80 banked when the session ended; checkpointed and resumable —
-re-run the same command). The n=10 table below is superseded by the n=22 line beneath it.** Direction is stark
-enough to record now; the final number replaces this one.
+**COMPLETE (n = 60).** Every false-alarm target on which the optimiser actually found a
+paraphrase was re-scored. Earlier partial figures (n=10 retention 32%, n=22 retention 40%)
+are superseded by the numbers below.
+
+| quantity | value |
+|---|---|
+| mean move at **selection** (the reported figure) | **+0.698 nats** (median +0.586) |
+| mean move on a **fresh seed** | **+0.315 nats** (median +0.165) |
+| **retention** | **45%** |
+| **shrinkage** | **−0.383 [−0.529, −0.234] nats** |
+| targets keeping a positive move | 36/60 |
+| corr(selection, fresh) | +0.456 |
+
+**The shrinkage CI excludes zero**, so the inflation is demonstrated rather than suggested:
+the reported false-alarm effect is provably about twice what survives re-measurement on
+independent samples. Real signal remains — 36 of 60 targets keep a positive move and the two
+measurements correlate at +0.46 — but the magnitude of the raw number is inflated ~2.2x.
 
 ## Design
 
