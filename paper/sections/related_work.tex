@@ -70,6 +70,24 @@ direction as its mirror). The bidirectional-NLI equivalence gate is our design c
 certifying meaning-preservation, not itself a novelty axis --- indeed our own analysis
 treats the detector's reliance on that same NLI model as the central confound.
 
+\paragraph{What the estimator can and cannot express.}
+A separate line studies semantic entropy as a \emph{statistic} rather than as a detector.
+\citet{mccabe2025alphabet} show that the discrete plug-in estimator underestimates the true
+semantic entropy at practical sample sizes, because the semantic alphabet is under-covered,
+and correct it upward. We characterise the same estimator's opposite tail---it cannot exceed
+$\log N$, and in deployment it piles up there---which is not a competing claim but a
+mechanism for theirs: a statistic capped at $\log N$ must understate whenever the quantity it
+estimates is larger. Separately, \citet{sun2026granularity} name the \emph{score granularity
+gap} for black-box LLM classification: a confidence score may rank well and still take so
+few distinct values that an operator has only a handful of usable thresholds. Semantic
+entropy inherits exactly this pathology, with the twist that the granularity limit is set by
+the sampling budget rather than by a verbalisation format; our contribution here is the
+instantiation and its consequence for attack evaluation, not the argument itself. Read
+together with the originating papers---which report that clusters are few and grow slowly
+with $N$, and treat that as a computational
+saving~\citep{kuhn2023semantic, farquhar2024detecting}---the picture is of a well-known
+observation whose measurement consequences have not been drawn out.
+
 \paragraph{Evaluating the evaluation.}
 Because our framing is protocol-led, two methodological strands matter beyond the attack
 neighbours. First, the individual failure modes our controls target are classical ---

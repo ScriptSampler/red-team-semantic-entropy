@@ -16,6 +16,29 @@ equivalence---the NLI gate's and the sampling distribution's---that the detector
 implicitly assumes coincide; isolating that this gap is the cause (rather than a
 correlate) is exactly what the independent-clusterer check would establish.
 
+\paragraph{How much of this is an attack, and how much is the detector?}
+The mechanism above presumes there is room to move the score. Much of the time there is
+not, and that changes what the false-alarm result is a result \emph{about}. A tenth of
+correct answers are already at the estimator's maximum before anything is done to them, a
+quarter are in the top decile of its range, and the whole clean separation between correct
+and hallucinating answers is a fraction of the estimator's own dispersion. Against that
+backdrop, pushing a correct answer over a flagging threshold does not require a subtle
+adversary; it requires very little, and ordinary rephrasing frequently accomplishes it. The
+sharpest way to put the finding is therefore not ``we constructed an attack that defeats
+semantic entropy'' but ``semantic entropy has so little usable range at the top of its scale
+that defeating it in the false-alarm direction is nearly free.'' The first claim invites the
+reply that a stronger detector would resist; the second does not, because it is a statement
+about the measurement rather than about our optimiser.
+
+That reading also disciplines what we may say about magnitude. Because roughly half of
+attacked targets end at the cap, the attack and any other method that also saturates become
+indistinguishable there, and effect sizes expressed in nats are censored. And because the
+reported effect is the maximum over a large candidate search, a further part of it is
+selection on estimator noise---measurably about half, on our own data. Strip both away and
+what remains is a modest, real, but heavily conditioned quantity. We think the honest
+summary is that the vulnerability is real and the \emph{margin} is small, and that most of
+the apparent margin in an uncorrected report is an artefact of how the number was obtained.
+
 \paragraph{Is the weakness structural?}
 We conjecture the mechanism generalises beyond one implementation: any detector that
 operationalises ``semantic equivalence'' through a learned model inherits that
