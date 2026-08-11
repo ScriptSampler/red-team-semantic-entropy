@@ -20,11 +20,16 @@ def test_tie_credit_shrinks_as_the_attack_puts_more_candidates_on_the_ceiling():
     draw earns less credit => smaller statistic => stronger evidence for the attack."""
     attack = [CAP]
     benign = [[CAP] * 10]                     # every benign draw ties the ceiling
-    weak = exceedance_counts_randomized(attack, benign, [1], seed=0)[0][0]
-    mid = exceedance_counts_randomized(attack, benign, [9], seed=0)[0][0]
-    strong = exceedance_counts_randomized(attack, benign, [99], seed=0)[0][0]
-    assert weak == pytest.approx(10 / 2, abs=0.6)      # b=1  -> credit 1/2
-    assert mid == pytest.approx(10 / 10, abs=0.4)      # b=9  -> credit 1/10
+
+    def mean_over_seeds(b, n=400):
+        """Each call is a SINGLE draw (that is what the null assumes), so the mechanism is
+        checked by averaging ACROSS seeds here in the test — never inside the statistic."""
+        return sum(exceedance_counts_randomized(attack, benign, [b], seed=s)[0][0]
+                   for s in range(n)) / n
+
+    weak, mid, strong = mean_over_seeds(1), mean_over_seeds(9), mean_over_seeds(99)
+    assert weak == pytest.approx(10 / 2, abs=0.4)      # b=1  -> credit 1/2
+    assert mid == pytest.approx(10 / 10, abs=0.3)      # b=9  -> credit 1/10
     assert strong == pytest.approx(10 / 100, abs=0.2)  # b=99 -> credit 1/100
     assert weak > mid > strong
 
@@ -54,3 +59,32 @@ def test_b_is_clamped_and_empty_benign_skipped():
     got = exceedance_counts_randomized(attack, benign, [0, 5], seed=0)
     assert len(got) == 1                       # empty benign list dropped
     assert got[0][0] <= 1.0                    # b clamped to >=1 -> credit <= 1/2 each
+
+
+def test_single_draw_returns_integers_not_averages():
+    """REGRESSION: an earlier version averaged tie credit over many draws and returned
+    fractional counts. Averaging strips the tie-break variance the convolution null assumes,
+    driving the H0 level to 0.996 at realistic saturation. Counts must be integers from ONE
+    realisation."""
+    attack = [CAP]
+    benign = [[CAP] * 10]
+    k, m = exceedance_counts_randomized(attack, benign, [9], seed=0)[0]
+    assert isinstance(k, int), "counts must be integer single-draw realisations"
+    assert m == 10
+
+
+def test_different_seeds_give_different_realisations():
+    attack = [CAP]
+    benign = [[CAP] * 20]
+    ks = {exceedance_counts_randomized(attack, benign, [3], seed=s)[0][0] for s in range(15)}
+    assert len(ks) > 1, "tie-breaking must actually be random across seeds"
+
+
+def test_over_seeds_summarises_the_spread():
+    from se.stats import exceedance_test_over_seeds
+    attack = [CAP] * 40
+    benign = [[CAP, CAP, 0.1]] * 40
+    r = exceedance_test_over_seeds(attack, benign, [5] * 40, 181, n_seeds=25)
+    assert r["n_seeds"] == 25
+    assert r["p_lo"] <= r["p_median"] <= r["p_hi"]
+    assert 0.0 <= r["frac_below_05"] <= 1.0

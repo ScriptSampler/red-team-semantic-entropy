@@ -21,6 +21,35 @@ because two of them were errors I had explicitly warned myself against.
 | wrong answers at the ceiling | **4/17 = 24%** |
 | distinct entropy values across all 97 targets | **22** |
 
+## ⚠ POPULATION CORRECTION (2026-08-11) — the separation claim is withdrawn from the spine
+
+Everything above is computed on the **attacked subset** (the 80 FA + 17 hide campaign
+targets), and the hide arm is **truncated mid-campaign at n=17**. That is not the population
+a claim about "the detector" may be made on. The fair pool says something materially
+different:
+
+| population | wrong | right | separation | implied AUROC |
+|---|---|---|---|---|
+| **fair pool** (the right one) | 1.843 | 1.380 | **0.463 nats**, d ≈ 0.76 | **0.704** |
+| attacked subset (used above) | 1.661 (n=17) | 1.477 (n=80) | 0.184, d = 0.28 | 0.579 |
+
+The attacked-subset separation is **2.5× smaller**, and its implied AUROC (0.579) is exactly
+the attacked-subset figure `fa_n80_milestone.md` quarantined as not-to-be-confused-with the
+fair pool's 0.704. I used the quarantined number as a headline anyway — the second time this
+project has attached a real number to the wrong population.
+
+**Consequence, stated plainly: the claim "the detector's class separation is a fraction of
+its own noise" does not survive.** On the fair pool d ≈ 0.76 and AUROC ≈ 0.70 — a moderate
+detector, not a useless one. That claim is removed from the Abstract, Discussion and
+Conclusion rather than restated with a caveat, because at d ≈ 0.76 it is simply not true.
+
+**What survives, and is still on the false-alarm-relevant region:** the crowding at the top
+of the scale (10% of clean correct answers exactly at the cap, 26% in the top decile) and the
+granularity limit (22 attainable values). Those are direct counts, they concern the top of
+the range where the false-alarm attack operates, and they do not depend on the class
+separation at all. The honest scope is **"little usable range at the top of the scale"**, not
+"the detector barely separates the classes".
+
 ## What can and cannot be concluded
 
 **Solid.** The score is coarse and crowded at the top: 22 attainable values over 97 targets,

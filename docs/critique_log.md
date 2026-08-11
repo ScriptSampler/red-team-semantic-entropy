@@ -1070,3 +1070,64 @@ claim of the form "we show X", ask first whether X is a measurement or a derivat
 a derivation, whether it is one an informed reader already holds.
 
 ---
+
+## 28. 2026-08-11 — critic BLOCKS the reframe on provenance; and a LIVE PIPELINE BUG found
+
+Two serious problems, both mine, both caught before the confirmatory run.
+
+**BLOCKER 1 — the spine statistic was the quarantined population.** The reframe leaned on
+"class separation 0.184 nats, d=0.28". The critic noticed d=0.28 implies AUROC ~0.578, which
+is essentially the 0.579 ATTACKED-SUBSET figure that fa_n80_milestone.md had explicitly
+quarantined as not-to-be-confused-with the fair pool. Verified against
+results/fair_pool_report.md:
+    fair pool: wrong 1.843, right 1.380 -> separation 0.463 nats, AUROC 0.704, d ~ 0.76
+    attacked subset (what I used): 1.661 (n=17, TRUNCATED) vs 1.477 -> 0.184, d 0.28
+A 2.5x understatement, in the direction that flatters the thesis, computed on a mid-campaign
+hide arm. Same class of error as the SRE 0.828 mislabel, and the SECOND time this project
+has attached a real number to the wrong population — the first being the AUROC
+reconciliation in entry 25 that I had myself written a warning against.
+**Resolution: the claim is WITHDRAWN, not caveated.** At d~0.76 "the separation is a fraction
+of the estimator's own noise" is simply false. Removed from Abstract, Discussion and
+Conclusion. What survives is scoped to the top of the scale — 10% of clean correct answers at
+the cap, 26% in the top decile, 22 attainable values — and every spine statement now says
+which population and n it comes from. The detector is explicitly described as MODERATE
+(AUROC 0.704), because it is.
+
+**BLOCKER 2 — a live anti-conservative bug in the pipeline, worse than the critic suspected.**
+He flagged the measured H0 level 0.093 vs nominal 0.05 as too large to be Monte-Carlo noise.
+Probing it (scripts/tie_level_probe.py) found the cause and it is severe:
+    tie handling                     q=0     q=0.01   q=0.05
+    rounded average (what I shipped) 0.034   0.372    **0.996**
+    single randomized draw           0.041   0.037    0.024
+`exceedance_counts_randomized` averaged tie credit over 200 draws, and null_control rounded
+that average before the exact convolution. Averaging removes the tie-break variance the null
+still assumes is present, so the statistic is systematically less extreme than the null
+expects. At realistic ceiling saturation the false-positive rate is **99.6%** — it would have
+manufactured a "significant" result at the definitive run, on data that had not yet been
+collected.
+**Fix:** single-draw INTEGER counts (matching the null's derivation), plus
+`exceedance_test_over_seeds`, which reports the median p-value and its range across 101
+tie-break realisations — a randomised test's verdict must not hinge on one coin flip, and if
+the range straddles the threshold, that is the result. Regression tests pin integer output
+and cross-seed variation. Measured single-draw level is <= 0.05 (conservative) at every atom
+mass tested.
+
+**Other rulings adopted:** (a) measurement-led spine APPROVED as correct and not
+over-rotation, but two of six legs are weakened by my own scoop sweep (the log N identity;
+the distinct-value point as an instantiation of sun2026granularity) — no further weight to be
+put on those. (b) "no room" over "we built an attack" is SOUND, not a dodge, because the
+natural rebuttal (use a better estimator) is itself a concession — conditional on scoping it
+to the top of the scale and reporting the confirmatory verdict with equal prominence
+whichever way it lands. Both conditions now in the text. (c) the mccabe reconciliation is
+directionally right but NOT established: plug-in entropy carries a well-known negative
+finite-sample bias (Miller-Madow) at all entropy levels, which is the likelier dominant
+driver, so the cap is ONE mechanism, not THE mechanism. Restated as consistency in sign.
+(d) "nearly free" in the Discussion asserted the DEFERRED attack claim; removed, and the
+phrase may not return until the measured benign-saturation rate exists.
+
+**Lesson.** Both of today's errors were failures to check a number's PROVENANCE and a
+statistic's CALIBRATION before building on them — not failures of derivation. The derivations
+were fine. Simulate the null; name the population; do both before the number enters a
+sentence.
+
+---

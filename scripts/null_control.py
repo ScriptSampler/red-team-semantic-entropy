@@ -45,7 +45,8 @@ from se.se_pipeline import semantic_entropy
 from se.entropy import (cluster_and_score_exact, cluster_and_score_embedding,
                         cluster_and_score_judge, cluster_and_score_judge_batched)
 from se.stats import (rate_ci, bootstrap_ci, paired_max_net, analytic_max_percentile,
-                      exceedance_counts, exceedance_counts_randomized, exceedance_test)
+                      exceedance_counts, exceedance_counts_randomized, exceedance_test,
+                      exceedance_test_over_seeds)
 
 CELLS = [("false_alarm", "se"), ("hide", "se")]
 
@@ -458,17 +459,29 @@ def main() -> int:
             # benign data without assuming H0 and erasing the signal.
             tie_b = [max(1, int(getattr(o, "n_feasible_at_best", 0) or 1)) for o in outcomes]
             have_b = any(int(getattr(o, "n_feasible_at_best", 0) or 0) > 0 for o in outcomes)
-            rnd = exceedance_test(
-                [(int(round(k)), m) for k, m in
-                 exceedance_counts_randomized(am, bl, tie_b)], attack_budget)
+            # NB: single-draw integer counts, never a rounded average — averaging the tie
+            # credit strips the variance the convolution null assumes and drives the H0
+            # level to 0.996 at realistic saturation (critique_log 28).
+            rnd = exceedance_test(exceedance_counts_randomized(am, bl, tie_b, seed=0),
+                                  attack_budget)
+            over = exceedance_test_over_seeds(am, bl, tie_b, attack_budget)
             strict_t = exceedance_test(exceedance_counts(am, bl, ties="strict"), attack_budget)
             cons_t = exceedance_test(exceedance_counts(am, bl, ties="conservative"), attack_budget)
             if rnd.get("n_targets"):
                 L.append(f"- **EXCEEDANCE TEST (CLAIM STATISTIC, randomized ties)**: "
                          f"observed {rnd['observed']} vs H0-expected {rnd['expected']:.1f}, "
-                         f"p={rnd['p_value']:.4f}, effective benign budget n_eff="
-                         f"{rnd['n_eff']:.1f} (\"the attack is worth n_eff random "
-                         f"paraphrases\").")
+                         f"p={rnd['p_value']:.4f} (single tie-break draw), effective benign "
+                         f"budget n_eff={rnd['n_eff']:.1f} (\"the attack is worth n_eff "
+                         f"random paraphrases\").")
+                if over.get("n_seeds"):
+                    L.append(f"  - across {over['n_seeds']} tie-break realisations: median "
+                             f"p={over['p_median']:.4f}, range [{over['p_lo']:.4f}, "
+                             f"{over['p_hi']:.4f}], {over['frac_below_05']:.0%} below 0.05. "
+                             f"A randomised test must not hinge on one coin flip; if this "
+                             f"range straddles the threshold, the data do not settle it.")
+                L.append("  - measured actual H0 level of this test at realistic ceiling "
+                         "saturation is <= 0.05 (conservative) for a SINGLE draw; do NOT "
+                         "average tie credit across draws (critique_log 28).")
                 L.append(f"  - diagnostics: strict p={strict_t['p_value']:.4f} · "
                          f"conservative p={cons_t['p_value']:.4f}. Disagreement between these "
                          f"indicates ceiling saturation is driving the comparison, not attack "

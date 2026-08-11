@@ -46,9 +46,11 @@ analytically, with tie handling that survives the ceiling---together with the in
 equivalence oracle the attribution requires, an LLM-judge that clears the adversarial
 discrimination on which sentence embedders are near-chance ($0.93$ vs.\ $0.51$). We report
 the confirmatory evaluation at the pre-registered scale under this protocol. The broader
-point is that a detector whose score saturates under ordinary rephrasing, and whose
-correct-versus-hallucinating separation is a fraction of its own noise, is fragile for
-reasons that precede any adversary.
+point is that a detector need not be badly calibrated to be fragile: this one separates
+correct from hallucinating answers moderately well overall (AUROC $0.70$ on our
+score-independent pool), yet has so little usable range at the \emph{top} of its scale---the
+region a false alarm must reach---that the direction is compromised for reasons that precede
+any adversary.
 \end{abstract}
 
 \section{Introduction}

@@ -17,18 +17,24 @@ implicitly assumes coincide; isolating that this gap is the cause (rather than a
 correlate) is exactly what the independent-clusterer check would establish.
 
 \paragraph{How much of this is an attack, and how much is the detector?}
-The mechanism above presumes there is room to move the score. Much of the time there is
-not, and that changes what the false-alarm result is a result \emph{about}. A tenth of
-correct answers are already at the estimator's maximum before anything is done to them, a
-quarter are in the top decile of its range, and the whole clean separation between correct
-and hallucinating answers is a fraction of the estimator's own dispersion. Against that
-backdrop, pushing a correct answer over a flagging threshold does not require a subtle
-adversary; it requires very little, and ordinary rephrasing frequently accomplishes it. The
-sharpest way to put the finding is therefore not ``we constructed an attack that defeats
+The mechanism above presumes there is room to move the score. At the top of the scale there
+often is not, and that changes what the false-alarm result is a result \emph{about}. We
+should be precise about the scope: on our score-independent pool the detector separates
+correct from hallucinating answers moderately well (AUROC $0.704$ [$0.653$, $0.753$]), so
+this is not a claim that semantic entropy fails as a detector. It is a claim about one
+region of its range. A tenth of correct answers are already at the estimator's maximum
+before anything is done to them, a quarter are within the top decile, and the estimator
+offers only $22$ distinct values in which to express any difference---and it is exactly into
+that compressed region that a false alarm must be pushed.
+
+The sharpest way to put the finding is therefore not ``we constructed an attack that defeats
 semantic entropy'' but ``semantic entropy has so little usable range at the top of its scale
-that defeating it in the false-alarm direction is nearly free.'' The first claim invites the
-reply that a stronger detector would resist; the second does not, because it is a statement
-about the measurement rather than about our optimiser.
+that the false-alarm direction is largely unmeasurable in the detector's own units.'' The
+first claim invites the reply that a stronger detector, or a stronger optimiser, would settle
+the matter; the second does not, because the natural rebuttal---use an estimator with more
+range---concedes the point. Whether the remaining, uncensored margin is one an adversary can
+reliably exploit is the question the confirmatory evaluation answers, and we report that
+result with the same prominence whichever way it falls.
 
 That reading also disciplines what we may say about magnitude. Because roughly half of
 attacked targets end at the cap, the attack and any other method that also saturates become

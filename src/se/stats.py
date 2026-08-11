@@ -425,10 +425,19 @@ def exceedance_counts_randomized(attack_max, benign_lists, tie_multiplicity, *,
     the max value is pinned by the ceiling, so estimating it under H0 would erase the
     signal. b is clamped to >= 1 because the attack's own maximum is one of the tied values.
 
-    Averaging over `n_rep` tie-break draws removes the dependence on a single coin flip
-    (the counts become fractional; callers wanting integer counts should use the returned
-    per-target means with a Monte-Carlo null rather than the exact convolution).
-    Returns [(mean_k_j, m_j), ...]."""
+    ⚠ USE A SINGLE DRAW, NOT AN AVERAGE. Returns INTEGER counts from ONE tie-break
+    realisation, because the exact convolution null is the distribution of a single
+    realisation. Averaging the tie credit over many draws (an earlier version of this
+    function did) removes the tie-break variance that the null still assumes is present, so
+    the averaged statistic is systematically less extreme than the null expects and the test
+    becomes wildly anti-conservative: measured H0 level 0.034 / 0.372 / 0.996 at ceiling-atom
+    mass q = 0 / 0.01 / 0.05, against a single draw's 0.041 / 0.037 / 0.024
+    (`scripts/tie_level_probe.py`). Averaging a statistic whose null was derived for one
+    realisation is the bug; do not reintroduce it.
+
+    Because the result depends on one random tie-break, report the test across several
+    `seed` values (see `exceedance_test_over_seeds`) rather than quoting a single p-value.
+    Returns [(k_j, m_j), ...] with integer k_j."""
     rng = np.random.default_rng(seed)
     out = []
     for a, bl, b in zip(attack_max, benign_lists, tie_multiplicity):
@@ -439,12 +448,35 @@ def exceedance_counts_randomized(attack_max, benign_lists, tie_multiplicity, *,
         strict = int((vals > a).sum())
         tied = int(np.isclose(vals, a).sum())
         b = max(1, int(b))
-        if tied:
-            extra = rng.binomial(tied, 1.0 / (b + 1), size=n_rep).mean()
-        else:
-            extra = 0.0
-        out.append((strict + float(extra), len(vals)))
+        extra = int(rng.binomial(tied, 1.0 / (b + 1))) if tied else 0
+        out.append((strict + extra, len(vals)))
     return out
+
+
+def exceedance_test_over_seeds(attack_max, benign_lists, tie_multiplicity,
+                               n_attack_candidates: int, *, n_seeds: int = 101):
+    """Run the randomised-tie exceedance test across `n_seeds` tie-break realisations and
+    summarise the resulting p-values. A randomised test's verdict should not hinge on one
+    coin flip, so we report the median p-value together with its spread; if the range
+    straddles the decision threshold, the data do not settle the question and that fact is
+    the result. Each individual run uses a single draw, so each is correctly calibrated."""
+    ps = []
+    for s in range(int(n_seeds)):
+        counts = exceedance_counts_randomized(attack_max, benign_lists, tie_multiplicity,
+                                              seed=s)
+        r = exceedance_test(counts, n_attack_candidates)
+        if r.get("n_targets"):
+            ps.append(r["p_value"])
+    if not ps:
+        return {"n_seeds": 0, "p_median": float("nan")}
+    ps = np.sort(np.asarray(ps, dtype=float))
+    return {
+        "n_seeds": len(ps),
+        "p_median": float(np.median(ps)),
+        "p_lo": float(ps[0]),
+        "p_hi": float(ps[-1]),
+        "frac_below_05": float((ps <= 0.05).mean()),
+    }
 
 
 def exceedance_test(counts, n_attack_candidates: int) -> dict:
