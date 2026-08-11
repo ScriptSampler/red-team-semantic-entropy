@@ -26,29 +26,29 @@ Sampling-Based Hallucination Detectors}
 
 \begin{abstract}
 % Option-B (protocol-led) draft, ~210 words. Numbers finalise after the n>=80 run.
-Sampling-based hallucination detectors such as semantic entropy are deployed on the
-claim that the uncertainty they report is invariant to how a question is phrased. We
-ask whether a meaning-preserving paraphrase can break that claim, and find that
-answering rigorously is harder than prior work assumed. We introduce a null-controlled
-evaluation protocol---score-independent target selection, an answer-invariance success
-criterion, and a benign-paraphrase noise floor---and show each control is necessary:
-without them a circular selection inflates the clean detector to perfect accuracy,
-sampling noise masquerades as attack success, and meaning-changing paraphrases are
-miscounted as wins. Under the protocol, a preliminary evaluation finds that an optimised
-paraphrase attack moves the detector as measured by the detector's own
-natural-language-inference (NLI) clusterer, in the under-explored false-alarm direction
-(inflating the reported uncertainty of a correct answer); the attack also formulates the
-mirror hide direction, which we do not yet evaluate under the null control. But that
-clusterer is shared with the attack's equivalence gate, so this measure cannot
-distinguish a real change in the model's answers from the clusterer's own inconsistency;
-and the cheap independent oracles one would use to break the tie are near-chance on
-exactly the adversarial case. We conclude that the standard single-clusterer evaluation
-cannot support such attack claims without an independent oracle, and we build and validate
-one---an LLM-judge that, unlike the embedders, clears the adversarial discrimination
-($0.93$ vs.\ $0.51$). Whether the attack's effect survives this independent clusterer is
-the question the protocol is built to answer: a small-sample pass validates the machinery
-end to end, and we draw the verdict from the confirmatory evaluation at the pre-registered
-scale, now under way, rather than from a sample size at which the interval is uninformative.
+Sampling-based hallucination detectors such as semantic entropy are deployed on the claim
+that the uncertainty they report is invariant to how a question is phrased. We set out to
+break that claim with meaning-preserving paraphrases and found, first, that the detector has
+very little room in which to be broken. Semantic entropy over $N$ sampled answers is bounded
+above by $\log N$; at the standard $N{=}10$ we find that a tenth of \emph{correct} answers
+already sit exactly at that ceiling before any attack, a quarter sit in the top decile of
+the scale, and the estimator takes only $22$ distinct values across $97$ questions. An
+optimised paraphrase attack drives a further $39\%$ of correct answers onto the ceiling, but
+so does ordinary rephrasing, and raising $N$ does not help because the baseline rises with
+the cap. Second, we show that measuring such an attack honestly is harder than prior work
+assumes. The attack reports a maximum over $\sim$$181$ candidates, and re-scoring each
+\emph{selected} paraphrase on an independent sample shows that only $45\%$ of its apparent
+effect survives ($-0.383$ nats, $95\%$ CI $[-0.529,-0.234]$): about half of what a naive
+report would claim is selection on sampling noise. We therefore give a protocol that makes
+the question answerable---score-independent target selection, an answer-invariance success
+criterion, and an exceedance test that prices the attacker's search budget into the null
+analytically, with tie handling that survives the ceiling---together with the independent
+equivalence oracle the attribution requires, an LLM-judge that clears the adversarial
+discrimination on which sentence embedders are near-chance ($0.93$ vs.\ $0.51$). We report
+the confirmatory evaluation at the pre-registered scale under this protocol. The broader
+point is that a detector whose score saturates under ordinary rephrasing, and whose
+correct-versus-hallucinating separation is a fraction of its own noise, is fragile for
+reasons that precede any adversary.
 \end{abstract}
 
 \section{Introduction}
