@@ -123,6 +123,22 @@
 
 % ---- Evaluation methodology (protocol + oracle strands) ---------------------
 
+@inproceedings{chouldechova2025comparison,
+  title     = {Comparison requires valid measurement: Rethinking attack success rate comparisons in {AI} red teaming},
+  author    = {Chouldechova, Alexandra and Cooper, A. Feder and Barocas, Solon and Palia, Abhinav and Vann, Dan and Wallach, Hanna},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2025},
+  annote    = {arXiv:2601.18076. Argues attack-success-rate comparisons in red teaming are often apples-to-oranges or low-validity, and gives conditions for valid comparison. PRECEDENT for our protocol contribution: we must NOT claim budget-corrected attack evaluation as unprecedented. Title/authors/venue verified on arXiv 2026-08-11. %TODO the scoop sweep additionally reported that it prescribes a repeated-sampling baseline at matched budget — NOT confirmable from the abstract; read the full text before attributing that specific prescription.}
+}
+
+@article{hughes2024bon,
+  title   = {Best-of-{N} Jailbreaking},
+  author  = {Hughes, John and Price, Sara and Lynch, Aengus and Schaeffer, Rylan and Barez, Fazl and Koyejo, Sanmi and Sleight, Henry and Jones, Erik and Perez, Ethan and Sharma, Mrinank},
+  journal = {arXiv preprint arXiv:2412.03556},
+  year    = {2024},
+  annote  = {Best-of-N jailbreaking: success improves reliably with more sampled augmentations, following a power law — i.e. attack success scales with the SEARCH BUDGET, which is the effect our exceedance null prices in. Title/authors verified on arXiv 2026-08-11; venue not stated there. %TODO the scoop sweep reported a section re-running selected winning attacks under fresh randomness with 15-30% retention (the direct antecedent of our winner's-curse measurement) — NOT visible in the abstract; verify in the full text before citing it for that claim.}
+}
+
 @inproceedings{zheng2023judging,
   title     = {Judging {LLM}-as-a-Judge with {MT-Bench} and Chatbot Arena},
   author    = {Zheng, Lianmin and Chiang, Wei-Lin and Sheng, Ying and Zhuang, Siyuan and Wu, Zhanghao and Zhuang, Yonghao and Lin, Zi and Li, Zhuohan and Li, Dacheng and Xing, Eric P. and Zhang, Hao and Gonzalez, Joseph E. and Stoica, Ion},

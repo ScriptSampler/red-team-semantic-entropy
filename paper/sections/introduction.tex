@@ -54,33 +54,41 @@ correct answer's---as the case study that exercises the protocol; only the false
 direction is evaluated under the null control in this work.
 
 \paragraph{Contributions.}
-(1) \textbf{A circularity-free, null-controlled evaluation protocol} for paraphrase
-attacks on sampling-based hallucination detectors: score-independent target selection,
-an answer-invariance success criterion, and a benign-paraphrase noise floor---the
-attack-max scored as a paired net against a \emph{budget-matched} benign-max, the best
-move a benign search of the attacker's own size achieves, rather than against unmatched
-individual benign draws---whose three controls we show are each load-bearing, and
-demonstrably so: without score-independent selection the clean detector looks perfect
-(clean AUROC $1.0$ by construction vs.\ $0.704$ [$0.653$, $0.753$] under fair selection);
-without the noise floor a budget-\emph{mismatched} comparison flips the same data from a
-$33\%$ to an $80\%$ apparent success rate; and without the answer-invariance check meaning-changing
-paraphrases are miscounted as wins. (2) \textbf{An independent-clusterer
-attribution analysis}: because the detector's NLI model both clusters answers and
-certifies paraphrase equivalence, the standard evaluation cannot attribute a measured
-attack to the model's answer distribution rather than to that shared model's
-self-inconsistency; we show cheap independent oracles (sentence embedders, near-chance
-on the adversarial case) do not resolve it---so any single-clusterer paraphrase-attack
-claim on these detectors would be inadequately supported---and we build and validate the
-victim- and NLI-independent LLM-judge oracle that does clear the adversarial case ($0.93$
-vs.\ the embedder's $0.51$), the instrument under which the attribution can finally be
-adjudicated; the confirmatory $n{\geq}80$ evaluation now under way supplies the verdict at
-the pre-registered scale. (3) \textbf{The attack
-itself}---bidirectional, NLI-constrained, foregrounding the under-explored
-induced-false-positive direction---as the case study that exercises the protocol,
-reported as a directional bracket (a preliminary effect under the detector's own
-clusterer, with its adjudication under the independent judge deferred to that
-confirmatory run). (4) A
-reformulation-averaging defense and an analysis of what it does and does not close. Our
+(1) \textbf{A measurement-validity result about semantic entropy itself}, independent of
+whether any attack succeeds. The score is bounded above by $\log N$; at the standard
+$N{=}10$, a tenth of \emph{correct} answers already sit exactly at that ceiling, a quarter
+sit in the top decile of the scale, and the estimator realises only $22$ distinct values
+across $97$ questions. Raising $N$ does not recover the range, because the baselines rise
+with the cap. A detector this compressed at the top of its scale is fragile in the
+false-alarm direction before an adversary appears, and effect sizes reported in its native
+units are censored on roughly half of attacked targets.
+(2) \textbf{A measured account of how much of a paraphrase-attack effect is an artefact of
+its own search.} Re-scoring each \emph{selected} paraphrase on an independent sample, we
+find only $45\%$ of the apparent effect survives ($-0.383$ nats, $95\%$ CI
+$[-0.529, -0.234]$). Half of what an uncorrected report would claim is selection on
+sampling noise. That attack success scales with the search budget is
+known~\citep{hughes2024bon}, as is the case that success-rate comparisons need explicit
+measurement validity~\citep{chouldechova2025comparison}; what we add is the measurement for
+a \emph{stochastic detector score}, where the randomness being resampled lives inside the
+estimator rather than in the victim's decoding.
+(3) \textbf{A protocol that makes the question answerable}: score-independent target
+selection (without it the clean detector looks perfect---AUROC $1.0$ by construction versus
+$0.704$ [$0.653$, $0.753$] under fair selection), an answer-invariance success criterion,
+and an exceedance test that prices the attacker's search budget into the null analytically,
+with tie handling that remains valid when the score saturates. Each control is individually
+precedented; we are not aware of them applied jointly to a sampling-based hallucination
+detector.
+(4) \textbf{The independent equivalence oracle the attribution requires.} Because the
+detector's NLI model both clusters answers and certifies paraphrase equivalence, a
+single-clusterer evaluation cannot separate a real change in the model's answers from that
+model's own inconsistency. Cheap oracles do not resolve it---sentence embedders are
+near-chance on exactly the adversarial case---so we build and validate an LLM-judge that
+clears it ($0.93$ vs.\ $0.51$), and report the confirmatory evaluation under it at the
+pre-registered scale.
+(5) \textbf{The attack itself}---bidirectional, NLI-constrained, foregrounding the
+under-explored induced-false-positive direction---as the case study that exercises the
+protocol, and a reformulation-averaging defense with an analysis of what it does and does
+not close. Our
 effect-size bracket on the fair, null-controlled pool is reported in
 Section~\ref{sec:experiments}; no effect size enters the body until the definitive
 $n{\geq}80$ run lands under the budget-matched null control, and the small-sample
