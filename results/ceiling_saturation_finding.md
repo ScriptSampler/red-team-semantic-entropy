@@ -85,7 +85,9 @@ Splitting the n=80 cell by headroom (ceiling − baseline entropy):
 *equally within a target*, because both face the same ceiling on the same question. A
 paired, per-target null control is therefore the right structure and is robust to the
 censoring — with one exception, which is exactly the defect found above: **ties at the
-ceiling**. That is now handled by the conservative tie policy rather than by luck.
+ceiling**. Those are now handled by randomized (exchangeable) tie-breaking, which reads the
+tie multiplicity `b` the instrumented optimiser records; the conservative policy first
+adopted here was itself wrong and is retained only as a diagnostic (critique_log 26).
 
 ## What to report
 

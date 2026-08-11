@@ -29,23 +29,45 @@ on the adversarial, word-preserving case (hard-negative AUROC $0.51$), so it can
 adjudicate. The LLM-judge (Qwen2.5-7B-Instruct), victim- and NLI-independent and
 validated to $0.93$ [$0.90$, $0.96$] ($n{=}300$) on domain-matched gold-alias hard
 negatives---a proxy for the deployed clustering decision---is the \textbf{adjudicator}
-(for the false-alarm direction, under the disclosed re-scoped gate; Methods). The
-\textbf{headline} is the per-target \emph{paired} comparison of attack-max to a
-\emph{budget-matched} benign-max (the max over a benign search of the attacker's own size),
-which is the only winner's-curse-honest statistic; the percentile-within-individual-draws
-and the net-vs-mean are shown as diagnostics but are budget-biased upward (a max over the
-attacker's $\sim$180 candidates beats individual benign draws by construction) and are not
-the claim statistic.
+(for the false-alarm direction, under the disclosed re-scoped gate; Methods).
+
+\paragraph{The claim statistic, and why the obvious ones fail.}
+The attack reports the \emph{maximum} over $\sim$181 candidate paraphrases, so any
+comparison against individual benign draws is upward-biased by construction: under the null
+a max-of-181 sits at $\sim$$99\%$ of an individual-draw distribution, not $50\%$. We
+therefore price the search budget into the null analytically. Under the hypothesis that the
+optimiser carries no signal, a target's $N$ attack candidates and its $m$ benign draws are
+exchangeable, so $F(\text{attack-max}) \sim \mathrm{Beta}(N,1)$ and the number of benign
+draws above the attack's maximum is $K \sim \mathrm{BetaBinomial}(m; 1, N)$, with
+$\mathbb{E}[K] = m/(N{+}1)$. Fewer exceedances than that is evidence for the attack; the
+one-sided $p$-value follows by exact convolution over targets, and the effect size is the
+\emph{effective benign budget} $n_{\mathrm{eff}} = m/\bar{K} - 1$, read as ``the search is
+worth $n_{\mathrm{eff}}$ random paraphrases''.
+
+Ties are not a technicality here. Semantic entropy is bounded above by $\log N$
+(Section~\ref{sec:experiments}, Setup), and benign paraphrases reach that ceiling too, so
+the score has an \emph{atom} where the exchangeability null assumes a continuum. We resolve
+ties by \textbf{randomised (exchangeable) breaking}: a benign draw tied with the attack's
+maximum outranks it with probability $1/(b{+}1)$, where $b$ is the number of attack
+candidates also achieving that maximum. Simulation at full saturation shows why the
+alternatives are inadmissible---counting ties strictly gives a null rejection rate of
+$0.995$, and counting them against the attack gives power $0.05$---while the randomised rule
+holds its nominal level with power $0.84$ at a two-fold effect. Both inadmissible rules are
+reported as diagnostics: their disagreement is a direct indicator that ceiling saturation,
+rather than attack strength, is driving a comparison. Note that $b$ must be \emph{measured}
+rather than estimated, since it is precisely where attack strength appears once the ceiling
+pins the maximum's value; our optimiser records it per target.
 
 \begin{table}[t]
 \centering
 \caption{Null-controlled attack effect, SE / false-alarm direction, per clustering
-relation. Bands are mean intended move (nats). The naive seed~$<$~benign~$<$~attack
-ordering is only a rough expectation --- in the pilot the benign floor is negative in the
-false-alarm direction and the seed~$<$~benign leg does not always hold --- so the
-budget-matched paired comparison (attack-max vs benign-max), not the band ordering or the
-budget-biased percentile, is the test. \emph{Placeholder cells pending the definitive run};
-confirmatory $n{\geq}80$.}
+relation. Bands are mean intended move (nats) and are descriptive only: in the pilot the
+benign floor is negative in the false-alarm direction and the seed~$<$~benign ordering does
+not always hold, so the band ordering is not the test. The test is the randomised-tie
+exceedance statistic; the saturation rate is reported beside it because it governs how much
+the nats bands can be trusted, and the two inadmissible tie rules are shown so that any
+disagreement between them is visible. \emph{Placeholder cells pending the definitive run};
+confirmatory $n{\geq}80$, $m{=}50$.}
 \label{tab:nullcontrol}
 \begin{tabular}{lcccc}
 \toprule
@@ -56,31 +78,38 @@ Seed-noise floor (nats)        & -- & -- & -- & -- \\
 Benign floor (nats)            & -- & -- & -- & -- \\
 Attack (nats)                  & -- & -- & -- & -- \\
 \midrule
-\textbf{Attack pctile in benign} & \textbf{--} & \textbf{--} & \textbf{--} & \textbf{--} \\
-Beats benign p90 (\%)          & -- & -- & -- & -- \\
-Net (attack $-$ mean benign)   & -- & -- & -- & -- \\
+\textbf{Exceedance test $p$ (randomised ties)} & \textbf{--} & \textbf{--} & \textbf{--} & \textbf{--} \\
+\textbf{Effective benign budget $n_{\mathrm{eff}}$} & \textbf{--} & \textbf{--} & \textbf{--} & \textbf{--} \\
+\midrule
+Saturation rate (\% at $\log N$) & -- & -- & -- & -- \\
+Diagnostic: strict-tie $p$     & -- & -- & -- & -- \\
+Diagnostic: conservative-tie $p$ & -- & -- & -- & -- \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \paragraph{Decision rule (single, pre-registered, with disclosed deviations).}
-Reframe~(a)---``the attack targets the detector''---is claimed iff, at $n{\geq}80$, the
-adjudicator clusterer's per-target \emph{paired} net (attack-max minus the
-\emph{budget-matched} benign-max, i.e.\ the max over $\sim$180 random feasible paraphrases,
-matching the attacker's search budget) has a paired-bootstrap $95\%$ CI strictly above
-zero, corroborated by the sign test (fraction of targets with attack-max $>$ benign-max)
-and read against the analytic IID null baseline ($\approx m/(m{+}1)$ for a max over $m$
-candidates). The adjudicator is the validated LLM-judge. If the CI includes zero, (a) is
-not claimed and the NLI/exact-match bracket plus the judge point estimate is reported as
-the honest bounded result. We retire the earlier percentile-within-individual-draws and
-survival-ratio statistics as headlines: both are winner's-curse-biased, since the attack
-move is a max over $\sim$180 candidates while the individual benign draws are not (a
-max-of-180 sits at $\sim$$99\%$ of an individual-draw distribution under $H_0$, not
-$50\%$). Two deviations from the original pre-registration are disclosed as
-outcome-triggered: the adjudicator moved from the sentence embedder to the LLM-judge
-(triggered by the embedder's $0.51$ hard-negative AUROC), and the benign floor moved from
-individual draws to the budget-matched max (triggered by the winner's-curse budget mismatch
-surfaced in adversarial review).
+Reframe~(a)---``the attack targets the detector''---is claimed iff, at $n{\geq}80$ with
+$m{=}50$ benign paraphrases per target, the adjudicator clusterer's randomised-tie
+exceedance test rejects at the $5\%$ level in the direction of the attack. That design was
+fixed in advance at a simulated power of $0.84$ against a two-fold effect and $0.99$ against
+a three-fold one, chosen over a cheaper $m{=}30$ (power $0.67$) because our own
+selection-on-noise measurement indicates the true effect is modest and the design must be
+able to see a small one. If the test does not reject, (a) is not claimed, and the
+NLI/exact-match bracket together with the judge's point estimate is reported as the honest
+bounded result.
+
+Four deviations from the original pre-registration are disclosed as outcome-triggered
+rather than folded silently into ``the pre-registered rule''. The adjudicator moved from the
+sentence embedder to the LLM-judge, triggered by the embedder's $0.51$ hard-negative AUROC.
+The benign floor moved from individual draws to a budget-corrected comparison, triggered by
+the winner's-curse mismatch surfaced in adversarial review. The budget correction then moved
+from brute-force matching to the analytic exceedance null, triggered by the matched design
+pricing out at roughly nine GPU-days. And the tie rule moved from conservative to randomised
+breaking, triggered by the simulation above showing the conservative rule has no power under
+the ceiling. Each trigger is objective, each was recorded before the corresponding data was
+seen, and the full sequence is given here rather than in an appendix precisely because a
+reader is entitled to check that the rule was not tuned to the result.
 
 \paragraph{Transfer and defense.}
 These results are pending: the SE$\leftrightarrow$SRE transfer table and the
