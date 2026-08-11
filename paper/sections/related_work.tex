@@ -75,9 +75,11 @@ A separate line studies semantic entropy as a \emph{statistic} rather than as a 
 \citet{mccabe2025alphabet} show that the discrete plug-in estimator underestimates the true
 semantic entropy at practical sample sizes, because the semantic alphabet is under-covered,
 and correct it upward. We characterise the same estimator's opposite tail---it cannot exceed
-$\log N$, and in deployment it piles up there---which is not a competing claim but a
-mechanism for theirs: a statistic capped at $\log N$ must understate whenever the quantity it
-estimates is larger. Separately, \citet{sun2026granularity} name the \emph{score granularity
+$\log N$, and in deployment it piles up there. The two are complementary rather than
+competing, and they coincide in the high-entropy regime: their coverage argument applies at
+any level, while a statistic capped at $\log N$ must understate whenever the quantity it
+estimates exceeds that cap, so where the cap binds it is itself one source of the
+understatement they correct for. Separately, \citet{sun2026granularity} name the \emph{score granularity
 gap} for black-box LLM classification: a confidence score may rank well and still take so
 few distinct values that an operator has only a handful of usable thresholds. Semantic
 entropy inherits exactly this pathology, with the twist that the granularity limit is set by
