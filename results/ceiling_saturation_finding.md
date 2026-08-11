@@ -17,11 +17,13 @@ on half our targets, and it changes how the null control must be computed.
 
 | quantity | value |
 |---|---|
-| attacked entropy **exactly at** the ln(10) ceiling | **39/80 = 49%** |
+| attacked entropy at the ln(10) ceiling (TOTAL) | 39/80 = 49% |
+| **ATTACK-INDUCED** saturation (excludes the 8 already pinned) | **31/80 = 38.75%** |
 | baseline entropy already at the ceiling (zero headroom) | 8/80 = 10% |
 | headroom (ceiling − baseline) | mean 0.826, median 0.749 nats |
 | attack move | mean 0.524, median 0.416 nats |
-| fraction of *available* headroom consumed | mean **66%**, median **83%** |
+| headroom consumed, UNCENSORED targets (n=41) | mean **39.9%**, median **38.6%** |
+| ~~headroom consumed, all targets~~ | ~~66%/83%~~ — computed on n=72, estimand unstated; withdrawn |
 | successes at the ceiling | 21 of 47 |
 
 The attack does not have a free scale to move on: it consumes most of the headroom that
@@ -42,13 +44,15 @@ the ceiling and benign paraphrases reach it too. Confirmed on the first null-obj
 ablation target (`dpql_1059`): the real attack, a null-objective beam, and plain random
 paraphrasing **all landed on exactly 2.3026**. Counting only strict exceedances
 (`benign > attack`) scores a benign draw that *matched* the attack as a non-exceedance —
-manufacturing evidence for the attack. Fixed: `exceedance_counts(..., ties="conservative")`
-(default) counts `benign >= attack`; both policies are reported, and disagreement between
-them is itself the diagnostic that ceiling saturation, not attack superiority, is driving
-the result. A unit test pins the failure mode (strict says p<0.05, conservative says p>0.99
-on the same saturated data).
+manufacturing evidence for the attack. SUPERSEDED FIX (critique_log 26): the conservative rule adopted here was itself wrong — it
+overcredits ties and has power 0.05 at full saturation. The claim statistic is now
+RANDOMIZED (exchangeable) tie-breaking, `exceedance_counts_randomized`, which is calibrated
+AND powerful (0.71 @2x). Strict and conservative are retained as diagnostics only, and
+their disagreement remains the signal that saturation is driving the comparison.
 
-**3. N=10 is arguably too small for the false-alarm direction.** The FA attack pushes
+**3. N=10 is arguably too small for the false-alarm direction** (but raising it does NOT
+rescue the analysis — see results/n20_verdict.md; and the statistic works at N=10 under the
+correct tie rule, so no re-run is needed). The FA attack pushes
 *upward*, straight into the ceiling; the hide attack pushes *downward*, away from it, so
 the two directions are not symmetric in measurement headroom. Raising N to 20 would lift
 the ceiling to ln(20)=3.00 nats at 2x sampling cost. We do not re-run at N=20 here, but the
@@ -87,10 +91,9 @@ ceiling**. That is now handled by the conservative tie policy rather than by luc
 
 - The **saturation rate** (49%) alongside every FA effect size, so readers can see the
   censoring rather than infer it.
-- Both tie policies for any exceedance-based null test, with the conservative one as the
-  claim statistic.
-- The headroom-consumed fraction (66% mean / 83% median) as a censoring-robust companion to
-  raw nats: it is scale-free and defined even at saturation.
+- All three tie policies, with the RANDOMIZED one as the claim statistic (critique_log 26).
+- The headroom-consumed fraction on UNCENSORED targets (39.9% mean / 38.6% median), with
+  the 0/0 exclusion rule stated explicitly (8 targets have zero headroom).
 - A limitation sentence on the N=10 ceiling and the FA/hide asymmetry it induces.
 
 Code: `se.stats.ceiling_saturation`, `se.stats.exceedance_counts(ties=...)`.
