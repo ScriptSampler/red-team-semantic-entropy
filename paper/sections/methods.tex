@@ -177,11 +177,11 @@ exact-match ($56$th)---in contrast to the exact-match collapse, which we thus at
 that oracle's saturation rather than to a clusterer artifact. At this sample size the
 interval is uninformative (the net confidence interval includes zero), so we do \emph{not}
 claim the effect real; the confirmatory $n{\geq}80$ run under the validated judge is the
-gate on that claim. We report the per-target paired net---attack-max minus \emph{budget-matched}
-benign-max---with a paired-bootstrap CI and a sign test as the headline; the
-percentile-in-benign indicator is shown as a diagnostic only, since it is
-budget-biased. Absent a cleared claim, attribution is an explicit
-bracket, not an assertion.
+gate on that claim. The statistic reported there is the randomised-tie exceedance test
+described in Section~\ref{sec:experiments}, which prices the attacker's search budget into
+the null analytically; the percentile-in-benign indicator and the survival ratio are shown
+as diagnostics only, both being upward-biased by that same budget. Absent a cleared claim,
+attribution is an explicit bracket, not an assertion.
 
 \paragraph{Transfer and defense.}
 To test whether the vulnerability is paradigm-level rather than implementation-

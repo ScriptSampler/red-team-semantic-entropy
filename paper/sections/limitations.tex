@@ -1,21 +1,32 @@
 % Limitations. Draft prose --- owns the construct-validity issues surfaced by our
 % own adversarial audit; verify numbers/scope at revision.
 
-\paragraph{Selection on a noisy estimator.}
+\paragraph{Selection on a noisy estimator---measured, not merely acknowledged.}
 Semantic entropy is a finite-sample quantity: for each candidate we cluster
 $N{=}10$ sampled answers, so the score is a Monte-Carlo estimate of the true
 entropy. Our optimiser selects the extremum of this estimate over $\sim$180
 candidate paraphrases, and the extremum of many noisy-but-unbiased estimates is
 biased in the attacker's favour even when, as here, sampling is seeded so each
 estimate is \emph{reproducible}. Reproducibility is not the same as noise-freeness.
-We therefore do not report raw attack effect sizes as the headline; we report attack
-success and AUROC degradation \emph{net of a noise floor} obtained by scoring $m$
-random, non-adversarial NLI-passing paraphrases of each target---with $m$ matched to
-the attacker's own search budget, so the comparison of maxima is like-for-like---and
-taking the best move they achieve by chance. An effect that does not exceed this floor is not
-claimed. This control distinguishes genuine manipulation from selection-on-noise; we are
-not aware of it in prior paraphrase-attack evaluations of these detectors (a claim
-we will verify against the literature at revision).
+
+We quantify the resulting inflation directly, by re-scoring each \emph{selected}
+paraphrase on an independent sample---same $N$, a different sampling seed---which is the
+classical diagnostic for selection on noise and requires neither an oracle nor a benign
+floor. Across the $60$ false-alarm targets on which the optimiser found a paraphrase, the
+mean intended move falls from $+0.698$ nats at selection to $+0.315$ nats on fresh samples:
+a retention of $45\%$, with a shrinkage of $-0.383$ nats and a bootstrap interval of
+$[-0.529, -0.234]$ that excludes zero. Roughly \emph{half} of the effect a naive report
+would have claimed is selection on sampling noise rather than a property of the paraphrase.
+Signal remains---$36$ of $60$ targets keep a positive move and the two measurements
+correlate at $r{=}0.46$---but the magnitude of any uncorrected number is inflated by about
+a factor of two.
+
+We therefore do not report raw effect sizes as the headline. The claim statistic prices the
+attacker's search budget into the null (Section~\ref{sec:experiments}), so an effect that
+does not exceed what a benign search of comparable size achieves by chance is not claimed.
+We note that this re-scoring diagnostic bounds only the \emph{selection} component: it says
+nothing about whether random rephrasing achieves the same move, which is the separate
+question the null control answers.
 
 \paragraph{The clusterer and the equivalence gate share one NLI model.}
 Semantic entropy is \emph{defined} by DeBERTa-large-MNLI bidirectional clustering,
