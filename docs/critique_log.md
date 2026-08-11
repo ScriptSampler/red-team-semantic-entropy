@@ -1025,3 +1025,48 @@ strict is disqualified (H0 level 0.995) and conservative is disqualified (power 
 are reported as diagnostics, and any disagreement between the three is disclosed.
 
 ---
+
+## 27. 2026-08-11 — full-text scoop check on finding (C): NARROWED, and the sharpest catch yet
+
+A 5-agent full-text sweep (13 unique papers, appendices and supplementary included) tested
+whether finding (C) — "SE is bounded by log N and saturates in practice" — is already in the
+literature. Verdict: **not scooped, but not novel as I had written it.**
+
+**THE CATCH: I was about to claim an elementary identity as a finding.** Contribution (1)
+read "The score is bounded above by log N". For a plug-in entropy over at most N observed
+clusters, H(p-hat) <= log K <= log N is textbook information theory. No paper "states" it
+because nobody would bother; absence from 13 papers is not evidence of novelty when the
+proposition is an identity. A reviewer would object on sight. Fixed: we now explicitly
+disclaim novelty for the bound and claim only the MEASUREMENT of how tightly it binds.
+
+**Precedent found that must be cited (verified myself on arXiv today):**
+- **sun2026granularity** (Sun, Sun, Geng, arXiv:2606.22179) — the "score granularity gap":
+  verbalized confidence "ranks cases surprisingly well, yet takes only a handful of distinct
+  values", so it "offers an operator only a few coarse thresholds, no matter how well it
+  ranks". Our "22 distinct values across 97 questions" is an instance of exactly this
+  argument, already named in print. We instantiate it for a sampling-based GENERATIVE
+  detector where the granularity limit comes from the sample budget. (The sweep also claimed
+  they explicitly exclude generative settings — NOT in the abstract; flagged %TODO, not
+  asserted.)
+- **mccabe2025alphabet** (arXiv:2509.14478) — verified: the DSE estimator "underestimates
+  the 'true' semantic entropy, as expected from theory". OPPOSITE polarity to ours. These
+  must be RECONCILED in the paper or a reader takes them as contradictory. The reconciliation
+  is favourable and worth stating: an estimator that cannot exceed log N *must* understate
+  whenever the true semantic entropy is larger — so our censoring finding is a MECHANISM for
+  their underestimation, not a rival claim.
+- **kuhn2023semantic / farquhar2024detecting** — both already report that clusters are few
+  and grow little with N, framed as a computational saving (Nature SI: "increasing the number
+  of generations does not greatly increase the number of clusters"). This pre-empts the
+  PHRASING of our "raising N does not help" sub-claim; we must present it as re-reading a
+  known observation as a measurement property, not as discovering the observation.
+- Helps us: the SEP paper thresholds SE to train probes and never remarks on ties or a
+  lattice — an "available and unstated" datapoint.
+
+**Standing lesson, and it is not the same as the earlier ones.** The previous errors were
+statistical intuitions that needed simulating. This one is different: a true statement,
+correctly derived, that is simply *not a contribution*. Verifying that nobody has SAID a
+thing is not the same as establishing that saying it is worth anything. For any future
+claim of the form "we show X", ask first whether X is a measurement or a derivation — and if
+a derivation, whether it is one an informed reader already holds.
+
+---

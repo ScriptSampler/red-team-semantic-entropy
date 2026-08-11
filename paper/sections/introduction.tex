@@ -55,13 +55,24 @@ direction is evaluated under the null control in this work.
 
 \paragraph{Contributions.}
 (1) \textbf{A measurement-validity result about semantic entropy itself}, independent of
-whether any attack succeeds. The score is bounded above by $\log N$; at the standard
-$N{=}10$, a tenth of \emph{correct} answers already sit exactly at that ceiling, a quarter
-sit in the top decile of the scale, and the estimator realises only $22$ distinct values
-across $97$ questions. Raising $N$ does not recover the range, because the baselines rise
-with the cap. A detector this compressed at the top of its scale is fragile in the
-false-alarm direction before an adversary appears, and effect sizes reported in its native
-units are censored on roughly half of attacked targets.
+whether any attack succeeds. That a plug-in entropy over at most $N$ observed clusters
+cannot exceed $\log N$ is elementary, and we claim no novelty for it; our contribution is
+the measurement of \emph{how tightly that bound binds in deployment}. At the standard
+$N{=}10$ the estimator realises only $22$ distinct values across $97$ questions, a tenth of
+\emph{correct} answers sit exactly at $\ln 10$ before any intervention, and a quarter sit in
+the top decile of the scale. The general argument---that a score's distinct-value count caps
+what an operator can do with it, however well it ranks---has been made and named for
+black-box LLM classification~\citep{sun2026granularity}; we instantiate it for a
+sampling-based generative detector, where the granularity limit is imposed by the sample
+budget itself. The originating work sees the same crowding from the other side, reporting
+that clusters are few and grow little with $N$, and reads it as a computational
+saving~\citep{kuhn2023semantic, farquhar2024detecting}. Read instead as a measurement
+property, it means false-alarm effects are \emph{right-censored} on roughly half of attacked
+targets, so native-unit effect sizes understate them and any null must stay valid under ties
+at the cap. This also sits consistently with---indeed helps explain---reports that the
+plug-in estimator \emph{underestimates} true semantic entropy at practical
+$N$~\citep{mccabe2025alphabet}: an estimator that cannot exceed $\log N$ must understate
+whenever the underlying semantic entropy is larger.
 (2) \textbf{A measured account of how much of a paraphrase-attack effect is an artefact of
 its own search.} Re-scoring each \emph{selected} paraphrase on an independent sample, we
 find only $45\%$ of the apparent effect survives ($-0.383$ nats, $95\%$ CI

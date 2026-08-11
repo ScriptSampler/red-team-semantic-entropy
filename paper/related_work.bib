@@ -123,6 +123,22 @@
 
 % ---- Evaluation methodology (protocol + oracle strands) ---------------------
 
+@article{mccabe2025alphabet,
+  title   = {Estimating Semantic Alphabet Size for {LLM} Uncertainty Quantification},
+  author  = {McCabe, Lucas H. and Melamed, Rimon and Hartvigsen, Thomas and Huang, H. Howie},
+  journal = {arXiv preprint arXiv:2509.14478},
+  year    = {2025},
+  annote  = {The closest prior art on finite-N semantic-entropy estimation, at the OPPOSITE polarity to us: they show the discrete SE estimator "underestimates the 'true' semantic entropy, as expected from theory" because the semantic alphabet is under-covered at practical n, and correct it upward for coverage. We describe the upper-tail behaviour of the SAME estimator — it cannot exceed log N and piles up at the cap. The two are CONSISTENT and in fact ours helps explain theirs: an estimator bounded by log N must understate whenever the true semantic entropy exceeds that bound. Reconcile explicitly in the paper, or a reader will take the two as contradictory. Title/authors verified on arXiv 2026-08-11; no venue stated.}
+}
+
+@article{sun2026granularity,
+  title   = {The Score Granularity Gap in Black-Box {LLM} Classification: A Comparative Study of Confidence Constructions},
+  author  = {Sun, Ao and Sun, Tian and Geng, Jiaxing},
+  journal = {arXiv preprint arXiv:2606.22179},
+  year    = {2026},
+  annote  = {THE precedent for our distinct-value argument. Shows verbalized confidence "ranks cases surprisingly well, yet takes only a handful of distinct values", so it "offers an operator only a few coarse thresholds, no matter how well it ranks" — i.e. granularity upper-bounds operational controllability independently of ranking quality. Our "22 distinct values across 97 questions" is an instance of exactly this, so we must CITE rather than claim it. Distinguish on setting: theirs is black-box LLM CLASSIFICATION with verbalized confidence over 25 model-dataset pairs; ours is a sampling-based generative detector whose score is an entropy over answer clusters, where the granularity limit is imposed by the sample budget N. Title/authors verified on arXiv 2026-08-11. %TODO the scoop sweep reported they explicitly exclude generative settings — NOT visible in the abstract; verify before asserting that they leave our cell open.}
+}
+
 @inproceedings{chouldechova2025comparison,
   title     = {Comparison requires valid measurement: Rethinking attack success rate comparisons in {AI} red teaming},
   author    = {Chouldechova, Alexandra and Cooper, A. Feder and Barocas, Solon and Palia, Abhinav and Vann, Dan and Wallach, Hanna},
