@@ -2,21 +2,28 @@
 % evidence. Fill the final effect size at revision.
 
 Sampling-based hallucination detectors treat semantic uncertainty as a property of the
-question, invariant to surface form. We tested that assumption adversarially, on the
-detector itself. Our evidence indicates that, \emph{as measured by the detector's own
-(confounded) NLI clusterer}, it can be made to move under a meaning-preserving
-paraphrase---certified equivalent by an automatic bidirectional-NLI gate (not yet by a
-human audit), leaving the model's correctness unchanged---which, reported net of a
-benign-paraphrase noise floor, inflates the reported uncertainty of a \emph{correct}
-answer into an apparent false alarm, the under-explored direction we foreground. Whether
-that move survives an \emph{independent} clusterer is the question we defer to the
-confirmatory run. The mirror \emph{hide} direction, which suppresses a wrong answer's
-score, the attack is built to exercise but we do not yet report under the same null
-control. We confine our claims to where the evidence supports them: targets are chosen
-without reference to the detector's own scores,
-success requires the hallucination status to survive the paraphrase, and effect sizes
-are reported net of a benign-paraphrase noise floor rather than as the raw output of an
-optimiser that maximises a noisy estimate.
+question, invariant to surface form. We set out to test that assumption adversarially and
+found that the more informative obstacle lay upstream of the adversary: at the sample
+budgets these detectors are actually run at, the score has very little room in which to be
+attacked. A tenth of correct answers are already at the estimator's maximum, a quarter are
+in its top decile, and the whole separation between correct and hallucinating answers is a
+fraction of the estimator's own dispersion. Pushing a correct answer across a flagging
+threshold, in the under-explored false-alarm direction we foreground, is therefore cheap---
+and frequently achieved by ordinary rephrasing, not only by an optimiser.
+
+Establishing even that much honestly turned out to require more care than the question
+first appears to need. Because the attack reports a maximum over a large candidate search,
+about half of its apparent effect is selection on estimator noise, which we measure directly
+by re-scoring the selected paraphrase on independent samples. Because the score saturates,
+effect sizes in its native units are censored on roughly half of attacked targets, and a
+null must remain valid when attack and benign candidates tie at the cap. And because the
+detector's clusterer is the same model that certifies our paraphrases as
+meaning-preserving, no single-clusterer measurement can separate a real change in the
+model's answers from that model's own inconsistency. We report the confirmatory evaluation
+under a protocol built to survive all three, and confine claims to what it supports: targets
+chosen without reference to the detector's own scores, success requiring the hallucination
+status to survive the paraphrase, and a null that prices the attacker's search budget in
+rather than comparing a maximum against single draws.
 
 Two boundaries remain, and we state them as the work to do rather than as caveats to
 wave away. First, our clusterer and our equivalence gate are the same NLI model, so
