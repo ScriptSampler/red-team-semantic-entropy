@@ -231,9 +231,69 @@ def benign_equivalent_budget(attack_move: float, benign_values, *, max_budget: i
     return None
 
 
+def flip_test_conditional(attack_crossed, attack_n, benign_crossed, benign_n) -> dict:
+    """EXACT stratified conditional test on operating-point crossings — censoring-immune
+    and estimation-free. This is the correct replacement for `flip_test` below, whose null
+    was biased by plugging an estimated crossing rate into a nonlinear transform.
+
+    Per target we have a 2x2 table: {attack candidates, benign draws} x {crossed, did not}.
+    Under H0 the attack's candidates and the benign draws are exchangeable, so CONDITIONAL
+    ON THE MARGINS the number of attack crossings is hypergeometric:
+        a_j ~ Hypergeometric(population = N_j + m_j, successes = a_j + k_j, draws = N_j).
+    No rate is estimated, so there is no Jensen bias and no dependence on a posterior. The
+    null for the total sum_j a_j is the exact convolution of the per-target hypergeometrics
+    (each has finite support), giving a one-sided p-value with no simulation.
+
+    This is the crossing analogue of a stratified Fisher / Cochran--Mantel--Haenszel test.
+    Because a crossing is binary, the log(N) ceiling cannot censor it: past the operating
+    point is past it, however far past.
+
+    Requires the per-target count of ATTACK candidates that crossed, which needs the
+    instrumented optimiser (`feasible_objs`); it is not recoverable from a run that stored
+    only the selected paraphrase. Evidence for the attack is MORE attack crossings than the
+    exchangeable null predicts, so the p-value is P(S >= observed)."""
+    from scipy.stats import hypergeom
+    rows = [(int(a), int(na), int(k), int(m))
+            for a, na, k, m in zip(attack_crossed, attack_n, benign_crossed, benign_n)
+            if int(na) > 0 and int(m) > 0]
+    if not rows:
+        return {"n_targets": 0, "observed": 0, "expected": float("nan"),
+                "p_value": float("nan")}
+
+    obs = sum(a for a, _, _, _ in rows)
+    exp = 0.0
+    dist = np.array([1.0])
+    for a, na, k, m in rows:
+        pop, succ = na + m, a + k
+        lo, hi = max(0, succ - m), min(succ, na)
+        support = np.arange(lo, hi + 1)
+        pmf = hypergeom.pmf(support, pop, succ, na)
+        pmf = np.asarray(pmf, dtype=float)
+        s = pmf.sum()
+        if s <= 0:
+            continue
+        pmf = pmf / s
+        exp += float((support * pmf).sum())
+        # convolve, tracking the offset so indices stay aligned with the running total
+        full = np.zeros(hi + 1)
+        full[lo:hi + 1] = pmf
+        dist = np.convolve(dist, full)
+    p_ge = float(dist[obs:].sum()) if obs < len(dist) else 0.0
+    return {
+        "n_targets": len(rows),
+        "observed": obs,
+        "expected": exp,
+        "p_value": min(1.0, max(0.0, p_ge)),
+        "attack_crossing_rate": obs / max(1, sum(na for _, na, _, _ in rows)),
+        "benign_crossing_rate": sum(k for _, _, k, _ in rows) / max(1, sum(m for _, _, _, m in rows)),
+    }
+
+
 def flip_test(attack_crossed, benign_crossed, benign_n, n_attack_candidates: int,
               *, n_sim: int = 20000, seed: int = 0) -> dict:
-    """⚠ NOT CALIBRATED — DO NOT USE AS A CLAIM STATISTIC (measured 2026-08-04).
+    """⚠ NOT CALIBRATED — SUPERSEDED. Use `flip_test_conditional` above, which is exact,
+    estimation-free, and measured at or below its nominal level on the same simulation this
+    function fails. This one is retained only so its documented failure stays visible.
 
     Simulated H0 rejection rate at nominal 0.05: **0.81 (m=30), 0.78 (m=60), 0.48 (m=120),
     0.35 (m=181)** — anti-conservative at every benign budget, so raising m does not fix it.
