@@ -87,8 +87,8 @@ measurement validity~\citep{chouldechova2025comparison}; what we add is the meas
 a \emph{stochastic detector score}, where the randomness being resampled lives inside the
 estimator rather than in the victim's decoding.
 (3) \textbf{A protocol that makes the question answerable}: score-independent target
-selection (without it the clean detector looks perfect---AUROC $1.0$ by construction versus
-$0.704$ [$0.653$, $0.753$] under fair selection), an answer-invariance success criterion,
+selection (without it the clean detector looks perfect---AUROC $1.0$ by construction, versus
+$0.704$ [$0.653$, $0.753$] on the fair pool), an answer-invariance success criterion,
 and an exceedance test that prices the attacker's search budget into the null analytically,
 with tie handling that remains valid when the score saturates. Each control is individually
 precedented; we are not aware of them applied jointly to a sampling-based hallucination
@@ -118,8 +118,9 @@ relation at all. Second, the score is a finite-sample estimate, so a maximum ove
 inflates: we measure $45\%$ retention on re-scoring. This does not arise against the
 deterministic classifiers targeted in the work above, though it would against any stochastic
 scorer. Third, the estimator is not merely bounded---classifier confidence is bounded
-too---but \emph{discrete}, and non-relaxably so: it realises only $22$ attainable values, and
-raising $N$ does not buy range, because the baseline rises with the cap. Effect sizes are
+too---but \emph{discrete}, and non-relaxably so: across the $97$ attacked targets it realises
+only $22$ attainable values, and raising $N$ does not buy range, because the baseline rises
+with the cap. Effect sizes are
 therefore right-censored and any null must stay valid under ties at the cap. The discreteness
 half of this is the score-granularity gap named by~\citet{sun2026granularity}; the
 non-relaxability is ours. What we claim is what this victim class forces on the measurement,
