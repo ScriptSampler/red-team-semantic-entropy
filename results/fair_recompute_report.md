@@ -1,5 +1,24 @@
 # Fair-pool recompute — B1 shared pool + B2 answer-invariance metric
 
+> # ⚠ DO NOT CITE THE AUROC ROW — AND THIS FILE IS STALE
+> Flagged by an independent audit, 2026-08-12.
+>
+> **1. The AUROC row is computed on an invalid population.** It pools the 80 false-alarm
+> targets with a *truncated* hide arm, so its "clean AUROC 0.579" and "degradation 0.434
+> [0.303, 0.568]" describe the ATTACKED SUBSET, not the detector. The authoritative
+> characterisation is `results/fair_pool_report.md`: fair-pool clean **AUROC 0.704**,
+> class separation **0.463 nats**. The 0.579 figure is precisely the number withdrawn from
+> the paper in commit c92fe2a as wrong-population; it was quarantined in
+> `fa_n80_milestone.md` but that quarantine lived in a *different file*, so this report kept
+> serving it unflagged. Hence this banner, here, in the file itself.
+>
+> **2. Every hide-arm number below is stale.** Regenerated 2026-08-03 against a 17-row hide
+> cell; that cell has held 55 rows since 2026-08-07. Do not read the hide column.
+>
+> **3. This whole report is superseded in purpose.** The definitive campaign runs under tag
+> `_defb` (fully instrumented optimiser). Regenerate from `_defb` when it completes, with
+> both cells at n=80, and delete this banner then.
+
 Detector-independent pool via `campaign_pool` (seed=0, n=80/stratum), success = entropy moved AND feasible AND hallucination status held under Q'. All rates carry bootstrap 95% CIs. This supersedes the pre-B1/B2 wk9 matrix.
 
 > **PRELIMINARY / EXPLORATORY (critic, critique_log entry 10).** Seeded SE is reproducible but each candidate's entropy is a finite N=10 estimate, so the beam max carries an attenuated winner's-curse bias. These numbers are NOT the confirmatory headline until reported NET OF the noise floor (scripts/null_control.py, finding 13). Treat effect sizes as upper-ish bounds.

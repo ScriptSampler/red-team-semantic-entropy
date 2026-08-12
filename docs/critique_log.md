@@ -1131,3 +1131,45 @@ were fine. Simulate the null; name the population; do both before the number ent
 sentence.
 
 ---
+
+## 29. 2026-08-12 — independent audit: work confirmed real, three gaps found
+
+An independent auditor agent was asked to verify from the filesystem and git, explicitly
+told not to trust any claimed number. Result: **the work is real, not churn** — of the last
+ten commits four carry substantive code (~350 lines of new statistics plus three test
+files), the rest are prose rewrites forced by code findings. It re-ran the suite itself
+(146 passed) and sampled recent tests, judging them non-vacuous.
+
+**It reproduced the headline numbers independently**, which is the point of having it:
+winner's curse n=60, selection +0.6982, fresh +0.3152, retention 45.2% — all matching. It
+also re-derived the 99.6% tie bug from scratch on a *different* seed (0.998 vs my 0.996 at
+q=0.05), confirming both the bug and that its severity was not overstated.
+
+**Three gaps it found that I had missed:**
+
+1. **The retention figure had no confidence interval, and it is wide.** Computed: retention
+   45.2% with bootstrap 95% CI **[25.1%, 64.7%]**. This matters for how the finding may be
+   stated. The two claims must be separated: *that* there is inflation is DEMONSTRATED (the
+   shrinkage CI −0.383 [−0.529, −0.234] excludes zero); *how much* is NOT tightly determined
+   (a quarter to two-thirds survives). "Roughly half" is a fair description of the centre but
+   was being quoted bare. Fixed in the results file, Limitations, and the Abstract.
+2. **`results/fair_recompute_report.md` was serving the wrong-population AUROC unflagged.**
+   Its row reports clean AUROC 0.579 and degradation 0.434 pooling 80 FA targets with a
+   truncated hide arm — precisely the number withdrawn from the paper in c92fe2a. It *was*
+   quarantined, but in `fa_n80_milestone.md`, a DIFFERENT FILE. A quarantine that lives
+   somewhere other than the artifact it quarantines does not work. Bannered in the file
+   itself.
+3. **That report is three days stale** — regenerated 2026-08-03 against a 17-row hide cell
+   that has held 55 rows since 2026-08-07, so its hide column misdescribes its own data.
+
+**Lesson, and it generalises the entry-28 one.** Fixing a wrong number where it is
+discovered is not enough: the same figure had propagated to a second paper section (fixed in
+4d2aa77) and was still being served by a third artifact with its warning filed elsewhere.
+**A correction must be applied at every site the number appears, and a quarantine must live
+in the file it quarantines.** Grep for the numeral, not for the sentence.
+
+Note on the auditor's observation that the campaign was "not climbing": correct at the
+moment of checking but not a fault — the 14-hour gap was the user's own machine time between
+sessions. The campaign resumed from checkpoint and is running.
+
+---

@@ -13,13 +13,15 @@ We quantify the resulting inflation directly, by re-scoring each \emph{selected}
 paraphrase on an independent sample---same $N$, a different sampling seed---which is the
 classical diagnostic for selection on noise and requires neither an oracle nor a benign
 floor. Across the $60$ false-alarm targets on which the optimiser found a paraphrase, the
-mean intended move falls from $+0.698$ nats at selection to $+0.315$ nats on fresh samples:
-a retention of $45\%$, with a shrinkage of $-0.383$ nats and a bootstrap interval of
-$[-0.529, -0.234]$ that excludes zero. Roughly \emph{half} of the effect a naive report
-would have claimed is selection on sampling noise rather than a property of the paraphrase.
-Signal remains---$36$ of $60$ targets keep a positive move and the two measurements
-correlate at $r{=}0.46$---but the magnitude of any uncorrected number is inflated by about
-a factor of two.
+mean intended move falls from $+0.698$ nats at selection to $+0.315$ nats on fresh samples.
+Two statements follow, with very different strengths, and we separate them. \emph{That} the
+selection-time figure is inflated is demonstrated: the shrinkage is $-0.383$ nats with a
+bootstrap interval of $[-0.529, -0.234]$ that excludes zero. \emph{How much} it is inflated
+is not tightly determined: retention is a ratio of means, and its interval is wide at
+$45\%$ $[25\%, 65\%]$. So roughly half of the effect a naive report would claim is
+selection on sampling noise rather than a property of the paraphrase, but the honest range
+runs from a quarter to two-thirds surviving. Signal remains either way---$36$ of $60$
+targets keep a positive move and the two measurements correlate at $r{=}0.46$.
 
 We therefore do not report raw effect sizes as the headline. The claim statistic prices the
 attacker's search budget into the null (Section~\ref{sec:experiments}), so an effect that

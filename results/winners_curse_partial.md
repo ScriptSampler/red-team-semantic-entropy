@@ -8,15 +8,25 @@ are superseded by the numbers below.
 |---|---|
 | mean move at **selection** (the reported figure) | **+0.698 nats** (median +0.586) |
 | mean move on a **fresh seed** | **+0.315 nats** (median +0.165) |
-| **retention** | **45%** |
-| **shrinkage** | **−0.383 [−0.529, −0.234] nats** |
+| **retention** | **45.2%**, bootstrap 95% CI **[25.1%, 64.7%]** |
+| **shrinkage** | **−0.383 nats**, 95% CI **[−0.529, −0.234]** |
 | targets keeping a positive move | 36/60 |
 | corr(selection, fresh) | +0.456 |
 
-**The shrinkage CI excludes zero**, so the inflation is demonstrated rather than suggested:
-the reported false-alarm effect is provably about twice what survives re-measurement on
-independent samples. Real signal remains — 36 of 60 targets keep a positive move and the two
-measurements correlate at +0.46 — but the magnitude of the raw number is inflated ~2.2x.
+**Separate the two statements, because they have very different strengths.**
+
+*That* there is inflation is **demonstrated**: the shrinkage CI excludes zero, so the
+selection-time figure is provably larger than what survives re-measurement on independent
+samples.
+
+*How much* is inflated is **uncertain**. Retention is a ratio of two means and its interval
+is wide: anywhere from a quarter to about two-thirds of the effect survives. The point
+estimate is 45%, so "roughly half is selection on noise" is a fair summary of the centre,
+but it must be quoted with the interval and must not be reported as if it were tight. An
+earlier version of this file gave 45% bare; that omission was caught by an independent audit.
+
+Real signal remains regardless — 36 of 60 targets keep a positive move and the two
+measurements correlate at +0.46.
 
 ## Design
 

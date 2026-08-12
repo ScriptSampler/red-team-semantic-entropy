@@ -37,9 +37,11 @@ optimised paraphrase attack drives a further $39\%$ of correct answers onto the 
 so does ordinary rephrasing, and raising $N$ does not help because the baseline rises with
 the cap. Second, we show that measuring such an attack honestly is harder than prior work
 assumes. The attack reports a maximum over $\sim$$181$ candidates, and re-scoring each
-\emph{selected} paraphrase on an independent sample shows that only $45\%$ of its apparent
-effect survives ($-0.383$ nats, $95\%$ CI $[-0.529,-0.234]$): about half of what a naive
-report would claim is selection on sampling noise. We therefore give a protocol that makes
+\emph{selected} paraphrase on an independent sample shows the effect shrinks
+significantly---by $-0.383$ nats, $95\%$ CI $[-0.529,-0.234]$---with a point retention of
+$45\%$ and a wide interval of $[25\%, 65\%]$: that inflation is present is established,
+though its exact size is not, and roughly half of what a naive report would claim is
+selection on sampling noise. We therefore give a protocol that makes
 the question answerable---score-independent target selection, an answer-invariance success
 criterion, and an exceedance test that prices the attacker's search budget into the null
 analytically, with tie handling that survives the ceiling---together with the independent
