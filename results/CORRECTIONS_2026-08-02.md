@@ -70,7 +70,7 @@ under the broken rule (0.46 / 0.77)** — **at zero GPU cost**.
 - **C2:** "66% mean / 83% median of headroom consumed" was computed on **n=72**, silently
   dropping the 8 zero-headroom targets, and the estimand was never stated. On the 41
   **uncensored** targets it is **mean 39.9%, median 38.6%**.
-- **Confirmed and strengthened:** corr(headroom, move) = +0.70 holds *within the uncensored
+- **Confirmed and strengthened:** corr(headroom, move) = +0.71 (_defb; _def gave +0.70) holds *within the uncensored
   subset* (+0.67), so it is not a censoring artifact. The strongest number in that document.
 
 ## What survives unchanged

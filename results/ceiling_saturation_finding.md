@@ -23,7 +23,7 @@
 > TOTAL at-ceiling rate; ATTACK-INDUCED saturation is 31/80 = 38.75% (8 targets were
 > already pinned). The "66%/83% of headroom consumed" was computed on n=72, not 80, with
 > the estimand unstated; on the 41 UNCENSORED targets it is 39.9% mean / 38.6% median.
-> The ceiling itself, and corr(headroom, move)=+0.70 (+0.67 within the uncensored subset),
+> The ceiling itself, and corr(headroom, move)=+0.71 (+0.68 within the uncensored subset, n=38) [_defb; the _def cell gave +0.70/+0.67 at n=41],
 > are confirmed.
 
 
@@ -41,7 +41,7 @@ on half our targets, and it changes how the null control must be computed.
 | baseline entropy already at the ceiling (zero headroom) | 8/80 = 10% |
 | headroom (ceiling − baseline) | mean 0.826, median 0.749 nats |
 | attack move | mean 0.524, median 0.416 nats |
-| headroom consumed, UNCENSORED targets (n=41) | mean **39.9%**, median **38.6%** |
+| headroom consumed, UNCENSORED targets (n=41, _def; n=38 under _defb) | mean **39.9%**, median **38.6%** |
 | ~~headroom consumed, all targets~~ | ~~66%/83%~~ — computed on n=72, estimand unstated; withdrawn |
 | successes at the ceiling | 21 of 47 |
 
