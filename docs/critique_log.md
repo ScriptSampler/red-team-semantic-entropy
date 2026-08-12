@@ -1286,3 +1286,47 @@ now ("domain-matched gold-alias proxy; validation on messy real sampled answers 
 owed"); closing them is task #24.
 
 ---
+
+## 32. 2026-08-12 (late) — the censoring-immune statistic is DEAD CODE, and a near-miss hazard
+
+**`flip_test_conditional` has never been run on data.** It is implemented, unit-tested, and
+measured at or below its nominal level — and it is wired into nothing. `grep` across
+`scripts/` and `src/` finds only its definition and its tests. The statistic exists precisely
+because the entropy-magnitude comparison is censored by the log N ceiling, and the definitive
+`_defb` FA cell now puts **42/80 = 52.5%** of targets at the cap. So the one statistic built
+to survive that censoring is the one we are not computing.
+
+**Why it is not wired in tonight, deliberately.** Two reasons, both worth recording.
+
+1. **HAZARD, caught before doing damage.** The running chain is
+   `recompute_fair.py && null_control.py`. Python reads `null_control.py` at *invocation*
+   time, not when the chain was launched — so editing it now would have taken effect on the
+   ~67 GPU-hour null control when the matrix hands over. A bug introduced tonight would
+   surface three days from now, as a crash or as silent garbage, with no obvious link to the
+   edit. Anything touching that script waits until the chain is idle, or goes in a separate
+   post-hoc script reading `--dump_diag`.
+
+2. **The operating point is a pre-registration decision, not an implementation detail.** A
+   crossing test needs a threshold tau defining what counts as "the detector fires". Choosing
+   tau *after* seeing 52.5% censoring is outcome-triggered, and adding a second claim
+   statistic post hoc is exactly how a paper acquires a result it did not earn. The primary
+   statistic stays the randomised-tie exceedance test (critique_log 26a). If the crossing
+   test is added it must be (a) pre-registered with tau fixed BEFORE the null-control data
+   exists — which is still possible, since that run has not started — and (b) reported as a
+   DISCLOSED outcome-triggered secondary diagnostic, with the trigger named as the measured
+   saturation rate.
+
+**Proposed tau, pre-committed here before the data exists:** the fair-pool clean-score
+threshold at 10% FPR on correct answers, i.e. the operating point at which a deployed
+detector would flag one correct answer in ten. A "crossing" is then a paraphrase pushing a
+correct answer's score above that threshold — which is what a false alarm *is*, operationally.
+Fixing it on the FAIR pool keeps the threshold independent of the attacked targets.
+
+**Instrumentation verified present on disk** (this was worth checking, since the whole point
+of the `_defb` re-run was to capture it): `feasible_objs` and `n_feasible_at_best` are
+non-empty in **69/80** FA targets, `trajectory_best_obj` in 80/80. The 11 blanks are targets
+where the optimiser found no feasible candidate; `tie_b` falls back to `max(1, ...)`, which
+is the conservative default and correct. So the primary claim statistic has its input, and
+so would the crossing test.
+
+---
