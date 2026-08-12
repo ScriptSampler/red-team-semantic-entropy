@@ -214,3 +214,31 @@
   year    = {2026},
   annote  = {Title/authors/date/abstract VERIFIED by me on arXiv 2026-08-12 (v1 2 Aug 2026). The literature sweep described this as a structural twin of our budget-matched control; it is NOT. Their MatchedCtrl is a FORMAT-matched control for candidate selection in vision-language test-time scaling ("the same short, no-CoT draws spent on the original image"), not a benign floor for an adversarial search. It is nonetheless a strong independent instance of the methodological point behind our contribution (3): an apparent gain of "up to +31.8 points on TextVQA" vanishes once budget and format are controlled, since "MatchedCtrl tracks or exceeds Pgs within noise on every benchmark". Cite as corroboration that uncontrolled-baseline inflation is a live problem in adjacent literature, NOT as a precedent for the exceedance null itself.}
 }
+
+@article{obadinma2024calibration,
+  title   = {Calibration Attacks: A Comprehensive Study of Adversarial Attacks on Model Confidence},
+  author  = {Obadinma, Stephen and Zhu, Xiaodan and Guo, Hongyu},
+  journal = {Transactions on Machine Learning Research},
+  year    = {2024},
+  note    = {arXiv:2401.02718},
+  annote  = {VERIFIED 2026-08-13 against the TMLR listing and arXiv v3. The canonical statement of the family we concede: attacks "that aim to trap victim models to be heavily miscalibrated without altering their predicted labels", self-described as "the first dedicated study" of calibration-focused attacks. NOTE the lineage -- same group as obadinma2025verbal already cited here; this is its vision-modality predecessor, which makes it the strongest single citation for the concession. Distinguish on victim and channel: an image classifier's softmax under l_p pixel perturbation, scored by ECE/KS, with NO sampling-based uncertainty and no meaning-preservation gate (full text verified: NLP/language/BERT/text-classification all absent; datasets CIFAR-100, Caltech-101, GTSRB).}
+}
+
+@inproceedings{martinezmartinez2026uat,
+  title     = {Improving Vision Model Robustness against Misclassification and Uncertainty Attacks via Underconfidence Adversarial Training},
+  author    = {Mart{\'i}nez-Mart{\'i}nez, Josu{\'e} and Holodnak, John T. and Brown, Olivia and Nabavi, Sheida and Aguiar, Derek and Wollaber, Allan},
+  booktitle = {Proceedings of the 7th Northern Lights Deep Learning Conference (NLDL)},
+  series    = {PMLR},
+  volume    = {307},
+  pages     = {274--286},
+  year      = {2026},
+  annote    = {VERIFIED 2026-08-13 from the PMLR full text. CITED UNDER THE PAPER'S OWN KEY, not "ConfSmooth" -- ConfSmooth is a METHOD INSIDE this paper, not a paper, and it is an ATTACK not a defence: "a novel attack that lowers confidence while preserving the original prediction of the model". The defence here is UAT (Underconfidence Adversarial Training). Value over obadinma2024calibration is showing the prediction-preserving confidence-attack family is LIVE IN 2026 rather than a 2024 artifact; it builds directly on that work, beating its CAAT defence. The UAT half is additionally a genuine neighbour for our reformulation-averaging defence discussion. Purely vision, l_p perturbations; verified to contain no semantic entropy, no sampling-based uncertainty, and no discreteness/granularity discussion.}
+}
+
+@article{wang2026depo,
+  title   = {Detector-Evasive LLM Paraphrasing via Constrained Policy Optimization},
+  author  = {Wang, Mingyi and Shen, Zhuoer and Bu, Yuheng and Zou, Shaofeng},
+  journal = {arXiv preprint arXiv:2606.00392},
+  year    = {2026},
+  annote  = {VERIFIED 2026-08-13 via the arXiv abs page, the arXiv API, and the PDF (submitted 29 May 2026, updated 12 Aug 2026; unvenued preprint). Cited ONLY to support the concession that constrained paraphrase search is a standard primitive we do not claim: DEPO formulates detector-evasive paraphrasing as a Constrained MDP "where detector evasion is the primary objective and semantic preservation is enforced as an explicit constraint", via Lagrangian primal-dual RL. Cleanest existing statement of constrained paraphrase search as a formal optimisation object. Distinguish on three axes: the victim is an AI-text-origin detector; the polarity is EVASION, the opposite of our false-alarm inflation, so there is no prediction to preserve -- the flagged output IS what is flipped; and the meaning constraint is a soft token-level BERTScore-F1 threshold, NOT a hard bidirectional-NLI entailment gate (verified: NLI and entail absent from the full text). No semantic entropy, no sampling-based uncertainty, no discreteness discussion.}
+}

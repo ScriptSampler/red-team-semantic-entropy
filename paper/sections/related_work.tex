@@ -34,7 +34,10 @@ neither subsumes our result despite the shared machinery.
 
 \paragraph{Paraphrase attacks on text-origin detectors.}
 A mature line paraphrases text to evade AI-versus-human
-classifiers~\citep{cheng2025advparaphrasing,fang2025copa}. These share the
+classifiers~\citep{cheng2025advparaphrasing,fang2025copa}. \citet{wang2026depo} give the
+cleanest formalisation of the primitive, casting detector-evasive paraphrasing as a
+constrained Markov decision process in which semantic preservation is an explicit
+constraint rather than a scalarised reward term. These share the
 high-level move ``paraphrase to fool a detector'' but differ on every axis that
 matters here: the victim is a text-origin classifier, not a sampling-based
 uncertainty estimator; the attacks are evasion-only (one-directional); and the
@@ -44,7 +47,8 @@ with~\citet{cheng2025advparaphrasing}.
 
 \paragraph{Manipulating uncertainty and probes.}
 The closest input-side neighbour is \citet{obadinma2025verbal}, who show that
-semantics-preserving perturbations degrade an LLM's \emph{verbal} confidence. The victim
+semantics-preserving perturbations degrade an LLM's \emph{verbal} confidence---carrying that
+group's own calibration-attack line~\citep{obadinma2024calibration} from vision into language. The victim
 differs in the way that matters here: verbal confidence is the model's prompted
 self-report, whereas semantic entropy is computed from a sampled answer set clustered by
 meaning, so the attack surface is the sampling-and-clustering pipeline rather than a
@@ -58,7 +62,12 @@ paraphrase).
 
 We should be explicit that the \emph{direction} we foreground is not itself new. Moving a
 confidence signal in an attacker-chosen direction while holding the underlying prediction
-fixed is an established family, and forcing a detector into a false \emph{positive} has a
+fixed is an established family with a name: \citet{obadinma2024calibration} give what they
+describe as the first dedicated study of \emph{calibration attacks}, which ``trap victim
+models to be heavily miscalibrated without altering their predicted labels'', and the family
+is still active---\citet{martinezmartinez2026uat} propose an underconfidence attack that
+lowers confidence while preserving the prediction, paired with an adversarial-training
+defence. Forcing a detector into a false \emph{positive} has a
 direct text-modality precedent: \citet{rusert2025redherring} perturb text so that an
 attack-detection model flags an input while the classifier's prediction stays correct.
 Concurrently, \citet{khanmohammadi2026answerpreserving} manipulate deployed confidence
