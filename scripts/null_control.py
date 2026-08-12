@@ -252,6 +252,13 @@ def _ckpt_complete(rec: dict, embed_active: bool, judge_active: bool) -> bool:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", default="_fair")
+    ap.add_argument("--only", default="",
+                    help="comma-separated attack cells to run (e.g. 'false_alarm'); default "
+                         "runs every cell in CELLS. The judge oracle is scoped to FA ONLY "
+                         "(results/judge_validation.md: over-splitting is conservative for "
+                         "false-alarm but NOT for hide), and the paper evaluates only the "
+                         "false-alarm direction under the null control, so running the hide "
+                         "cell here costs ~70 GPU-h for a number that cannot be used.")
     ap.add_argument("--K", type=int, default=8, help="benign paraphrases per target")
     ap.add_argument("--n_seeds", type=int, default=3, help="seeds for the original noise band")
     ap.add_argument("--max_targets", type=int, default=0, help="0 = all completed targets")
@@ -345,7 +352,17 @@ def main() -> int:
         ckpt_path.parent.mkdir(parents=True, exist_ok=True)
 
     diag: list[dict] = []  # per-target diagnostic records (dumped iff --dump_diag)
-    for attack, detector in CELLS:
+    cells = CELLS
+    if args.only:
+        want = {s.strip() for s in args.only.split(",") if s.strip()}
+        unknown = want - {a for a, _ in CELLS}
+        if unknown:
+            raise SystemExit(f"--only: unknown cell(s) {sorted(unknown)}; "
+                             f"known cells are {sorted({a for a, _ in CELLS})}")
+        cells = [(a, d) for a, d in CELLS if a in want]
+        print(f"[cells] --only={args.only} -> running {[a for a, _ in cells]} "
+              f"(skipping {[a for a, _ in CELLS if a not in want]})", flush=True)
+    for attack, detector in cells:
         f = campaign_dir / f"triviaqa_{detector}_{attack}.jsonl"
         if not f.exists():
             L.append(f"## {detector}_{attack}: no outcomes yet"); L.append(""); continue
@@ -469,6 +486,7 @@ def main() -> int:
             cons_t = exceedance_test(exceedance_counts(am, bl, ties="conservative"), attack_budget)
             if rnd.get("n_targets"):
                 L.append(f"- **EXCEEDANCE TEST (CLAIM STATISTIC, randomized ties)**: "
+                         f"n_targets={rnd['n_targets']} (of {len(outcomes)} in cell), "
                          f"observed {rnd['observed']} vs H0-expected {rnd['expected']:.1f}, "
                          f"p={rnd['p_value']:.4f} (single tie-break draw), effective benign "
                          f"budget n_eff={rnd['n_eff']:.1f} (\"the attack is worth n_eff "

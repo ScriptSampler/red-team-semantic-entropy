@@ -30,15 +30,18 @@ Sampling-based hallucination detectors such as semantic entropy are deployed on 
 that the uncertainty they report is invariant to how a question is phrased. We set out to
 break that claim with meaning-preserving paraphrases and found, first, that the detector has
 very little room in which to be broken. Semantic entropy over $N$ sampled answers is bounded
-above by $\log N$; at the standard $N{=}10$, across the $97$ targets of our attack campaign
-scored clean, a tenth of \emph{correct} answers already sit exactly at that ceiling before
-any attack, a quarter sit in the top tenth of the score's range, and the estimator takes only $22$
-distinct values in all. An optimised paraphrase attack drives a further $42\%$ onto the
-ceiling, taking the total there past half; whether ordinary rephrasing does the same is
-precisely what a budget-matched null control has to settle, and we do not yet claim it.
-Raising $N$ does not help, because the baseline rises with the cap---on the $15$ saturated
-targets we re-scored at $N{=}20$, lifting the cap by $0.693$ nats left $20\%$ still pinned
-and the mean attack move essentially unchanged. Second, the controls this measurement needs
+above by $\log N$, and at the standard $N{=}10$ it lives on a lattice of just $39$ attainable
+values---of which only \emph{two} fall in the top tenth of its range. Across the $97$ targets
+of our attack campaign scored clean, a tenth of \emph{correct} answers already sit exactly at
+the ceiling before any attack, and a quarter sit on one of those two top-decile points; $22$
+of the $39$ values are realised at all. An optimised paraphrase attack drives a further
+$42\%$ onto the ceiling, taking the total there past half; whether ordinary rephrasing does
+the same is precisely what a budget-matched null control has to settle, and we do not yet
+claim it. Raising $N$ \emph{does} buy resolution---$N{=}20$ affords $455$ attainable values
+and seven in the top decile---but less of it reaches the region that matters than the cap
+implies: on $15$ saturated targets re-scored at $N{=}20$, lifting the cap by $0.693$ nats
+left $20\%$ still pinned, because the plug-in baseline climbs with the cap as its
+finite-sample negative bias decays. Second, the controls this measurement needs
 are stronger than the random-perturbation baseline that is standard in this literature. The
 attack reports a maximum over $\sim$$181$ candidates, and re-scoring each
 \emph{selected} paraphrase on an independent sample shows the effect shrinks

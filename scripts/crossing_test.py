@@ -86,6 +86,15 @@ from se.stats import ceiling_saturation, flip_test_conditional, operating_point 
 
 CAP_N = 10                       # GenConfig.n_samples; the ceiling is log(CAP_N)
 CAP = math.log(CAP_N)
+
+# Semantic entropy at N=10 is an ATOM-VALUED score: it is a sum of -p log p over a cluster
+# partition, so mathematically identical partitions must give identical values. They do not
+# in floating point — summing the same logs in a different order shifts the last bit. On the
+# fair pool this splits 28 real atoms into 36 apparent values, with spurious "distinct"
+# thresholds 1e-16 apart (e.g. 2.0253262207700673 vs ...677). Real atoms here are ~0.05 nats
+# apart, so any tolerance between 1e-15 and 1e-3 collapses the noise and nothing else.
+# Comparing exactly would let a candidate that IS at tau land on the wrong side of it.
+ATOM_TOL = 1e-9
 FAIR_N = 200                     # fair-pool size per stratum (scripts/fair_pool_check.py)
 FAIR_SEED = 0
 
@@ -184,15 +193,34 @@ def fair_pool_clean_scores(labels_path: Path = RELABELED, *, n: int = FAIR_N,
 
 # ------------------------------------------------------------------- operating point
 
+def crosses(value: float, tau: float, compare: str = "ge") -> bool:
+    """Is `value` on the flagged side of tau? Atom-tolerant (see ATOM_TOL).
+
+    'ge' matches the deployed convention in `se.stats.flips_at_threshold` (score >= tau
+    fires) and is the default; 'gt' is the strict variant, reported as a sensitivity.
+    """
+    # bool() is load-bearing: a numpy scalar in gives numpy.bool_ out, which is not JSON
+    # serialisable and fails an `is True` identity check.
+    return bool(value >= tau - ATOM_TOL) if compare == "ge" else bool(value > tau + ATOM_TOL)
+
+
+def atoms(scores) -> list[float]:
+    """The score's genuinely distinct attainable values, ascending, float noise collapsed."""
+    out: list[float] = []
+    for v in sorted(float(x) for x in np.asarray(scores, dtype=float)):
+        if not out or v - out[-1] > ATOM_TOL:
+            out.append(v)
+    return out
+
+
 def realised_fpr(scores, tau: float, compare: str = "ge") -> float:
     """Fraction of CORRECT answers the detector would actually flag at tau.
 
-    The deployed convention in `se.stats.flips_at_threshold` is `score >= threshold` fires,
-    so 'ge' is the default. This is the number to quote — never the nominal target, which a
-    discrete score generally cannot hit.
+    This is the number to quote — never the nominal target, which a discrete score
+    generally cannot hit.
     """
     s = np.asarray(scores, dtype=float)
-    return float((s >= tau).mean() if compare == "ge" else (s > tau).mean())
+    return float(np.mean([crosses(float(x), tau, compare) for x in s])) if len(s) else 0.0
 
 
 def attainable_grid(scores, compare: str = "ge") -> list[tuple[float, float]]:
@@ -201,8 +229,7 @@ def attainable_grid(scores, compare: str = "ge") -> list[tuple[float, float]]:
     Printing this is the whole defence against quoting an operating point that does not
     exist: at N=10 the FPR does not vary continuously, it steps.
     """
-    return [(float(v), realised_fpr(scores, float(v), compare))
-            for v in sorted(set(float(x) for x in np.asarray(scores, dtype=float)))]
+    return [(v, realised_fpr(scores, v, compare)) for v in atoms(scores)]
 
 
 def smallest_threshold_at_most_fpr(scores, target_fpr: float, compare: str = "ge"):
@@ -217,21 +244,45 @@ def smallest_threshold_at_most_fpr(scores, target_fpr: float, compare: str = "ge
     return None
 
 
+def flagged_atoms(scores, tau: float, compare: str = "ge") -> list[float]:
+    """The attainable score values that the detector would flag at tau."""
+    return [a for a in atoms(scores) if crosses(a, tau, compare)]
+
+
+def crossing_is_saturation(scores, tau: float, compare: str = "ge") -> bool:
+    """True when 'crossed tau' and 'sat at the log(N) ceiling' are THE SAME EVENT.
+
+    This is the failure mode that voids the whole point of a crossing test. The censoring-
+    immunity argument — "past the operating point is past it, however far past" — needs at
+    least one attainable value strictly between tau and the ceiling. If the only flaggable
+    value IS the ceiling, the crossing statistic is a relabelling of the saturation rate,
+    and it inherits exactly the censoring it was built to dodge.
+    """
+    fl = flagged_atoms(scores, tau, compare)
+    return len(fl) == 1 and fl[0] >= CAP - ATOM_TOL
+
+
 def compute_tau(scores, target_fpr: float = 0.10, compare: str = "ge") -> dict:
     """The pre-registered tau plus everything needed to read it honestly."""
     s = np.asarray(scores, dtype=float)
     tau = float(operating_point([0] * len(s), s, target_fpr=target_fpr))
     strict = smallest_threshold_at_most_fpr(s, target_fpr, compare)
     return {
+        "n_flagged_atoms": len(flagged_atoms(s, tau, compare)),
+        "crossing_is_saturation": crossing_is_saturation(s, tau, compare),
+        "crossing_is_saturation_at_most": (
+            crossing_is_saturation(s, strict, compare) if strict is not None else False),
         "tau": tau,
         "target_fpr": float(target_fpr),
         "realised_fpr": realised_fpr(s, tau, compare),
         "n_scores": int(len(s)),
-        "n_distinct": int(len(set(s.tolist()))),
+        "n_distinct": len(atoms(s)),
         "tau_at_most_target_fpr": strict,
         "realised_fpr_at_most": (realised_fpr(s, strict, compare) if strict is not None
                                  else float("nan")),
-        "tau_is_interior": bool(tau < CAP - 1e-9),
+        # Censoring-immunity holds only if tau sits strictly BELOW the top of the attainable
+        # range: at the top, '>' can never be satisfied and '>=' just re-measures saturation.
+        "tau_is_interior": bool(tau < float(s.max()) - 1e-9),
         "at_most_is_ceiling": (strict is not None and strict >= CAP - 1e-9),
     }
 
@@ -256,7 +307,7 @@ def crossing_counts(rows, tau: float, *, compare: str = "ge",
         was_empty = not objs
         if was_empty and empty_policy == "original":
             objs = [float(r["entropy_before"])]          # the trivially-feasible candidate
-        crossed = sum(1 for o in objs if (o >= tau if compare == "ge" else o > tau))
+        crossed = sum(1 for o in objs if crosses(o, tau, compare))
         out.append({
             "question_id": r.get("question_id"),
             "attack_crossed": int(crossed),
@@ -264,9 +315,7 @@ def crossing_counts(rows, tau: float, *, compare: str = "ge",
             "empty_feasible_objs": bool(was_empty),
             "entropy_before": float(r["entropy_before"]),
             "entropy_after": float(r["entropy_after"]),
-            "clean_already_flagged": bool(
-                float(r["entropy_before"]) >= tau if compare == "ge"
-                else float(r["entropy_before"]) > tau),
+            "clean_already_flagged": crosses(float(r["entropy_before"]), tau, compare),
             "n_feasible_at_best": int(r.get("n_feasible_at_best") or 0),
             "n_objective_calls": int(r.get("n_objective_calls") or 0),
             "success": bool(r.get("success")),
@@ -304,7 +353,7 @@ def load_benign_crossings(path, tau: float, *, compare: str = "ge",
         if base is None or not moves:
             continue
         vals = [float(base) + float(m) for m in moves]
-        k = sum(1 for v in vals if (v >= tau if compare == "ge" else v > tau))
+        k = sum(1 for v in vals if crosses(v, tau, compare))
         out[rec["question_id"]] = (int(k), int(len(vals)))
     if not out:
         raise InputMissing(
@@ -418,12 +467,30 @@ def main(argv=None) -> int:
               f"{strict if strict is None else f'{strict:.6f}'} "
               f"(FPR {tau_info['realised_fpr_at_most']:.1%})")
         if tau_info["at_most_is_ceiling"]:
-            print("       That threshold IS the log(10) ceiling, so at a true <=10% FPR the")
-            print("       crossing test LOSES its censoring-immunity: with '>' nothing can")
-            print("       cross the maximum attainable score, and with '>=' 'crossed' is")
-            print("       identical to 'saturated'. Censoring-immunity needs tau strictly")
-            print("       INTERIOR to the attainable range. The quantile-rule tau above is")
-            print("       interior; this one is not. Proceeding with the interior tau.")
+            print(f"       That threshold IS the log({CAP_N}) ceiling. Censoring-immunity "
+                  f"needs tau strictly")
+            print("       INTERIOR to the attainable range; this one is the boundary.")
+        print()
+        print("  [W4] DOES THE DIAGNOSTIC SURVIVE ITS OWN OPERATING POINT?")
+        print(f"       flaggable attainable values at tau under '{args.compare}': "
+              f"{tau_info['n_flagged_atoms']}")
+        if tau_info["crossing_is_saturation"]:
+            print(f"       EXACTLY ONE, and it is the ceiling — so at this operating point")
+            print(f"       'crossed tau' and 'saturated at log({CAP_N})' are THE SAME EVENT.")
+            print("       The crossing statistic is then a relabelling of the saturation")
+            print("       rate and inherits the censoring it was built to dodge. This tau")
+            print("       cannot support the diagnostic; widen the operating point.")
+        else:
+            print(f"       More than one, so a crossing is NOT merely a saturation: the")
+            print(f"       statistic is well defined here. Note the price — the realised")
+            print(f"       FPR is {tau_info['realised_fpr']:.1%}, not the pre-registered "
+                  f"{args.target_fpr:.0%}.")
+            if tau_info["crossing_is_saturation_at_most"]:
+                print(f"       At any threshold tight enough for a true <= "
+                      f"{args.target_fpr:.0%} FPR it WOULD collapse")
+                print("       to saturation. There is no operating point that is both at "
+                      "the")
+                print("       pre-registered FPR and censoring-immune.")
         print()
 
     # ---- attack arm ------------------------------------------------------------

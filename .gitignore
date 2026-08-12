@@ -97,3 +97,7 @@ hf_token*
 *.toc
 paper/build/
 node_modules/
+
+# per-target resume checkpoints — must survive `git clean -fd`
+results/*.jsonl
+!results/*.md

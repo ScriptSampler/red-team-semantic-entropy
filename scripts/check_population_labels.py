@@ -38,7 +38,7 @@ PAPER = REPO / "paper"
 RULES = [
     {
         "name": "fair-pool AUROC",
-        "numbers": [r"0\.704", r"0\.653", r"0\.753", r"0\.463"],
+        "numbers": [r"0\.704", r"0\.653", r"0\.753", r"0\.463", r"AUROC \$?0\.70\$?"],
         "requires": [r"fair pool", r"score-independent pool", r"200 correct"],
         "window": 420,
     },
@@ -50,7 +50,7 @@ RULES = [
     },
     {
         "name": "ceiling / granularity counts (attacked pool)",
-        "numbers": [r"22 distinct", r"22 attainable"],
+        "numbers": [r"22 distinct", r"22 attainable", r"22 of (?:its |the )?\$?39", r"39 attainable"],
         "requires": [r"97", r"attack campaign", r"attacked"],
         "window": 420,
     },
@@ -69,7 +69,10 @@ def strip_latex(text: str) -> str:
     This is the whole point: the manual sweeps failed because \\emph{} split the phrases
     they were grepping for.
     """
-    text = re.sub(r"%.*?$", "", text, flags=re.MULTILINE)          # comments
+    # NB: negative lookbehind is load-bearing. Without it this eats from a LITERAL \%
+    # to end of line, which would blind the checker to every number on Table 1's
+    # "Saturation rate (\% at $\log N$)" row -- the exact row it exists to guard.
+    text = re.sub(r"(?<!\\)%.*?$", "", text, flags=re.MULTILINE)  # comments, not \%
     text = re.sub(r"\\(?:emph|textbf|textit|mathrm|text)\{([^{}]*)\}", r"\1", text)
     text = re.sub(r"\\citep?\{[^{}]*\}", " ", text)                # citations
     text = re.sub(r"\\ref\{[^{}]*\}", " ", text)

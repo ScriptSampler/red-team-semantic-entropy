@@ -60,8 +60,9 @@ cannot exceed $\log N$ is elementary, and we claim no novelty for it; our contri
 the measurement of \emph{how tightly that bound binds in deployment}. At the standard
 $N{=}10$, across the $97$ targets of our attack campaign scored clean ($80$ correct, $17$
 wrong---a different and smaller population than the fair pool below), the estimator realises
-only $22$ distinct values, a tenth of \emph{correct} answers sit exactly at $\ln 10$ before
-any intervention, and a quarter sit in the top tenth of the score's range. The general argument---that a score's distinct-value count caps
+$22$ of its $39$ attainable values, a tenth of \emph{correct} answers sit exactly at $\ln 10$
+before any intervention, and a quarter sit in the top tenth of the score's range---a region
+that contains only two attainable values in total. The general argument---that a score's distinct-value count caps
 what an operator can do with it, however well it ranks---has been made and named for
 black-box LLM classification~\citep{sun2026granularity}; we instantiate it for a
 sampling-based generative detector, where the granularity limit is imposed by the sample
@@ -118,12 +119,16 @@ relation at all. Second, the score is a finite-sample estimate, so a maximum ove
 inflates: we measure $45\%$ retention on re-scoring. This does not arise against the
 deterministic classifiers targeted in the work above, though it would against any stochastic
 scorer. Third, the estimator is not merely bounded---classifier confidence is bounded
-too---but \emph{discrete}, and non-relaxably so: across the $97$ attacked targets it realises
-only $22$ attainable values, and raising $N$ does not buy range, because the baseline rises
-with the cap. Effect sizes are
+too---but \emph{discrete}, and coarsest exactly where the attack must land: at $N{=}10$ the
+estimator's attainable lattice has $39$ points, of which only \emph{two} lie in the top tenth
+of its range, so $21$ of our $80$ correct targets occupy one of two values. Raising $N$
+relaxes this ($N{=}20$ affords $455$ points, seven in the top decile), but buys less
+usable headroom than the cap implies, because the plug-in baseline climbs with the cap as its
+negative bias decays. Effect sizes are
 therefore right-censored and any null must stay valid under ties at the cap. The discreteness
-half of this is the score-granularity gap named by~\citet{sun2026granularity}; the
-non-relaxability is ours. What we claim is what this victim class forces on the measurement,
+half of this is the score-granularity gap named by~\citet{sun2026granularity}; what we add
+is its instantiation for a sampling-based detector, where the lattice is set by the sample
+budget and is at its coarsest in the top decile that a false alarm must reach. What we claim is what this victim class forces on the measurement,
 not the move itself. No effect size enters the body until the definitive
 $n{\geq}80$ run lands under the budget-matched null control
 (Section~\ref{sec:experiments}); the small-sample machinery pass is treated as

@@ -1,0 +1,29 @@
+# population,"80 correct-answer targets of the false-alarm attack arm (TriviaQA, semantic entropy, N=10, definitive cell wk9_defb). NOT the 200+200 score-independent fair pool."
+# source,\\wsl.localhost\Ubuntu-24.04\home\abhi\.cache\se-research\samples\attacks\wk9_defb\triviaqa_se_false_alarm.jsonl
+# ceiling_nats,2.302585092994046
+entropy_nats,n_baseline,n_after,at_ceiling,in_top_tenth_of_range
+0.000000000,4,1,0,0
+0.325082973,6,1,0,0
+0.639031860,3,0,0,0
+0.801818553,1,0,0,0
+0.897945725,0,1,0,0
+0.940447989,1,0,0,0
+0.943348392,2,1,0,0
+1.054920168,1,0,0,0
+1.088899975,4,1,0,0
+1.227529411,6,2,0,0
+1.279854226,0,1,0,0
+1.359236701,3,0,0,0
+1.418483662,1,2,0,0
+1.470808476,1,1,0,0
+1.497866137,7,0,0,0
+1.504788284,0,1,0,0
+1.609437912,4,2,0,0
+1.643417720,2,1,0,0
+1.695742534,2,1,0,0
+1.748067349,3,3,0,0
+1.834371970,3,3,0,0
+1.973001406,2,5,0,0
+2.025326221,3,2,0,0
+2.163955657,13,9,0,1
+2.302585093,8,42,1,1

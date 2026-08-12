@@ -85,12 +85,42 @@ def test_discrete_scores_make_the_nominal_fpr_unattainable():
     assert info["n_distinct"] == 3
 
 
+def test_atoms_collapse_last_bit_float_noise():
+    """Real bug this guards: identical cluster partitions summed in a different order give
+    entropies 1e-16 apart, which split one atom into two apparent thresholds. Real atoms on
+    this score are ~0.05 nats apart, so collapsing at 1e-9 loses nothing."""
+    v = 2.0253262207700673
+    scores = [v, np.nextafter(v, 1.0), np.nextafter(v, 0.0), 1.5]
+    assert CT.atoms(scores) == pytest.approx([1.5, np.nextafter(v, 0.0)])
+    assert len(CT.attainable_grid(scores)) == 2
+
+
+def test_a_candidate_exactly_at_tau_counts_despite_float_noise():
+    """Without the tolerance a candidate one ULP below tau would be scored as not crossing
+    even though it is the same attainable value."""
+    tau = 2.1639556568820564
+    assert CT.crosses(np.nextafter(tau, 0.0), tau, "ge") is True
+    assert CT.crosses(tau, tau, "ge") is True
+    assert CT.crosses(np.nextafter(tau, 1.0), tau, "gt") is False    # same atom, not above
+    assert CT.crosses(tau + 0.05, tau, "gt") is True                 # a genuinely higher atom
+
+
 def test_attainable_grid_and_smallest_threshold_at_most_fpr():
     scores = np.array([1.0] * 5 + [2.0] * 3 + [3.0] * 2)
     grid = CT.attainable_grid(scores)
     assert grid == [(1.0, 1.0), (2.0, 0.5), (3.0, 0.2)]
     assert CT.smallest_threshold_at_most_fpr(scores, 0.5) == pytest.approx(2.0)
     assert CT.smallest_threshold_at_most_fpr(scores, 0.01) is None   # unattainable -> None
+
+
+def test_crossing_collapses_into_saturation_when_the_ceiling_is_the_only_flaggable_value():
+    """The failure mode that voids the diagnostic: if nothing between tau and log(10) is
+    attainable, 'crossed' just means 'saturated' and the censoring is back."""
+    scores = np.array([1.0] * 6 + [2.0] * 2 + [CT.CAP] * 2)
+    assert CT.crossing_is_saturation(scores, CT.CAP, "ge") is True
+    assert CT.crossing_is_saturation(scores, 2.0, "gt") is True     # only the cap is above
+    assert CT.crossing_is_saturation(scores, 2.0, "ge") is False    # 2.0 itself flags too
+    assert CT.flagged_atoms(scores, 2.0, "ge") == pytest.approx([2.0, CT.CAP])
 
 
 def test_tau_at_the_ceiling_is_flagged():
