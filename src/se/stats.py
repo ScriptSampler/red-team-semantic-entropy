@@ -290,7 +290,8 @@ def flip_test_conditional(attack_crossed, attack_n, benign_crossed, benign_n) ->
 
 
 def flip_test(attack_crossed, benign_crossed, benign_n, n_attack_candidates: int,
-              *, n_sim: int = 20000, seed: int = 0) -> dict:
+              *, n_sim: int = 20000, seed: int = 0,
+              _documented_defect_opt_in: bool = False) -> dict:
     """⚠ NOT CALIBRATED — SUPERSEDED. Use `flip_test_conditional` above, which is exact,
     estimation-free, and measured at or below its nominal level on the same simulation this
     function fails. This one is retained only so its documented failure stays visible.
@@ -330,7 +331,20 @@ def flip_test(attack_crossed, benign_crossed, benign_n, n_attack_candidates: int
     the one-sided p-value is P(S_null >= observed).
 
     Returns observed/expected counts, the p-value, and the per-target null rates.
+
+    RETIRED 2026-08-12. Calling this raises unless `_documented_defect_opt_in=True`. The
+    docstring warning above was the only guard, and a docstring is easy to skip when the
+    function name reads as though it works. The body is preserved, not deleted, because the
+    measured failure is itself a finding worth keeping reproducible.
     """
+    if not _documented_defect_opt_in:
+        raise RuntimeError(
+            "flip_test is RETIRED: its null is anti-conservative (H0 rejection 0.81 at m=30 "
+            "through 0.35 at m=181, nominal 0.05) because P(cross)=1-(1-pi)^N is concave in "
+            "pi and integrating an estimated pi over a wide posterior under-predicts "
+            "crossings by Jensen. Use flip_test_conditional, which conditions on the margins, "
+            "estimates no rate, and is exact. Pass _documented_defect_opt_in=True only to "
+            "reproduce the documented failure (see tests/test_flip_test.py).")
     a = [bool(x) for x in attack_crossed]
     k = [int(x) for x in benign_crossed]
     m = [int(x) for x in benign_n]
