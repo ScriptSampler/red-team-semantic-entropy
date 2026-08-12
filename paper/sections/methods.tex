@@ -84,13 +84,22 @@ degradation against the clean AUROC of the \emph{fair} pool, not the extreme one
 Semantic entropy over $N$ sampled answers is bounded on both sides, $H \in [0, \log N]$:
 the upper bound is attained when every sample forms its own cluster, the lower when they
 all collapse into one. At the deployed $N{=}10$ the ceiling is $\log 10 = 2.303$ nats. The
-two attack directions therefore face different amounts of room to move. On our pool the
-false-alarm targets start at mean entropy $1.477$, leaving $0.826$ nats to the ceiling,
-while the hide targets start at $1.661$, leaving $1.661$ nats to the floor---the false-alarm
-direction has almost exactly \emph{half} the headroom. The consequence is visible in the
-data: $39$ of $80$ attacked false-alarm targets finish \emph{exactly} at the ceiling, and
-$8$ of $80$ begin there (so no upward move is possible at all), whereas no hide target
-reaches the floor.
+two attack directions therefore face different amounts of room to move. Measured on the
+\emph{score-independent fair pool} (the population the detector is characterised on, not the
+attacked subset), correctly-answered questions have clean mean entropy $1.380$, leaving
+$0.923$ nats to the ceiling, while wrongly-answered questions sit at $1.843$, leaving
+$1.843$ nats to the floor: the false-alarm direction has almost exactly \emph{half} the
+headroom of the hide direction. The consequence is visible in the attacked cells: of the
+$80$ false-alarm targets, $39$ finish \emph{exactly} at the ceiling and $8$ began there (so
+no upward move was ever possible), whereas no hide target reaches the floor---though that
+last comparison is on a partial hide cell and we restate it when that cell completes.
+
+We label the population of every quantity we report, because the two differ materially and
+conflating them is easy: the fair pool gives a clean correct-versus-wrong separation of
+$0.463$ nats and AUROC $0.704$, whereas the \emph{attacked subset} gives $0.184$ nats and
+AUROC $0.579$. The attacked subset is a selected, partly truncated sample and is not a
+description of the detector; wherever we characterise the detector we use the fair pool, and
+wherever we describe what the attack did we say so explicitly.
 
 Two things follow, and we apply them throughout. First, false-alarm effect sizes measured in
 nats are \emph{censored}: on a saturated target the attack and any other method that also
