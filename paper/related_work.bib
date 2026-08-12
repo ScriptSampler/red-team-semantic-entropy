@@ -121,6 +121,26 @@
   annote    = {Backdoor-trigger manipulation of MCQ self-evaluation confidence. Different threat model (fine-tuning, not input paraphrase). Full author list verified on arXiv 2026-07-10 (first author Zeng, Qingcheng confirmed).}
 }
 
+% ---- Inducing FALSE POSITIVES in a detector (the direction we foreground) ----
+% Found 2026-08-12 by an OpenReview/ARR sweep. These make the inflation direction a NAMED,
+% DEFENDED FAMILY rather than a gap. Our claim must narrow to the sampling-based victim.
+
+@inproceedings{rusert2025redherring,
+  title     = {{RedHerring} Attack: Testing the Reliability of Attack Detection},
+  author    = {Rusert, Jonathan},
+  booktitle = {Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year      = {2025},
+  annote    = {arXiv:2509.20691. THE text-modality precedent for our false-alarm direction, and the sharpest exposure in the paper: "RedHerring aims to make attack detection models unreliable by modifying a text to cause the detection model to predict an attack, while keeping the classifier correct" — structurally our move (perturb text, force a detector false positive, leave the underlying prediction correct). DISTINGUISH: their victim is an adversarial-ATTACK detector (a binary classifier over text), ours is a sampling-based hallucination detector whose score is an entropy over meaning-clustered samples; and they perturb text freely whereas we require a certified bidirectional-NLI meaning-preservation gate. Verified on arXiv 2026-08-12.}
+}
+
+@article{khanmohammadi2026answerpreserving,
+  title   = {Model Confidence Under Answer-Preserving Attacks: An Informativeness--Manipulability Frontier},
+  author  = {Khanmohammadi, Reza and Brugere, Ivan and Kaur, Simerjot and Smiley, Charese H. and Thind, Kundan and Ghassemi, Mohammad M.},
+  journal = {arXiv preprint arXiv:2608.06571},
+  year    = {2026},
+  annote  = {CONCURRENT (submitted 2026-08-06, six days before we found it) and the closest thing to a partial scoop of our framing: bidirectional manipulation of deployed confidence channels under an ANSWER-PRESERVATION constraint, with an explicit inflation direction and a random-perturbation control. DISTINGUISH: vision-language models attacked through pixel perturbation, hidden-state intervention and token probabilities; verified NOT to involve semantic entropy, self-consistency, or any sampling-based uncertainty; and no meaning-preservation machinery, since an l_p budget grants invariance that a paraphrase must earn. Verified on arXiv 2026-08-12.}
+}
+
 % ---- Evaluation methodology (protocol + oracle strands) ---------------------
 
 @article{mccabe2025alphabet,

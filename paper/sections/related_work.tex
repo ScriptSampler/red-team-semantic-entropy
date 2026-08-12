@@ -54,7 +54,23 @@ whereas their attacks frequently change the answer. Also on the ``manipulate unc
 axis, \citet{uncertaintyfragile2024}
 shift answer confidence via a fine-tuned backdoor trigger on multiple-choice
 self-evaluation --- a different threat model (weight access, not input
-paraphrase). Most relevant of all, CORVUS red-teams single-pass hallucination
+paraphrase).
+
+We should be explicit that the \emph{direction} we foreground is not itself new. Moving a
+confidence signal in an attacker-chosen direction while holding the underlying prediction
+fixed is an established family, and forcing a detector into a false \emph{positive} has a
+direct text-modality precedent: \citet{rusert2025redherring} perturb text so that an
+attack-detection model flags an input while the classifier's prediction stays correct.
+Concurrently, \citet{khanmohammadi2026answerpreserving} manipulate deployed confidence
+channels bidirectionally under an answer-preservation constraint, including an inflation
+direction, and report the same qualitative collapse of a gated system toward its ungated
+floor. We therefore do not claim the false-alarm direction as a discovery. What we claim is
+its instantiation against a \emph{sampling-based} detector: the manipulated quantity is an
+entropy over meaning-clustered samples rather than a softmax or a learned detector's logit;
+the victim is a hallucination detector rather than an attack detector; the perturbation is
+a question rewrite rather than a pixel budget or a hidden-state intervention; and semantic
+invariance therefore has to be \emph{certified} by an equivalence gate rather than granted
+by an $\ell_p$ ball. Most relevant of all, CORVUS red-teams single-pass hallucination
 detectors and degrades SEP~\citep{corvus2026} --- establishing that SE-\emph{family}
 detectors can be attacked, which we do not claim as our novelty. Our distinction is
 substantive rather than a label: CORVUS perturbs a frozen hidden-state probe
@@ -63,10 +79,13 @@ semantic-equivalence constraint, Alpaca/FAVA), whereas we perturb the \emph{inpu
 hard equivalence constraint and target the sampling-and-NLI-clustering pipeline itself --- a
 different attack surface --- in both directions, on TriviaQA/SQuAD. A weaker neighbour prompts
 LLMs to fool generic activation probes~\citep{blandfort2025redteamprobes}, but
-not in the hallucination-detection setting. To our knowledge, no prior work \emph{formulates} an
-input-side, bidirectional meaning-preserving paraphrase attack on sampling-based
-hallucination detectors (we evaluate the false-alarm direction here and build the hide
-direction as its mirror). The bidirectional-NLI equivalence gate is our design choice for
+not in the hallucination-detection setting. Each ingredient of our attack is by now standard: constrained search over meaning-preserving
+paraphrases is an established primitive, and directional manipulation of a confidence signal
+under prediction-preservation is an established family. To our knowledge the combination has
+not been pointed at a \emph{sampling-based} hallucination detector --- one whose score is an
+entropy over meaning-clustered samples rather than a classifier output --- from the input
+side alone (we evaluate the false-alarm direction here and build the hide direction as its
+mirror). The bidirectional-NLI equivalence gate is our design choice for
 certifying meaning-preservation, not itself a novelty axis --- indeed our own analysis
 treats the detector's reliance on that same NLI model as the central confound.
 

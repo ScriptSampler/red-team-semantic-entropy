@@ -97,9 +97,13 @@ near-chance on exactly the adversarial case---so we build and validate an LLM-ju
 clears it ($0.93$ vs.\ $0.51$), and report the confirmatory evaluation under it at the
 pre-registered scale.
 (5) \textbf{The attack itself}---bidirectional, NLI-constrained, foregrounding the
-under-explored induced-false-positive direction---as the case study that exercises the
-protocol, and a reformulation-averaging defense with an analysis of what it does and does
-not close. Our
+induced-false-positive direction---as the case study that exercises the protocol, and a
+reformulation-averaging defense with an analysis of what it does and does not close. We
+claim neither the direction nor the search primitive as new: inducing a detector false
+positive while the underlying prediction stays correct is an established
+family~\citep{rusert2025redherring, khanmohammadi2026answerpreserving}, and constrained
+paraphrase search is a standard tool~\citep{liang2025seca, liang2026realista}. The
+combination is what has not, to our knowledge, been aimed at a sampling-based detector. Our
 effect-size bracket on the fair, null-controlled pool is reported in
 Section~\ref{sec:experiments}; no effect size enters the body until the definitive
 $n{\geq}80$ run lands under the budget-matched null control, and the small-sample

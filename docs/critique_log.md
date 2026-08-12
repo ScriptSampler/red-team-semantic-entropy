@@ -1173,3 +1173,53 @@ moment of checking but not a fault — the 14-hour gap was the user's own machin
 sessions. The campaign resumed from checkpoint and is running.
 
 ---
+
+## 30. 2026-08-12 — OpenReview/ARR sweep: the false-alarm DIRECTION is a named family
+
+The sweep that was supposed to close the anonymity blind spot found its most damaging hit on
+public arXiv instead, and narrowed the claim I had been treating as most defensible.
+
+**No scoop under anonymity — but that is WEAK evidence.** Genuinely searched (abstract-level,
+via the OpenReview API): ICLR 2026 accepted/rejected/withdrawn, TMLR under-review, ARR 2024-10,
+2025-07, 2025-10, 2026-01, 2026-05, 2026-08, COLM 2024/25 + COLM 2026 workshops, ICML 2026
+workshops, NLDL, plus a full arXiv census for Jul 1 - Aug 12 2026. **Unreachable, so absence
+proves nothing:** NeurIPS 2026 main track (zero visibility, the likeliest home of a
+competitor), ARR Feb/June/July 2026 (absent from the index entirely — a control query returns
+0 where neighbouring cycles return 10), non-opt-in ARR submissions, COLM 2026 main, and ALL
+OpenReview full text (forum pages return a bot challenge, so every judgement above rests on
+an abstract).
+
+**VERIFIED MYSELF, both consequential:**
+- **rusert2025redherring** (EMNLP 2025, arXiv:2509.20691): "modifying a text to cause the
+  detection model to predict an attack, while keeping the classifier correct." That is
+  structurally our false-alarm move, in text, published. Distinguished on victim (an
+  adversarial-ATTACK detector, a binary classifier) versus ours (a sampling-based
+  hallucination detector scoring an entropy over meaning-clusters), and on our requiring a
+  certified equivalence gate where they perturb text freely.
+- **khanmohammadi2026answerpreserving** (arXiv:2608.06571, submitted 2026-08-06 — SIX DAYS
+  before we found it): bidirectional manipulation of deployed confidence channels under
+  answer preservation, with an explicit inflation direction and a random-perturbation
+  control. Verified NOT to touch semantic entropy or any sampling-based uncertainty; attacks
+  vision-language models via pixels, hidden states and token probabilities. Concurrent, not
+  a scoop, but close enough that omitting it would look like inattention.
+
+**CONSEQUENCE — the novelty is now narrow, and stated as such.** I had been treating the
+false-alarm direction as the paper's most defensible contribution. It is a named, defended
+family (calibration attacks; RedHerring; the concurrent work above). Rewritten in Related
+Work and Intro contribution (5): we claim neither the direction nor the paraphrase-search
+primitive, only the combination aimed at a SAMPLING-BASED detector, where the manipulated
+quantity is an entropy over meaning-clustered samples rather than a classifier output and
+semantic invariance must be CERTIFIED rather than granted by an l_p ball.
+
+**Also flagged, not yet actioned (%TODO):** SHADE (arXiv:2604.19162) may be a sharper
+neighbour than mccabe2025alphabet for the estimator-bias strand; MatchedCtrl
+(arXiv:2608.01207) is described as a structural twin of the budget-matched control;
+Calibration Attacks (TMLR) and ConfSmooth (NLDL 2026) belong in the inflation family; PAA
+(arXiv:2601.06884) and DEPO (arXiv:2606.00392) in the paraphrase-search primitive. Verify
+each before citing — this sweep's unverified specifics have a poor track record.
+
+**Recommendation carried forward:** the residual risk is concentrated in NeurIPS 2026 main
+and the missing ARR cycles, neither of which can be searched. That argues for finishing
+rather than for more searching.
+
+---
