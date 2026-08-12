@@ -1,97 +1,125 @@
-# START HERE — current state, 2026-08-07
+# START HERE — current state, 2026-08-12 (late)
 
-Supersedes every earlier version of this file. Two of its previous headline conclusions
-were overturned; if you are reading a cached copy that says the ceiling makes the
-false-alarm analysis impossible, or that conservative tie-breaking is the primary rule,
-that copy is wrong.
+Supersedes every earlier version. If you are reading a copy dated 2026-08-07 or earlier, it
+carries the superseded `_def` ceiling numbers and predates the scoop concession; discard it.
 
-## Where the project actually stands
+**34 days to the 2026-09-15 arXiv target.** 149 tests pass, 24 citations resolve.
 
-**Findings that hold (verified, arithmetic independently re-derived from raw data):**
+---
 
-1. **The FA attack saturates the metric.** Semantic entropy is capped at log(N) = 2.3026
-   at N=10. **39/80 attacked FA targets finish exactly there.** 8/80 baselines already sit
-   at the cap and can never move (attack move exactly 0.000, zero successes). *Corrected
-   denominators:* 49% is the TOTAL at-ceiling rate; **attack-induced saturation is 31/80 =
-   38.75%**. The "66%/83% headroom consumed" figure was computed on n=72, not 80; on the 41
-   uncensored targets it is **39.9% mean / 38.6% median**.
-   corr(headroom, move) = **+0.70**, and it holds *within* the uncensored subset (+0.67), so
-   it is not a censoring artifact. → `results/ceiling_saturation_finding.md`
-2. **Winner's curse — COMPLETE at n=60.** Re-scoring the selected paraphrase on a fresh
-   seed: **+0.698 → +0.315 nats, 45% retention**, shrinkage **−0.383 [−0.529, −0.234]**.
-   The CI excludes zero, so the inflation is *proven*: the reported effect is ~2.2× what
-   survives independent re-measurement. 36/60 keep a positive move (r = +0.46), so real
-   signal remains. → `results/winners_curse_partial.md`
-3. **The detector has little dynamic range** — but the numbers in that write-up are
-   OVERSTATED and being fixed (see Owed). What survives: 10% of clean correct answers sit
-   at the cap, 26% in the top decile, the estimator takes 22 distinct values over 97
-   targets. → `results/dynamic_range_finding.md`
+## What this paper is now
 
-**Overturned — do not cite:** the N=20 verdict and the "zero power / FA not identifiable"
-conclusion. Both were artifacts of the conservative tie rule, not of the ceiling
-(`results/CORRECTIONS_2026-08-02.md`, critique_log 25–26). The N=20 *measurement* stands
-(headroom gain only +0.11 median); the *inference* from it does not.
+Not "we broke semantic entropy." It is a **measurement-validity paper about semantic
+entropy**, with a paraphrase attack as the case study that exercises the protocol. That
+reframe is deliberate and load-bearing: it means a null attack result does not kill the
+paper, because the measurement findings stand either way.
 
-## The statistic (settled 2026-08-04, critique_log 26)
+**Novelty is narrow, and stated as such.** The false-alarm/inflation direction is an
+established family (`rusert2025redherring` EMNLP 2025; `khanmohammadi2026answerpreserving`,
+which was six days old when we found it). Constrained paraphrase search is a standard
+primitive (`kaneko2026paa`, `liang2025seca`). We claim neither. What we claim is what a
+sampling-based victim forces on the *evaluation* — see contribution (5).
 
-**Randomized (exchangeable) tie-breaking is the claim statistic.** Simulation at full
-ceiling saturation: strict H0 level **0.995** (broken), conservative power **0.05** (dead),
-randomized level 0.093 with power **0.71 @2×**. Strict and conservative are reported as
-diagnostics only; disagreement between them signals that saturation, not attack strength,
-is driving the comparison. → `results/tie_rule_showdown.md`
+---
 
-Why it works, and why I got it wrong twice: the ceiling pins the max's **value** under both
-hypotheses, but the signal is the **multiplicity at the max** — a stronger attack lands more
-candidates on the ceiling, shrinking each tied benign draw's `1/(b+1)` credit.
+## Findings that hold
 
-**`b` must be MEASURED.** Estimating it from benign data assumes H0 and erases the signal.
-It was previously *unrecordable* (the optimiser filtered ties out before the feasibility
-gate); now fixed and persisted as `n_feasible_at_best`. `null_control.py` prints a bold
-warning if it runs on a campaign lacking it.
+1. **Ceiling saturation.** SE is capped at ln(10) = 2.3026 at N=10.
+   **From the definitive `_defb` FA cell (n=80, complete):**
+   - baseline already at ceiling: **8/80 = 10%**
+   - at ceiling after attack: **42/80 = 52.5%**
+   - attack-induced: **34/80 = 42.5%**
+   - baseline in top tenth of range: **21/80 = 26.2%**
+   - distinct baseline entropy values: **22**
 
-## Pre-committed design (critique_log 26a — fixed before any data)
+   The superseded `_def` figures were 39/80, 31/80 = 38.75%. **The three clean-baseline
+   statistics are IDENTICAL across both runs** — the ceiling/granularity finding does not
+   depend on the attack instrumentation, which is the robustness check that matters.
+   → `results/ceiling_saturation_finding.md` (bannered with both columns)
 
-> **N = 10 samples, m = 50 benign paraphrases/target, n ≥ 80 targets, randomized ties,
-> LLM-judge as the FA adjudicator.** Power 0.84 @2×, 0.99 @3×. m=50 over the cheaper m=30
-> because the winner's-curse result says the true effect is modest. If compute forces a
-> smaller m, report the shortfall — do not re-choose m after seeing results.
+2. **Winner's curse — complete at n=60.** +0.698 → +0.315 nats on re-scoring.
+   Shrinkage **−0.383 [−0.529, −0.234]**, CI excludes zero. Retention **45% [25%, 65%]**.
+   Keep the two statements apart: *that* there is inflation is established; *how much* is
+   not. 36/60 keep a positive move, r = +0.46. → `results/winners_curse_partial.md`
+
+3. **Non-relaxability.** Raising N does not buy range because the baseline rises with the
+   cap (n=15 pilot at N=20: 20% still pinned, mean move essentially unchanged). Discreteness
+   alone is `sun2026granularity`, already in print — **non-relaxability is the part that is
+   ours.** → `results/n20_verdict.md` (read its correction banner first)
+
+4. **Judge.** Deployed symmetric config: hard-neg **0.930 [0.900, 0.957] n=300**, positives
+   0.650 [0.593, 0.703], e5 near-chance at 0.51. `results/judge_validation.md` says
+   explicitly: *"this number is the DEPLOYED config (symmetric) — cite THIS one."*
+   **0.884 / 0.700 are the SUPERSEDED ASYMMETRIC run.** A critic gate flagged 0.93 as drift
+   on 2026-08-12; that ruling was wrong and was overruled. Do not "fix" it back.
+
+**Overturned — do not cite:** the N=20 verdict's original conclusion, "zero power / FA not
+identifiable", and the class-separation-vs-noise claim (that used the quarantined pool).
+
+---
+
+## THE TWO POPULATIONS — the project's most-repeated error
+
+| | fair pool | attacked pool |
+|---|---|---|
+| composition | 200 correct + 200 hallucinating | 97 targets = 80 correct + 17 wrong |
+| AUROC | **0.704** [0.653, 0.753] | 0.579 |
+| separation | 0.463 nats, d ≈ 0.76 | 0.184 nats, d = 0.28 — **QUARANTINED** |
+| carries | claims about "the detector" | ceiling + granularity statistics |
+
+This error has been found at **six** sites. Sites 1–3 were fixed manually; site 4
+(Conclusion, "on the same pool") and site 5 (Discussion, by adjacency) were found by a
+44-agent sweep; **site 6 was found by the automated linter, in text written the same hour.**
+
+**`scripts/check_population_labels.py` now runs in the test suite.** It anchors on NUMBERS,
+never phrases — a manual grep for "fair pool" missed `conclusion.tex` because the source
+reads `\emph{fair} pool`. Markup and math delimiters are stripped before matching.
+
+---
 
 ## Running now
 
-Fresh **`_defb`** campaign (both cells re-run under the instrumented optimiser, ~28 GPU-h),
-chained into the **definitive null control** (m=50, ~67 GPU-h). ~95h total, all per-target
-checkpointed. Resume either with the identical command.
+```
+recompute_fair.py --only se_false_alarm,se_hide --n 80 --tag _defb
+  -> null_control.py --tag _defb --K 50 --n_seeds 3 --judge_batched --judge_batch_size 6
+```
 
-`_defb` exists because `_def` is unusable for the claim statistic: its FA cell ran entirely
-pre-instrumentation, and its hide cell is *mixed* (targets 1–17 old code, 18–55 new). `_def`
-is retained for comparison.
+- **FA cell: 80/80 COMPLETE.** Hide cell: in progress. Null control: not started (~67 GPU-h).
+- Per-target cache at `~/.cache/se-research/samples/attacks/wk9_defb/` **inside WSL, not in
+  the repo** — repo-scoped searches will find nothing and it is not evidence of failure.
+- Fully resumable: `recompute_fair.py` skips completed qids. Killing it costs one target.
+- **`recompute_fair.py` writes its report only at the very end** (single `write_text`). Watch
+  the per-target JSONL for progress, not `results/`.
 
-## Owed
+---
 
-- **Fix the overstated dynamic-range claims** (C3/C4/C5): d=0.28 implies AUROC 0.579, not
-  0.704 — that reconciliation is withdrawn; the +0.184 separation is NOT significant
-  (p=0.296); "2.8× the detector's signal" is ~2.1× censoring-corrected with a CI spanning
-  zero — honestly **one** class separation, not three.
-- Judge validation on **messy real sampled pairs** (current 0.93 is on clean gold aliases).
-- **Differential over-splitting check** (attack vs benign cluster counts).
-- **Human equivalence audit** (harness built: `prepare_equivalence_audit.py`).
-- **Quantify how often BENIGN paraphrases reach the ceiling** — if often, the sharpest
-  honest claim is that inducing a false alarm needs no adversarial optimisation at all.
-- **Exchangeability check** for the test's null, on the cheap NLI arm at many targets.
-- Rebuild the **flip test's** null (currently quarantined, H0 level 0.35–0.81, Jensen bias).
-- **Two-hour scoop de-risk**: OpenReview/ARR sweep + full-text grep of four papers for the
-  log N bound (the (C) novelty is a claim of absence).
+## Owed, in priority order
 
-## Framing (critic-approved, scoop-checked)
+1. **Task #24 — judge conditions (ii) and (iii)**, which `judge_validation.md` itself lists
+   as unmet "before the paper cites it as sole adjudicator": validation on messy real
+   sampled pairs (current 0.93 is clean gold aliases), and a differential-over-splitting
+   check (attack vs benign cluster counts must not diverge). **Needs GPU.** The Abstract is
+   scoped for now, not closed.
+2. **Task #27 — the definitive null control.** This is the gate on the attack verdict.
+3. **Table 1 fill-in.** Caption already names the population; attach n per row as written.
+4. **Human equivalence audit** — harness exists (`prepare_equivalence_audit.py`), unrun.
+5. **Unverified citations**, deliberately out of the bib: Calibration Attacks (TMLR),
+   ConfSmooth (NLDL 2026), DEPO (2606.00392). Verify before citing.
+6. Regenerate `fair_recompute_report.md` from `_defb` when the matrix finishes.
 
-FA-led survives, reframed: not "we attack FA, here is the effect size" but "**FA is where
-the detector has no headroom**." The scoop check confirmed nobody attacks a hallucination
-detector to manufacture false positives — that direction is the most defensible novelty.
-But the protocol and winner's-curse contributions are **partially scooped** (Chouldechova
-et al. NeurIPS 2025; Best-of-N Jailbreaking §5.4) and must be presented as imported hygiene
-applied to a stochastic detector score, with the numbers as the deliverable.
-→ `docs/paper_review_punchlist.md`, and the scoop memo.
+---
 
-## Reference
-`docs/critique_log.md` 21–26a — every ruling and pre-commitment, including 23a and 26a where
-bars were tightened *before* the data. 138 tests passing.
+## Process rules, learned the hard way
+
+- **Check every gate ruling against the committed artifact before applying it.** The critic
+  was wrong once (the judge number) and applying it on authority would have shipped an error.
+- **Sweep on numbers, not phrases.** LaTeX markup defeats phrase matching.
+- **Verify agent claims yourself.** A literature sweep called `zheng2026matchedctrl` a
+  structural twin of our budget-matched control; reading it showed it is a format-matched
+  control for VLM test-time scaling. Every bib `annote` now records who verified what, when.
+- **Do not assert run state — read it.** Both directions have burned us in one session:
+  a stale "FA 58/80" reported to the user, and a false "nothing has been written in 9 hours"
+  that was just a repo-scoped search missing the WSL cache.
+- **Unmeasured claims are the worst failure mode.** The Abstract asserted that benign
+  rephrasing reaches the ceiling comparably to the attack. Never measured — and
+  `critique_log` 826/1126 had *pre-committed* not to say it until it was.
