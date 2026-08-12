@@ -56,9 +56,14 @@ maximum outranks it with probability $1/(b{+}1)$, where $b$ is the number of att
 candidates also achieving that maximum. Simulation shows why the alternatives are
 inadmissible. At full saturation ($q{=}0.05$, $m{=}30$), counting ties strictly gives a null
 rejection rate of $0.995$ and counting them against the attack gives power $0.05$ at a
-two-fold effect, while the randomised rule retains power $0.71$ there at level $0.093$. At
-the pre-registered $m{=}50$, under the empirical $n{=}80$ headroom distribution, the
-randomised rule reaches power $0.84$ at level $0.068$. Both inadmissible rules are
+two-fold effect, while the randomised rule retains power $0.51$ there at level $0.022$. At
+the pre-registered $m{=}50$, under the empirical $n{=}80$ headroom distribution, it reaches
+power $0.77$ at level $0.053$. We report the operating characteristics of the test
+\emph{as deployed}, against its analytic null. Simulation studies that instead calibrate a
+critical value from the same draws they evaluate report $0.71$ and $0.84$ for these two
+cells; that is an oracle upper bound, not the shipped test, and the gap
+($0.06$--$0.20$ in power) is the price of using a null that does not see the data. Both
+inadmissible rules are
 reported as diagnostics: their disagreement is a direct indicator that ceiling saturation,
 rather than attack strength, is driving a comparison. Note that $b$ must be \emph{measured}
 rather than estimated, since it is precisely where attack strength appears once the ceiling
@@ -104,7 +109,11 @@ exceedance test rejects at the $5\%$ level in the direction of the attack. That 
 fixed in advance at a simulated power of $0.84$ against a two-fold effect and $0.99$ against
 a three-fold one, chosen over a cheaper $m{=}30$ (power $0.67$) because our own
 selection-on-noise measurement indicates the true effect is modest and the design must be
-able to see a small one. If the test does not reject, (a) is not claimed, and the
+able to see a small one. We disclose that those pre-registration figures were the
+oracle-calibrated ones; the deployed analytic-null test is less powerful ($0.77$ at
+$m{=}50$, $0.51$ at $m{=}30$). The ordering that drove the choice is unchanged and we do not
+re-choose $m$ after the fact, but the design is weaker than the number we picked it on, and
+a non-rejection must be read against $0.77$ rather than $0.84$. If the test does not reject, (a) is not claimed, and the
 NLI/exact-match bracket together with the judge's point estimate is reported as the honest
 bounded result.
 

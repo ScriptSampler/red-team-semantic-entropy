@@ -231,6 +231,19 @@ def benign_equivalent_budget(attack_move: float, benign_values, *, max_budget: i
     return None
 
 
+def _clamp_p(p) -> float:
+    """Clamp a p-value to [0,1] WITHOUT laundering NaN into 0.0.
+
+    `max(0.0, float("nan"))` returns 0.0 in Python, so the obvious clamp turns a
+    degenerate/undefined computation into MAXIMUM significance. That is the silent
+    false-positive class that already cost this project once (critique_log 28), so
+    NaN propagates as NaN and the caller must deal with it.
+    """
+    p = float(p)
+    if p != p:            # NaN
+        return float("nan")
+    return min(1.0, max(0.0, p))
+
 def flip_test_conditional(attack_crossed, attack_n, benign_crossed, benign_n) -> dict:
     """EXACT stratified conditional test on operating-point crossings — censoring-immune
     and estimation-free. This is the correct replacement for `flip_test` below, whose null
@@ -253,9 +266,26 @@ def flip_test_conditional(attack_crossed, attack_n, benign_crossed, benign_n) ->
     only the selected paraphrase. Evidence for the attack is MORE attack crossings than the
     exchangeable null predicts, so the p-value is P(S >= observed)."""
     from scipy.stats import hypergeom
-    rows = [(int(a), int(na), int(k), int(m))
-            for a, na, k, m in zip(attack_crossed, attack_n, benign_crossed, benign_n)
-            if int(na) > 0 and int(m) > 0]
+    # Length mismatch used to truncate SILENTLY via zip (3 attack values against 1 benign
+    # list would quietly become n=1). Fail loudly instead.
+    lens = {len(attack_crossed), len(attack_n), len(benign_crossed), len(benign_n)}
+    if len(lens) > 1:
+        raise ValueError(
+            f"flip_test_conditional: arm lengths disagree {sorted(lens)}; zip would have "
+            f"truncated to the shortest and silently shrunk n_targets.")
+    rows = []
+    for a, na, k, m in zip(attack_crossed, attack_n, benign_crossed, benign_n):
+        a, na, k, m = int(a), int(na), int(k), int(m)
+        # A count of crossings cannot exceed its arm size. Left unchecked, such a row makes
+        # the hypergeometric support empty, the stratum is skipped while its count stays in
+        # `obs`, and the p-value collapses to 0.0 -- maximum significance from impossible
+        # input. That is the silent-false-positive class of critique_log 28.
+        if not (0 <= a <= na) or not (0 <= k <= m):
+            raise ValueError(
+                f"flip_test_conditional: impossible 2x2 row (a={a}, n_attack={na}, "
+                f"k={k}, n_benign={m}); crossings cannot exceed the arm size.")
+        if na > 0 and m > 0:
+            rows.append((a, na, k, m))
     if not rows:
         return {"n_targets": 0, "observed": 0, "expected": float("nan"),
                 "p_value": float("nan")}
@@ -283,7 +313,7 @@ def flip_test_conditional(attack_crossed, attack_n, benign_crossed, benign_n) ->
         "n_targets": len(rows),
         "observed": obs,
         "expected": exp,
-        "p_value": min(1.0, max(0.0, p_ge)),
+        "p_value": _clamp_p(p_ge),
         "attack_crossing_rate": obs / max(1, sum(na for _, na, _, _ in rows)),
         "benign_crossing_rate": sum(k for _, _, k, _ in rows) / max(1, sum(m for _, _, _, m in rows)),
     }
@@ -547,7 +577,7 @@ def exceedance_test(counts, n_attack_candidates: int) -> dict:
         "n_targets": len(counts),
         "observed": obs,
         "expected": float(exp),
-        "p_value": min(1.0, max(0.0, p_le)),
+        "p_value": _clamp_p(p_le),
         "n_eff": n_eff,
         "p_attack_beats_all_per_target": N / (N + m_bar),
     }

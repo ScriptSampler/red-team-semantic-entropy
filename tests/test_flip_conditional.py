@@ -61,4 +61,26 @@ def test_ceiling_cannot_censor_a_binary_crossing():
 
 def test_degenerate_inputs():
     assert flip_test_conditional([], [], [], [])["n_targets"] == 0
-    assert flip_test_conditional([5], [0], [1], [10])["n_targets"] == 0   # zero-size arm dropped
+    # A target with no attack candidates carries no information and is dropped.
+    assert flip_test_conditional([0], [0], [1], [10])["n_targets"] == 0
+
+
+def test_impossible_rows_raise_instead_of_returning_p_zero():
+    """Counts that exceed their arm size are corrupt, not degenerate.
+
+    This case used to be dropped silently. Dropping a stratum's distribution while its
+    count stays in the observed total collapses the p-value to 0.0 -- maximum significance
+    manufactured from impossible input, which is the silent-false-positive class that
+    already cost this project once (critique_log 28). It now raises."""
+    with pytest.raises(ValueError, match="impossible 2x2 row"):
+        flip_test_conditional([5], [0], [1], [10])      # 5 crossings out of 0 candidates
+    with pytest.raises(ValueError, match="impossible 2x2 row"):
+        flip_test_conditional([25], [20], [0], [30])    # a > n_attack
+    with pytest.raises(ValueError, match="impossible 2x2 row"):
+        flip_test_conditional([5], [20], [40], [30])    # k > n_benign
+
+
+def test_length_mismatch_raises_rather_than_truncating():
+    """zip() silently truncated to the shortest arm, quietly shrinking n_targets."""
+    with pytest.raises(ValueError, match="arm lengths disagree"):
+        flip_test_conditional([5, 5, 5], [20, 20, 20], [0], [30])

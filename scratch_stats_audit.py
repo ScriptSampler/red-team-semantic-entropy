@@ -744,6 +744,119 @@ def part_h():
                   f"{row[2]:>10.3f}{row[3]:>10.3f}")
 
 
+# ======================================================================================
+@part("I")
+def part_i():
+    """Hunt for an anti-conservative regime: median-p at small nt, estimated b,
+    and cross-target dependence."""
+    print("=" * 86)
+    print("PART I — adversarial search for a level violation")
+    print("=" * 86)
+    verify_fast_path()
+    N = 181
+
+    # I1: median-p across a wide grid, looking for level > 0.05
+    print("\n[I1] median-p (101 seeds) level sweep — can it EVER exceed nominal 0.05?")
+    print(f"     {'nt':>5}{'m':>5}{'q':>7} | {'single':>8}{'median-p':>10}"
+          f"{'mean-p':>8} | {'minp':>7}")
+    worst = (0.0, None)
+    for nt in (20, 40, 80):
+        for m in (30, 80):
+            for q in (0.002, 0.01, 0.05, 0.2, 0.5):
+                r = np.random.default_rng(71)
+                tr = 2000
+                p1 = np.empty(tr); pm = np.empty(tr); pa = np.empty(tr)
+                for i in range(0, tr, 40):
+                    n = min(40, tr - i)
+                    _, b, s, t = gen_targets(q, m, n * nt, N, 1.0, r)
+                    cred = np.stack([credit_binomial(t, b, r) for _ in range(101)])
+                    Sall = (s[None, :] + cred).reshape(101, n, nt).sum(axis=2)
+                    p1[i:i + n] = fast_p(Sall[0], m, nt, N)
+                    pm[i:i + n] = fast_p(np.rint(np.median(Sall, 0)).astype(int), m, nt, N)
+                    pa[i:i + n] = fast_p(np.rint(Sall.mean(0)).astype(int), m, nt, N)
+                l1 = float((p1 <= .05).mean()); lm = float((pm <= .05).mean())
+                la = float((pa <= .05).mean())
+                if lm > worst[0]:
+                    worst = (lm, (nt, m, q))
+                print(f"     {nt:>5}{m:>5}{q:>7.3f} | {l1:>8.4f}{lm:>10.4f}{la:>8.4f}"
+                      f" | {float(fast_p(0,m,nt,N)):>7.4f}")
+    print(f"     worst median-p level over the grid: {worst[0]:.4f} at (nt,m,q)={worst[1]}")
+
+    # I2: can b be estimated from benign data instead of measured?
+    print("\n[I2] 'b must be MEASURED' — power when b is instead estimated under H0 from the")
+    print("     benign saturation rate (b_hat = 1 + (N-1)*q_hat, q_hat = benign atom rate)")
+    nt = 80
+    print(f"     {'q':>7}{'m':>5}{'mult':>6} | {'measured b':>11}{'estimated b':>12}"
+          f" | {'mean true b':>12}{'mean b_hat':>11}")
+    for q in (0.01, 0.05):
+        for m in (30, 50):
+            for mult in (1.0, 2.0, 5.0):
+                res = {}
+                tb, thb = [], []
+                for tag in ("meas", "est"):
+                    r = np.random.default_rng(81)
+                    tr = 3000
+                    S = np.empty(tr, dtype=int)
+                    for i in range(0, tr, 100):
+                        n = min(100, tr - i)
+                        n_att = int(round(N * mult))
+                        at_atom = r.random((n * nt, n_att)) < q
+                        att = np.where(at_atom, 1.0, r.random((n * nt, n_att)))
+                        A = att.max(axis=1)
+                        sat = A >= 1.0
+                        b_true = np.maximum(np.where(sat, at_atom.sum(1), 1), 1)
+                        bn_atom = r.random((n * nt, m)) < q
+                        ben = np.where(bn_atom, 1.0, r.random((n * nt, m)))
+                        s_ = (ben > A[:, None]).sum(1)
+                        t_ = (ben == A[:, None]).sum(1)
+                        qhat = bn_atom.mean(1)
+                        b_hat = np.maximum(1, np.rint(1 + (N - 1) * qhat).astype(int))
+                        bb = b_true if tag == "meas" else b_hat
+                        S[i:i + n] = (s_ + credit_binomial(t_, bb, r)).reshape(n, nt).sum(1)
+                        if tag == "meas" and i == 0:
+                            tb.append(b_true[sat].mean() if sat.any() else 1.0)
+                            thb.append(b_hat.mean())
+                    res[tag] = float((fast_p(S, m, nt, N) <= .05).mean())
+                lab = "level" if mult == 1.0 else "power"
+                print(f"     {q:>7.3f}{m:>5}{mult:>6.1f} | {res['meas']:>11.4f}"
+                      f"{res['est']:>12.4f} | {np.mean(tb):>12.1f}{np.mean(thb):>11.1f}"
+                      f"   ({lab})")
+
+    # I3: cross-target dependence breaks the convolution's independence assumption
+    print("\n[I3] CROSS-TARGET DEPENDENCE — the convolution null assumes independent K_j.")
+    print("     Here the ceiling atom mass q is shared across all targets in a run")
+    print("     (one campaign, one model, one day) instead of fixed.")
+    print(f"     {'nt':>5}{'m':>5} | {'q fixed 0.05':>13}{'q~{.005,.05}':>14}"
+          f"{'q~{.002,.3}':>13}{'q~U(0,.5)':>11}")
+    for nt in (20, 80):
+        for m in (30, 80):
+            cells = []
+            for mode in ("fixed", "two", "two_wide", "unif"):
+                r = np.random.default_rng(91)
+                tr = 4000
+                S = np.empty(tr, dtype=int)
+                for i in range(0, tr, 100):
+                    n = min(100, tr - i)
+                    if mode == "fixed":
+                        qs = np.full(n, 0.05)
+                    elif mode == "two":
+                        qs = np.where(r.random(n) < 0.5, 0.005, 0.05)
+                    elif mode == "two_wide":
+                        qs = np.where(r.random(n) < 0.5, 0.002, 0.30)
+                    else:
+                        qs = r.random(n) * 0.5
+                    tot = np.zeros(n, dtype=int)
+                    for j, qq in enumerate(qs):
+                        _, b, s_, t_ = gen_targets(qq, m, nt, N, 1.0, r)
+                        tot[j] = (s_ + credit_binomial(t_, b, r)).sum()
+                    S[i:i + n] = tot
+                cells.append(float((fast_p(S, m, nt, N) <= .05).mean()))
+            print(f"     {nt:>5}{m:>5} | {cells[0]:>13.4f}{cells[1]:>14.4f}"
+                  f"{cells[2]:>13.4f}{cells[3]:>11.4f}")
+    print("     (q shared within a run makes K_j correlated ACROSS targets; the analytic")
+    print("      null convolves them as independent.)")
+
+
 if __name__ == "__main__":
     for name in (sys.argv[1:] or sorted(PARTS)):
         t0 = time.time()
