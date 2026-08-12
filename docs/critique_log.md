@@ -1224,3 +1224,65 @@ and the missing ARR cycles, neither of which can be searched. That argues for fi
 rather than for more searching.
 
 ---
+
+## 31. 2026-08-12 — re-gate: APPROVE-WITH-NITS, and the critic was wrong once
+
+**I overruled the critic and the overrule was SUSTAINED.** It ruled that the judge accuracy
+had drifted 0.884 -> 0.92 -> 0.93 and demanded reconciliation. `results/judge_validation.md`
+line 1 reads "(symmetric)", line 7 reads 0.930 [0.900, 0.957] (n=300), and line 11 says
+verbatim: "this number is the DEPLOYED config (symmetric) — cite THIS one, not a mixed
+sym/asym pair." The paper matches exactly, positives 0.65 [0.59, 0.70] included. Applying the
+fix would have reverted the paper to the superseded ASYMMETRIC number — i.e. it would have
+*created* the drift it warned of. The critic's own diagnosis of its error: it had required the
+re-measurement under the deployed config in the B3 ruling, I performed it, and it then flagged
+the result of its own requirement, reasoning from a stale read rather than re-opening the file.
+
+**Lesson, and it cuts both ways.** The gate is not an oracle. Every ruling gets checked against
+the committed artifact before it is applied, exactly as the gate checks me. Three of four
+residuals were right and one was wrong; had I applied all four on authority I would have
+shipped an error.
+
+**My own sweep found more than the gate did.** 40 candidates across four error classes, all
+adversarially verified against artifacts: 31 confirmed, 9 refuted. Beyond the gate's four:
+- **An unmeasured claim in the Abstract.** It asserted ordinary rephrasing drives correct
+  answers onto the ceiling comparably to the attack. Never measured. Entry 826 lists it as
+  OWED; entry 1126 pre-commits that the phrase "may not return until the measured
+  benign-saturation rate exists." I wrote that rule and broke it in the Abstract.
+- **FOUR sites** claiming the confirmatory evaluation was reported (gate found one) while
+  Table 1 is entirely placeholders.
+- **Population sites four AND five** (Conclusion explicitly; Discussion by adjacency, inside
+  the paragraph whose whole job is keeping the populations apart).
+- **Fused number provenance** in the tie-rule sentence: 0.995/0.05 are full-saturation m=30;
+  0.84 is empirical-headroom m=50. At full saturation randomized gives 0.71 at level 0.093,
+  not "nominal level, 0.84".
+
+**Contribution (5) had one universal quantifier too many.** "None of the three arises for a
+classifier victim" is false: MC-dropout and ensembles are stochastic, and classifier
+confidence is bounded in [0,1] too. Rewritten on the gate's analysis, reordered 3->1->2:
+(3) SE's score IS an equivalence judgement, so the gate/clusterer confound is structural and
+cannot arise for an l_p ball (model-free, definitional) or for a classifier (whose score is
+not an equivalence relation) — this is the strongest and now leads; (1) selection inflation,
+scoped to the DETERMINISTIC classifiers in the compared work; (2) restated from "bounded" to
+DISCRETE and NON-RELAXABLE, since boundedness is not distinctive — and since discreteness is
+`sun2026granularity` already in print, non-relaxability is the part that is ours.
+
+**The 39% was stale and is now re-derived.** It came from the superseded `wk9_def` FA cell.
+`_defb` completed at 80/80 during this gate, so I recomputed rather than tagging it: the
+attack-induced saturation is **34/80 = 42.5%**, not 31/80 = 38.75%. Critically, the three
+CLEAN-baseline statistics are unchanged (8/80 at ceiling, 21/80 in the top tenth, 22 distinct
+values) — the ceiling/granularity finding does not depend on the attack instrumentation.
+`results/ceiling_saturation_finding.md` bannered with both columns.
+
+**Process fix carried forward, from the gate's own failed grep:** its search for "fair pool"
+missed `conclusion.tex:12` because the source reads `\emph{fair} pool`. LaTeX markup defeats
+phrase matching. **Sweep on NUMBERS (0.704 / 0.184 / 0.579 / 97 / 22), not phrases.** And
+population site six will appear at Table 1 fill-in — attach n and pool to every row as it is
+written, not afterwards.
+
+**Still owed, now explicit:** `judge_validation.md` lists conditions (ii) validation on messy
+real sampled pairs and (iii) a differential-over-splitting check as unmet "before the paper
+cites it as sole adjudicator", while 0.93 headlines the Abstract. Scoped in the Abstract for
+now ("domain-matched gold-alias proxy; validation on messy real sampled answers remains
+owed"); closing them is task #24.
+
+---

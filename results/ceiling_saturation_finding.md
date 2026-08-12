@@ -1,5 +1,24 @@
 # The false-alarm attack saturates the metric's ceiling (2026-08-02)
 
+> **REFRESHED FROM THE DEFINITIVE `_defb` RUN (2026-08-12).** Everything below was computed
+> on the superseded `wk9_def` FA cell. The instrumented `_defb` FA cell is now complete at
+> n=80 and supersedes it. Recomputed:
+>
+> | quantity | `_def` (below) | **`_defb` (definitive)** |
+> |---|---|---|
+> | baseline already at ceiling | 8/80 = 10% | **8/80 = 10%** (unchanged) |
+> | at ceiling AFTER attack (total) | 39/80 = 49% | **42/80 = 52.5%** |
+> | ATTACK-INDUCED saturation | 31/80 = 38.75% | **34/80 = 42.5%** |
+> | baseline in top tenth of range | 21/80 = 26% | **21/80 = 26.2%** (unchanged) |
+> | distinct baseline entropy values | 22 | **22** (unchanged) |
+>
+> The three *clean-baseline* statistics are IDENTICAL under the instrumented optimiser, which
+> is the robustness check that matters: the ceiling/granularity finding does not depend on the
+> attack instrumentation. Only the attack-induced figure moved (38.75% -> 42.5%), as expected
+> since `_defb` changed the candidate filter from `>` to `>=`. The paper now cites the `_defb`
+> numbers. Caught by the critic gate of 4c35975: the Abstract had been carrying the `_def` 39%
+> while `_defb` was mid-flight.
+
 > ⚠ **DENOMINATORS CORRECTED — see `results/CORRECTIONS_2026-08-02.md`.** The 49% is the
 > TOTAL at-ceiling rate; ATTACK-INDUCED saturation is 31/80 = 38.75% (8 targets were
 > already pinned). The "66%/83% of headroom consumed" was computed on n=72, not 80, with

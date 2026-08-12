@@ -32,11 +32,13 @@ break that claim with meaning-preserving paraphrases and found, first, that the 
 very little room in which to be broken. Semantic entropy over $N$ sampled answers is bounded
 above by $\log N$; at the standard $N{=}10$, across the $97$ targets of our attack campaign
 scored clean, a tenth of \emph{correct} answers already sit exactly at that ceiling before
-any attack, a quarter sit in the top decile of the scale, and the estimator takes only $22$
-distinct values in all. An optimised paraphrase attack drives a further $39\%$ of correct
-answers onto the ceiling; whether ordinary rephrasing does the same is precisely what a
-budget-matched null control has to settle, and we do not yet claim it. Raising $N$ does not
-help, because the baseline rises with the cap. Second, the controls this measurement needs
+any attack, a quarter sit in the top tenth of the score's range, and the estimator takes only $22$
+distinct values in all. An optimised paraphrase attack drives a further $42\%$ onto the
+ceiling, taking the total there past half; whether ordinary rephrasing does the same is
+precisely what a budget-matched null control has to settle, and we do not yet claim it.
+Raising $N$ does not help, because the baseline rises with the cap---on the $15$ saturated
+targets we re-scored at $N{=}20$, lifting the cap by $0.693$ nats left $20\%$ still pinned
+and the mean attack move essentially unchanged. Second, the controls this measurement needs
 are stronger than the random-perturbation baseline that is standard in this literature. The
 attack reports a maximum over $\sim$$181$ candidates, and re-scoring each
 \emph{selected} paraphrase on an independent sample shows the effect shrinks
@@ -48,7 +50,8 @@ the question answerable---score-independent target selection, an answer-invarian
 criterion, and an exceedance test that prices the attacker's search budget into the null
 analytically, with tie handling that survives the ceiling---together with the independent
 equivalence oracle the attribution requires, an LLM-judge that clears the adversarial
-discrimination on which sentence embedders are near-chance ($0.93$ vs.\ $0.51$). The
+discrimination on which sentence embedders are near-chance ($0.93$ vs.\ $0.51$ on a
+domain-matched gold-alias proxy; validation on messy real sampled answers remains owed). The
 confirmatory evaluation at the pre-registered scale is under way under this protocol. The
 broader point is that a detector need not be badly calibrated to be fragile: on a separate
 score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) this one separates
