@@ -88,7 +88,9 @@ hard equivalence constraint and target the sampling-and-NLI-clustering pipeline 
 different attack surface --- in both directions, on TriviaQA/SQuAD. A weaker neighbour prompts
 LLMs to fool generic activation probes~\citep{blandfort2025redteamprobes}, but
 not in the hallucination-detection setting. Each ingredient of our attack is by now standard: constrained search over meaning-preserving
-paraphrases is an established primitive, and directional manipulation of a confidence signal
+paraphrases is an established primitive---\citet{kaneko2026paa} run essentially our optimiser
+loop, searching paraphrases that raise an LLM reviewer's score under semantic-equivalence and
+naturalness constraints---and directional manipulation of a confidence signal
 under prediction-preservation is an established family. What does not carry over is the
 \emph{evaluation}: a victim whose score is a stochastic, ceiling-bounded estimate produced by
 the same model that certifies the attacker's constraint invalidates the standard protocol in
@@ -103,8 +105,13 @@ treats the detector's reliance on that same NLI model as the central confound.
 A separate line studies semantic entropy as a \emph{statistic} rather than as a detector.
 \citet{mccabe2025alphabet} show that the discrete plug-in estimator underestimates the true
 semantic entropy at practical sample sizes, because the semantic alphabet is under-covered,
-and correct it upward. We characterise the same estimator's opposite tail---it cannot exceed
-$\log N$, and in deployment it piles up there. The two are complementary rather than
+and correct it upward; \citet{pan2026shade} pursue the same correction with a
+coverage-adjusted estimator fusing Good--Turing coverage with a spectral term over an
+entailment-weighted response graph. We characterise the same estimator's opposite tail---it
+cannot exceed $\log N$, and in deployment it piles up there. That two groups now correct the
+estimator upward is itself evidence for our reading rather than against it: a remedy at the
+level of the \emph{estimator} concedes that the deployed plug-in statistic is the limiting
+factor, which is precisely our claim. The two are complementary rather than
 competing, and they coincide in the high-entropy regime: their coverage argument applies at
 any level, while a statistic capped at $\log N$ must understate whenever the quantity it
 estimates exceeds that cap, so where the cap binds it is itself one source of the
@@ -127,7 +134,11 @@ estimate, and success criteria that drift from the construct --- and so are the 
 remedies: comparing an adversarial perturbation against a random one of equivalent
 magnitude is established practice in vision robustness
 evaluation~\citep{rossolini2026worstcase}, and plain-paraphrase baselines are routine in
-AI-text-detector evasion~\citep{cheng2025advparaphrasing}. We claim neither as new. What we
+AI-text-detector evasion~\citep{cheng2025advparaphrasing}. We claim neither as new. That an
+uncontrolled baseline can manufacture an entire effect is not hypothetical:
+\citet{zheng2026matchedctrl} report an apparent gain of up to $31.8$ points from a
+perturbation-based selection rule that disappears once a format- and budget-matched control
+is introduced, the control tracking or exceeding the method on every benchmark. What we
 are not aware of, for a paraphrase attack on a sampling-based hallucination detector, is
 the \emph{joint} application of score-independent selection, answer-invariance checking,
 and a noise floor that is \emph{budget-matched} to the attacker's own search --- the

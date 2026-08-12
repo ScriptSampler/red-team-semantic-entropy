@@ -190,3 +190,27 @@
   year    = {2025},
   annote    = {Prompts to fool safety/behavior activation probes; not SE/hallucination. Weak overlap. Title+authors verified on arXiv 2026-07-10.}
 }
+
+@article{pan2026shade,
+  title   = {Mind the Unseen Mass: Unmasking LLM Hallucinations via Soft-Hybrid Alphabet Estimation},
+  author  = {Pan, Hongxing and Guo, Yingying and Kuang, Wenqing and Lu, Jiashi},
+  journal = {arXiv preprint arXiv:2604.19162},
+  year    = {2026},
+  annote  = {Title/authors/date/abstract VERIFIED by me on arXiv 2026-08-12 (submitted 21 Apr 2026). Same strand as mccabe2025alphabet and a more recent instance: "frequency-based estimators tend to undercount rare semantic modes when the sample size is small", corrected via Good-Turing coverage plus a heat-kernel trace of an entailment-weighted graph, yielding a "coverage-adjusted semantic entropy score". TWO uses for us. (a) It reinforces contribution (1)'s reconciliation: an estimator capped at log N must understate, and here is a second group correcting that understatement. (b) It is a concrete instance of the rebuttal our Discussion already anticipates -- "use an estimator with more range" CONCEDES the measurement point rather than refuting it; someone has now built that estimator. VERIFIED NOT to discuss discreteness or granularity (few distinct attainable values), so it does NOT scoop our distinct-value / non-relaxability strand, which remains distinct from both this and sun2026granularity.}
+}
+
+@article{kaneko2026paa,
+  title   = {Paraphrasing Adversarial Attack on LLM-as-a-Reviewer},
+  author  = {Kaneko, Masahiro},
+  journal = {arXiv preprint arXiv:2601.06884},
+  year    = {2026},
+  annote  = {Title/author/date/abstract VERIFIED by me on arXiv 2026-08-12 (submitted 11 Jan 2026). Cited ONLY to support our concession that constrained paraphrase search is a standard primitive we do not claim: PAA is "a black-box optimization method that searches for paraphrased sequences yielding higher review scores while preserving semantic equivalence and linguistic naturalness", guided by in-context learning over previous paraphrases and their scores -- structurally our optimiser loop, on a different victim. Victim is an LLM peer reviewer; VERIFIED to involve no hallucination detection, semantic entropy, or sampling-based uncertainty. Also note its mitigation finding (paraphrasing submissions partially mitigates) is a distant cousin of our reformulation-averaging defense.}
+}
+
+@article{zheng2026matchedctrl,
+  title   = {It's the Decoding Format, Not the Perturbation: Auditing Consistency-Based Selection for Vision-Language Test-Time Scaling},
+  author  = {Zheng, Puzhuo and Kurban, Hasan},
+  journal = {arXiv preprint arXiv:2608.01207},
+  year    = {2026},
+  annote  = {Title/authors/date/abstract VERIFIED by me on arXiv 2026-08-12 (v1 2 Aug 2026). The literature sweep described this as a structural twin of our budget-matched control; it is NOT. Their MatchedCtrl is a FORMAT-matched control for candidate selection in vision-language test-time scaling ("the same short, no-CoT draws spent on the original image"), not a benign floor for an adversarial search. It is nonetheless a strong independent instance of the methodological point behind our contribution (3): an apparent gain of "up to +31.8 points on TextVQA" vanishes once budget and format are controlled, since "MatchedCtrl tracks or exceeds Pgs within noise on every benchmark". Cite as corroboration that uncontrolled-baseline inflation is a live problem in adjacent literature, NOT as a precedent for the exceedance null itself.}
+}
