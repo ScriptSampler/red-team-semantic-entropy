@@ -16,9 +16,11 @@ the $1.0$ that score-dependent selection manufactures by construction.
 
 \paragraph{Reading the null control.}
 Table~\ref{tab:nullcontrol} places the optimised attack against two null bands---a
-same-question \emph{seed-noise} floor and a \emph{benign-paraphrase} floor of $m$
-NLI-passing non-adversarial rephrasings, with $m$ matched to the attacker's
-$\sim$180-candidate ($\sim$181-evaluation) search budget---under each of four clustering relations. ($m$ is
+same-question \emph{seed-noise} floor and a \emph{benign-paraphrase} floor of $m{=}50$
+NLI-passing non-adversarial rephrasings, whose comparison against the attacker's
+$\sim$180-candidate ($\sim$181-evaluation) search is budget-matched \emph{analytically} by
+the exceedance test below rather than by drawing $m$ equal to
+that budget---under each of four clustering relations. ($m$ is
 distinct from SRE's samples-per-reformulation $K$.) The
 shared-NLI arm is the detector's own clusterer and is the \emph{confounded upper bound}:
 it cannot separate a real change in the answer distribution from the NLI model's own
@@ -37,9 +39,11 @@ comparison against individual benign draws is upward-biased by construction: und
 a max-of-181 sits at $\sim$$99\%$ of an individual-draw distribution, not $50\%$. We
 therefore price the search budget into the null analytically. Under the hypothesis that the
 optimiser carries no signal, a target's $N$ attack candidates and its $m$ benign draws are
-exchangeable, so $F(\text{attack-max}) \sim \mathrm{Beta}(N,1)$ and the number of benign
-draws above the attack's maximum is $K \sim \mathrm{BetaBinomial}(m; 1, N)$, with
-$\mathbb{E}[K] = m/(N{+}1)$. Fewer exceedances than that is evidence for the attack; the
+exchangeable, so $F(\text{attack-max}) \sim \mathrm{Beta}(A,1)$ and the number of benign
+draws above the attack's maximum is $K \sim \mathrm{BetaBinomial}(m; 1, A)$, with
+$\mathbb{E}[K] = m/(A{+}1)$, where $A$ denotes the attacker's candidate count
+($A \approx 181$) and is distinct from the per-question sample budget $N{=}10$ used
+everywhere else. Fewer exceedances than that is evidence for the attack; the
 one-sided $p$-value follows by exact convolution over targets, and the effect size is the
 \emph{effective benign budget} $n_{\mathrm{eff}} = m/\bar{K} - 1$, read as ``the search is
 worth $n_{\mathrm{eff}}$ random paraphrases''.
@@ -49,10 +53,12 @@ Ties are not a technicality here. Semantic entropy is bounded above by $\log N$
 the score has an \emph{atom} where the exchangeability null assumes a continuum. We resolve
 ties by \textbf{randomised (exchangeable) breaking}: a benign draw tied with the attack's
 maximum outranks it with probability $1/(b{+}1)$, where $b$ is the number of attack
-candidates also achieving that maximum. Simulation at full saturation shows why the
-alternatives are inadmissible---counting ties strictly gives a null rejection rate of
-$0.995$, and counting them against the attack gives power $0.05$---while the randomised rule
-holds its nominal level with power $0.84$ at a two-fold effect. Both inadmissible rules are
+candidates also achieving that maximum. Simulation shows why the alternatives are
+inadmissible. At full saturation ($q{=}0.05$, $m{=}30$), counting ties strictly gives a null
+rejection rate of $0.995$ and counting them against the attack gives power $0.05$ at a
+two-fold effect, while the randomised rule retains power $0.71$ there at level $0.093$. At
+the pre-registered $m{=}50$, under the empirical $n{=}80$ headroom distribution, the
+randomised rule reaches power $0.84$ at level $0.068$. Both inadmissible rules are
 reported as diagnostics: their disagreement is a direct indicator that ceiling saturation,
 rather than attack strength, is driving a comparison. Note that $b$ must be \emph{measured}
 rather than estimated, since it is precisely where attack strength appears once the ceiling

@@ -30,13 +30,15 @@ Sampling-based hallucination detectors such as semantic entropy are deployed on 
 that the uncertainty they report is invariant to how a question is phrased. We set out to
 break that claim with meaning-preserving paraphrases and found, first, that the detector has
 very little room in which to be broken. Semantic entropy over $N$ sampled answers is bounded
-above by $\log N$; at the standard $N{=}10$ we find that a tenth of \emph{correct} answers
-already sit exactly at that ceiling before any attack, a quarter sit in the top decile of
-the scale, and the estimator takes only $22$ distinct values across $97$ questions. An
-optimised paraphrase attack drives a further $39\%$ of correct answers onto the ceiling, but
-so does ordinary rephrasing, and raising $N$ does not help because the baseline rises with
-the cap. Second, we show that measuring such an attack honestly is harder than prior work
-assumes. The attack reports a maximum over $\sim$$181$ candidates, and re-scoring each
+above by $\log N$; at the standard $N{=}10$, across the $97$ targets of our attack campaign
+scored clean, a tenth of \emph{correct} answers already sit exactly at that ceiling before
+any attack, a quarter sit in the top decile of the scale, and the estimator takes only $22$
+distinct values in all. An optimised paraphrase attack drives a further $39\%$ of correct
+answers onto the ceiling; whether ordinary rephrasing does the same is precisely what a
+budget-matched null control has to settle, and we do not yet claim it. Raising $N$ does not
+help, because the baseline rises with the cap. Second, the controls this measurement needs
+are stronger than the random-perturbation baseline that is standard in this literature. The
+attack reports a maximum over $\sim$$181$ candidates, and re-scoring each
 \emph{selected} paraphrase on an independent sample shows the effect shrinks
 significantly---by $-0.383$ nats, $95\%$ CI $[-0.529,-0.234]$---with a point retention of
 $45\%$ and a wide interval of $[25\%, 65\%]$: that inflation is present is established,
@@ -46,11 +48,12 @@ the question answerable---score-independent target selection, an answer-invarian
 criterion, and an exceedance test that prices the attacker's search budget into the null
 analytically, with tie handling that survives the ceiling---together with the independent
 equivalence oracle the attribution requires, an LLM-judge that clears the adversarial
-discrimination on which sentence embedders are near-chance ($0.93$ vs.\ $0.51$). We report
-the confirmatory evaluation at the pre-registered scale under this protocol. The broader
-point is that a detector need not be badly calibrated to be fragile: this one separates
-correct from hallucinating answers moderately well overall (AUROC $0.70$ on our
-score-independent pool), yet has so little usable range at the \emph{top} of its scale---the
+discrimination on which sentence embedders are near-chance ($0.93$ vs.\ $0.51$). The
+confirmatory evaluation at the pre-registered scale is under way under this protocol. The
+broader point is that a detector need not be badly calibrated to be fragile: on a separate
+score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) this one separates
+the two moderately well (AUROC $0.70$), yet has so little usable range at the \emph{top} of
+its scale---the
 region a false alarm must reach---that the direction is compromised for reasons that precede
 any adversary.
 \end{abstract}

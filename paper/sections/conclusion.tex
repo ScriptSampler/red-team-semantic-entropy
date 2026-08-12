@@ -5,11 +5,14 @@ Sampling-based hallucination detectors treat semantic uncertainty as a property 
 question, invariant to surface form. We set out to test that assumption adversarially and
 found that the more informative obstacle lay upstream of the adversary: at the sample
 budgets these detectors are actually run at, the top of the score's range---the region a
-false alarm must reach---has very little room in which to be attacked. A tenth of correct
-answers are already at the estimator's maximum, a quarter are within its top decile, and the
-estimator offers only $22$ distinct values across our pool. This is not a claim that the
-detector fails: on the same pool it separates correct from hallucinating answers moderately
-well, at AUROC $0.704$. It is a claim that the region where a false alarm lives is
+false alarm must reach---has very little room in which to be attacked. Across the $97$
+targets of the attack campaign, scored clean, a tenth of correct answers are already at the
+estimator's maximum, a quarter are within its top decile, and the estimator offers only $22$
+distinct values in all. This is not a claim that the detector fails: on the
+score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating)---a different
+population, and the one on which we characterise the detector---it separates correct from
+hallucinating answers moderately well, at AUROC $0.704$ [$0.653$, $0.753$]. It is a claim
+that the region where a false alarm lives is
 compressed to the point where differences there are largely unmeasurable in the detector's
 own units.
 
@@ -21,8 +24,8 @@ effect sizes in its native units are censored on roughly half of attacked target
 null must remain valid when attack and benign candidates tie at the cap. And because the
 detector's clusterer is the same model that certifies our paraphrases as
 meaning-preserving, no single-clusterer measurement can separate a real change in the
-model's answers from that model's own inconsistency. We report the confirmatory evaluation
-under a protocol built to survive all three, and confine claims to what it supports: targets
+model's answers from that model's own inconsistency. The confirmatory evaluation is running
+under a protocol built to survive all three, and we confine claims to what it supports: targets
 chosen without reference to the detector's own scores, success requiring the hallucination
 status to survive the paraphrase, and a null that prices the attacker's search budget in
 rather than comparing a maximum against single draws.

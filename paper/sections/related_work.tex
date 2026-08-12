@@ -65,12 +65,20 @@ Concurrently, \citet{khanmohammadi2026answerpreserving} manipulate deployed conf
 channels bidirectionally under an answer-preservation constraint, including an inflation
 direction, and report the same qualitative collapse of a gated system toward its ungated
 floor. We therefore do not claim the false-alarm direction as a discovery. What we claim is
-its instantiation against a \emph{sampling-based} detector: the manipulated quantity is an
-entropy over meaning-clustered samples rather than a softmax or a learned detector's logit;
-the victim is a hallucination detector rather than an attack detector; the perturbation is
-a question rewrite rather than a pixel budget or a hidden-state intervention; and semantic
-invariance therefore has to be \emph{certified} by an equivalence gate rather than granted
-by an $\ell_p$ ball. Most relevant of all, CORVUS red-teams single-pass hallucination
+its instantiation against a \emph{sampling-based} detector, which differs on two axes that
+carry consequences rather than labels. First, the manipulated quantity is an entropy over
+meaning-clustered samples rather than a softmax or a learned detector's logit: a stochastic
+finite-sample estimate, bounded above by $\log N$, produced by the same NLI model that
+certifies the attacker's constraint. Second, the perturbation is a question rewrite rather
+than a pixel budget or a hidden-state intervention---channels a deployed adversary does not
+possess---so semantic invariance cannot be granted by an $\ell_p$ ball and must instead be
+certified. We accordingly treat the equivalence constraint as an instrument requiring its
+own validation rather than as a definition: we constrain, re-check that answer invariance
+actually held, measure how often the gate nonetheless admitted a non-equivalent rewrite and
+report that as a disclosed lower bound, and validate the oracle making the judgement on an
+adversarial discrimination that disqualified the obvious cheap candidate ($0.51$). An attack
+whose constraint is an $\ell_p$ ball has no analogue of these steps, because there the
+constraint is definitional rather than inferred. Most relevant of all, CORVUS red-teams single-pass hallucination
 detectors and degrades SEP~\citep{corvus2026} --- establishing that SE-\emph{family}
 detectors can be attacked, which we do not claim as our novelty. Our distinction is
 substantive rather than a label: CORVUS perturbs a frozen hidden-state probe
@@ -81,11 +89,13 @@ different attack surface --- in both directions, on TriviaQA/SQuAD. A weaker nei
 LLMs to fool generic activation probes~\citep{blandfort2025redteamprobes}, but
 not in the hallucination-detection setting. Each ingredient of our attack is by now standard: constrained search over meaning-preserving
 paraphrases is an established primitive, and directional manipulation of a confidence signal
-under prediction-preservation is an established family. To our knowledge the combination has
-not been pointed at a \emph{sampling-based} hallucination detector --- one whose score is an
-entropy over meaning-clustered samples rather than a classifier output --- from the input
-side alone (we evaluate the false-alarm direction here and build the hide direction as its
-mirror). The bidirectional-NLI equivalence gate is our design choice for
+under prediction-preservation is an established family. What does not carry over is the
+\emph{evaluation}: a victim whose score is a stochastic, ceiling-bounded estimate produced by
+the same model that certifies the attacker's constraint invalidates the standard protocol in
+three specific ways --- selection on estimator noise, right-censoring at the cap, and
+unattributability under a shared clusterer --- none of which arises for a classifier victim.
+That is where we locate our contribution (we evaluate the false-alarm direction here and
+build the hide direction as its mirror). The bidirectional-NLI equivalence gate is our design choice for
 certifying meaning-preservation, not itself a novelty axis --- indeed our own analysis
 treats the detector's reliance on that same NLI model as the central confound.
 

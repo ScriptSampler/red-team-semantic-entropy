@@ -1179,7 +1179,8 @@ sessions. The campaign resumed from checkpoint and is running.
 The sweep that was supposed to close the anonymity blind spot found its most damaging hit on
 public arXiv instead, and narrowed the claim I had been treating as most defensible.
 
-**No scoop under anonymity — but that is WEAK evidence.** Genuinely searched (abstract-level,
+**No scoop under anonymity — but for the unreachable venues that is NOT weak evidence, it is
+NO evidence.** Genuinely searched (abstract-level,
 via the OpenReview API): ICLR 2026 accepted/rejected/withdrawn, TMLR under-review, ARR 2024-10,
 2025-07, 2025-10, 2026-01, 2026-05, 2026-08, COLM 2024/25 + COLM 2026 workshops, ICML 2026
 workshops, NLDL, plus a full arXiv census for Jul 1 - Aug 12 2026. **Unreachable, so absence

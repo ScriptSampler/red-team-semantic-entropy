@@ -60,8 +60,9 @@ surface single-hop NLI false positives---so the residual fidelity of that one
 gate hop is not assumed away but measured directly (the answer-flip subcategory
 of the evaluation below). The search terminates on a score threshold or an
 iteration budget of $20$ rounds ($1 + 20 \times P \times B \approx 181$ objective
-evaluations per target --- the attacker's search budget, which the benign noise floor of $m$
-random NLI-passing paraphrases must match). We swap SECA's objective (confidence in a wrong
+evaluations per target --- the attacker's search budget, which the benign noise floor of
+$m{=}50$ random NLI-passing paraphrases is matched against analytically, by the exceedance
+test of Section~\ref{sec:experiments}, rather than by setting $m$ equal to it). We swap SECA's objective (confidence in a wrong
 multiple-choice token) for the detector entropy above, and its LLM-judge
 feasibility check for the NLI gate.
 
@@ -91,8 +92,10 @@ $0.923$ nats to the ceiling, while wrongly-answered questions sit at $1.843$, le
 $1.843$ nats to the floor: the false-alarm direction has almost exactly \emph{half} the
 headroom of the hide direction. The consequence is visible in the attacked cells: of the
 $80$ false-alarm targets, $39$ finish \emph{exactly} at the ceiling and $8$ began there (so
-no upward move was ever possible), whereas no hide target reaches the floor---though that
-last comparison is on a partial hide cell and we restate it when that cell completes.
+no upward move was ever possible), whereas none of the $17$ hide targets scored so far
+reaches the floor---though that last comparison is on a hide cell that was truncated
+mid-campaign at $17$ of $80$, and we restate it with its final $n$ when that cell
+completes.
 
 We label the population of every quantity we report, because the two differ materially and
 conflating them is easy: the fair pool gives a clean correct-versus-wrong separation of

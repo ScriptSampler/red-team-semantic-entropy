@@ -28,9 +28,9 @@ question we ask is accordingly: can an attacker who only \emph{rephrases the que
 under a hard semantic-equivalence constraint, move a sampling-based detector's score
 in a chosen direction while the model's answer---and its correctness---stays put?
 
-Answering this question rigorously turns out to require controls that prior
-evaluations do not jointly apply, and once they are applied the picture is more subtle
-than a clean ``we broke it.'' We contribute those controls as a protocol and report
+Answering this question rigorously turns out to require controls that, to our knowledge,
+prior evaluations of this detector family do not jointly apply, and once they are applied
+the picture is more subtle than a clean ``we broke it.'' We contribute those controls as a protocol and report
 what they reveal. Three are load-bearing: (i) targets are selected
 \emph{score-independently}, or the clean detector is evaluated on a pool its own scores
 defined---a circularity that inflates clean AUROC to $1.0$; (ii) an attack counts only
@@ -40,8 +40,8 @@ with the same oracle that labelled the data; and (iii) effect sizes are reported
 finite-sample estimate and an optimiser selecting the extremum over many candidates
 otherwise mistakes sampling variance for success. In a preliminary evaluation the
 optimised attack moves the detector---beating benign paraphrasing as measured by the
-detector's own NLI clusterer, an effect we quantify at scale in
-Section~\ref{sec:experiments}---but that measure is precisely the one that cannot
+detector's own NLI clusterer, an effect the confirmatory run at scale is designed to
+quantify (Section~\ref{sec:experiments})---but that measure is precisely the one that cannot
 separate a change in the model's answer distribution from an inconsistency of the NLI
 model that the detector's clustering and the attack's equivalence gate \emph{share}.
 The independent oracles one would reach for to break this tie---sentence embedders---turn
@@ -49,7 +49,7 @@ out to be near-chance on exactly the word-preserving, meaning-shifted case an at
 produces. On current evidence, then, the attribution is \emph{unresolved but bounded},
 and single-clusterer paraphrase-attack claims on these detectors are not adequately
 supported. We formulate the attack in \emph{both} directions---\emph{hide} designed to
-suppress a wrong answer's score, the under-explored \emph{false-alarm} to inflate a
+suppress a wrong answer's score, \emph{false-alarm} to inflate a
 correct answer's---as the case study that exercises the protocol; only the false-alarm
 direction is evaluated under the null control in this work.
 
@@ -58,9 +58,10 @@ direction is evaluated under the null control in this work.
 whether any attack succeeds. That a plug-in entropy over at most $N$ observed clusters
 cannot exceed $\log N$ is elementary, and we claim no novelty for it; our contribution is
 the measurement of \emph{how tightly that bound binds in deployment}. At the standard
-$N{=}10$ the estimator realises only $22$ distinct values across $97$ questions, a tenth of
-\emph{correct} answers sit exactly at $\ln 10$ before any intervention, and a quarter sit in
-the top decile of the scale. The general argument---that a score's distinct-value count caps
+$N{=}10$, across the $97$ targets of our attack campaign scored clean ($80$ correct, $17$
+wrong---a different and smaller population than the fair pool below), the estimator realises
+only $22$ distinct values, a tenth of \emph{correct} answers sit exactly at $\ln 10$ before
+any intervention, and a quarter sit in the top decile of the scale. The general argument---that a score's distinct-value count caps
 what an operator can do with it, however well it ranks---has been made and named for
 black-box LLM classification~\citep{sun2026granularity}; we instantiate it for a
 sampling-based generative detector, where the granularity limit is imposed by the sample
@@ -75,9 +76,12 @@ $N$~\citep{mccabe2025alphabet}: an estimator that cannot exceed $\log N$ must un
 whenever the underlying semantic entropy is larger.
 (2) \textbf{A measured account of how much of a paraphrase-attack effect is an artefact of
 its own search.} Re-scoring each \emph{selected} paraphrase on an independent sample, we
-find only $45\%$ of the apparent effect survives ($-0.383$ nats, $95\%$ CI
-$[-0.529, -0.234]$). Half of what an uncorrected report would claim is selection on
-sampling noise. That attack success scales with the search budget is
+find only $45\%$ of the apparent effect survives ($95\%$ CI $[25\%, 65\%]$). The two
+statements this supports have very different strengths and we keep them apart: \emph{that}
+the selection-time figure is inflated is established, since the shrinkage is $-0.383$ nats
+with a $95\%$ CI of $[-0.529, -0.234]$ that excludes zero; \emph{how much} is not, since the
+retention interval runs from a quarter to two-thirds. Roughly half of what an uncorrected
+report would claim is selection on sampling noise. That attack success scales with the search budget is
 known~\citep{hughes2024bon}, as is the case that success-rate comparisons need explicit
 measurement validity~\citep{chouldechova2025comparison}; what we add is the measurement for
 a \emph{stochastic detector score}, where the randomness being resampled lives inside the
@@ -94,17 +98,25 @@ detector's NLI model both clusters answers and certifies paraphrase equivalence,
 single-clusterer evaluation cannot separate a real change in the model's answers from that
 model's own inconsistency. Cheap oracles do not resolve it---sentence embedders are
 near-chance on exactly the adversarial case---so we build and validate an LLM-judge that
-clears it ($0.93$ vs.\ $0.51$), and report the confirmatory evaluation under it at the
-pre-registered scale.
+clears it ($0.93$ vs.\ $0.51$); the confirmatory evaluation under it at the pre-registered
+scale is under way.
 (5) \textbf{The attack itself}---bidirectional, NLI-constrained, foregrounding the
 induced-false-positive direction---as the case study that exercises the protocol, and a
 reformulation-averaging defense with an analysis of what it does and does not close. We
 claim neither the direction nor the search primitive as new: inducing a detector false
 positive while the underlying prediction stays correct is an established
 family~\citep{rusert2025redherring, khanmohammadi2026answerpreserving}, and constrained
-paraphrase search is a standard tool~\citep{liang2025seca, liang2026realista}. The
-combination is what has not, to our knowledge, been aimed at a sampling-based detector. Our
-effect-size bracket on the fair, null-controlled pool is reported in
-Section~\ref{sec:experiments}; no effect size enters the body until the definitive
-$n{\geq}80$ run lands under the budget-matched null control, and the small-sample
-machinery pass is treated as pipeline-validation only.
+paraphrase search is a standard tool~\citep{liang2025seca, liang2026realista}. What is not
+inherited is the \emph{evaluation}. Against a classifier victim the detector's output is a
+deterministic function of its input, so an attack either moves it or does not. A
+sampling-based detector's score is a finite-sample estimate, bounded above by $\log N$, and
+computed by the same NLI model that must certify the attacker's constraint---and each of
+those three properties breaks a step of the standard protocol: the estimate's noise makes a
+maximum over candidates inflate (we measure $45\%$ retention), the bound censors effect
+sizes and invalidates any null that mishandles ties at the cap, and the shared model leaves
+the effect unattributable without an independent oracle. None of the three arises for a
+classifier victim. What we claim is therefore what this victim class forces on the
+measurement, not the move itself. No effect size enters the body until the definitive
+$n{\geq}80$ run lands under the budget-matched null control
+(Section~\ref{sec:experiments}); the small-sample machinery pass is treated as
+pipeline-validation only.

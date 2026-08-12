@@ -19,13 +19,17 @@ correlate) is exactly what the independent-clusterer check would establish.
 \paragraph{How much of this is an attack, and how much is the detector?}
 The mechanism above presumes there is room to move the score. At the top of the scale there
 often is not, and that changes what the false-alarm result is a result \emph{about}. We
-should be precise about the scope: on our score-independent pool the detector separates
-correct from hallucinating answers moderately well (AUROC $0.704$ [$0.653$, $0.753$]), so
-this is not a claim that semantic entropy fails as a detector. It is a claim about one
-region of its range. A tenth of correct answers are already at the estimator's maximum
-before anything is done to them, a quarter are within the top decile, and the estimator
-offers only $22$ distinct values in which to express any difference---and it is exactly into
-that compressed region that a false alarm must be pushed.
+should be precise about the scope, and about which population each number comes from: on the
+score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) the detector
+separates the two moderately well (AUROC $0.704$ [$0.653$, $0.753$]), so this is not a claim
+that semantic entropy fails as a detector. It is a claim about one region of its range, and
+the counts that establish it are measured elsewhere---on the $97$ targets of the attack
+campaign, scored clean, before anything is done to them. There, a tenth of the correct
+answers ($8/80$) already sit at the estimator's maximum, a quarter ($21/80$) sit within the
+top decile, and the estimator offers only $22$ distinct values across all $97$ in which to
+express any difference (all $22$ realised by the $80$ correct targets alone, so the count
+does not depend on the truncated wrong stratum)---and it is exactly into that compressed
+region that a false alarm must be pushed.
 
 The sharpest way to put the finding is therefore not ``we constructed an attack that defeats
 semantic entropy'' but ``semantic entropy has so little usable range at the top of its scale
@@ -41,9 +45,10 @@ attacked targets end at the cap, the attack and any other method that also satur
 indistinguishable there, and effect sizes expressed in nats are censored. And because the
 reported effect is the maximum over a large candidate search, a further part of it is
 selection on estimator noise---measurably about half, on our own data. Strip both away and
-what remains is a modest, real, but heavily conditioned quantity. We think the honest
-summary is that the vulnerability is real and the \emph{margin} is small, and that most of
-the apparent margin in an uncorrected report is an artefact of how the number was obtained.
+what remains is a modest and heavily conditioned quantity. We think the honest summary is
+that whatever margin exists is small, and that most of the apparent margin in an uncorrected
+report is an artefact of how the number was obtained. Whether the remainder is real is the
+question the confirmatory run decides; consistent with Methods, we do not claim it here.
 
 \paragraph{Is the weakness structural?}
 We conjecture the mechanism generalises beyond one implementation: any detector that
@@ -58,8 +63,9 @@ answers and sentence embedders are near-chance on the adversarial, word-preservi
 the gold-alias hard negatives that proxy that adversarial discrimination (where the
 embedder scores $0.51$), can---for the false-alarm direction, under the disclosed
 re-scoped gate (Methods). Under it,
-the point estimates lean toward the structural reading: the attack's move ($+0.37$ nats)
-sits close to its move under the detector's own NLI ($+0.46$) and far above the saturated
+the point estimates lean toward the structural reading: on the $n{=}6$ machinery-validation
+subset the attack's move ($+0.37$ nats) sits close to its move under the detector's own NLI
+($+0.46$) and far above the saturated
 exact-match ($+0.05$), placing it at nearly the same rank within the benign-move
 distribution as under the detector's own clusterer. But at the current sample size the
 interval is uninformative, so this is the \emph{first evidence bearing on} the structural
@@ -69,13 +75,15 @@ last word; SE-to-SRE transfer, confounded by the shared DeBERTa backbone, is at 
 corroborating.
 
 \paragraph{Why lead with false alarms.}
-Prior red-teaming of uncertainty estimators emphasises the hide direction (missed
-hallucinations). We foreground false alarms because, for a deployed abstention or
+Red-teaming of \emph{sampling-based} uncertainty estimators has emphasised the hide
+direction (missed hallucinations), though the inflation direction is well established
+against other confidence channels~\citep{rusert2025redherring,
+khanmohammadi2026answerpreserving}. We foreground false alarms because, for a deployed abstention or
 flagging system, systematically inflating the uncertainty of \emph{correct} answers
 is its own failure mode: it erodes utility and user trust, and it is cheaper for an
-adversary who merely wants to make a model look unreliable. That this direction is
-attackable at all---should the preliminary effect survive the confirmatory run---would
-be, we argue, the more surprising and under-examined result.
+adversary who merely wants to make a model look unreliable. That this \emph{class} of
+detector is exposed to it---should the effect survive the confirmatory run---is what would
+be new here; the direction itself is not.
 
 \paragraph{Defence.}
 Averaging the detector score over several reformulations of whatever input is
@@ -83,5 +91,7 @@ received---the mechanism SRE already builds in---should dilute a single adversar
 phrasing. Our defence experiment asks whether this confers measurable robustness or
 merely raises the attacker's query cost; either way, a detector whose own
 reformulation step is its best defence suggests that robustness to paraphrase must be
-designed in, not assumed. We frame all of the above against a null noise floor, so
-the claims are about effects that exceed what benign rephrasing achieves by chance.
+designed in, not assumed. Everything above is to be read against a null noise floor, so that
+what we ultimately claim are effects exceeding what benign rephrasing achieves by chance;
+the confirmatory run supplies that floor, and until it lands these remain readings of
+preliminary data rather than claims.
