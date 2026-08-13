@@ -16,19 +16,26 @@ test needs all lapse. Our headline result lapses with them, and we say so plainl
 grid of achievable false-alarm rates, and the floor beneath it, exist because the maximum
 $\log N$ is an \emph{atom}, which under real-valued weights it is not---Eq.~(5) attains its
 maximum only when the normalised cluster likelihoods are exactly equal. Whether a pile-up
-\emph{near} the cap would leave a near-atom, and so a near-floor, is the empirical question
-we bracket below rather than answer. Whether the \emph{empirical} pile-up near the cap transfers is genuinely
-open, and we would rather bracket it than assert it in either direction. Re-weighting our own
-cached cluster structure---the $1424$ greedy-correct questions (alias-aware span oracle, as
-everywhere else in this paper) of our $2000$-question
-replication pass---with simulated length-normalised likelihoods in place of sample counts
-reproduces a pile-up when the spread of within-cluster likelihoods is small and dissolves it
-when the spread is large, with the crossover falling inside the range we consider plausible.
-The simulation therefore brackets the answer without choosing between its ends, and no claim
-in this paper rests on either end. Settling it needs the real weights rather than simulated
-ones: re-scoring our stored samples under the generating model's own sequence likelihoods
-would decide it directly, on the same questions and the same clusterings. That script is
-being built; it has not been run, and we report nothing from it here.
+\emph{near} the cap would leave a near-atom, and so a near-floor, is a separate empirical
+question, and the only part of this we can speak to without the real weights. Re-weighting our
+own cached cluster structure---the $1424$ greedy-correct questions (alias-aware span oracle, as
+everywhere else in this paper) of our $2000$-question replication pass, and the $200$-question
+correct stratum of the fair pool nested within it---with simulated length-normalised
+likelihoods $\ell \sim \mathcal{N}(0, s^2)$ in place of sample counts separates two things that
+``the pile-up'' runs together (\texttt{scripts/likelihood\_weight\_sensitivity.py}). The
+\emph{exact} atom does not survive: at any positive spread no question sits exactly at
+$\log N$, and the achievable floor collapses to $1/n$. That is the measure-zero argument above
+restated as a measurement rather than a bracket, and no choice of $s$ rescues it. Near-cap
+\emph{crowding} does survive at small spread and decays smoothly: on the fair pool the share of
+clean correct answers within $0.05$ nats of the top score is $9.5\%$ at $s{=}0$, still $9.5\%$
+at $s{=}0.1$, and halves by $s \approx 0.46$. What we cannot say is where the real spread
+falls. Nothing we have measured constrains $s$ for length-normalised sequence log-likelihoods
+from our quantised model on these answers---our cache stores sample strings, not
+likelihoods---so we report the curve and decline to claim that its crossover falls inside a
+plausible range. Settling it needs the real weights: re-scoring our stored samples under the
+generating model's own sequence likelihoods would decide it directly, on the same questions and
+the same clusterings. That script is written; it has not been run, and we report nothing from
+it here.
 
 \paragraph{Selection on a noisy estimator---measured, not merely acknowledged.}
 Semantic entropy is a finite-sample quantity: for each candidate we cluster
