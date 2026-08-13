@@ -43,7 +43,25 @@ re-validation on messy samples + differential-over-splitting check).
   bracket." Paper treats it as "the adjudicator." Also 0.92(sym) ≠ 0.884(asym) cited
   inconsistently. FIX: either re-earn a documented USABLE verdict under a pre-committed
   re-spec (hard-neg-only, with written rationale for dropping pos≥0.8 + cleaned-label pos),
-  or revert to the bracket. Reconcile 0.92↔0.884; disclose the deviation in Limitations.
+  or revert to the bracket. ~~Reconcile 0.92↔0.884~~ **[CLOSED 2026-08-13 — see below]**;
+  disclose the deviation in Limitations.
+
+  > **CLOSED (2026-08-13): the "reconcile 0.92 vs 0.884" sub-item. There is nothing to
+  > reconcile — they are different runs, and only one is deployed.**
+  > `results/judge_validation.md` reports hard-negative accuracy **0.930 [0.900, 0.957],
+  > n=300**, for the **DEPLOYED SYMMETRIC** config, and instructs in line 11: *"this number
+  > is the DEPLOYED config (symmetric) — cite THIS one, not a mixed sym/asym pair."*
+  > **0.884 / 0.700 are the SUPERSEDED ASYMMETRIC run** and must not be cited.
+  > Provenance: a critic gate on 2026-08-12 read this as a drift 0.884 → 0.92 → 0.93 and
+  > demanded reconciliation; **that ruling was overruled, and the overrule was sustained on
+  > re-gate** — the gate had itself *required* the deployed-config re-measurement in its own
+  > B3 ruling, then flagged the result of its own requirement from a stale read. Applying
+  > the "fix" would have reverted the paper to the asymmetric 0.884 and *created* the drift
+  > it warned of. See critique_log entry 33 §1 (and entry 31), and
+  > `docs/START_HERE_overnight.md` item 6: *"Do not 'fix' it back."*
+  > The rest of B3 stays OPEN: the hard-neg-primary re-spec rationale, the Limitations
+  > disclosure, and the three still-owed validations (messy real sampled pairs, the
+  > differential-over-splitting check, and reporting the NLI/exact bracket alongside).
 
 ---
 
@@ -89,6 +107,8 @@ re-validation on messy samples + differential-over-splitting check).
 1. Clear the 3 blockers: B1 (scope Abstract to FA) now; B2 (budget-matched null) + B3
    (judge gate) via critic-gated design, then implement + run.
 2. Lock one decision rule + reconcile every number before the definitive run
-   (+0.64→+0.57+CI, 0.92↔0.884, fair-pool 0.70), hedge Conclusion FA+defense.
+   (+0.64→+0.57+CI, ~~0.92↔0.884~~ **[CLOSED 2026-08-13: cite the deployed symmetric
+   hard-neg 0.930 [0.900, 0.957] n=300; 0.884/0.700 are the superseded asymmetric run — see
+   B3]**, fair-pool 0.70), hedge Conclusion FA+defense.
 3. Positioning + hygiene (data-independent): add the RW strands (KLE, LLM-as-judge,
    selection-bias) + reframe novelty; scrub leaks (bib note/%TODO, affiliation, placeholder).

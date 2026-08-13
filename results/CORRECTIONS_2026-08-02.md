@@ -75,8 +75,12 @@ under the broken rule (0.46 / 0.77)** — **at zero GPU cost**.
 
 ## What survives unchanged
 
-The ceiling exists and is measured correctly (39/80 at ln(10) exactly; 8/80 baselines
-pinned, all with move exactly 0.000 and zero successes); the beta-binomial null derivation
+The ceiling exists and is measured correctly (~~39/80 at ln(10) exactly~~ **42/80 at ln(10)
+exactly** — 39/80 is the superseded `wk9_def` count; the definitive instrumented `_defb` cell
+gives **42/80 = 52.5%** at the cap after attack and **34/80 = 42.5%** attack-induced
+[`figures/ceiling_figures_stats.json`, `results/ceiling_saturation_finding.md`]; 8/80 baselines
+pinned, all with move exactly 0.000 and zero successes — that one is unchanged under `_defb`);
+the beta-binomial null derivation
 is correct (verified to 3e-13 against scipy, and by Monte Carlo across gamma/Cauchy/exponential);
 the headroom–success relationship is real; the N=20 headroom-gain measurement is real; and
 the winner's-curse re-evaluation design is sound (its number is still partial at n=10/80).

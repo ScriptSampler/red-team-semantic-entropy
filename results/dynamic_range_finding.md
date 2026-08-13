@@ -1,5 +1,37 @@
 # How much dynamic range does semantic entropy actually have? (rev. 2026-08-07)
 
+> ⚠ **RETIRED (2026-08-13): "22 distinct values" is not a property of the estimator, and it
+> was never "attainable".** The number of distinct values a score *realises* is monotone in
+> the number of targets scored, so it is a statement about the sample. This is the artifact
+> that fed the retired claim into the paper. `results/fair_pool_granularity.md` (2026-08-13)
+> settles it, by enumeration and by rarefaction:
+>
+> | quantity | value |
+> |---|---|
+> | **ATTAINABLE** values at N=10 (enumerating the p(10) = 42 partitions) | **39** |
+> | attainable values in the top tenth of the range | **2** (2.1640 and ln 10) |
+> | REALISED by the attacked 80 correct targets | 22 |
+> | E[realised] for a random 80 from the same stratum | **23.0** (MC sd 1.59) — so 22 is the **37th percentile**, an unremarkable draw |
+> | realised by the same population at n=200 / n=2000 | **28** / **35** (still only 35/39) |
+>
+> Every "22 attainable values" below is therefore a **category error**: 39 are attainable,
+> 22 were realised. The n-invariant replacement is the lattice — **39 attainable values at
+> N=10, of which 2 lie in the top tenth of the range**. Corrections are struck through in
+> place rather than deleted. Provenance: critique_log entry 33 §4 (2026-08-13); commit `e6e7629`
+> removed the claim from all four paper sites.
+>
+> **The companion claim is dead too.** "Granularity is NON-RELAXABLE — raising N does not buy
+> range" is false: N=20 has **455** attainable values, ~12x the N=10 lattice. What survives
+> is narrower and sharper: N=20 takes the **top decile only from 2 points to 7**, so
+> relaxation is weakest exactly where a false alarm has to land. See
+> `results/n20_verdict.md` and critique_log entry 33 §3 (commit `4683e26`).
+>
+> **Denominator note.** Every "97 targets" figure below is a snapshot of 2026-08-07, when the
+> hide arm stood at n=17. That cell is still running (n=46 on 2026-08-13, heading for 80), so
+> the 97 and the 17 are stale by construction until it finishes. The 80-denominated
+> correct-stratum counts (8/80 at the cap, 21/80 in the top decile) are unaffected — the FA
+> arm is complete.
+
 Measured on the **clean, unattacked** scores of the definitive pool (SE, N=10, TriviaQA,
 Llama-3.1-8B-Instruct 4-bit): 80 targets the model answers correctly, 17 it answers wrongly.
 Nothing here depends on the attack working or on any pending run.
@@ -19,7 +51,7 @@ because two of them were errors I had explicitly warned myself against.
 | correct answers at the ln(10) ceiling | **8/80 = 10%** |
 | correct answers in the top decile of the scale | **21/80 = 26%** |
 | wrong answers at the ceiling | **4/17 = 24%** |
-| distinct entropy values across all 97 targets | **22** |
+| distinct entropy values ~~across all 97 targets~~ **realised** by these 97 targets (a sample statistic; **39** are attainable at N=10) | 22 |
 
 ## ⚠ POPULATION CORRECTION (2026-08-11) — the separation claim is withdrawn from the spine
 
@@ -45,17 +77,22 @@ Conclusion rather than restated with a caveat, because at d ≈ 0.76 it is simpl
 
 **What survives, and is still on the false-alarm-relevant region:** the crowding at the top
 of the scale (10% of clean correct answers exactly at the cap, 26% in the top decile) and the
-granularity limit (22 attainable values). Those are direct counts, they concern the top of
+granularity limit (~~22 attainable values~~ **39 attainable values at N=10, only 2 of them
+in the top tenth of the range**; 22 is merely what these targets realised). Those are direct counts, they concern the top of
 the range where the false-alarm attack operates, and they do not depend on the class
 separation at all. The honest scope is **"little usable range at the top of the scale"**, not
 "the detector barely separates the classes".
 
 ## What can and cannot be concluded
 
-**Solid.** The score is coarse and crowded at the top: 22 attainable values over 97 targets,
+**Solid.** The score is coarse and crowded at the top: ~~22 attainable values over 97
+targets~~ **only 39 values are attainable at N=10 and just 2 of them lie in the top tenth of
+the range** (22 was the count these 97 targets happened to realise — see the banner: it is
+the 37th percentile of what a random 80 produces, and it is not "attainable"),
 a quarter of *correct* answers already in the top decile, a tenth already pinned at the
-maximum before anything is done to them. Those are direct counts on clean data and they do
-not depend on the class separation being significant.
+maximum before anything is done to them. The crowding counts are direct counts on clean data
+and they do not depend on the class separation being significant; the lattice count is an
+enumeration and depends on no data at all.
 
 **Not solid — and previously overstated here:**
 
@@ -78,8 +115,10 @@ not depend on the class separation being significant.
 - **The wrong-answer group is censored 2.4× more than the correct group** (24% vs 10% at
   the cap). That biases the measured separation *downward*, so the true separation may be
   larger than 0.184 — a caveat that cuts against the finding and must be stated.
-- All 22 distinct values come from the 80 correct targets; the 17 wrong targets contribute
-  10 values, every one a subset. The wrong-group mean is 17 draws over 10 atoms.
+- All 22 **realised** distinct values come from the 80 correct targets; the 17 wrong targets
+  contribute 10 values, every one a subset. The wrong-group mean is 17 draws over 10 atoms.
+  (Both counts are sample statistics and both grow with n — the wrong stratum is at n=46 and
+  still climbing. Neither may be quoted as a property of the estimator.)
 
 ## What to say in the paper
 

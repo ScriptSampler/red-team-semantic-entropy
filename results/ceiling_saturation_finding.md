@@ -69,9 +69,13 @@ RANDOMIZED (exchangeable) tie-breaking, `exceedance_counts_randomized`, which is
 AND powerful (0.71 @2x). Strict and conservative are retained as diagnostics only, and
 their disagreement remains the signal that saturation is driving the comparison.
 
-**3. N=10 is arguably too small for the false-alarm direction** (but raising it does NOT
-rescue the analysis — see results/n20_verdict.md; and the statistic works at N=10 under the
-correct tie rule, so no re-run is needed). The FA attack pushes
+**3. N=10 is arguably too small for the false-alarm direction** (~~but raising it does NOT
+rescue the analysis — see results/n20_verdict.md~~ — **the general form of that claim is
+WITHDRAWN AS FALSE, 2026-08-13: the attainable lattice goes from 39 values at N=10 to 455 at
+N=20, so granularity is relaxable by ~12x. What survives is that N=20 takes the TOP DECILE
+only from 2 points to 7 — relaxation is weakest exactly where a false alarm must land. See
+the second banner in `results/n20_verdict.md` and critique_log entry 33 §3**; and the statistic works
+at N=10 under the correct tie rule, so no re-run is needed). The FA attack pushes
 *upward*, straight into the ceiling; the hide attack pushes *downward*, away from it, so
 the two directions are not symmetric in measurement headroom. Raising N to 20 would lift
 the ceiling to ln(20)=3.00 nats at 2x sampling cost. We do not re-run at N=20 here, but the
@@ -81,14 +85,24 @@ asymmetry must be disclosed: the FA direction is the one our estimator censors.
 
 Splitting the n=80 cell by headroom (ceiling − baseline entropy):
 
+> ⚠ **THIS TABLE IS `_def`; THE TOP BANNER DOES NOT COVER IT (noted 2026-08-13).** The
+> censored/uncensored split below is the superseded `wk9_def` cell. Under the definitive
+> `_defb` cell the split is **42 censored / 38 uncensored** (`figures/ceiling_figures_stats.json`:
+> `n_censored_at_ceiling` 42, `n_uncensored` 38), matching the 42/80 = 52.5% at-ceiling rate
+> in the top banner. The `n` column is corrected in place below. The remaining cells of those
+> two rows (gated success, move, headroom, headroom used) have **not** been recomputed under
+> `_defb` and are still `_def` values — do not lift them into the paper. The low/high-headroom
+> rows keep n = 40/40 (that split is on the CLEAN baseline, which is bit-identical under
+> `_defb`), but their success and move columns are `_def` for the same reason.
+
 | stratum | n | gated success | move (mean) | headroom (mean) | headroom used |
 |---|---|---|---|---|---|
-| saturated (censored) | 39 | 0.538 [0.385, 0.692] | 0.502 | 0.502 | **100%** (by definition) |
-| uncensored | 41 | 0.634 [0.488, 0.780] | 0.544 | 1.133 | **40%** |
+| saturated (censored) | ~~39~~ **42** (`_defb`) | 0.538 [0.385, 0.692] | 0.502 | 0.502 | **100%** (by definition) |
+| uncensored | ~~41~~ **38** (`_defb`) | 0.634 [0.488, 0.780] | 0.544 | 1.133 | **40%** |
 | low headroom (≤ median) | 40 | **0.375** [0.225, 0.525] | 0.208 | 0.292 | — |
 | high headroom (> median) | 40 | **0.800** [0.675, 0.925] | 0.839 | 1.359 | — |
 
-- **corr(headroom, move) = +0.70; corr(headroom, success) = +0.53.** Whether a false-alarm
+- **corr(headroom, move) = ~~+0.70~~ +0.71 (`_defb`; `_def` gave +0.70); corr(headroom, success) = +0.53** (`_def`, not recomputed)**.** Whether a false-alarm
   attack "succeeds" is predicted more by how much room the target had than by anything the
   optimiser did. A success rate quoted without this conditioning describes the pool as much
   as the attack.

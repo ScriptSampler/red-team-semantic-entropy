@@ -5,8 +5,8 @@ Sampling-based hallucination detectors treat semantic uncertainty as a property 
 question, invariant to surface form. We set out to test that assumption adversarially and
 found that the more informative obstacle lay upstream of the adversary: at the sample
 budgets these detectors are actually run at, the top of the score's range---the region a
-false alarm must reach---has very little room in which to be attacked. Across the $97$
-targets of the attack campaign, scored clean, a tenth of correct answers are already at the
+false alarm must reach---has very little room in which to be attacked. Across the $80$
+correct-answer targets of the attack campaign, scored clean, a tenth are already at the
 estimator's maximum, and a quarter are within the top tenth of its range---which at $N{=}10$
 contains only two of the $39$ attainable values, so those targets occupy one of two points. This is not a claim that the detector fails: on the
 score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) those targets are a
