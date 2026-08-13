@@ -37,17 +37,17 @@ break it with meaning-preserving paraphrases and found the binding constraint fa
 operator, not the attacker. The \emph{discrete} estimator we study weights meaning clusters
 by sample counts, making it the entropy of a partition of $N$: at the standard $N{=}10$ it
 takes only $39$ values, with an atom at the maximum. Every threshold above that maximum
-flags nothing, so the lowest false-alarm rate at which a detector fires at all \emph{is} the
+flags nothing, so the lowest false-alarm rate a firing threshold can have \emph{is} the
 chance that a clean correct answer yields $N$ mutually distinct meanings---$10.5\%$
 [$9.0$, $12.2$] over $1424$ clean correct answers. An operator who specifies a $5\%$
 false-alarm budget cannot have one, however well the score ranks. Measuring an attack here
 needs stronger controls than this literature's random-perturbation baseline: re-scoring each
 selected paraphrase on an independent sample retains only $45\%$ [$25\%$, $65\%$] of the
-apparent effect, so roughly half of an uncorrected result is selection on sampling noise. We
-give a protocol that makes the question answerable: score-independent target selection, an
+apparent effect, so roughly half of an uncorrected result is selection on sampling noise.
+Our protocol makes the question answerable: score-independent target selection, an
 answer-invariance success criterion, a null priced against the attacker's search budget, and
-an independent LLM-judge equivalence oracle. The confirmatory attack evaluation under it is
-under way; we claim no attack effect here.
+an independent LLM-judge equivalence oracle. The confirmatory attack evaluation is under
+way; we claim no attack effect here.
 \end{abstract}
 
 \section{Introduction}

@@ -128,11 +128,15 @@ entailment-weighted response graph. We characterise the same estimator's opposit
 cannot exceed $\log N$, and in deployment it piles up there. That two groups now correct the
 estimator upward is itself evidence for our reading rather than against it: a remedy at the
 level of the \emph{estimator} concedes that the deployed plug-in statistic is the limiting
-factor, which is precisely our claim. The two are complementary rather than
-competing, and they coincide in the high-entropy regime: their coverage argument applies at
-any level, while a statistic capped at $\log N$ must understate whenever the quantity it
-estimates exceeds that cap, so where the cap binds it is itself one source of the
-understatement they correct for. Separately, \citet{sun2026granularity} name the \emph{score granularity
+factor, which is precisely our claim. The two accounts are complementary rather than
+competing, and we are careful not to promote that into an explanation. Two mechanisms can
+make a plug-in estimate fall short of the semantic entropy it targets: truncation at
+$\log N$, which binds whenever the true quantity exceeds the cap, and the finite-sample
+negative bias of a plug-in entropy over an alphabet the sample under-covers, which is the
+mechanism these papers propose and correct for. They are not mutually exclusive, both are
+active at deployed $N$, and nothing we measure apportions the understatement between them,
+so we claim agreement with their finding and not a diagnosis of it.
+Separately, \citet{sun2026granularity} name the \emph{score granularity
 gap} for black-box LLM classification: a confidence score may rank well and still take so
 few distinct values that an operator has only a handful of usable thresholds. \emph{Discrete}
 semantic entropy inherits exactly this pathology, with the twist that the granularity limit is

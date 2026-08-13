@@ -103,10 +103,15 @@ that clusters are few and grow little with $N$, and reads it as a computational
 saving~\citep{kuhn2023semantic, farquhar2024detecting}. Read instead as a measurement
 property, it means false-alarm effects are \emph{right-censored} on just over half of attacked
 targets, so native-unit effect sizes understate them and any null must stay valid under ties
-at the cap. This also sits consistently with---indeed helps explain---reports that the
-plug-in estimator \emph{underestimates} true semantic entropy at practical
-$N$~\citep{mccabe2025alphabet, pan2026shade}: an estimator that cannot exceed $\log N$ must
-understate whenever the underlying semantic entropy is larger.
+at the cap. This sits consistently with reports that the plug-in estimator
+\emph{underestimates} true semantic entropy at practical
+$N$~\citep{mccabe2025alphabet, pan2026shade}, and we stop at consistency. Two mechanisms
+would produce that understatement and nothing we measure separates them: truncation at
+$\log N$, since a statistic that cannot exceed the cap must understate whenever the quantity
+it estimates is larger, and the finite-sample negative bias of a plug-in entropy over a
+semantic alphabet the sample under-covers, which is the mechanism those two papers propose
+and correct for. They are not mutually exclusive and both are active at deployed $N$, so we
+claim agreement with their finding rather than an explanation of it.
 (2) \textbf{A measured account of how much of a paraphrase-attack effect is an artefact of
 its own search.} Re-scoring each \emph{selected} paraphrase on an independent sample, we
 find only $45\%$ of the apparent effect survives ($95\%$ CI $[25\%, 65\%]$). The two
@@ -125,7 +130,10 @@ $0.704$ [$0.653$, $0.753$] on the fair pool), an answer-invariance success crite
 and an exceedance test that prices the attacker's search budget into the null analytically,
 with tie handling that remains valid when the score saturates. Each control is individually
 precedented; we are not aware of them applied jointly to a sampling-based hallucination
-detector.
+detector. That hedge carries a stated coverage limit rather than an implied one:
+Section~\ref{sec:limitations} enumerates the venues our search could not reach, including
+indices we verified return nothing to control queries---so absence of hits there is
+uninformative, not weakly reassuring, and this claim is bounded accordingly.
 (4) \textbf{The independent equivalence oracle the attribution requires.} Because the
 detector's NLI model both clusters answers and certifies paraphrase equivalence, a
 single-clusterer evaluation cannot separate a real change in the model's answers from that
@@ -156,8 +164,8 @@ estimator's attainable lattice has $39$ points, and its top two lie $0.139$ nats
 than the success criterion's own $\delta$---so $21$ of our $80$ correct targets cannot
 register a success at any usable $\delta$, whatever the paraphrase. Raising $N$
 relaxes this ($N{=}20$ affords $455$ points, seven of them in the top tenth of the range), but
-buys less usable headroom than the cap implies, because the plug-in baseline climbs with the
-cap as its negative bias decays. Effect sizes are
+buys less usable headroom than the cap implies, because the clean baseline climbs along with
+the cap (Section~\ref{sec:discussion}). Effect sizes are
 therefore right-censored and any null must stay valid under ties at the cap. The discreteness
 half of this is the score-granularity gap named by~\citet{sun2026granularity}; what we add
 is its instantiation for a sampling-based detector, where the lattice is set by the sample
