@@ -47,7 +47,15 @@ result with the same prominence whichever way it falls.
 
 That reading also disciplines what we may say about magnitude. Because roughly half of
 attacked targets end at the cap, the attack and any other method that also saturates become
-indistinguishable there, and effect sizes expressed in nats are censored. And because the
+indistinguishable there, and effect sizes expressed in nats are censored. The cap bites
+asymmetrically---on the fair pool $27.5\%$ of hallucinating answers sit there against $9.5\%$
+of correct ones---but we are careful not to over-read that. AUROC is a rank statistic and
+$\min(\cdot,\log N)$ is monotone, so censoring changes no pairwise ordering except among
+pairs where \emph{both} members are pinned. That is $0.275 \times 0.095 = 2.6\%$ of pairs,
+bounding the downward bias at $0.013$ against a confidence half-width of $0.050$. The
+asymmetry in fact makes the effect \emph{smaller}: had both strata been censored at the
+higher of the two rates, $2.9\times$ as many pairs would be affected. The consequence of the asymmetry is therefore about which
+class loses resolution, not about the reported AUROC. And because the
 reported effect is the maximum over a large candidate search, a further part of it is
 selection on estimator noise---measurably about half, on our own data. Strip both away and
 what remains is a modest and heavily conditioned quantity. We think the honest summary is
