@@ -33,7 +33,7 @@ stratum (n=200). Wilson 95% intervals. `tau = inf` is the always-available
 
 | # | threshold tau (nats) | FPR (false alarms on correct answers) | TPR (hallucinations caught) | in top tenth of range? |
 | --- | --- | --- | --- | --- |
-| 0 | inf (never fire) | 0/200 = 0.0% [0.0%, 1.9%] | 0/200 = 0.0% [0.0%, 1.9%] | - |
+| 0 | inf (never fire) | 0/200 = 0.0% (exact: the policy never fires) | 0/200 = 0.0% (exact: the policy never fires) | - |
 | 1 | 2.302585 | 19/200 = 9.5% [6.2%, 14.4%] | 55/200 = 27.5% [21.8%, 34.1%] | yes |
 | 2 | 2.163956 | 43/200 = 21.5% [16.4%, 27.7%] | 89/200 = 44.5% [37.8%, 51.4%] | yes |
 | 3 | 2.025326 | 53/200 = 26.5% [20.9%, 33.0%] | 104/200 = 52.0% [45.1%, 58.8%] | - |
@@ -151,14 +151,14 @@ Plotted in `figures/fig_achievable_roc.pdf` (exact values in
 
 | tau | FPR [95% CI] | TPR [95% CI] | slope to the next point |
 | --- | --- | --- | --- |
-| inf | 0.0% [0.0%, 1.9%] | 0.0% [0.0%, 1.9%] | 2.89 |
-| 2.3026 | 9.5% [6.2%, 14.4%] | 27.5% [21.8%, 34.1%] | 1.42 |
-| 2.1640 | 21.5% [16.4%, 27.7%] | 44.5% [37.8%, 51.4%] | 1.50 |
-| 2.0253 | 26.5% [20.9%, 33.0%] | 52.0% [45.1%, 58.8%] | 2.20 |
-| 1.9730 | 29.0% [23.2%, 35.6%] | 57.5% [50.6%, 64.1%] | 1.14 |
-| 1.8344 | 32.5% [26.4%, 39.3%] | 61.5% [54.6%, 68.0%] | 1.45 |
-| 1.7481 | 38.0% [31.6%, 44.9%] | 69.5% [62.8%, 75.5%] | 1.00 |
-| 1.6957 | 39.0% [32.5%, 45.9%] | 70.5% [63.8%, 76.4%] | 0.67 |
+| inf | 0/200 = 0.0% (exact: the policy never fires) | 0/200 = 0.0% (exact: the policy never fires) | 2.89 |
+| 2.3026 | 19/200 = 9.5% [6.2%, 14.4%] | 55/200 = 27.5% [21.8%, 34.1%] | 1.42 |
+| 2.1640 | 43/200 = 21.5% [16.4%, 27.7%] | 89/200 = 44.5% [37.8%, 51.4%] | 1.50 |
+| 2.0253 | 53/200 = 26.5% [20.9%, 33.0%] | 104/200 = 52.0% [45.1%, 58.8%] | 2.20 |
+| 1.9730 | 58/200 = 29.0% [23.2%, 35.6%] | 115/200 = 57.5% [50.6%, 64.1%] | 1.14 |
+| 1.8344 | 65/200 = 32.5% [26.4%, 39.3%] | 123/200 = 61.5% [54.6%, 68.0%] | 1.45 |
+| 1.7481 | 76/200 = 38.0% [31.6%, 44.9%] | 139/200 = 69.5% [62.8%, 75.5%] | 1.00 |
+| 1.6957 | 78/200 = 39.0% [32.5%, 45.9%] | 141/200 = 70.5% [63.8%, 76.4%] | 0.67 |
 
 **The randomisation caveat, stated before a reviewer states it.** A randomised rule
 -- flag a ceiling item with probability p, otherwise never fire -- does reach any FPR
@@ -323,27 +323,30 @@ N=10 one, plus "N=20 can only lower the floor, by an amount we have not measured
 Replaces the top-decile sentence wherever it appears (abstract, introduction
 contribution (1), discussion, conclusion). Numbers are the fair pool, correct
 stratum, n=200; the parenthetical is the n=1424 superset.
+Copy-pasteable LaTeX -- every `%` is escaped, so it will not silently eat a line.
 
-> Semantic entropy over $N$ sampled answers is the entropy of a partition of $N$, so
-> at the standard $N{=}10$ it lives on a lattice of 39 attainable values
-> with an atom at the maximum $\ln 10$. A detector that flags when the score exceeds
-> a threshold can therefore only be operated at a finite list of false-alarm rates,
-> and the list is short where it matters: on a score-independent pool of 200 correct
-> answers scored clean, the only achievable clean false-positive rates below one in
-> four are $0\%$, $9.5\%$ [6.2, 14.4] and $21.5\%$ [16.4, 27.7]. An operator who
-> specifies a $5\%$ false-alarm budget cannot have one: the only threshold honouring
-> it flags nothing. The nearest operating point that fires runs at 9.5% and catches
-> 27.5% [21.8%, 34.1%] of hallucinations; the next runs at 21.5% for 44.5%. The
-> minimum non-zero false-positive rate is not a tuning choice but the mass of the
-> ceiling atom itself, since every threshold above $\ln N$ flags nothing
-> (150/1424 = 10.5% [9.0%, 12.2%] on the 1424-answer superset). This is the score-granularity
-> gap of \citet{sun2026granularity} -- a score that ranks acceptably while offering
-> an operator only a handful of usable thresholds -- instantiated for a
-> sampling-based detector, where the lattice is set by the sample budget. Raising the
-> budget can only lower the floor (the event ``all $N$ distinct'' shrinks with $N$),
-> and $N{=}20$ affords 455 attainable values, 7 of them in the
-> top tenth of the range; whether that makes the achievable grid usably fine near the
-> operating region we have not measured.
+```latex
+Semantic entropy over $N$ sampled answers is the entropy of a partition of $N$, so at
+the standard $N{=}10$ it lives on a lattice of $39$ attainable values with an atom at
+the maximum $\ln 10$. A detector that flags when the score reaches a threshold can
+therefore be operated only at a finite list of false-alarm rates, and the list is short
+exactly where an operator needs it: on a score-independent pool of $200$ correct answers
+scored clean, the only achievable clean false-positive rates below one in four are
+$0\%$, $9.5\%$ [6.2, 14.4] and $21.5\%$ [16.4, 27.7]. An operator who
+specifies a $5\%$ false-alarm budget cannot have one: the only threshold that
+honours it flags nothing at all. The nearest operating point that fires runs at
+$9.5\%$ and catches $27.5\%$ [21.8, 34.1] of hallucinations; the next runs at
+$21.5\%$ for $44.5\%$. The minimum non-zero false-positive rate is not a tuning
+choice but the mass of the ceiling atom itself, since every threshold above $\ln N$
+flags nothing ($10.5\%$ [9.0, 12.2] on the $1424$-answer superset). This is the score
+granularity gap of \citet{sun2026granularity} -- a score that ranks acceptably while
+leaving an operator only a handful of usable thresholds -- instantiated for a
+sampling-based detector, where the lattice is fixed by the sample budget. Raising that
+budget can only lower the floor, since the event ``all $N$ answers distinct'' shrinks
+with $N$; $N{=}20$ affords $455$ attainable values, $7$ of them in the top tenth of the
+range. Whether that makes the achievable grid usably fine near the operating region we
+have not measured.
+```
 
 Notes for whoever edits the .tex:
 
@@ -354,9 +357,13 @@ Notes for whoever edits the .tex:
 - Do not write "the ROC curve is a lie". Write "the achievable operating points are
   a finite set"; the chords between them are reachable by randomisation and a
   reviewer will say so (section 4).
-- Do not write that the detector cannot be operated at 10%. The data excludes 5%
-  [Wilson lower bound 9.0% on n=1424]; it does not
-  exclude 10%.
+- Do not write that the detector cannot be operated at 10%. The data excludes 5% [Wilson
+  lower bound 9.0% on n=1424]; for 10% the two populations split (section 5) and the
+  honest phrasing is "about one correct answer in ten", not a bare inequality.
+- The abstract currently spends two sentences on the top decile and on 21.5% of
+  correct answers occupying one of two points. Both are the same fact as the grid,
+  and the grid says it in an operator's units in one sentence, so the space is a
+  net gain, not a cost.
 - `sun2026granularity`'s own phrase ("only a handful of usable thresholds") is worth
   quoting at the point where the count table in section 1 lands.
 
@@ -368,7 +375,7 @@ checked against a population where the sampling resolution is 0.07%, not 0.5%.
 
 | # | threshold tau (nats) | FPR | TPR |
 | --- | --- | --- | --- |
-| 0 | inf (never fire) | 0/1424 = 0.0% [0.0%, 0.3%] | 0/576 = 0.0% [0.0%, 0.7%] |
+| 0 | inf (never fire) | 0/1424 = 0.0% (exact: the policy never fires) | 0/576 = 0.0% (exact: the policy never fires) |
 | 1 | 2.302585 | 150/1424 = 10.5% [9.0%, 12.2%] | 145/576 = 25.2% [21.8%, 28.9%] |
 | 2 | 2.163956 | 303/1424 = 21.3% [19.2%, 23.5%] | 253/576 = 43.9% [39.9%, 48.0%] |
 | 3 | 2.025326 | 360/1424 = 25.3% [23.1%, 27.6%] | 289/576 = 50.2% [46.1%, 54.2%] |

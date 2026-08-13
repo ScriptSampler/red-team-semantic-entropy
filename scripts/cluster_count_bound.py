@@ -609,8 +609,28 @@ def main() -> None:
     A("")
     A("## 5. The K distribution, per population")
     A("")
-    A("Every row carries its n and a Wilson 95% interval. The distribution is the "
-      "point, not just the tail rate.")
+    A("Every row carries its n and a Wilson 95% interval. The distribution is the point, "
+      "not just the tail rate. Summary first:")
+    A("")
+    A("| population | n | mean K | median | IQR | K <= 3 | K <= 7 (top decile "
+      "IMPOSSIBLE) | K >= 8 | K >= 9 | K = 10 |")
+    A("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
+    for name, ids in pops:
+        s = k_summary(ids, ent)
+        A(f"| {name} | {s['n']} | {s['mean']:.2f} | {s['median']:.1f} | "
+          f"[{s['q25']:.0f}, {s['q75']:.0f}] | {s['le3'] / s['n']:.1%} | "
+          f"**{s['le7'] / s['n']:.1%}** | {s['ge8'] / s['n']:.1%} | "
+          f"{s['ge9'] / s['n']:.1%} | {s['eq10'] / s['n']:.1%} |")
+    A("")
+    A("**The shape, not just the tail.** K is *not* piled up at the bottom: on the "
+      "correct stratum it is spread almost flat across 1..10 with mean 5.6 and median "
+      "5.5, and only a quarter of questions sit at K <= 3. What kills the top decile is "
+      "not that correct-stratum questions cluster tightly -- it is that the threshold "
+      "sits at K = 8 out of a possible 10, so a merely *broad* answer distribution "
+      "(K = 5, 6, 7 -- a third of the correct stratum) is still categorically excluded. "
+      "The hallucinating stratum is visibly right-shifted (mean 7.6, median 8, a quarter "
+      "of it at K = 10) rather than being a different shape: both strata are spread, and "
+      "the detector's signal is that shift. Per-population detail:")
     A("")
     for name, ids in pops:
         s = k_summary(ids, ent)
@@ -680,7 +700,8 @@ def main() -> None:
       f"{fmt_prop(sum(1 for q in fair_h if ent[q]['n_clusters'] >= 8), len(fair_h))}"
       " of hallucinating ones, so for the majority of the correct stratum the top decile "
       "of the scale is unreachable under any weighting scheme, not merely unreached "
-      "under ours. Raising N lifts the cap without loosening the condition: the "
+      "under ours. Raising N lifts the cap far faster than it loosens the condition: "
+      "the "
       "required fraction of samples in distinct clusters falls only as N^(-0.1), from "
       "79% at N = 10 to 74% at N = 20.")
     A("")

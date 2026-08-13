@@ -74,6 +74,18 @@ target and that side.
            approximately (artefact) compounded with (defense) and must not be
            quoted alone.
 
+WHY THE ESTIMAND IS A DIFFERENCE, NOT A RATIO. The headline is
+mean(|B'| - |C|) in nats. Simulated under the strict null with the shared
+draw 0, its bias is -0.0003 nats on 20,000 replicates -- i.e. zero. It is a
+mean, so it inherits none of the E|X| inflation that sank round 1, it needs no
+denominator, and it discards no target. The ratio of means and the per-question
+ratio are both still printed, as secondary and descriptive respectively. The
+same simulation puts the achieved resolution at n=40 per cell at ~0.086 nats,
+about 15% of the control arm's move (sharing draw 0 buys ~10% of that: sd of
+the paired difference falls from 0.309 to 0.278 nats), so the report prints its
+own half-width next to the verdict -- a FAILED verdict means "no effect larger
+than this", never "no effect".
+
 WHAT CAN STILL GO WRONG, stated so it cannot be quietly rediscovered:
   - If the equivalence gate rejects every paraphrase, C degenerates to vanilla
     SE, m = 1, and B' degenerates with it -- so C vs B' correctly reports zero
@@ -821,6 +833,13 @@ def analyse_cell(recs: list[DefenseRecord], attack: str, *, k: int, aggregate: s
     L += ["### C vs B': THE DEFENSE (the only comparison that isolates paraphrasing)",
           ""]
     L += format_comparison(prim)
+    if prim.computable and prim.mean_den > 0:
+        hw = 0.5 * (prim.diff_hi - prim.diff_lo)
+        L.append(f"- RESOLUTION: the interval's half-width is {hw:.4f} nats "
+                 f"= {hw/prim.mean_den*100:.1f}% of the arm B' mean move. A genuine "
+                 f"paraphrase effect smaller than that cannot be resolved at "
+                 f"n={prim.n}, so a FAILED verdict below means 'no effect larger "
+                 f"than this', not 'no effect'.")
     L.append("")
     if prim.verdict == "NOT COMPUTABLE":
         L += ["> **NOT COMPUTABLE for this cell.** Fewer than 2 usable targets, or a",

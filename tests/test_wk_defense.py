@@ -370,6 +370,47 @@ def test_synthetic_null_plant_makes_the_analysis_print_failed():
     assert cmps["C vs B"].ratio == pytest.approx(0.40)
 
 
+def test_a_failed_verdict_is_printed_with_the_resolution_that_qualifies_it():
+    """A FAILED verdict without a stated resolution is unreadable: it cannot be
+    distinguished from an underpowered cell. The half-width must be printed."""
+    recs = make_synthetic_records(30, r_cb=0.0, r_bb=0.40, r_ba=0.70)
+    lines, _ = analyse_cell(recs, "false_alarm", k=4, aggregate="median",
+                            n_boot=500)
+    body = "\n".join(lines)
+    assert "RESOLUTION" in body
+    assert "no effect larger" in body
+
+
+def test_the_paired_difference_is_unbiased_under_the_strict_null():
+    """The property that makes the estimand legitimate. Two arms with the SAME
+    aggregate size and no defense in either: the mean paired difference must sit
+    at 0, unlike the ratio of E|.| which the round-1 design used."""
+    rng = np.random.default_rng(0)
+    sigma, m, n = 0.34, 4, 400
+    effects = rng.standard_normal(n) * 0.5
+    agg = lambda z: np.median(z, axis=-1)
+    c = np.abs(effects + agg(rng.standard_normal((n, m))) * sigma
+               - agg(rng.standard_normal((n, m))) * sigma)
+    bp = np.abs(effects + agg(rng.standard_normal((n, m))) * sigma
+                - agg(rng.standard_normal((n, m))) * sigma)
+    pt, lo, hi = _paired_diff_ci(list(c), list(bp), n_boot=2000)
+    assert lo < 0.0 < hi                       # the null is not rejected
+    assert abs(pt) < 0.05
+
+
+def test_the_ratio_of_absolute_moves_is_biased_where_the_difference_is_not():
+    """The round-1 confound, in a fixture. Same true effects, no defense, but
+    arm C aggregates m draws and arm B one: the RATIO reports a fat 'defense'
+    while the paired difference of two EQUALLY-noisy arms reports zero."""
+    e = [0.3, 0.5, -0.2, 0.8, 0.1, 0.6]
+    e_b = null_expected_abs_move(e, 0.34, 1)
+    e_c = null_expected_abs_move(e, 0.34, 4, aggregate="median", n_reps=8_000)
+    assert 1.0 - e_c / e_b > 0.08              # phantom "defense" from noise alone
+    e_bprime = null_expected_abs_move(e, 0.34, 4, aggregate="median",
+                                      n_reps=8_000, seed=11)
+    assert abs(e_bprime - e_c) < 0.01          # ... and it vanishes once m matches
+
+
 def test_synthetic_positive_plant_makes_the_analysis_print_survives():
     recs = make_synthetic_records(30, r_cb=0.50, r_bb=0.40, r_ba=0.70)
     lines, cmps = analyse_cell(recs, "false_alarm", k=4, aggregate="median",

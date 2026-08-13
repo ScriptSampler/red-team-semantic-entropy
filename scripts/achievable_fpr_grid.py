@@ -129,6 +129,16 @@ def fmt_prop(k: int, n: int) -> str:
     return f"{k}/{n} = {p:.1%} [{lo:.1%}, {hi:.1%}]"
 
 
+def fmt_rate(r: dict, which: str) -> str:
+    """A rate cell. The `tau = inf` row is a STRUCTURAL zero -- the policy never fires, on
+    any sample -- so it gets no interval; a Wilson bound there would invite the reader to
+    think 'never fire' might have a non-zero false-alarm rate given more data."""
+    k, n = (r["k_fp"], r["n_neg"]) if which == "fpr" else (r["k_tp"], r["n_pos"])
+    if not r["fires"]:
+        return f"0/{n} = 0.0% (exact: the policy never fires)"
+    return fmt_prop(k, n)
+
+
 # ---------------------------------------------------------------------------- the grid
 def grid(neg: np.ndarray, pos: np.ndarray) -> list[dict]:
     """Every operating point the detector can be run at, ascending threshold.
@@ -250,8 +260,7 @@ def main() -> int:
     for i, r in enumerate(g_fair):
         tau = "inf (never fire)" if not r["fires"] else f"{r['threshold']:.6f}"
         top = ("yes" if r["fires"] and r["threshold"] >= TOP_DECILE - 1e-12 else "-")
-        log(f"| {i} | {tau} | {fmt_prop(r['k_fp'], r['n_neg'])} | "
-            f"{fmt_prop(r['k_tp'], r['n_pos'])} | {top} |")
+        log(f"| {i} | {tau} | {fmt_rate(r, 'fpr')} | {fmt_rate(r, 'tpr')} | {top} |")
     log("")
     log(f"**{len(g_fair)} operating points in total, {len(fire_fair)} of which fire.** The two")
     log("that matter for any realistic false-alarm budget are rows 0-2:")
@@ -387,10 +396,7 @@ def main() -> int:
             slope = f"{d_t / d_f:.2f}" if d_f > 0 else "-"
         else:
             slope = "-"
-        pf, lof, hif = wilson(r["k_fp"], r["n_neg"])
-        pt, lot, hit = wilson(r["k_tp"], r["n_pos"])
-        log(f"| {tau} | {pf:.1%} [{lof:.1%}, {hif:.1%}] | {pt:.1%} [{lot:.1%}, {hit:.1%}] | "
-            f"{slope} |")
+        log(f"| {tau} | {fmt_rate(r, 'fpr')} | {fmt_rate(r, 'tpr')} | {slope} |")
     log("")
     log("**The randomisation caveat, stated before a reviewer states it.** A randomised rule")
     log("-- flag a ceiling item with probability p, otherwise never fire -- does reach any FPR")
@@ -608,34 +614,42 @@ def main() -> int:
     log("Replaces the top-decile sentence wherever it appears (abstract, introduction")
     log("contribution (1), discussion, conclusion). Numbers are the fair pool, correct")
     log(f"stratum, n={len(neg_fair)}; the parenthetical is the n={len(neg_full)} superset.")
+    log("Copy-pasteable LaTeX -- every `%` is escaped, so it will not silently eat a line.")
     log("")
-    log("> Semantic entropy over $N$ sampled answers is the entropy of a partition of $N$, so")
-    log(f"> at the standard $N{{=}}10$ it lives on a lattice of {len(lattice)} attainable values")
-    log("> with an atom at the maximum $\\ln 10$. A detector that flags when the score exceeds")
-    log("> a threshold can therefore only be operated at a finite list of false-alarm rates,")
-    log("> and the list is short where it matters: on a score-independent pool of 200 correct")
-    log("> answers scored clean, the only achievable clean false-positive rates below one in")
-    log(f"> four are $0\\%$, ${lo_fair['fpr']*100:.1f}\\%$ "
-        f"[{lo_lo*100:.1f}, {lo_hi*100:.1f}] and ${second_fair['fpr']*100:.1f}\\%$ "
-        f"[{wilson(second_fair['k_fp'], second_fair['n_neg'])[1]*100:.1f}, "
-        f"{wilson(second_fair['k_fp'], second_fair['n_neg'])[2]*100:.1f}]. An operator who")
-    log("> specifies a $5\\%$ false-alarm budget cannot have one: the only threshold honouring")
-    log(f"> it flags nothing. The nearest operating point that fires runs at "
-        f"{lo_fair['fpr']:.1%} and catches")
-    log(f"> {lo_fair['tpr']:.1%} [{wilson(lo_fair['k_tp'], lo_fair['n_pos'])[1]:.1%}, "
-        f"{wilson(lo_fair['k_tp'], lo_fair['n_pos'])[2]:.1%}] of hallucinations; the next runs at "
-        f"{second_fair['fpr']:.1%} for {second_fair['tpr']:.1%}. The")
-    log("> minimum non-zero false-positive rate is not a tuning choice but the mass of the")
-    log("> ceiling atom itself, since every threshold above $\\ln N$ flags nothing")
-    log(f"> ({fmt_prop(lo_full['k_fp'], lo_full['n_neg'])} on the {len(neg_full)}-answer superset). "
-        "This is the score-granularity")
-    log("> gap of \\citet{sun2026granularity} -- a score that ranks acceptably while offering")
-    log("> an operator only a handful of usable thresholds -- instantiated for a")
-    log("> sampling-based detector, where the lattice is set by the sample budget. Raising the")
-    log(f"> budget can only lower the floor (the event ``all $N$ distinct'' shrinks with $N$),")
-    log(f"> and $N{{=}}20$ affords {len(lat20)} attainable values, {len(att20_top)} of them in the")
-    log("> top tenth of the range; whether that makes the achievable grid usably fine near the")
-    log("> operating region we have not measured.")
+    log("```latex")
+
+    def pct(x: float, dp: int = 1) -> str:
+        return f"{x * 100:.{dp}f}\\%"
+
+    def ci(k: int, n: int) -> str:
+        _, lo, hi = wilson(k, n)
+        return f"[{lo * 100:.1f}, {hi * 100:.1f}]"
+
+    log("Semantic entropy over $N$ sampled answers is the entropy of a partition of $N$, so at")
+    log(f"the standard $N{{=}}10$ it lives on a lattice of ${len(lattice)}$ attainable values with an atom at")
+    log("the maximum $\\ln 10$. A detector that flags when the score reaches a threshold can")
+    log("therefore be operated only at a finite list of false-alarm rates, and the list is short")
+    log("exactly where an operator needs it: on a score-independent pool of $200$ correct answers")
+    log("scored clean, the only achievable clean false-positive rates below one in four are")
+    log(f"${pct(0.0, 0)}$, ${pct(lo_fair['fpr'])}$ {ci(lo_fair['k_fp'], lo_fair['n_neg'])} and "
+        f"${pct(second_fair['fpr'])}$ {ci(second_fair['k_fp'], second_fair['n_neg'])}. An operator who")
+    log(f"specifies a ${pct(0.05, 0)}$ false-alarm budget cannot have one: the only threshold that")
+    log("honours it flags nothing at all. The nearest operating point that fires runs at")
+    log(f"${pct(lo_fair['fpr'])}$ and catches ${pct(lo_fair['tpr'])}$ "
+        f"{ci(lo_fair['k_tp'], lo_fair['n_pos'])} of hallucinations; the next runs at")
+    log(f"${pct(second_fair['fpr'])}$ for ${pct(second_fair['tpr'])}$. The minimum non-zero "
+        "false-positive rate is not a tuning")
+    log("choice but the mass of the ceiling atom itself, since every threshold above $\\ln N$")
+    log(f"flags nothing (${pct(lo_full['fpr'])}$ {ci(lo_full['k_fp'], lo_full['n_neg'])} on the "
+        f"${len(neg_full)}$-answer superset). This is the score")
+    log("granularity gap of \\citet{sun2026granularity} -- a score that ranks acceptably while")
+    log("leaving an operator only a handful of usable thresholds -- instantiated for a")
+    log("sampling-based detector, where the lattice is fixed by the sample budget. Raising that")
+    log("budget can only lower the floor, since the event ``all $N$ answers distinct'' shrinks")
+    log(f"with $N$; $N{{=}}20$ affords ${len(lat20)}$ attainable values, ${len(att20_top)}$ of them in the top tenth of the")
+    log("range. Whether that makes the achievable grid usably fine near the operating region we")
+    log("have not measured.")
+    log("```")
     log("")
     log("Notes for whoever edits the .tex:")
     log("")
@@ -646,10 +660,15 @@ def main() -> int:
     log("- Do not write \"the ROC curve is a lie\". Write \"the achievable operating points are")
     log("  a finite set\"; the chords between them are reachable by randomisation and a")
     log("  reviewer will say so (section 4).")
-    log("- Do not write that the detector cannot be operated at 10%. The data excludes 5%")
-    log("  [Wilson lower bound "
-        f"{wilson(lo_full['k_fp'], lo_full['n_neg'])[1]:.1%} on n={len(neg_full)}]; it does not")
-    log("  exclude 10%.")
+    log("- Do not write that the detector cannot be operated at 10%. The data excludes 5% "
+        f"[Wilson")
+    log(f"  lower bound {wilson(lo_full['k_fp'], lo_full['n_neg'])[1]:.1%} on n={len(neg_full)}]; "
+        "for 10% the two populations split (section 5) and the")
+    log("  honest phrasing is \"about one correct answer in ten\", not a bare inequality.")
+    log("- The abstract currently spends two sentences on the top decile and on 21.5% of")
+    log("  correct answers occupying one of two points. Both are the same fact as the grid,")
+    log("  and the grid says it in an operator's units in one sentence, so the space is a")
+    log("  net gain, not a cost.")
     log("- `sun2026granularity`'s own phrase (\"only a handful of usable thresholds\") is worth")
     log("  quoting at the point where the count table in section 1 lands.")
     log("")
@@ -665,8 +684,7 @@ def main() -> int:
     log("| --- | --- | --- | --- |")
     for i, r in enumerate(g_full):
         tau = "inf (never fire)" if not r["fires"] else f"{r['threshold']:.6f}"
-        log(f"| {i} | {tau} | {fmt_prop(r['k_fp'], r['n_neg'])} | "
-            f"{fmt_prop(r['k_tp'], r['n_pos'])} |")
+        log(f"| {i} | {tau} | {fmt_rate(r, 'fpr')} | {fmt_rate(r, 'tpr')} |")
     log("")
     log("## Appendix B. Provenance and reproduction")
     log("")

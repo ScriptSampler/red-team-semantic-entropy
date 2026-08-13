@@ -95,7 +95,19 @@ The FA attack stratum is the first 80 ids of the score-independent correct strat
 
 ## 5. The K distribution, per population
 
-Every row carries its n and a Wilson 95% interval. The distribution is the point, not just the tail rate.
+Every row carries its n and a Wilson 95% interval. The distribution is the point, not just the tail rate. Summary first:
+
+| population | n | mean K | median | IQR | K <= 3 | K <= 7 (top decile IMPOSSIBLE) | K >= 8 | K >= 9 | K = 10 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Fair pool -- correct stratum | 200 | 5.64 | 5.5 | [3, 8] | 27.5% | **71.0%** | 29.0% | 21.5% | 9.5% |
+| Fair pool -- hallucinating stratum | 200 | 7.58 | 8.0 | [6, 10] | 5.0% | **42.5%** | 57.5% | 44.5% | 27.5% |
+| Fair pool -- both strata pooled | 400 | 6.61 | 7.0 | [5, 9] | 16.2% | **56.8%** | 43.2% | 33.0% | 18.5% |
+| FA attack stratum (n=80, nested in fair-correct) | 80 | 6.01 | 6.0 | [4, 9] | 21.2% | **67.5%** | 32.5% | 26.2% | 10.0% |
+| Full labelled pool -- correct | 1424 | 5.73 | 6.0 | [4, 8] | 24.9% | **69.7%** | 30.3% | 21.3% | 10.5% |
+| Full labelled pool -- hallucinating | 576 | 7.58 | 8.0 | [6, 10] | 4.5% | **41.7%** | 58.3% | 43.9% | 25.2% |
+| Full labelled pool -- natural prevalence | 2000 | 6.26 | 6.0 | [4, 9] | 19.1% | **61.7%** | 38.4% | 27.8% | 14.8% |
+
+**The shape, not just the tail.** K is *not* piled up at the bottom: on the correct stratum it is spread almost flat across 1..10 with mean 5.6 and median 5.5, and only a quarter of questions sit at K <= 3. What kills the top decile is not that correct-stratum questions cluster tightly -- it is that the threshold sits at K = 8 out of a possible 10, so a merely *broad* answer distribution (K = 5, 6, 7 -- a third of the correct stratum) is still categorically excluded. The hallucinating stratum is visibly right-shifted (mean 7.6, median 8, a quarter of it at K = 10) rather than being a different shape: both strata are spread, and the detector's signal is that shift. Per-population detail:
 
 ### Fair pool -- correct stratum (n=200)
 
@@ -279,6 +291,6 @@ The preliminary 30.3% / 59.1% reproduces exactly under `entropy.jsonl`'s label c
 
 ## 8. Proposed paper sentence
 
-> Because every semantic-entropy variant scores the same clustering and differs only in how clusters are weighted, and because any normalised weighting over K clusters satisfies H <= log K, a score in the top tenth of the range [0, log N] requires K >= ceil(N^0.9) -- at N = 10, K >= 8, since log 8 = 2.079 exceeds 0.9 log 10 = 2.072 while log 7 = 1.946 does not. On the score-independent fair pool this condition is met by only 58/200 = 29.0% [23.2%, 35.6%] of correct-stratum questions against 115/200 = 57.5% [50.6%, 64.1%] of hallucinating ones, so for the majority of the correct stratum the top decile of the scale is unreachable under any weighting scheme, not merely unreached under ours. Raising N lifts the cap without loosening the condition: the required fraction of samples in distinct clusters falls only as N^(-0.1), from 79% at N = 10 to 74% at N = 20.
+> Because every semantic-entropy variant scores the same clustering and differs only in how clusters are weighted, and because any normalised weighting over K clusters satisfies H <= log K, a score in the top tenth of the range [0, log N] requires K >= ceil(N^0.9) -- at N = 10, K >= 8, since log 8 = 2.079 exceeds 0.9 log 10 = 2.072 while log 7 = 1.946 does not. On the score-independent fair pool this condition is met by only 58/200 = 29.0% [23.2%, 35.6%] of correct-stratum questions against 115/200 = 57.5% [50.6%, 64.1%] of hallucinating ones, so for the majority of the correct stratum the top decile of the scale is unreachable under any weighting scheme, not merely unreached under ours. Raising N lifts the cap far faster than it loosens the condition: the required fraction of samples in distinct clusters falls only as N^(-0.1), from 79% at N = 10 to 74% at N = 20.
 
 (Scope: the bound follows from the log N ceiling, so it applies to the discrete estimator and to Farquhar Eq. (5). Kuhn et al.'s Eq. (4) is an unnormalised mean surprisal with no log N ceiling and is therefore outside its scope -- state that rather than let the reader assume otherwise.)
