@@ -16,9 +16,20 @@ entropies in the literature:
   (3) KUHN Eq. (4)       mean of per-cluster surprisals, UNNORMALISED. NOT bounded by
                          log N -- it can and does exceed it.
 
-`scripts/duplication_level_sim.py` shows the pile-up surviving at small likelihood spread
-and vanishing at large, with the crossover inside the plausible range. So the question is
-genuinely open and a simulation cannot close it.
+`scripts/likelihood_weight_sensitivity.py` re-weights the CACHED cluster structure with
+simulated length-normalised likelihoods and splits the question in two. The near-cap
+CROWDING (top-decile rate, near-atom mass) decays smoothly with the likelihood spread s
+and halves around s ~ 0.5. The ATOM at ln(10) does not: it is gone by s = 0.001 and the
+achievable-FPR floor is at 1/n from there on, exactly as the measure-zero argument in
+`paper/sections/methods.tex` predicts. So a simulation cannot close the crowding question
+-- and it does not need to close the floor question, which is already settled against
+transfer. Note also that nothing in this repo calibrates s, which is precisely the gap
+THIS script exists to fill.
+
+(Before 2026-08-13 these two paragraphs cited `scripts/duplication_level_sim.py`, which
+simulates the exceedance test's H0 level under arm duplication and does no likelihood
+re-weighting whatsoever. The citation was wrong and the code it pointed to never existed;
+`likelihood_weight_sensitivity.py` is the reconstruction.)
 
 WHAT THIS SCRIPT DOES
 ---------------------
@@ -695,9 +706,11 @@ def build_report(samples_dir: Path, checkpoint: Path, out_path: Path) -> None:
       "sequence likelihoods is expected to sit far below `farquhar_eq5_lennorm`: raw "
       "log-likelihoods over ~27 tokens spread over tens of nats, which makes the "
       "cluster softmax nearly one-hot and drives the entropy toward zero. That is "
-      "precisely the large-spread regime in which `scripts/duplication_level_sim.py` "
-      "predicted the pile-up disappears, and it is why both variants are reported: "
-      "length normalisation is the modelling choice that decides the answer.")
+      "precisely the large-spread regime in which "
+      "`scripts/likelihood_weight_sensitivity.py` finds the near-cap crowding gone "
+      "(its top-decile rate is already ~0 by s = 2), and it is why both variants are "
+      "reported: length normalisation is the modelling choice that decides the answer. "
+      "The at-cap ATOM needs no such regime -- it is gone by s = 0.001 either way.")
     A("")
     A("## What each outcome would mean (fixed before the numbers existed)")
     A("")
