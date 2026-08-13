@@ -6,6 +6,8 @@
 \usepackage[T1]{fontenc}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
+% figures/ lives at the repo root; accept a build launched from either the root or paper/.
+\graphicspath{{../figures/}{figures/}}
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage[numbers]{natbib}
@@ -25,58 +27,27 @@ Sampling-Based Hallucination Detectors}
 \maketitle
 
 \begin{abstract}
-% Option-B (protocol-led) draft, ~210 words. Numbers finalise after the n>=80 run.
+% ~200 words (critic gate, 2026-08-13; the previous draft had accreted to ~750). Everything
+% cut from here is still stated where it belongs: the three-estimator scoping and the
+% Eq.(4)/Eq.(5) transfer argument in Methods, the N=20 pilot in Discussion, the judge
+% validation in Methods, the interval on every rate in Discussion and Conclusion.
 Sampling-based hallucination detectors such as semantic entropy are deployed on the claim
-that the uncertainty they report is invariant to how a question is phrased. Three estimators
-of semantic entropy are in circulation and we study one: the \emph{discrete} variant, which
-weights each meaning cluster by how many samples it contains. That is the black-box
-deployment path rather than a convenience---it is the variant Farquhar et al.\ name and use
-for all of their GPT-4 results, it is what semantic entropy probes are trained to predict,
-and it is the only one computable under the black-box access our threat model assumes. We set
-out to break the invariance claim with meaning-preserving paraphrases and found, first, that
-the detector has very little room in which to be broken. Discrete semantic entropy over $N$
-sampled answers is bounded above by $\log N$, and at the standard $N{=}10$ it lives on a
-lattice of just $39$ attainable values---of which only \emph{two} fall in the top tenth of its
-range. On a score-independent
-pool of $400$ questions scored clean, $9.5\%$ [$6.2$, $14.4$] of \emph{correct} answers
-already sit exactly at the ceiling before any attack and $21.5\%$ [$16.4$, $27.7$] sit on one
-of those two top-decile points. For hallucinating answers it is $27.5\%$ and $44.5\%$, so the
-cap bites hardest on exactly the class the detector exists to flag. On the $80$ correct-answer targets of our attack campaign---a
-score-independent sub-sample of that pool's correct stratum---an optimised paraphrase attack
-drives a further $42\%$ onto the ceiling, taking the total there past half; whether ordinary
-rephrasing does the same is precisely what a budget-matched null control has to settle, and
-we do not yet claim it. Raising $N$ \emph{does} buy resolution---$N{=}20$ affords $455$ attainable values
-and seven in the top decile---but less of it reaches the region that matters than the cap
-implies: on $15$ saturated targets re-scored at $N{=}20$, lifting the cap by $0.693$ nats
-left $20\%$ still pinned, because the plug-in baseline climbs with the cap as its
-finite-sample negative bias decays. The ceiling is not an artefact of the variant we study:
-the likelihood-weighted estimator Farquhar et al.\ designate as their main method normalises
-cluster likelihoods into a categorical distribution over the same at most $N$ observed
-clusters, so it obeys the same $\log N$ bound. The lattice \emph{is} an artefact of it---real
-weights leave no attainable values to count---so we scope every claim resting on discreteness
-and bracket, rather than assert, whether the empirical pile-up near the cap transfers.
-Second, the controls this measurement needs
-are stronger than the random-perturbation baseline that is standard in this literature. The
-attack reports a maximum over $\sim$$181$ candidates, and re-scoring each
-\emph{selected} paraphrase on an independent sample shows the effect shrinks
-significantly---by $-0.383$ nats, $95\%$ CI $[-0.529,-0.234]$---with a point retention of
-$45\%$ and a wide interval of $[25\%, 65\%]$: that inflation is present is established,
-though its exact size is not, and roughly half of what a naive report would claim is
-selection on sampling noise. We therefore give a protocol that makes
-the question answerable---score-independent target selection, an answer-invariance success
-criterion, and an exceedance test that prices the attacker's search budget into the null
-analytically, with tie handling that survives the ceiling---together with the independent
-equivalence oracle the attribution requires, an LLM-judge that clears the adversarial
-discrimination on which sentence embedders are near-chance ($0.93$ vs.\ $0.51$ on a
-domain-matched gold-alias proxy; validation on messy real sampled answers remains owed). The
-confirmatory evaluation at the pre-registered scale is under way under this protocol. The
-broader point is that a detector need not be badly calibrated to be fragile: on the wider
-score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) those targets are
-drawn from, this one separates
-the two moderately well (AUROC $0.70$), yet has so little usable range at the \emph{top} of
-its scale---the
-region a false alarm must reach---that the direction is compromised for reasons that precede
-any adversary.
+that the uncertainty they report is invariant to how a question is phrased. We set out to
+break it with meaning-preserving paraphrases and found the binding constraint falls on the
+operator, not the attacker. The \emph{discrete} estimator we study weights meaning clusters
+by sample counts, making it the entropy of a partition of $N$: at the standard $N{=}10$ it
+takes only $39$ values, with an atom at the maximum. Every threshold above that maximum
+flags nothing, so the lowest false-alarm rate at which a detector fires at all \emph{is} the
+chance that a clean correct answer yields $N$ mutually distinct meanings---$10.5\%$
+[$9.0$, $12.2$] over $1424$ clean correct answers. An operator who specifies a $5\%$
+false-alarm budget cannot have one, however well the score ranks. Measuring an attack here
+needs stronger controls than this literature's random-perturbation baseline: re-scoring each
+selected paraphrase on an independent sample retains only $45\%$ [$25\%$, $65\%$] of the
+apparent effect, so roughly half of an uncorrected result is selection on sampling noise. We
+give a protocol that makes the question answerable: score-independent target selection, an
+answer-invariance success criterion, a null priced against the attacker's search budget, and
+an independent LLM-judge equivalence oracle. The confirmatory attack evaluation under it is
+under way; we claim no attack effect here.
 \end{abstract}
 
 \section{Introduction}

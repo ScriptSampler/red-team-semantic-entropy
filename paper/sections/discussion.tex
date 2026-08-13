@@ -1,5 +1,6 @@
 % Discussion. Draft prose --- mechanism + implications; keep claims scoped to what
 % the null-controlled results support. Fill exact numbers at revision.
+\label{sec:discussion}
 
 \paragraph{Hypothesised mechanism.}
 Semantic entropy measures uncertainty over \emph{meaning} by clustering sampled
@@ -22,24 +23,134 @@ often is not, and that changes what the false-alarm result is a result \emph{abo
 should be precise about the scope, and about which population each number comes from: on the
 score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) the detector
 separates the two moderately well (AUROC $0.704$ [$0.653$, $0.753$]), so this is not a claim
-that discrete semantic entropy fails as a detector. It is a claim about one region of its range, and
-the counts that establish it are within-stratum frequencies measured on a sub-sample of that
-same pool---the attack campaign's $80$ correct-answer targets, scored clean, before anything
-is done to them. There, a tenth of the correct
-answers ($8/80$) already sit at the estimator's maximum, a quarter ($21/80$) sit within the
-top tenth of its range---a region containing just two of the estimator's $39$ attainable
-values, so those $21$ targets occupy one of two points---and it is exactly into that compressed
-region that a false alarm must be pushed. Under our own success criterion they cannot register
-a success at all, whatever the paraphrase: those two points lie $0.139$ nats apart, so the
-criterion's $\delta{=}0.25$ is out of reach from the lower one and there is nowhere above the
-upper one to go (Methods).
+that discrete semantic entropy fails as a detector. It is a claim about the region of its
+range where a deployed threshold has to sit, and it is best stated in the unit an operator
+actually specifies: a false-alarm budget.
+
+\paragraph{The achievable false-alarm rates are a short finite list.}
+A detector that flags when the score reaches $\tau$ changes its false-positive rate only when
+$\tau$ crosses a value some clean correct answer actually took, so on any given population
+the rates it can be operated at form a finite set---one per distinct clean score, plus the
+always-available policy that never fires. That set is not spread evenly. Enumerated on the
+fair pool's $200$ correct answers, the achievable rates below one in four false alarms are
+exactly three---$0\%$, $9.5\%$ [$6.2$, $14.4$] and $21.5\%$---catching respectively $0\%$,
+$27.5\%$ [$21.8$, $34.1$] and $44.5\%$ [$37.8$, $51.4$] of that pool's $200$ hallucinating
+answers. Counted against the budget an operator would state, the number of firing operating
+points at or below $1\%$, $5\%$, $10\%$ and $20\%$ false alarms is $0$, $0$, $1$ and $1$. We
+count against a budget rather than reporting how many operating points exist in total,
+because the total is a property of the sample---more negatives realise more of the
+lattice---while the low end is not. This is the argument of
+\citet{sun2026granularity}---that a score can rank acceptably and still leave an operator
+only a handful of usable thresholds---counted out for a sampling-based detector, where the
+thresholds available are fixed by the sample budget rather than by a model's verbal habits.
+
+The lower end of that list is an \emph{identity} rather than a measurement. The largest value
+the estimator can emit is $\ln N$, so every threshold above it flags nothing and the first
+threshold that fires at all is $\tau{=}\ln N$, which flags exactly the answers at the
+ceiling. The minimum non-zero false-positive rate is therefore not a tuning choice: it
+\emph{is} $\Pr(\text{a clean correct answer yields } N \text{ mutually distinct meanings})$,
+the mass of the ceiling atom. An operator who specifies a $5\%$ false-alarm budget cannot
+have one: the only threshold that honours it is the one that never fires, catching nothing.
+Nor is the shortfall a property of our sample. The Wilson lower bound on the fair pool's
+correct stratum is $6.2\%$, and the $1424$-answer superset that stratum is a subset of
+estimates the same parameter with seven times the negatives, at $10.5\%$ [$9.0$, $12.2$].%
+\footnote{False-positive rate is a within-negatives quantity, so the $400$-item fair pool has
+the \emph{same} grid as its correct stratum and there is no separate pooled figure to report;
+what the hallucinating stratum supplies is the true-positive column. The superset is the full
+labelled pool's correct stratum, of which the fair pool's is a strict subset, so it pins the
+same parameter rather than a different one---which is what makes it a precision check on the
+floor and not a second population with a second answer.}
+A $10\%$ budget we do \emph{not} claim to exclude. It falls between the two populations'
+estimates---honoured at $9.5\%$ on the fair pool's correct stratum, unavailable at all on the
+superset, with overlapping intervals either way---so the defensible statement is that the
+floor is about one correct answer in ten and a $10\%$ budget sits on the boundary of
+feasibility. The $5\%$ claim needs no such hedge on either population.
+
+Prevalence changes the consequences of a chosen operating point but not the grid, which is a
+within-negatives object and so does not move when the mix of correct and hallucinating
+questions does. Stated at the full labelled pool's natural hallucination rate, running at the
+lowest firing threshold raises $148$ alerts per thousand questions, of which $49.2\%$
+[$43.5$, $54.8$] are genuine, and leaves $216$ hallucinations per thousand unflagged.
+
+What makes that gap a gap, rather than an interval a finer threshold could subdivide, is that
+the ceiling is an \emph{atom} and not merely a maximum. At $\tau{=}\ln 10$ the flagged set is a single block of
+items carrying an identical score---$19$ of the fair pool's $200$ correct answers together
+with $55$ of its $200$ hallucinating ones---and no threshold can separate them, so those
+$19$ false alarms are not a tuning failure but the fixed price of those $55$ detections. The
+same holds one step down, where the second-largest attainable value moves the whole grid from
+$9.5\%$ to $21.5\%$ false alarms in one jump. This is what the coarseness of the lattice near
+the top of the range amounts to operationally: the two largest of the estimator's $39$
+attainable values are not a small slice of the scale but two indivisible blocks of
+population, and an operator's entire low-false-alarm menu is to take neither, one, or both.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_achievable_roc}
+\caption{Every operating point a deterministic threshold rule on discrete semantic entropy
+can occupy at $N{=}10$, with the false-positive rate measured on the fair pool's correct
+stratum ($n{=}200$) and the true-positive rate on its $200$ hallucinating answers. They are
+\emph{points}, not a curve---a finite achievable set whose size grows with the
+sample---and the dashed line is the upper convex hull, reachable only by a rule that
+randomises. Below the floor of $9.5\%$ that hull is a single chord out of the
+origin, so a randomised rule buys sub-floor false-alarm rates only by paying the average of
+an indivisible block (a $5\%$ budget costs a true-positive rate of $14.5\%$ against the
+$27.5\%$ available at this fair pool floor). No deterministic threshold exists anywhere in
+the shaded region.}
+\label{fig:achievable-roc}
+\end{figure}
+
+\paragraph{What this does and does not say about the ROC curve.}
+It does not say the ROC curve is fictional, and we state the limit of the claim before a
+reader has to. A \emph{randomised} rule---flag a ceiling item with probability $p$ and
+otherwise never fire---reaches any point on the chord between two adjacent achievable points,
+so a $5\%$ false-alarm rate is attainable at $p{=}0.526$, for a true-positive rate of
+$14.5\%$. Three things survive that concession. Every \emph{deterministic} operating point,
+which is the only kind a deployment can be audited against and the only kind under which the
+same input reliably gets the same decision, is one of them (Figure~\ref{fig:achievable-roc}).
+On the chord the operator pays the \emph{average} of an indivisible block rather than
+selecting its most informative members, which is exactly what the granularity costs. And
+randomisation invents nothing below the chord's left end: at any false-alarm rate the
+achievable true-positive rate is capped by the upper convex hull of those points, and below
+the floor that hull is one straight line out of the origin.
+
+\paragraph{Does a larger sample budget fix it?}
+Half of this is settled without data and half is not, and the two halves are easy to
+conflate. Settled: the floor is non-increasing in $N$. Couple the budgets by taking the
+$N{=}10$ sample to be the first ten draws of the $N{=}20$ one; if all twenty answers are
+pairwise inequivalent then so are any ten of them, so $\{\text{saturate at }20\}$ is
+contained in $\{\text{saturate at }10\}$, and the first ten of an i.i.d.\ draw of twenty have
+the law of an i.i.d.\ draw of ten. Raising the budget can therefore only lower the
+false-alarm floor, and the floor itself is a fact about how often the model answers a
+question $N$ different ways---a property of the model and the question distribution, not of
+the estimator's arithmetic. Not settled: whether the grid becomes usably \emph{fine} near the
+operating region. Enumeration bounds the number of thresholds available in the top tenth of
+the range at seven ($455$ attainable values at $N{=}20$, against $39$ and two at $N{=}10$),
+but says nothing about the false-alarm rates those seven carry, and that depends on how the
+negatives distribute over them. Mass could spread evenly, giving a usable grid, or stay
+concentrated on the cap, giving the same pathology one budget along. We have no clean
+$N{=}20$ scores on the fair pool, and the one $N{=}20$ re-score in this work is not evidence
+either way: its $15$ targets were chosen because their \emph{attacked} $N{=}10$ score hit the
+cap, which is selection on a score and on the attacked side, and at that size the interval
+around the ceiling rate spans almost everything of interest. Settling it needs one clean pass
+at $N{=}20$ over the same correct stratum, which we have not run.
+
+Under the attack's own success criterion the same coarseness bites from the other side. A
+target whose clean score already sits at one of the top two attainable values cannot register
+a success whatever the paraphrase: the two lie $0.139$ nats apart, so the criterion's
+$\delta{=}0.25$ is out of reach from the lower one and there is nowhere above the upper one
+to go, which disqualifies $21$ of the $80$ correct-answer targets of the attack campaign
+before any paraphrase is generated (Methods).
 
 The sharpest way to put the finding is therefore not ``we constructed an attack that defeats
-semantic entropy'' but ``discrete semantic entropy has so little usable range at the top of
-its scale that the false-alarm direction is largely unmeasurable in the detector's own
-units.'' The qualifier is load-bearing and we do not drop it: the ceiling behind this reading
+semantic entropy'' but ``discrete semantic entropy offers an operator no false-alarm rate
+between zero and roughly one correct answer in ten, and the false-alarm direction is
+correspondingly unmeasurable in the detector's own units.'' The two halves are the same fact
+seen from the two ends of the deployment, and the first is the stronger form because it is a
+statement about what does not exist rather than a frequency we observed. The qualifier is
+load-bearing and we do not drop it: the ceiling behind this reading
 is shared with the likelihood-weighted estimator, but the lattice that makes the range so
-coarse is not (Section~\ref{sec:methods}). The
+coarse---and with it the discrete grid of achievable false-alarm rates---is not
+(Section~\ref{sec:methods}). The
 first claim invites the reply that a stronger detector, or a stronger optimiser, would settle
 the matter; the second does not, because the natural rebuttal---use an estimator with more
 range---concedes the point. That rebuttal is already being built: coverage-adjusted
@@ -52,7 +163,8 @@ That reading also disciplines what we may say about magnitude. Because roughly h
 attacked targets end at the cap, the attack and any other method that also saturates become
 indistinguishable there, and effect sizes expressed in nats are censored. The cap bites
 asymmetrically---on the fair pool $27.5\%$ of hallucinating answers sit there against $9.5\%$
-of correct ones---but we are careful not to over-read that. AUROC is a rank statistic and
+of correct ones, which is the same pair of numbers as the lowest firing operating point
+above, read from the other direction---but we are careful not to over-read that. AUROC is a rank statistic and
 $\min(\cdot,\log N)$ is monotone, so censoring changes no pairwise ordering except among
 pairs where \emph{both} members are pinned. That is $0.275 \times 0.095 = 2.6\%$ of pairs,
 bounding the downward bias at $0.013$ against a confidence half-width of $0.050$. The

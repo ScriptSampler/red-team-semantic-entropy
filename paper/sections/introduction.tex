@@ -70,16 +70,31 @@ the measurement of \emph{how tightly that bound binds in deployment}. That half 
 the likelihood-weighted Eq.~(5), which normalises to a categorical distribution over the same
 clusters and so inherits the same ceiling---though not with Kuhn's unnormalised Eq.~(4), which
 has no such bound, so the ceiling is not a property of ``semantic entropy'' unqualified. The
-lattice half below is discrete-specific and does not transfer. At the standard
-$N{=}10$, on the $80$ correct-answer targets of our attack campaign scored clean---the
-false-alarm stratum, complete, and a score-independent prefix of the fair pool's correct
-stratum below---a tenth sit exactly at $\ln 10$ before any
-intervention, and a quarter sit in the top tenth of the score's range---a region containing
-only two of the estimator's $39$ attainable values. We do \emph{not} report a count of
+lattice half below is discrete-specific and does not transfer. At the standard $N{=}10$ the
+estimator is confined to a lattice of $39$ attainable values with an atom at the maximum
+$\ln 10$, and the consequence we measure is a constraint on the \emph{operator} rather than on
+the attacker: a detector that flags when the score reaches a threshold can only change its
+false-alarm rate at a value some clean correct answer actually took, so the rates it can be
+run at are a short finite list. Scored clean on the fair pool's $200$ correct answers, the
+achievable clean false-positive rates below one in four are $0\%$, $9.5\%$ [$6.2$, $14.4$]
+and $21.5\%$ [$16.4$, $27.7$], with nothing in between; an operator who specifies a $5\%$
+false-alarm budget cannot have one, because the only threshold that honours it never fires.
+That floor is an identity, not a measurement we happened to make: every threshold above
+$\ln N$ flags nothing, so the smallest false-positive rate a firing threshold can have
+\emph{is} the probability that a clean correct answer yields $N$ mutually distinct meanings.
+We put that probability at $9.5\%$ on the fair pool's correct stratum and at $10.5\%$ [$9.0$,
+$12.2$] on the $1424$-answer superset it is a subset of, whose lower bound closes off a $5\%$
+budget at $95\%$ confidence; a $10\%$ budget sits on the boundary, and the two populations
+land on opposite sides of it, so we claim only that the floor is about one correct answer in
+ten. The claim is about \emph{deterministic} rules, which is what a deployment can be audited
+against: a randomised rule that flags a ceiling item with some probability does reach the
+chords between these points, at the price of paying an indivisible block's average, and below
+the floor the reachable frontier is a single chord out of the origin. Nothing here rests on a count of
 distinct values realised: that quantity is monotone in the number of targets scored (the
 same population yields $28$ at $n{=}200$ and $35$ at $n{=}2000$, and $22$ sits at the $37$th
-percentile of what a random $80$ produces), so it measures the sample, not the estimator.
-The lattice size does not move. The general argument---that a score's distinct-value count caps
+percentile of what a random $80$ produces), so it measures the sample, not the estimator, and
+the total number of operating points inherits the same defect. What does not move with the
+sample is the lattice size, and at the low end the floor. The general argument---that a score's distinct-value count caps
 what an operator can do with it, however well it ranks---has been made and named for
 black-box LLM classification~\citep{sun2026granularity}; we instantiate it for a
 sampling-based generative detector, where the granularity limit is imposed by the sample
@@ -137,15 +152,17 @@ inflates: we measure $45\%$ retention on re-scoring. This does not arise against
 deterministic classifiers targeted in the work above, though it would against any stochastic
 scorer. Third, the estimator is not merely bounded---classifier confidence is bounded
 too---but \emph{discrete}, and coarsest exactly where the attack must land: at $N{=}10$ the
-estimator's attainable lattice has $39$ points, of which only \emph{two} lie in the top tenth
-of its range, so $21$ of our $80$ correct targets occupy one of two values. Raising $N$
-relaxes this ($N{=}20$ affords $455$ points, seven in the top decile), but buys less
-usable headroom than the cap implies, because the plug-in baseline climbs with the cap as its
-negative bias decays. Effect sizes are
+estimator's attainable lattice has $39$ points, and its top two lie $0.139$ nats apart---less
+than the success criterion's own $\delta$---so $21$ of our $80$ correct targets cannot
+register a success at any usable $\delta$, whatever the paraphrase. Raising $N$
+relaxes this ($N{=}20$ affords $455$ points, seven of them in the top tenth of the range), but
+buys less usable headroom than the cap implies, because the plug-in baseline climbs with the
+cap as its negative bias decays. Effect sizes are
 therefore right-censored and any null must stay valid under ties at the cap. The discreteness
 half of this is the score-granularity gap named by~\citet{sun2026granularity}; what we add
 is its instantiation for a sampling-based detector, where the lattice is set by the sample
-budget and is at its coarsest in the top decile that a false alarm must reach. What we claim is what this victim class forces on the measurement,
+budget and is at its coarsest at the top of the scale that both a false alarm and an
+operator's threshold must reach. What we claim is what this victim class forces on the measurement,
 not the move itself. No effect size enters the body until the definitive
 $n{\geq}80$ run lands under the budget-matched null control
 (Section~\ref{sec:experiments}); the small-sample machinery pass is treated as

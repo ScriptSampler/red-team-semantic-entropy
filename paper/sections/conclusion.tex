@@ -3,22 +3,34 @@
 
 Sampling-based hallucination detectors treat semantic uncertainty as a property of the
 question, invariant to surface form. We set out to test that assumption adversarially and
-found that the more informative obstacle lay upstream of the adversary: at the sample
-budgets these detectors are actually run at, the top of the score's range---the region a
-false alarm must reach---has very little room in which to be attacked. Across the $80$
-correct-answer targets of the attack campaign, scored clean, a tenth are already at the
-estimator's maximum, and a quarter are within the top tenth of its range---which at $N{=}10$
-contains only two of the $39$ attainable values of the \emph{discrete} estimator we study, so
-those targets occupy one of two points. The $\log N$ ceiling is shared with the
+found that the more informative obstacle lay upstream of the adversary, and that it is
+sharpest stated as a constraint on the operator rather than on the attacker. At $N{=}10$ the
+\emph{discrete} estimator we study is confined to a lattice of $39$ attainable values with an
+atom at the maximum, so a detector that flags when the score reaches a threshold can be run
+only at a finite list of false-alarm rates. Scored clean on the fair pool's $200$ correct
+answers, the achievable rates below one in four are $0\%$, $9.5\%$ [$6.2$, $14.4$] and
+$21.5\%$, catching $0\%$, $27.5\%$ and $44.5\%$ of that pool's $200$ hallucinating answers;
+an operator who specifies a $5\%$ false-alarm budget cannot have one, because the only
+threshold that honours it never fires. That floor is an identity rather than a measurement,
+since every threshold above $\ln N$ flags nothing and the smallest rate a firing threshold
+can have is therefore the mass of the ceiling atom itself---the probability that a clean
+correct answer yields $N$ mutually distinct meanings, which the $1424$-answer superset puts
+at $10.5\%$ [$9.0$, $12.2$]. A $5\%$ budget is excluded at $95\%$ confidence on both
+populations; a $10\%$ budget is on the boundary and we claim no more than that. The claim is
+about deterministic rules: a randomised rule reaches the chords between these points, but
+only by paying an indivisible block's average, and below the floor the reachable frontier is
+a single chord out of the origin. The $\log N$ ceiling behind all of this is shared with the
 likelihood-weighted estimator its authors designate as their main method; the lattice, and so
-the coarseness, is particular to the discrete variant that the same authors run for their
+the grid of achievable false-alarm rates, is particular to the discrete variant that the same
+authors run for their
 GPT-4 results and that semantic entropy probes are trained to predict. This is not a claim that the detector fails: on the
-score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) those targets are a
-sub-sample of---the wider population on which we characterise the detector---it separates correct from
+score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating)---the wider
+population on which we characterise the detector, and the one our targets are a sub-sample
+of---it separates correct from
 hallucinating answers moderately well, at AUROC $0.704$ [$0.653$, $0.753$]. It is a claim
 that the region where a false alarm lives is
-compressed to the point where differences there are largely unmeasurable in the detector's
-own units.
+compressed to the point where an operator has no usable choice inside it, and differences
+there are largely unmeasurable in the detector's own units.
 
 Establishing even that much honestly turned out to require more care than the question
 first appears to need. Because the attack reports a maximum over a large candidate search,

@@ -65,9 +65,14 @@ effect sizes, and the requirement that a null remain valid under ties. They do \
 transfer to Kuhn's Eq.~(4), which is unbounded above; the ceiling therefore cannot be asserted
 of ``semantic entropy'' unqualified, and writing ``discrete'' once would not be enough.
 Claims resting on \emph{discreteness} are ours alone: the $39$-point lattice at $N{=}10$, the
-two top-decile points and the $0.139$ nats between them, the unwinnable share of the
-false-alarm denominator, the exact-saturation counts, and the hard-tie handling in the
-exceedance test all presuppose integer cluster sizes and lapse under real-valued weights.
+$0.139$ nats between its top two points, the unwinnable share of the
+false-alarm denominator, the exact-saturation counts, the hard-tie handling in the
+exceedance test, and---most consequentially---the finite grid of achievable false-alarm rates
+and the non-zero floor beneath it all presuppose integer cluster sizes and lapse under
+real-valued weights. Eq.~(5) attains its own maximum only when the normalised cluster
+likelihoods are exactly equal, an event of measure zero, so it has no ceiling \emph{atom} and
+hence no floor on the false-positive rates it can be operated at; the ceiling is shared, the
+atom that makes the ceiling an operating constraint is not.
 Whether the empirical pile-up near the cap survives the substitution is unsettled, and we
 bracket it rather than assert it either way (Limitations).
 
@@ -253,7 +258,16 @@ We report every rate with a bootstrap $95\%$ confidence interval over questions.
 Beyond the aggregate score shift we report operating-point flips: fixing a
 detector threshold at a target false-positive rate on clean data, we count hide
 targets that move from flagged to unflagged and false-alarm targets that move
-from unflagged to flagged---the operationally meaningful events. We additionally
+from unflagged to flagged---the operationally meaningful events. Fixing that threshold is
+less innocent than it sounds, and we do it explicitly rather than by quantile. Because the
+score is discrete, a rule that flags when $H \geq \tau$ realises only the false-positive
+rates attained by some clean negative, so a nominal target such as $5\%$ or $10\%$ generally
+does not exist; interpolating between order statistics returns a threshold that silently runs
+at a different rate, in our case answering a $10\%$ request with a threshold that operates at
+more than twice it. We therefore select $\tau$ as the largest threshold whose \emph{achieved} clean
+false-positive rate is at or below the stated budget, assert that achieved rate at run time,
+and report it rather than the nominal one. Enumerating the achievable rates this way is what
+turns the ceiling into an operating constraint (Section~\ref{sec:discussion}). We additionally
 break out the subset of would-be successes voided by condition~(iii) because the
 model's answer flipped, since these are candidates for equivalence-gate leakage
 and lower-bound the fidelity of the NLI constraint. Both detectors are evaluated
