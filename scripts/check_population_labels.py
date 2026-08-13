@@ -35,15 +35,17 @@ THREE POPULATIONS, and they are not interchangeable:
                  correctness convention labels the run:
                    0.694  greedy alias-aware span  -- OPERATIVE: the convention the rest
                           of the paper runs on, and the one the paper must lead with.
-                   0.730  majority-of-samples.
+                   0.729  majority-of-samples (0.730 under the substring oracle; the full
+                          oracle x convention grid is results/replication_conventions.md).
                    0.787  all-samples-correct -- SCORE-COUPLED, and DEMOTED by commit
                           8e54943. All-samples labels a question correct iff all ten
                           samples are correct, and SE is the entropy of the clustering of
                           those same ten, so part of the AUROC it awards is the score
                           scored against itself. It flatters the pipeline (0.787 vs the
                           published 0.828) and it is the one figure this paper may not
-                          present as its replication result. Guarded so that it can only
-                          appear WITH its convention named.
+                          present as its replication result. 0.790 is the same cell under
+                          the span oracle and carries the same prohibition. Both are
+                          guarded so that they can only appear WITH the convention named.
 
 TWO OF THEM ARE NESTED, NOT DISJOINT. The attacked targets are literally the first 80 of
 the fair pool's 200 correct (src/se/attacks/select.py, _stratum_ids + [:n]). So a sentence
@@ -420,13 +422,18 @@ RULES: list[dict] = [
         "name": "our SE replication AUROC (operative conventions)",
         "owner": "replication",
         "foreign": ["fair", "attacked"],
-        "numbers": [r"0\.694", r"0\.730"],
+        # Both renderings of the majority cell are guarded. The (oracle x convention) grid
+        # in results/replication_conventions.md gives span/majority 0.7292 -> 0.729, which
+        # is what the paper now carries, and substring/majority 0.7296 -> 0.730, which it
+        # carried until the span oracle was made consistent. A guard that tracked only the
+        # current rendering would go quiet the next time the oracle is restated.
+        "numbers": [r"0\.694", r"0\.729", r"0\.730"],
         "window": 300,
         "exclusive": True,
-        "note": "0.694 (greedy alias-aware span) is the OPERATIVE replication figure and "
-                "0.730 the majority-of-samples one. Neither is a fair-pool or an "
-                "attacked-pool AUROC: they come from 2000 TriviaQA questions with no "
-                "attack and no stratified sampler.",
+        "note": "0.694 (greedy alias-aware span) is the OPERATIVE replication figure; "
+                "0.729/0.730 are the majority-of-samples one under the span and substring "
+                "oracles. None is a fair-pool or an attacked-pool AUROC: they come from "
+                "2000 TriviaQA questions with no attack and no stratified sampler.",
     },
     {
         # commit 8e54943 DEMOTED 0.787. The coupling is the reason, so the guard demands the
@@ -558,11 +565,18 @@ FROZEN_COUNTS: dict[int, str] = {          # the union, for reporting only
           "(results/replication_results.md, 2000 of 2000)",
 }
 
-# HIDE_OPEN is deliberately empty. While the hide arm is filling there is NO literal count
-# of it that is true for longer than a session. When it closes at its planned 80, whoever
-# closes it puts 80 here, with the artifact that closed it -- and only then may the paper
-# write a hide count or a both-strata total.
+# HIDE_OPEN is empty. While the hide arm is filling there is NO literal count of it that is
+# true for longer than a session. When it closes at its planned 80, whoever closes it puts
+# 80 here, with the artifact that closed it -- and only then may the paper write a hide
+# count or a both-strata total.
 HIDE_OPEN: frozenset[int] = frozenset()
+
+# The fair pool's wrong stratum can be named by DIRECTION rather than by correctness --
+# results/fair_pool_report.md says "the IDENTICAL 200 hide + 200 false-alarm ids" -- so a
+# hide-word pattern reaches it too. 200 is admissible there and 80 is not, and the
+# difference is not arbitrary: the hide ARM is planned at 80 and will pass through it, so
+# barring 80 is the whole point; it is planned at 80 and can never be 200.
+HIDE_OR_FAIR = frozenset({200})
 
 # (pattern, what it counts, the counts admissible for THAT cell, an optional context gate).
 # The gate exists only for patterns loose enough to reach counts outside this campaign.
@@ -571,12 +585,19 @@ HIDE_OPEN: frozenset[int] = frozenset()
 _ATTACK_CTX = [r"attack", r"campaign", r"optimiser", r"hide arm", r"false[- ]alarm",
                r"quarantin"]
 
-_STRATUM_COUNTS: list[tuple[str, str, frozenset, list | None]] = [
+_POOL_NOUN = (r"(?:attack(?:ed)?(?: campaign| pool| subset| arm| cells?)?|campaign"
+              r"|optimiser'?s own targets)")
+_QUAL = r"(?: [a-z-]+){1,2}"      # "80 CORRECT-ANSWER targets" -- names a stratum
+_NUM = r"(?<![/\d.])\b(\d+)"
+_STRATUM_OK = frozenset({15, 60, 80})
+
+GROWING_CELLS: list[tuple[str, str, frozenset, list | None]] = [
+    # ---- A COUNT OF A STRATUM ---------------------------------------------------------
     (r"(?<![/\d.])\b(\d+) (?:model-)?wrong\b", "the hide (wrong-answer) stratum",
-     HIDE_OPEN, None),
+     HIDE_OR_FAIR, None),
     (r"(?<![/\d.])\b(\d+) wrong-answer\b", "the hide (wrong-answer) stratum",
-     HIDE_OPEN, None),
-    (r"(?<![/\d.])\b(\d+) hid(?:e|ing)\b", "the hide stratum", HIDE_OPEN, None),
+     HIDE_OR_FAIR, None),
+    (r"(?<![/\d.])\b(\d+) hid(?:e|ing)\b", "the hide stratum", HIDE_OR_FAIR, None),
     # `hallucinating` reaches the fair pool's complete wrong stratum, not the hide arm.
     (r"(?<![/\d.])\b(\d+) hallucinating\b", "a hallucinating-answer stratum",
      frozenset({200}), None),
@@ -585,22 +606,17 @@ _STRATUM_COUNTS: list[tuple[str, str, frozenset, list | None]] = [
     # any value but 80 there an error rather than a snapshot.
     (r"(?<![/\d.])\b(\d+) correct\b", "a correct-answer stratum", frozenset({80, 200}),
      None),
-    (r"(?<![/\d.])\b(\d+) false-alarm\b", "the false-alarm stratum", frozenset({60, 80}),
-     None),
-]
+    # ...and 200 here for the same reason: "200 false-alarm ids" is the fair pool's correct
+    # stratum named by direction, complete, and not a count of the campaign's FA arm.
+    (r"(?<![/\d.])\b(\d+) false-alarm\b", "the false-alarm stratum",
+     frozenset({60, 80}) | HIDE_OR_FAIR, None),
 
-# A count predicated of the POOL rather than of a stratum: the sum, which is 80 + a live
-# number, and therefore has no admissible value at all. These are CONSTRUCTIONS, not
-# proximity: "those 21 targets" and "15 saturated targets" are subset counts and must stay
-# green, so a bare "N targets" is never enough -- the pool has to be named, or the
-# quantifier has to be a totalising one.
-_POOL_NOUN = (r"(?:attack(?:ed)?(?: campaign| pool| subset| arm| cells?)?|campaign"
-              r"|optimiser'?s own targets)")
-_QUAL = r"(?: [a-z-]+){1,2}"      # "80 CORRECT-ANSWER targets" -- names a stratum
-_NUM = r"(?<![/\d.])\b(\d+)"
-_STRATUM_OK = frozenset({15, 60, 80})
-
-_POOL_TOTALS: list[tuple[str, str, frozenset, list | None]] = [
+    # ---- A COUNT OF THE POOL AS A WHOLE -----------------------------------------------
+    # The sum, which is 80 + a live number, and therefore has no admissible value at all.
+    # These are CONSTRUCTIONS, not proximity: "those 21 targets" and "15 saturated targets"
+    # are subset counts and must stay green, so a bare "N targets" is never enough -- the
+    # pool has to be named, or the quantifier has to be a totalising one.
+    #
     # "the 97 targets of the attack campaign" -- unqualified, so it is the SUM.
     (_NUM + r" targets? (?:of|in|from) (?:the |our |its )?" + _POOL_NOUN,
      "the attacked pool as a whole", HIDE_OPEN, None),
@@ -873,31 +889,30 @@ def _check_growing(raw: str, flat: str, shown: str) -> list[str]:
     """
     problems: list[str] = []
     seen: set[tuple[int, int]] = set()
-    for specs in (_STRATUM_COUNTS, _POOL_TOTALS):
-        for pattern, what, allowed, near in specs:
-            for hit in re.finditer(pattern, flat, re.IGNORECASE):
-                value = int(hit.group(1))
-                if value in allowed:
+    for pattern, what, allowed, near in GROWING_CELLS:
+        for hit in re.finditer(pattern, flat, re.IGNORECASE):
+            value = int(hit.group(1))
+            if value in allowed:
+                continue
+            if near is not None:
+                lo = max(0, hit.start() - NEAR_WINDOW)
+                ctx = flat[lo:min(len(flat), hit.end() + NEAR_WINDOW)]
+                if not any(re.search(p, ctx, re.IGNORECASE) for p in near):
                     continue
-                if near is not None:
-                    lo = max(0, hit.start() - NEAR_WINDOW)
-                    ctx = flat[lo:min(len(flat), hit.end() + NEAR_WINDOW)]
-                    if not any(re.search(p, ctx, re.IGNORECASE) for p in near):
-                        continue
-                if (hit.start(1), hit.end(1)) in seen:   # one report per literal count
-                    continue
-                seen.add((hit.start(1), hit.end(1)))
-                where = f"{shown}{_line_hint(raw, hit.group(0))}"
-                snippet = flat[max(0, hit.start() - 110):hit.end() + 110].strip()
-                ok = (", ".join(str(v) for v in sorted(allowed)) if allowed
-                      else "NONE -- that cell is still filling")
-                problems.append(
-                    f"{where}: [growing denominator] COUNT OF A CELL THAT IS NOT CLOSED.\n"
-                    f"      '{hit.group(0).replace(chr(92), '')}' attaches the literal "
-                    f"count {value} to {what};\n"
-                    f"      admissible counts there: {ok}.\n"
-                    f"      {GROWING_ADVICE}.\n"
-                    f"      context: ...{snippet}...")
+            if (hit.start(1), hit.end(1)) in seen:       # one report per literal count
+                continue
+            seen.add((hit.start(1), hit.end(1)))
+            where = f"{shown}{_line_hint(raw, hit.group(0))}"
+            snippet = flat[max(0, hit.start() - 110):hit.end() + 110].strip()
+            ok = (", ".join(str(v) for v in sorted(allowed)) if allowed
+                  else "NONE -- that cell is still filling")
+            problems.append(
+                f"{where}: [growing denominator] COUNT OF A CELL THAT IS NOT CLOSED.\n"
+                f"      '{hit.group(0).replace(chr(92), '')}' attaches the literal "
+                f"count {value} to {what};\n"
+                f"      admissible counts there: {ok}.\n"
+                f"      {GROWING_ADVICE}.\n"
+                f"      context: ...{snippet}...")
     return problems
 
 
@@ -938,7 +953,7 @@ def main() -> int:
               "clause that carries the number. The third is disjoint from both.")
         return 1
     n_numbers = sum(len(r["numbers"]) for r in RULES)
-    n_growing = len(_STRATUM_COUNTS) + len(_POOL_TOTALS)
+    n_growing = len(GROWING_CELLS)
     print(f"population-label check: OK ({len(targets)} files, {len(RULES)} rules, "
           f"{n_numbers} number patterns, {len(SUPERSEDED)} superseded-run patterns, "
           f"{n_growing} growing-cell patterns over {len(FROZEN_COUNTS)} frozen counts)")

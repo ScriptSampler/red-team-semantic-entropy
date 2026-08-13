@@ -4,13 +4,31 @@ Binding a statistic to the wrong population has been found at six separate sites
 paper, each by a manual sweep, each sweep missing a site the next one found. This converts
 that into a check that runs every time the suite does.
 
-HISTORY THIS FILE HAS TO ANSWER FOR. The first version of the guard, and the first version
-of this file, were written by the same person on the same afternoon, and they encoded the
-same assumption: that the error looks like a MISSING label. An audit then constructed eight
-genuine population errors and the guard missed seven, because every one of them looked like
-a WRONG label with a right one somewhere in the window. The eight probes are reconstructed
-below as PROBES, and each is paired with a CONTROL -- the same claim written correctly --
-so that a rule cannot pass by flagging everything.
+HISTORY THIS FILE HAS TO ANSWER FOR, IN TWO ROUNDS.
+
+ROUND ONE. The first version of the guard, and the first version of this file, were written
+by the same person on the same afternoon, and they encoded the same assumption: that the
+error looks like a MISSING label. An audit then constructed eight genuine population errors
+and the guard missed seven, because every one of them looked like a WRONG label with a right
+one somewhere in the window. The eight probes are reconstructed below as PROBES, and each is
+paired with a CONTROL -- the same claim written correctly -- so that a rule cannot pass by
+flagging everything.
+
+ROUND TWO (2026-08-13), and it is the more instructive one. Commit 4448da0 hardened the
+attachment logic and the guard went from catching 1 of 14 probes to 14 of 14. It then
+returned GREEN on "Across the $97$ targets of the attack campaign ($80$ correct, $17$
+wrong)" -- a sentence in which both counts are retired -- because `97 targets` and
+`17 wrong` were still LABELS, and a rule existed whose only job was to legitimise the
+phrase. The hardening asked how tightly a label binds. It never asked whether the label was
+still true, so a retired count became a licence rather than an error.
+
+THIS FILE WAS COMPLICIT. Three of its controls asserted GREEN on the retired framing, one of
+them the deleted sentence verbatim, and they went on certifying it after commit 5d822b9
+removed it from the paper. They are rewritten below and marked. The lesson generalised into
+a structural test -- test_no_pool_label_may_carry_a_count_of_a_cell_that_is_not_closed --
+which points the guard's own growing-denominator rule at the guard's own label list: no
+label may assert a count unless that cell is declared complete. That test, not the probes,
+is what would have caught round two.
 """
 from __future__ import annotations
 
@@ -649,6 +667,24 @@ def test_subset_counts_inside_the_stratum_are_not_pool_totals(tmp_path):
     assert not problems, _say(problems)
 
 
+def test_the_fair_pools_wrong_stratum_may_be_named_by_direction(tmp_path):
+    """A false positive found by sweeping the rule across results/ before shipping it.
+
+    results/fair_pool_report.md names the fair pool's strata by ATTACK DIRECTION -- 'the
+    IDENTICAL 200 hide + 200 false-alarm ids' -- so a hide-word pattern reaches a stratum
+    that is complete. 200 is admissible there; 80 is not, and the asymmetry is the point:
+    the hide arm is planned at 80 and will pass through it, and can never be 200.
+    """
+    ok = _check(tmp_path, r"""
+        The SRE campaigns use the identical $200$ hide and $200$ false-alarm ids from the
+        score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating).
+    """)
+    assert not ok, _say(ok)
+
+    bad = _check(tmp_path, r"The campaign covers $80$ hide targets of the attack campaign.")
+    assert any("80" in p for p in bad), _say(bad)
+
+
 def test_target_counts_outside_this_campaign_are_none_of_the_rules_business(tmp_path):
     """The loose 'the N targets' pattern is context-gated. Without the gate it would fire
     on every target count in the paper and the rule would be unusable."""
@@ -675,7 +711,10 @@ def test_the_papers_refusal_to_quote_a_hide_count_passes(tmp_path):
 def test_the_operative_replication_auroc_is_guarded_at_all(tmp_path):
     """Commit 8e54943 demoted 0.787 and led with 0.694, and the guard kept guarding only
     0.787 -- so the paper's headline replication figure had no protection whatsoever."""
-    for token in ("0.694", "0.730"):
+    # 0.729 and 0.730 are the same majority cell under the span and substring oracles
+    # (results/replication_conventions.md). Both are guarded, so that restating the oracle
+    # -- which the paper did mid-session -- cannot silently un-guard the number.
+    for token in ("0.694", "0.729", "0.730"):
         problems = _check(tmp_path, f"The detector reaches AUROC ${token}$.")
         assert any(token in p for p in problems), f"{token} is unguarded"
 
@@ -714,8 +753,8 @@ def test_the_live_replication_paragraph_passes(tmp_path):
         Our SE replication on TriviaQA does not have one AUROC: on a single run of $2000$
         questions, the number depends on which correctness convention labels it. Under the
         greedy alias-aware span oracle used everywhere else in this paper it is $0.694$;
-        under a majority-of-samples label $0.730$; and under an all-samples-correct label
-        the replication reaches $0.787$, against the published SE figure of $0.828$.
+        under a majority-of-samples label $0.729$; and under an all-samples-correct label
+        it reaches $0.790$, against the published SE figure of $0.828$.
     """)
     assert not problems, _say(problems)
 
@@ -804,9 +843,9 @@ def test_every_rule_names_a_known_pool_and_compiles():
 def test_every_growing_cell_pattern_compiles_and_captures_a_count():
     """The growing rule reads group(1) as an integer. A pattern without that group would
     raise at check time, on a file the author is trying to get green."""
-    from check_population_labels import _POOL_TOTALS, _STRATUM_COUNTS
+    from check_population_labels import GROWING_CELLS
 
-    for pattern, what, allowed, near in _STRATUM_COUNTS + _POOL_TOTALS:
+    for pattern, what, allowed, near in GROWING_CELLS:
         rx = re.compile(pattern)
         assert rx.groups >= 1, pattern
         assert what and isinstance(allowed, frozenset), pattern
@@ -818,6 +857,7 @@ def _literal(pattern: str) -> str:
     """Best-effort plain text of a regex, so the guard can be pointed at its own labels."""
     s = re.sub(r"\(\?<![^)]*\)", "", pattern)      # lookbehinds
     s = re.sub(r"\(\?[:=!][^)]*\)", " ", s)        # non-capturing / lookahead groups
+    s = re.sub(r"\{\d*(?:,\d*)?\}", "", s)         # repetition counts are not data
     for token, repl in ((r"\b", ""), (r"\s*", " "), (r"\s+", " "), ("\\", "")):
         s = s.replace(token, repl)
     return s
