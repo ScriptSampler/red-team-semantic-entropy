@@ -291,12 +291,18 @@ def test_a_mislabelled_number_is_reported_as_mislabelled_not_merely_unlabelled(t
 # CONTROLS. The corrected form of every probe must pass, or the rule is unusable.
 # ======================================================================================
 def test_accepts_a_properly_labelled_pair(tmp_path):
-    """The corrected form must pass, or the check is unusable."""
+    """The corrected form must pass, or the check is unusable.
+
+    REWRITTEN 2026-08-13. This control used to say "across the $97$ targets of the attack
+    campaign" and assert green -- so the test file blessed the retired total just as the
+    guard's label list did. The pool is now named by its complete stratum, which is what
+    the live paper says.
+    """
     problems = _check(tmp_path, r"""
-        Across the $97$ targets of the attack campaign, scored clean, a tenth of correct
-        answers ($8/80$) already sit at the estimator's maximum. On the score-independent
-        \emph{fair} pool ($200$ correct, $200$ hallucinating) it separates correct from
-        hallucinating answers at AUROC $0.704$ [$0.653$, $0.753$].
+        Across the $80$ correct-answer targets of the attack campaign, scored clean, a
+        tenth of correct answers ($8/80$) already sit at the estimator's maximum. On the
+        score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) it
+        separates correct from hallucinating answers at AUROC $0.704$ [$0.653$, $0.753$].
     """)
     assert not problems, _say(problems)
 
@@ -339,13 +345,20 @@ def test_a_denied_label_does_not_count_as_the_binding_one(tmp_path):
 
 
 def test_a_sub_sample_clause_is_provenance_not_attachment(tmp_path):
-    """Introduction: '($80$ correct, $17$ wrong---a score-independent sub-sample of the
-    fair pool below...)' -- and then the attacked-pool granularity counts."""
+    """The Introduction's live wording: the stratum is named, its completeness asserted,
+    and the fair pool mentioned only as provenance.
+
+    REWRITTEN 2026-08-13. The old version of this control was the retired sentence verbatim
+    -- 'across the $97$ targets of our attack campaign scored clean ($80$ correct, $17$
+    wrong---a score-independent sub-sample of the fair pool below)' -- and it asserted
+    GREEN. Both counts in that parenthetical are false, and commit 5d822b9 had already
+    deleted the sentence from the paper; this test went on certifying it afterwards.
+    """
     problems = _check(tmp_path, r"""
-        At the standard $N{=}10$, across the $97$ targets of our attack campaign scored
-        clean ($80$ correct, $17$ wrong---a score-independent sub-sample of the fair pool
-        below, one correctness stratum per attack direction), a quarter of correct answers
-        ($21/80$) sit in the top tenth of the score's range.
+        At the standard $N{=}10$, on the $80$ correct-answer targets of our attack campaign
+        scored clean---the false-alarm stratum, complete, and a score-independent prefix of
+        the fair pool's correct stratum below---a quarter of correct answers ($21/80$) sit
+        in the top tenth of the score's range.
     """)
     assert not problems, _say(problems)
 
@@ -384,13 +397,13 @@ def test_a_clause_break_keeps_two_correctly_labelled_claims_apart(tmp_path):
     would fail on every draft."""
     for text in (
         r"""
-        Across the $97$ targets of the attack campaign we report saturation; AUROC is
-        $0.704$ on the score-independent \emph{fair} pool ($200$ correct, $200$
+        Across the $80$ correct-answer targets of the attack campaign we report saturation;
+        AUROC is $0.704$ on the score-independent \emph{fair} pool ($200$ correct, $200$
         hallucinating).
         """,
         r"""
-        Across the $97$ targets of the attack campaign, scored clean, a quarter sit in the
-        top tenth of the range.
+        Across the $80$ correct-answer targets of the attack campaign, scored clean, a
+        quarter sit in the top tenth of the range.
 
         On the score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) the
         clean detector reaches AUROC $0.704$ [$0.653$, $0.753$].
@@ -485,6 +498,256 @@ def test_the_current_run_values_are_not_flagged_as_stale(tmp_path):
 
 
 # ======================================================================================
+# THE INVERSION (2026-08-13). Four probes were run through the hardened guard and it
+# returned GREEN on three genuine errors -- including one where the guard did not merely
+# miss the stale count but BLESSED it, because `97 targets` and `17 wrong` were still on
+# the attacked pool's LABEL list and a whole rule existed to legitimise them.
+#
+# The four are reconstructed verbatim. Each one FAILS without the corresponding change:
+# probe 1 needs the label retirement plus GROWING_CELLS, probes 3 and 4 need the
+# replication rules and their `exclusive` flag.
+# ======================================================================================
+INVERSION_PROBES: list[tuple[str, str, str]] = [
+    (
+        "retired_97_and_17_were_accepted_as_labels",
+        r"""
+        Across the $97$ targets of the attack campaign ($80$ correct, $17$ wrong), a tenth
+        of correct answers ($8/80$) already sit at the estimator's maximum and $21/80$ sit
+        in the top tenth of the range.
+        """,
+        "97",
+    ),
+    (
+        "replication_auroc_sold_as_a_fair_pool_number",
+        r"""
+        On the \emph{fair} pool ($200$ correct, $200$ hallucinating) our SE replication
+        reaches AUROC $0.694$.
+        """,
+        "0.694",
+    ),
+    (
+        "replication_auroc_sold_as_an_attacked_pool_number",
+        r"Measured on the attacked subset the replication AUROC is $0.730$.",
+        "0.730",
+    ),
+]
+
+
+@pytest.mark.parametrize("name,text,token", INVERSION_PROBES,
+                         ids=[p[0] for p in INVERSION_PROBES])
+def test_the_inversion_probes_are_caught(tmp_path, name, text, token):
+    problems = _check(tmp_path, text, name=f"{name}.tex")
+    assert problems, f"probe {name!r} was accepted -- the guard is inverted on it"
+    assert any(token in p for p in problems), _say(problems)
+
+
+def test_the_fourth_probe_the_current_truth_is_also_a_live_count(tmp_path):
+    """The audit's fourth probe, and the one place I depart from its expected verdict.
+
+    The audit called '$80$ correct and $52$ wrong' GREEN because 52 is the count TODAY.
+    It is flagged. 52 was 46 at commit 5d822b9, 43 six hours before that, and 17 when the
+    paper first named it; the FA cell is closed at 80 and the hide cell is not closed at
+    all. Commit 5d822b9's own justification for deleting 97 -- 'wrong the moment it was
+    committed and wrong again at any later value' -- is a statement about 52 as much as
+    about 17, and Methods already refuses to quote the number for that reason ('the hide
+    cell is still filling ... any figure we quote for it goes stale between drafts').
+    Treating a currently-accurate count as safe is the assumption that produced the bug.
+    """
+    problems = _check(tmp_path, r"""
+        Across the targets of the attack campaign ($80$ correct and $52$ wrong), a tenth
+        of correct answers ($8/80$) already sit at the estimator's maximum.
+    """)
+    assert any("52" in p for p in problems), _say(problems)
+    # ...and it is flagged for being a live count, not for being mislabelled.
+    assert any("growing denominator" in p for p in problems), _say(problems)
+
+
+# ======================================================================================
+# GROWING DENOMINATORS. The general form: a literal count of a cell that is still filling,
+# or any total that sums over one. These must be caught WITHOUT the value ever having been
+# written down here -- the enumerated list is what failed.
+# ======================================================================================
+def test_a_hide_count_no_one_has_ever_enumerated_is_flagged(tmp_path):
+    """61 appears nowhere in this repo. The hide arm will pass through it on the way to 80,
+    and the guard has to be red on it the day it does, with no edit."""
+    problems = _check(tmp_path, r"The attack campaign covers $80$ correct and $61$ wrong.")
+    assert any("61" in p for p in problems), _say(problems)
+
+
+def test_the_planned_hide_n_is_not_admissible_while_the_cell_is_open(tmp_path):
+    """The sign-flipped version of the same bug, and a hole in my first draft of the rule.
+
+    The hide arm's planned n IS 80, and 80 is frozen for the FALSE-ALARM stratum. A registry
+    keyed by value alone would therefore bless '80 wrong' -- a count that is false today and
+    true later, which is stale-by-construction wearing the other hat. The registry is keyed
+    by cell, and the hide cell's admissible set is empty until someone closes it.
+    """
+    problems = _check(tmp_path, r"The campaign covers $80$ correct and $80$ wrong targets.")
+    assert any("80 wrong" in p for p in problems), _say(problems)
+
+
+@pytest.mark.parametrize("text,token", [
+    (r"Across the $132$ targets of the attack campaign we report saturation.", "132"),
+    (r"The attack campaign's $121$ targets are scored clean.", "121"),
+    (r"The $97$-target pool of the attack campaign is described in Section 4.", "97"),
+    (r"We report $97$ targets in total for the attack campaign.", "97"),
+    (r"We attack a pool of $97$, drawn from the fair pool.", "97"),
+    (r"The attack campaign is described below. The $97$ targets were scored clean.", "97"),
+    (r"Across $97$ attacked targets, scored clean, a tenth sit at the cap.", "97"),
+    (r"The hide arm now covers $52$ hide targets against its planned $80$.", "52"),
+    (r"The campaign covers $52$ wrong-answer targets.", "52"),
+    (r"Earlier drafts said $41$ wrong, then $46$ wrong, in the hide arm.", "41"),
+])
+def test_every_rendering_of_a_moving_total_is_flagged(tmp_path, text, token):
+    """One construction per row. The bug arrived as 'the 97 targets (80 correct, 17 wrong)',
+    but a total can be written a dozen ways and the rule has to reach all of them."""
+    problems = _check(tmp_path, text)
+    assert any(token in p for p in problems), _say(problems)
+
+
+def test_latex_cannot_hide_a_moving_total(tmp_path):
+    """strip_latex leaves a space where it removed a command, so `$\\mathbf{97}$-target`
+    flattens to `97 -target`. The markup lesson, applied to the new rule."""
+    for text in (
+        r"Across the \emph{97} targets of the attack campaign, a tenth sit at the cap.",
+        r"The $\mathbf{97}$-target pool of the attack campaign is described below.",
+    ):
+        assert any("97" in p for p in _check(tmp_path, text)), text
+
+
+# --- CONTROLS: the growing rule must not swallow the counts that are actually true ------
+def test_the_complete_false_alarm_stratum_is_still_a_valid_label(tmp_path):
+    """THE control for this whole change. `80 correct` stays a label -- the FA cell is
+    complete at its pre-registered n (results/fa_n80_milestone.md, 80/80) -- while
+    `17 wrong` does not. A rule that flagged both would be no better than one that flagged
+    neither, and would take the paper's three live sites down with it."""
+    good = _check(tmp_path, r"""
+        Across the $80$ correct-answer targets of the attack campaign, scored clean, a
+        tenth of correct answers ($8/80$) sit at the estimator's maximum and $21/80$ within
+        the top tenth of the range.
+    """)
+    assert not good, _say(good)
+
+    bad = _check(tmp_path, r"""
+        Across the $80$ correct and $17$ wrong targets of the attack campaign, scored
+        clean, a tenth of correct answers ($8/80$) sit at the estimator's maximum.
+    """)
+    assert any("17" in p for p in bad), _say(bad)
+
+
+def test_subset_counts_inside_the_stratum_are_not_pool_totals(tmp_path):
+    """Discussion says 'those $21$ targets' and the Abstract '$15$ saturated targets'.
+    Both are counts of a slice, not assertions about the pool's size. A bare `N targets`
+    rule would fire on both, which is why the pool has to be named or the quantifier has to
+    be a totalising one."""
+    problems = _check(tmp_path, r"""
+        On the attack campaign's $80$ correct-answer targets, a quarter ($21/80$) sit in a
+        region containing just two of the estimator's $39$ attainable values, so those
+        $21$ targets occupy one of two points; and on $15$ saturated targets re-scored at
+        $N{=}20$, lifting the cap by $0.693$ nats left $20\%$ still pinned.
+    """)
+    assert not problems, _say(problems)
+
+
+def test_target_counts_outside_this_campaign_are_none_of_the_rules_business(tmp_path):
+    """The loose 'the N targets' pattern is context-gated. Without the gate it would fire
+    on every target count in the paper and the rule would be unusable."""
+    problems = _check(
+        tmp_path, r"The benign sweep covers the $500$ targets of an unrelated study.")
+    assert not problems, _say(problems)
+
+
+def test_the_papers_refusal_to_quote_a_hide_count_passes(tmp_path):
+    """Methods' live wording. Naming the planned n while declining to give a current count
+    is the correct behaviour, and the guard must not punish it."""
+    problems = _check(tmp_path, r"""
+        We deliberately attach no count to that second clause here: the hide cell is still
+        filling against its planned $80$, so any figure we quote for it goes stale between
+        drafts. We state the hide-side counts once, with their final $n$, when that cell
+        completes.
+    """)
+    assert not problems, _say(problems)
+
+
+# ======================================================================================
+# THE REPLICATION POOL -- a third population, disjoint from both of the others.
+# ======================================================================================
+def test_the_operative_replication_auroc_is_guarded_at_all(tmp_path):
+    """Commit 8e54943 demoted 0.787 and led with 0.694, and the guard kept guarding only
+    0.787 -- so the paper's headline replication figure had no protection whatsoever."""
+    for token in ("0.694", "0.730"):
+        problems = _check(tmp_path, f"The detector reaches AUROC ${token}$.")
+        assert any(token in p for p in problems), f"{token} is unguarded"
+
+
+def test_a_replication_auroc_may_not_share_a_sentence_with_another_pool(tmp_path):
+    """`exclusive`. The fair pool and the attacked pool are NESTED, so proximity has to
+    arbitrate between them; the 2000-question replication run is DISJOINT from both, so
+    there is nothing to arbitrate. This is also the case proximity gets wrong -- 'On the
+    fair pool our SE replication reaches 0.694' puts the owning word CLOSER to the number
+    than the scope adverbial that actually binds it."""
+    for text in (
+        r"On the \emph{fair} pool ($200$ correct, $200$ hallucinating) our SE replication "
+        r"reaches AUROC $0.694$.",
+        r"Our SE replication reaches AUROC $0.694$ on the score-independent fair pool.",
+        r"Measured on the attacked subset the replication AUROC is $0.730$.",
+    ):
+        problems = _check(tmp_path, text)
+        assert any("MISLABELLED" in p for p in problems), _say(problems)
+
+
+def test_a_genuine_contrast_between_the_populations_still_passes(tmp_path):
+    """...and `exclusive` must not make cross-population comparison unwritable. The escape
+    hatch is the existing one: a label introduced by a denial or contrast cue is disarmed
+    before it can accuse anything."""
+    problems = _check(tmp_path, r"""
+        Our SE replication reaches AUROC $0.694$ under the greedy alias-aware span oracle,
+        unlike the fair pool.
+    """)
+    assert not problems, _say(problems)
+
+
+def test_the_live_replication_paragraph_passes(tmp_path):
+    """Experiments' actual wording, which reports all three conventions and leads with the
+    operative one. If the guard cannot accept this, the guard is wrong."""
+    problems = _check(tmp_path, r"""
+        Our SE replication on TriviaQA does not have one AUROC: on a single run of $2000$
+        questions, the number depends on which correctness convention labels it. Under the
+        greedy alias-aware span oracle used everywhere else in this paper it is $0.694$;
+        under a majority-of-samples label $0.730$; and under an all-samples-correct label
+        the replication reaches $0.787$, against the published SE figure of $0.828$.
+    """)
+    assert not problems, _say(problems)
+
+
+def test_the_score_coupled_auroc_may_not_be_presented_bare(tmp_path):
+    """0.787 is the all-samples-correct convention: a question counts correct iff all ten
+    samples are, and SE is the entropy of the clustering of those same ten -- so part of
+    that AUROC is the score scored against itself, in a paper whose third contribution is
+    that score-entangled selection invalidates a clean AUROC. Commit 8e54943 demoted it.
+    Wherever it appears its convention must appear with it, so that it can never again read
+    as the replication result."""
+    for text in (
+        r"We replicate semantic entropy on TriviaQA at AUROC $0.787$.",
+        r"Our SE replication reaches AUROC $0.787$, against the published $0.828$.",
+        r"Our SE replication on $2000$ questions reaches AUROC $0.790$.",
+    ):
+        problems = _check(tmp_path, text)
+        assert any("SCORE-COUPLED" in p for p in problems), _say(problems)
+
+
+def test_the_score_coupled_auroc_passes_when_its_convention_is_named(tmp_path):
+    """Limitations' live wording. The demotion is a requirement to disclose, not a ban."""
+    problems = _check(tmp_path, r"""
+        Our \emph{SE} replication reaches AUROC $0.694$ under the greedy alias-aware span
+        oracle this paper operates with, against the paper's SE figure of $0.828$. The
+        nearer-looking $0.787$ is the same run scored under an all-samples-correct label, a
+        convention mechanically coupled to semantic entropy that we use nowhere else.
+    """)
+    assert not problems, _say(problems)
+
+
+# ======================================================================================
 # Regression: the two original constructions
 # ======================================================================================
 def test_catches_an_unlabelled_fair_pool_auroc(tmp_path):
@@ -526,12 +789,76 @@ def test_every_rule_names_a_known_pool_and_compiles():
         for other in rule["foreign"]:
             assert other in POOLS, rule["name"]
             assert other != rule["owner"], rule["name"]
+        # `exclusive` says "a foreign label in this sentence is itself the error", which
+        # means nothing without foreign pools to exclude.
+        if rule.get("exclusive"):
+            assert rule["foreign"], rule["name"]
         for pat in rule["numbers"] + list(rule.get("requires", [])):
             re.compile(pat)
     for item in SUPERSEDED:
         re.compile(item["pattern"])
         for pat in item.get("near", []):
             re.compile(pat)
+
+
+def test_every_growing_cell_pattern_compiles_and_captures_a_count():
+    """The growing rule reads group(1) as an integer. A pattern without that group would
+    raise at check time, on a file the author is trying to get green."""
+    from check_population_labels import _POOL_TOTALS, _STRATUM_COUNTS
+
+    for pattern, what, allowed, near in _STRATUM_COUNTS + _POOL_TOTALS:
+        rx = re.compile(pattern)
+        assert rx.groups >= 1, pattern
+        assert what and isinstance(allowed, frozenset), pattern
+        for p in (near or []):
+            re.compile(p)
+
+
+def _literal(pattern: str) -> str:
+    """Best-effort plain text of a regex, so the guard can be pointed at its own labels."""
+    s = re.sub(r"\(\?<![^)]*\)", "", pattern)      # lookbehinds
+    s = re.sub(r"\(\?[:=!][^)]*\)", " ", s)        # non-capturing / lookahead groups
+    for token, repl in ((r"\b", ""), (r"\s*", " "), (r"\s+", " "), ("\\", "")):
+        s = s.replace(token, repl)
+    return s
+
+
+def test_no_pool_label_may_carry_a_count_of_a_cell_that_is_not_closed():
+    """THE structural pin for the inversion, and the one rule that would have caught it.
+
+    The guard went wrong because `97 targets`, `97-target`, `17 wrong` and `17 hide` sat on
+    the attacked pool's LABEL list. A label is an assertion about the world; those four
+    stopped being true and nothing re-checked them, so a retired count became a licence to
+    attach anything to it. Hardening the attachment logic could not find that, because the
+    attachment logic was working perfectly on a false premise.
+
+    So: every integer that appears anywhere in any label must be a DECLARED-COMPLETE cell
+    size. Re-adding `17 wrong` fails here; so does `52 wrong`, and so does the 160 total on
+    the day the hide arm closes, until whoever closes it says so in FROZEN_COUNTS.
+    """
+    from check_population_labels import FROZEN_COUNTS, POOLS
+
+    offenders = []
+    for pool, spec in POOLS.items():
+        for pat in spec["labels"]:
+            for found in re.findall(r"\d+", _literal(pat)):
+                if int(found) not in FROZEN_COUNTS:
+                    offenders.append(f"{pool}: {pat!r} asserts the count {found}")
+    assert not offenders, (
+        "a pool label names a count that is not a declared-complete cell size "
+        f"(frozen: {sorted(FROZEN_COUNTS)}):\n  " + "\n  ".join(offenders))
+
+
+def test_the_retired_labels_are_gone_and_stay_gone():
+    """Named explicitly, because these four are the ones that inverted the guard and the
+    generic test above would not name them in a failure message."""
+    from check_population_labels import POOLS, RULES
+
+    flat = " ".join(p for spec in POOLS.values() for p in spec["labels"])
+    for retired in ("97 targets", "97-target", "17 wrong", "17 hide"):
+        assert retired not in flat, f"{retired!r} is a retired count, not a label"
+    # ...and the rule whose only job was to legitimise the phrase.
+    assert not any("97" in r["name"] for r in RULES)
 
 
 def test_the_guard_is_cheap_enough_to_run_in_the_suite():

@@ -5,9 +5,10 @@ Large language models are increasingly paired with \emph{hallucination detectors
 that estimate whether a generated answer can be trusted. A prominent family is
 sampling-based: semantic entropy (SE)~\citep{kuhn2023semantic, farquhar2024detecting}
 samples several answers, clusters them by meaning with a natural-language-inference
-(NLI) equivalence check, and reports the entropy of the resulting cluster
-distribution; semantic reformulation entropy (SRE)~\citep{tong2025sre} extends this
-with input reformulations. These detectors are deployed on an implicit promise: that
+(NLI) equivalence check, and reports an entropy over the resulting clusters (we study the
+\emph{discrete} variant, which weights clusters by sample counts; the literature carries three
+estimators and Section~\ref{sec:methods} separates them); semantic reformulation entropy
+(SRE)~\citep{tong2025sre} extends this with input reformulations. These detectors are deployed on an implicit promise: that
 the uncertainty they report is a property of the \emph{question and answer}, invariant
 to how the question happens to be phrased.
 
@@ -57,10 +58,19 @@ correct answer's---as the case study that exercises the protocol; only the false
 direction is evaluated under the null control in this work.
 
 \paragraph{Contributions.}
-(1) \textbf{A measurement-validity result about semantic entropy itself}, independent of
-whether any attack succeeds. That a plug-in entropy over at most $N$ observed clusters
+(1) \textbf{A measurement-validity result about \emph{discrete} semantic entropy}, independent
+of whether any attack succeeds. The scope is deliberate and is the black-box deployment path:
+the discrete variant is the one \citet{farquhar2024detecting} name and run for all of their
+GPT-4 results, the one \citet{kossen2024seps} train their probes to predict, and the only one
+computable under the black-box access we assume (Section~\ref{sec:methods}). The two halves of
+the result have different reach, and we keep them apart. That a plug-in entropy over at most
+$N$ observed clusters
 cannot exceed $\log N$ is elementary, and we claim no novelty for it; our contribution is
-the measurement of \emph{how tightly that bound binds in deployment}. At the standard
+the measurement of \emph{how tightly that bound binds in deployment}. That half is shared with
+the likelihood-weighted Eq.~(5), which normalises to a categorical distribution over the same
+clusters and so inherits the same ceiling---though not with Kuhn's unnormalised Eq.~(4), which
+has no such bound, so the ceiling is not a property of ``semantic entropy'' unqualified. The
+lattice half below is discrete-specific and does not transfer. At the standard
 $N{=}10$, on the $80$ correct-answer targets of our attack campaign scored clean---the
 false-alarm stratum, complete, and a score-independent prefix of the fair pool's correct
 stratum below---a tenth sit exactly at $\ln 10$ before any

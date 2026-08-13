@@ -1,6 +1,28 @@
 % Limitations. Draft prose --- owns the construct-validity issues surfaced by our
 % own adversarial audit; verify numbers/scope at revision.
 
+\paragraph{Our results are scoped to the discrete estimator, and one of them may not transfer.}
+We study discrete semantic entropy, for the three reasons given in
+Section~\ref{sec:methods}, and the paper's claims do not all have the same standing under the
+likelihood-weighted estimator that \citet{farquhar2024detecting} designate as their main
+method. The $\log N$ ceiling transfers by construction: their Eq.~(5) normalises cluster
+likelihoods into a categorical distribution over the same at most $N$ observed clusters, so
+its plug-in entropy lies in $[0, \log N]$ exactly as ours does. The $39$-point lattice does
+not: real-valued weights are not confined to the entropies of integer partitions of $N$, so
+the exact ties at the cap, the $0.139$ nats separating the top two attainable values, the
+unwinnable share of the false-alarm denominator, and the hard-tie machinery the exceedance
+test needs all lapse. Whether the \emph{empirical} pile-up near the cap transfers is genuinely
+open, and we would rather bracket it than assert it in either direction. Re-weighting our own
+cached cluster structure---the $1440$ greedy-correct questions of our $2000$-question
+replication pass---with simulated length-normalised likelihoods in place of sample counts
+reproduces a pile-up when the spread of within-cluster likelihoods is small and dissolves it
+when the spread is large, with the crossover falling inside the range we consider plausible.
+The simulation therefore brackets the answer without choosing between its ends, and no claim
+in this paper rests on either end. Settling it needs the real weights rather than simulated
+ones: re-scoring our stored samples under the generating model's own sequence likelihoods
+would decide it directly, on the same questions and the same clusterings. That script is
+being built; it has not been run, and we report nothing from it here.
+
 \paragraph{Selection on a noisy estimator---measured, not merely acknowledged.}
 Semantic entropy is a finite-sample quantity: for each candidate we cluster
 $N{=}10$ sampled answers, so the score is a Monte-Carlo estimate of the true

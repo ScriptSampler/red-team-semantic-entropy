@@ -13,7 +13,16 @@
   author  = {Kuhn, Lorenz and Gal, Yarin and Farquhar, Sebastian},
   journal = {International Conference on Learning Representations (ICLR)},
   year    = {2023},
-  annote    = {arXiv:2302.09664. Origin of semantic entropy; the linguistic-invariance claim this project attacks.}
+  annote    = {arXiv:2302.09664. Origin of semantic entropy; the linguistic-invariance claim
+this project attacks. ESTIMATOR CAVEAT, verified against the full text 2026-08-13: their
+Eq. (4) is "SE(x) ~ -|C|^-1 sum_{i=1}^{|C|} log p(C_i|x)" with p(c|x) = sum_{s in c} p(s|x)
+over LENGTH-NORMALISED sequence likelihoods and NO renormalisation across clusters. It is an
+average of surprisals, not a plug-in categorical entropy, and it is therefore NOT bounded by
+log N --- it diverges upward as any cluster likelihood tends to zero, and length normalisation
+can push cluster mass above one (the degeneracy Farquhar's Eq. (5) normalisation was added to
+remove). Even renormalised, Jensen puts a uniform average of -log P(C_i|x) AT OR ABOVE
+log|C|. So the log N ceiling may NOT be stated for "semantic entropy" unqualified; writing
+"discrete" once is not enough, which is why Methods separates all three estimators.}
 }
 
 @article{farquhar2024detecting,
@@ -22,7 +31,22 @@
   journal = {Nature},
   volume  = {630},
   year    = {2024},
-  annote    = {The SE detector. Primary victim method.}
+  annote    = {The SE detector. Primary victim method. ESTIMATOR SCOPE, verified against the
+Nature full text 2026-08-13 (PMC11186750) --- do not re-litigate without re-reading it.
+THREE estimators exist and we implement the third. Eq. (5) is the likelihood-weighted one and
+is explicitly NORMALISED: "P(C_i|x) = P(c_i|x)/sum_c P(c|x) estimates a categorical
+distribution over the cluster meanings, that is, sum_i P(C_i|x) = 1. Without this
+normalization step cluster 'probabilities' could exceed one because of length normalization,
+resulting in degeneracies." And: "Equation (5) is the estimator giving our main method that we
+refer to as semantic entropy throughout the text." THEY NAME OURS: "For scenarios in which the
+sequence probabilities are not available, we propose a variant of semantic entropy which we
+call 'discrete' semantic entropy", which "approximates P(C_i|x) directly from the number of
+generations in each cluster, disregarding the token probabilities" --- and decisively, it is
+the estimator "which we use for all GPT-4 results in this paper and which performs similarly
+well." CONSEQUENCE: the log N ceiling DOES carry to Eq. (5) (normalised categorical entropy
+over the same at most N observed clusters, so provably in [0, log K] subset [0, log N]); the
+39-point lattice, the 0.139-nat gap, the unwinnable-denominator count and the hard-tie
+machinery DO NOT. Whether the empirical pile-up carries is UNSETTLED (Limitations).}
 }
 
 @article{tong2025sre,
@@ -38,7 +62,12 @@
   author  = {Kossen, Jannik and Han, Jiatong and Razzak, Muhammed and Schut, Lisa and Malik, Shreshth and Gal, Yarin},
   booktitle = {ICML Workshop on Foundation Models in the Wild},
   year    = {2024},
-  annote    = {arXiv:2406.15927. Linear probe approximating SE from one hidden state. Transfer target for the SEP-transfer stretch. VENUE CORRECTED 2026-08-03: we had cited COLM 2024, which is WRONG — OATML's own publication page lists the ICML 2024 Workshop on Foundation Models in the Wild (https://oatml.cs.ox.ac.uk/publications/20240621_KossenSemantic.html). Re-check OpenReview before camera-ready in case of a later archival venue.}
+  annote    = {arXiv:2406.15927. Linear probe approximating SE from one hidden state. Transfer target for the SEP-transfer stretch. VENUE CORRECTED 2026-08-03: we had cited COLM 2024, which is WRONG — OATML's own publication page lists the ICML 2024 Workshop on Foundation Models in the Wild (https://oatml.cs.ox.ac.uk/publications/20240621_KossenSemantic.html). Re-check OpenReview before camera-ready in case of a later archival venue. ESTIMATOR SCOPE,
+verified 2026-08-13: SEPs are trained on the DISCRETE variant, which is a load-bearing
+justification for our scoping --- "We here use an additional approximation, employing the
+discrete variant of SE that yields good performance without access to token probabilities,
+making it compatible with black-box models." So a result about discrete SE is a result about
+the quantity SEPs regress on.}
 }
 
 @inproceedings{nikitin2024kle,

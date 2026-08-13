@@ -152,8 +152,20 @@ WHAT IT STILL CANNOT CATCH (deliberate; false positives gate the suite)
   * The oracle-calibrated vs shipped power figures (0.84/0.71 vs 0.77/0.51) are a
     test-variant provenance problem, not a population one, and are not guarded here.
   * Numbers rendered as words ("a tenth", "a quarter", "past half", "nearly two fifths")
-    are invisible to a number-anchored check -- for staleness as much as for population.
-    They are the reason prose claims still need a human read.
+    are invisible to a number-anchored check -- for staleness as much as for population,
+    and now for growing denominators too: "across the ninety-seven targets of the attack
+    campaign" passes. They are the reason prose claims still need a human read.
+  * The growing-denominator rule anchors on the NOUN a count quantifies, so a hide count
+    written with no stratum noun escapes it: "the hide arm now stands at 52" passes, as
+    does "the campaign covers $80 + 52$ targets". A verb-anchored pattern was tried and
+    rejected -- Methods legitimately writes "the hide cell is still filling against its
+    planned 80", and no cheap rule separates a planned n from a current count. Red-teamed
+    and left open on purpose; the constructions that actually carried the bug (a total
+    with a pool noun, a count with a stratum noun) are all covered.
+  * `exclusive` compares within a sentence-ish unit, and `:` is a unit boundary. "On the
+    fair pool: our SE replication reaches 0.694" therefore passes, where the same sentence
+    with a comma fails. Splitting on the colon is what keeps the Conclusion's "not a claim
+    that the detector fails: on the fair pool ... 0.704" green, so the boundary stays.
   * Table 1's cells are placeholders ("--"). When they are filled, the numbers themselves
     become checkable; the caption already names the population.
   * The guarded set is a LIST. A number this file has never heard of is unguarded, so a new
@@ -400,11 +412,43 @@ RULES: list[dict] = [
         "window": 250,
     },
     {
-        "name": "our SE replication AUROC",
+        # The 2000-question replication run is DISJOINT from both pools, so `exclusive`:
+        # a fair-pool or attacked-pool label anywhere in the same sentence is an error even
+        # when "replication" sits closer to the number. "On the fair pool our SE replication
+        # reaches AUROC 0.694" is the shape that defeats proximity arbitration -- the owning
+        # word is nearer, and the scope adverbial is what actually binds.
+        "name": "our SE replication AUROC (operative conventions)",
         "owner": "replication",
         "foreign": ["fair", "attacked"],
-        "numbers": [r"0\.787"],
+        "numbers": [r"0\.694", r"0\.730"],
         "window": 300,
+        "exclusive": True,
+        "note": "0.694 (greedy alias-aware span) is the OPERATIVE replication figure and "
+                "0.730 the majority-of-samples one. Neither is a fair-pool or an "
+                "attacked-pool AUROC: they come from 2000 TriviaQA questions with no "
+                "attack and no stratified sampler.",
+    },
+    {
+        # commit 8e54943 DEMOTED 0.787. The coupling is the reason, so the guard demands the
+        # coupling be visible: `requires` here is not a pool label but the CONVENTION, and
+        # the rule turns red on a bare "our replication reaches 0.787" -- which is exactly
+        # how the paper used to present it, against the published 0.828.
+        "name": "all-samples replication AUROC (SCORE-COUPLED, never the operative figure)",
+        "owner": "replication",
+        "foreign": ["fair", "attacked"],
+        "numbers": [r"0\.787", r"0\.790"],
+        "requires": [r"all[- ]samples", r"all ten sampl", r"nearer[- ]looking",
+                     r"(?:mechanically )?coupled", r"score[- ]entangled",
+                     r"convention (?:the paper|we) (?:does not|use)"],
+        "window": 300,
+        "exclusive": True,
+        "missing_label": "SCORE-COUPLED FIGURE PRESENTED BARE",
+        "note": "0.787 is the all-samples-correct convention: a question counts correct "
+                "iff all ten samples are, and SE is the entropy of the clustering of those "
+                "same ten, so part of this AUROC is the score scored against itself. It "
+                "was demoted by commit 8e54943 and may NEVER be presented as the paper's "
+                "operative replication figure -- 0.694 is. Wherever it appears, the "
+                "all-samples convention must be named in the same breath.",
     },
     {
         "name": "prior-work figures (not ours)",
@@ -465,10 +509,141 @@ SUPERSEDED: list[dict] = [
      "replacement": "that count is a statement about the sample, not the estimator -- "
                     "report the n-invariant lattice instead ($39$ attainable values at "
                     "$N{=}10$, two of them in the top tenth of the range)"},
+    # NB: `97 targets`, `17 wrong` and friends are deliberately NOT listed here. Enumerating
+    # the particular stale values is the shape that failed -- see GROWING_CELLS below.
 ]
 SUPERSEDED_RUN = "wk9_def"
 CURRENT_RUN = "wk9_defb"
 NEAR_WINDOW = 300
+
+
+# --------------------------------------------------------------------------------------
+# GROWING DENOMINATORS. The general form of the bug that inverted this guard.
+#
+# SUPERSEDED above answers "this number was recomputed and is now that number". It cannot
+# answer the hide arm, because the hide arm has no settled value to be superseded BY: it was
+# 17, then 41, then 43, then 46, then 52, and it is heading for its planned 80. A literal
+# count of a cell that is still filling is wrong at the moment of writing and wrong again at
+# every later moment, and so is any total that sums over it. Commit 5d822b9 removed "97" on
+# exactly this reasoning ("stale by construction ... would have been wrong again at any
+# later value") and the guard then went on blessing it for a day, because the guard was
+# looking for values it had been told about.
+#
+# SO THE POLARITY IS INVERTED. We do not enumerate the stale counts -- that set is open and
+# grows by one every time the campaign advances, which is precisely why the enumerated form
+# failed. We enumerate the counts that are FROZEN, a closed set that changes only when a cell
+# COMPLETES, and flag every other literal count of a campaign stratum or of the pool as a
+# whole. 52 is caught today without anyone having written 52 down; so is 61, and so is 132.
+#
+# Adding to FROZEN_COUNTS is therefore a deliberate assertion that a cell is closed. That is
+# the intended cost: stating a total should require saying which run finished.
+# --------------------------------------------------------------------------------------
+# The registry is keyed by CELL, not by value. Keying it by value alone leaves the worst
+# hole open: the hide arm's planned n IS 80, so a global "80 is fine" would bless "80 wrong"
+# today -- a count that is false now and will be true later, which is the same
+# stale-by-construction bug with the sign flipped. A cell whose entry is an EMPTY set has no
+# admissible literal count at all, because it is still filling.
+_FA_STRATUM = "the FALSE-ALARM stratum -- COMPLETE at its pre-registered n=80 " \
+              "(results/fa_n80_milestone.md, 80/80)"
+_FAIR_STRATUM = "a fair-pool correctness stratum -- complete and score-independent"
+_WC_SUBSET = "the winner's-curse subset (the FA targets the optimiser found a paraphrase " \
+             "for), frozen with the FA cell"
+_PILOT = "the N=20 re-score subset (results/pilot_n20_ceiling.md) -- a closed pilot"
+
+FROZEN_COUNTS: dict[int, str] = {          # the union, for reporting only
+    15: _PILOT, 60: _WC_SUBSET, 80: _FA_STRATUM, 200: _FAIR_STRATUM,
+    300: "each judge-validation stratum -- complete (results/judge_validation.md)",
+    400: "the fair pool, 200 + 200 -- complete",
+    2000: "the TriviaQA replication run -- complete "
+          "(results/replication_results.md, 2000 of 2000)",
+}
+
+# HIDE_OPEN is deliberately empty. While the hide arm is filling there is NO literal count
+# of it that is true for longer than a session. When it closes at its planned 80, whoever
+# closes it puts 80 here, with the artifact that closed it -- and only then may the paper
+# write a hide count or a both-strata total.
+HIDE_OPEN: frozenset[int] = frozenset()
+
+# (pattern, what it counts, the counts admissible for THAT cell, an optional context gate).
+# The gate exists only for patterns loose enough to reach counts outside this campaign.
+# NB: `target` is deliberately absent -- the loose pattern below contains the word
+# "targets" itself, so including it would make the gate vacuous.
+_ATTACK_CTX = [r"attack", r"campaign", r"optimiser", r"hide arm", r"false[- ]alarm",
+               r"quarantin"]
+
+_STRATUM_COUNTS: list[tuple[str, str, frozenset, list | None]] = [
+    (r"(?<![/\d.])\b(\d+) (?:model-)?wrong\b", "the hide (wrong-answer) stratum",
+     HIDE_OPEN, None),
+    (r"(?<![/\d.])\b(\d+) wrong-answer\b", "the hide (wrong-answer) stratum",
+     HIDE_OPEN, None),
+    (r"(?<![/\d.])\b(\d+) hid(?:e|ing)\b", "the hide stratum", HIDE_OPEN, None),
+    # `hallucinating` reaches the fair pool's complete wrong stratum, not the hide arm.
+    (r"(?<![/\d.])\b(\d+) hallucinating\b", "a hallucinating-answer stratum",
+     frozenset({200}), None),
+    # `correct`/`false-alarm` reach frozen cells; they are guarded anyway so that a
+    # MIS-stated frozen count is caught -- the FA cell being closed is exactly what makes
+    # any value but 80 there an error rather than a snapshot.
+    (r"(?<![/\d.])\b(\d+) correct\b", "a correct-answer stratum", frozenset({80, 200}),
+     None),
+    (r"(?<![/\d.])\b(\d+) false-alarm\b", "the false-alarm stratum", frozenset({60, 80}),
+     None),
+]
+
+# A count predicated of the POOL rather than of a stratum: the sum, which is 80 + a live
+# number, and therefore has no admissible value at all. These are CONSTRUCTIONS, not
+# proximity: "those 21 targets" and "15 saturated targets" are subset counts and must stay
+# green, so a bare "N targets" is never enough -- the pool has to be named, or the
+# quantifier has to be a totalising one.
+_POOL_NOUN = (r"(?:attack(?:ed)?(?: campaign| pool| subset| arm| cells?)?|campaign"
+              r"|optimiser'?s own targets)")
+_QUAL = r"(?: [a-z-]+){1,2}"      # "80 CORRECT-ANSWER targets" -- names a stratum
+_NUM = r"(?<![/\d.])\b(\d+)"
+_STRATUM_OK = frozenset({15, 60, 80})
+
+_POOL_TOTALS: list[tuple[str, str, frozenset, list | None]] = [
+    # "the 97 targets of the attack campaign" -- unqualified, so it is the SUM.
+    (_NUM + r" targets? (?:of|in|from) (?:the |our |its )?" + _POOL_NOUN,
+     "the attacked pool as a whole", HIDE_OPEN, None),
+    # "...of our attack campaign" with a stratum named: a stratum count, frozen values only.
+    (_NUM + _QUAL + r" targets? (?:of|in|from) (?:the |our |its )?" + _POOL_NOUN,
+     "a named stratum of the attacked pool", _STRATUM_OK, None),
+    # "the attack campaign's 97 targets", and its stratum-qualified form.
+    (_POOL_NOUN + r"'?s? " + _NUM + r" targets?", "the attacked pool as a whole",
+     HIDE_OPEN, None),
+    (_POOL_NOUN + r"'?s? " + _NUM + _QUAL + r" targets?",
+     "a named stratum of the attacked pool", _STRATUM_OK, None),
+    # "the 97-target pool". The `\s*` is load-bearing: strip_latex leaves a space where it
+    # removed a command, so `$\mathbf{97}$-target` flattens to `97 -target`.
+    (_NUM + r"\s*-\s*target\b", "a pool named by its size", HIDE_OPEN, None),
+    # "across the 97 targets", "all 97 targets", "a pool of 97". Frozen stratum sizes are
+    # tolerated here because "all 80 targets" is far likelier to be the FA cell than a
+    # claimed total, and crying wolf on it would cost more than it catches.
+    (r"\b(?:across|all|a pool of|pool of|totalling|comprising) (?:the |our |its )?"
+     + _NUM + r"\b(?=\s*(?:targets?|attack|campaign|[,.;:]|$))",
+     "the attacked pool as a whole", _STRATUM_OK, None),
+    (_NUM + r" targets?,? (?:in total|altogether|overall)",
+     "the attacked pool as a whole", HIDE_OPEN, None),
+    # "97 targets (80 correct, 17 wrong)" -- a total stated with its own strata breakdown,
+    # which is the exact sentence commit 5d822b9 deleted.
+    (_NUM + r" targets?[^.]{0,20}?\(?\s*(?<![/\d.])\d+ correct",
+     "the attacked pool as a whole, stated as a strata sum", HIDE_OPEN, None),
+    # Bare "the 97 targets", with no pool noun attached. A DEFINITE determiner is required
+    # so that the paper's subset counts stay green: "those 21 targets" and "15 saturated
+    # targets" are counts of a slice, not assertions about the pool's size. Context-gated,
+    # because "the 500 targets" of something else is none of this rule's business.
+    (r"\b(?:the|our|its) " + _NUM + r" targets?\b",
+     "the attacked pool as a whole", _STRATUM_OK, _ATTACK_CTX),
+]
+
+GROWING_ADVICE = (
+    "the hide arm is STILL FILLING against its planned 80 (17 -> 41 -> 46 -> 52 and "
+    "counting), so this count -- and every total that sums over it -- is stale at the "
+    "moment of writing. Name the stratum that carries the statistic instead: the "
+    "false-alarm stratum is complete at 80 and its counts (8/80, 21/80, 42/80) are "
+    "stable. If a both-strata figure is wanted, the fair pool supplies one that is "
+    "complete and score-independent. If a cell has genuinely COMPLETED, declare it in "
+    "FROZEN_COUNTS with the artifact that closed it"
+)
 
 
 def strip_latex(text: str) -> str:
@@ -614,15 +789,29 @@ def _check_pools(raw: str, flat: str, terms: list[int], shown: str) -> list[str]
                         foreign_best = tagged
 
                 # (1) NEGATIVE assertion: a foreign pool's label binds more tightly.
+                #     ...unless the rule is `exclusive`, in which case the owning pool is
+                #     DISJOINT from the foreign ones and same-sentence co-occurrence is
+                #     itself the error. Proximity arbitration exists to tolerate NESTING
+                #     ("the 80 targets are drawn from the fair pool"); nothing about the
+                #     2000-question replication run is nested in either pool, so there is
+                #     nothing to tolerate. A label already disarmed by NON_BINDING_CUES
+                #     ("unlike the fair pool's 0.704") never reaches here.
                 if foreign_best is not None:
                     fc, fs, ftext, fpool = foreign_best
-                    beaten = (own_prox is None
+                    exclusive_hit = bool(rule.get("exclusive")) and fc == 0
+                    beaten = (exclusive_hit
+                              or own_prox is None
                               or fc < own_prox[0]
                               or (fc == own_prox[0] and fs + MARGIN < own_prox[1]))
                     if beaten:
-                        near = ("no owning-pool label within "
-                                f"{prox} chars" if own_prox is None
-                                else f"its own label '{own_prox[2]}' binds less tightly")
+                        if exclusive_hit and own_prox is not None:
+                            near = ("its own label "
+                                    f"'{own_prox[2]}' is nearer, but these populations are "
+                                    "DISJOINT -- they may not share a sentence")
+                        elif own_prox is None:
+                            near = f"no owning-pool label within {prox} chars"
+                        else:
+                            near = f"its own label '{own_prox[2]}' binds less tightly"
                         where = f"{shown}{_line_hint(raw, hit.group(0))}"
                         ctx = flat[max(0, hit.start() - 110):hit.end() + 110].strip()
                         problems.append(
@@ -640,7 +829,8 @@ def _check_pools(raw: str, flat: str, terms: list[int], shown: str) -> list[str]
                     where = f"{shown}{_line_hint(raw, hit.group(0))}"
                     ctx = flat[max(0, hit.start() - 110):hit.end() + 110].strip()
                     problems.append(
-                        f"{where}: [{rule['name']}] UNLABELLED.\n"
+                        f"{where}: [{rule['name']}] "
+                        f"{rule.get('missing_label', 'UNLABELLED')}.\n"
                         f"      '{token}' belongs to the {POOLS[owner]['what']} "
                         f"but no binding label appears within {window} chars.\n"
                         f"      needs one of: {req_desc}\n"
@@ -673,12 +863,52 @@ def _check_provenance(raw: str, flat: str, shown: str) -> list[str]:
     return problems
 
 
+def _check_growing(raw: str, flat: str, shown: str) -> list[str]:
+    """Flag a literal count of a cell that is still filling, or a total that sums over one.
+
+    The polarity is the point. A count passes only if it is DECLARED FROZEN in
+    FROZEN_COUNTS; the stale values are never enumerated, because that set gains a member
+    every time the campaign advances -- which is how `97 targets` and `17 wrong` survived
+    as LABELS long after both were false.
+    """
+    problems: list[str] = []
+    seen: set[tuple[int, int]] = set()
+    for specs in (_STRATUM_COUNTS, _POOL_TOTALS):
+        for pattern, what, allowed, near in specs:
+            for hit in re.finditer(pattern, flat, re.IGNORECASE):
+                value = int(hit.group(1))
+                if value in allowed:
+                    continue
+                if near is not None:
+                    lo = max(0, hit.start() - NEAR_WINDOW)
+                    ctx = flat[lo:min(len(flat), hit.end() + NEAR_WINDOW)]
+                    if not any(re.search(p, ctx, re.IGNORECASE) for p in near):
+                        continue
+                if (hit.start(1), hit.end(1)) in seen:   # one report per literal count
+                    continue
+                seen.add((hit.start(1), hit.end(1)))
+                where = f"{shown}{_line_hint(raw, hit.group(0))}"
+                snippet = flat[max(0, hit.start() - 110):hit.end() + 110].strip()
+                ok = (", ".join(str(v) for v in sorted(allowed)) if allowed
+                      else "NONE -- that cell is still filling")
+                problems.append(
+                    f"{where}: [growing denominator] COUNT OF A CELL THAT IS NOT CLOSED.\n"
+                    f"      '{hit.group(0).replace(chr(92), '')}' attaches the literal "
+                    f"count {value} to {what};\n"
+                    f"      admissible counts there: {ok}.\n"
+                    f"      {GROWING_ADVICE}.\n"
+                    f"      context: ...{snippet}...")
+    return problems
+
+
 def check_file(path: Path) -> list[str]:
     raw = path.read_text(encoding="utf-8", errors="replace")
     flat = strip_latex(raw)
     terms = _terminators(flat)
     shown = _rel(path)
-    return _check_pools(raw, flat, terms, shown) + _check_provenance(raw, flat, shown)
+    return (_check_pools(raw, flat, terms, shown)
+            + _check_provenance(raw, flat, shown)
+            + _check_growing(raw, flat, shown))
 
 
 def main() -> int:
@@ -694,14 +924,24 @@ def main() -> int:
         for p in problems:
             print("  " + p)
         print("\nEvery population-sensitive number must be BOUND to its pool, not merely "
-              "near a mention of one. The two are NOT interchangeable: 0.704 is the fair "
-              "pool (200+200); the ceiling, granularity and saturation counts are the "
-              "97-target attacked pool. They are nested, not disjoint, so say which one "
-              "you mean in the clause that carries the number.")
+              "near a mention of one. THREE populations, not interchangeable:\n"
+              "  fair pool    200 correct + 200 hallucinating, score-independent. "
+              "0.704 lives here, and every correct-versus-hallucinating claim.\n"
+              "  attacked     the campaign's own targets: a COMPLETE false-alarm stratum "
+              "of 80, plus a hide stratum that is still filling. The ceiling, granularity "
+              "and saturation counts live here, all 80-denominated. Name the stratum -- "
+              "this pool has no total, and any sum over it is stale before it is read.\n"
+              "  replication  2000 TriviaQA questions, no attack. 0.694 is the operative "
+              "AUROC; 0.787 is the score-coupled all-samples one and is not the paper's "
+              "figure.\n"
+              "The first two are nested, not disjoint, so say which one you mean in the "
+              "clause that carries the number. The third is disjoint from both.")
         return 1
     n_numbers = sum(len(r["numbers"]) for r in RULES)
+    n_growing = len(_STRATUM_COUNTS) + len(_POOL_TOTALS)
     print(f"population-label check: OK ({len(targets)} files, {len(RULES)} rules, "
-          f"{n_numbers} number patterns, {len(SUPERSEDED)} superseded-run patterns)")
+          f"{n_numbers} number patterns, {len(SUPERSEDED)} superseded-run patterns, "
+          f"{n_growing} growing-cell patterns over {len(FROZEN_COUNTS)} frozen counts)")
     return 0
 
 

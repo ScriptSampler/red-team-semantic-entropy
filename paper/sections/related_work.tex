@@ -3,8 +3,16 @@
 
 \paragraph{Sampling-based hallucination detection.}
 Semantic entropy estimates a model's uncertainty by sampling several answers,
-clustering them into meaning-equivalence classes, and taking the entropy of the
-cluster distribution~\citep{kuhn2023semantic,farquhar2024detecting}. Its central
+clustering them into meaning-equivalence classes, and taking an entropy over those
+classes~\citep{kuhn2023semantic,farquhar2024detecting}. How the classes are \emph{weighted}
+is not a detail, and the originating papers do not settle on one answer:
+\citet{kuhn2023semantic} average cluster surprisals under length-normalised sequence
+likelihoods, \citet{farquhar2024detecting} normalise those likelihoods into a categorical
+distribution and take its plug-in entropy (their Eq.~(5), which they designate as their main
+method), and the same paper introduces a third, \emph{discrete} variant that weights each
+cluster by the number of generations in it. The three do not share their measurement
+properties, so we name ours: we study the discrete variant, for reasons and with consequences
+set out in Section~\ref{sec:methods}. Its central
 selling point is \emph{linguistic invariance}: because clustering is on meaning
 rather than surface form, the score is meant to be stable across rephrasings.
 Subsequent work improves the estimator. Semantic Reformulation Entropy (SRE)
@@ -126,10 +134,14 @@ any level, while a statistic capped at $\log N$ must understate whenever the qua
 estimates exceeds that cap, so where the cap binds it is itself one source of the
 understatement they correct for. Separately, \citet{sun2026granularity} name the \emph{score granularity
 gap} for black-box LLM classification: a confidence score may rank well and still take so
-few distinct values that an operator has only a handful of usable thresholds. Semantic
-entropy inherits exactly this pathology, with the twist that the granularity limit is set by
-the sampling budget rather than by a verbalisation format; our contribution here is the
-instantiation and its consequence for attack evaluation, not the argument itself. Read
+few distinct values that an operator has only a handful of usable thresholds. \emph{Discrete}
+semantic entropy inherits exactly this pathology, with the twist that the granularity limit is
+set by the sampling budget rather than by a verbalisation format; our contribution here is the
+instantiation and its consequence for attack evaluation, not the argument itself. The
+likelihood-weighted estimator does not inherit it: real-valued cluster weights are not
+confined to the entropies of integer partitions of $N$, so the lattice dissolves even though
+the $\log N$ ceiling remains (Section~\ref{sec:methods}). The granularity claim is thus the
+sharper and the narrower of our two, and we keep the two apart wherever we make them. Read
 together with the originating papers---which report that clusters are few and grow slowly
 with $N$, and treat that as a computational
 saving~\citep{kuhn2023semantic, farquhar2024detecting}---the picture is of a well-known

@@ -27,11 +27,17 @@ Sampling-Based Hallucination Detectors}
 \begin{abstract}
 % Option-B (protocol-led) draft, ~210 words. Numbers finalise after the n>=80 run.
 Sampling-based hallucination detectors such as semantic entropy are deployed on the claim
-that the uncertainty they report is invariant to how a question is phrased. We set out to
-break that claim with meaning-preserving paraphrases and found, first, that the detector has
-very little room in which to be broken. Semantic entropy over $N$ sampled answers is bounded
-above by $\log N$, and at the standard $N{=}10$ it lives on a lattice of just $39$ attainable
-values---of which only \emph{two} fall in the top tenth of its range. On a score-independent
+that the uncertainty they report is invariant to how a question is phrased. Three estimators
+of semantic entropy are in circulation and we study one: the \emph{discrete} variant, which
+weights each meaning cluster by how many samples it contains. That is the black-box
+deployment path rather than a convenience---it is the variant Farquhar et al.\ name and use
+for all of their GPT-4 results, it is what semantic entropy probes are trained to predict,
+and it is the only one computable under the black-box access our threat model assumes. We set
+out to break the invariance claim with meaning-preserving paraphrases and found, first, that
+the detector has very little room in which to be broken. Discrete semantic entropy over $N$
+sampled answers is bounded above by $\log N$, and at the standard $N{=}10$ it lives on a
+lattice of just $39$ attainable values---of which only \emph{two} fall in the top tenth of its
+range. On a score-independent
 pool of $400$ questions scored clean, $9.5\%$ [$6.2$, $14.4$] of \emph{correct} answers
 already sit exactly at the ceiling before any attack and $21.5\%$ [$16.4$, $27.7$] sit on one
 of those two top-decile points. For hallucinating answers it is $27.5\%$ and $44.5\%$, so the
@@ -43,7 +49,13 @@ we do not yet claim it. Raising $N$ \emph{does} buy resolution---$N{=}20$ afford
 and seven in the top decile---but less of it reaches the region that matters than the cap
 implies: on $15$ saturated targets re-scored at $N{=}20$, lifting the cap by $0.693$ nats
 left $20\%$ still pinned, because the plug-in baseline climbs with the cap as its
-finite-sample negative bias decays. Second, the controls this measurement needs
+finite-sample negative bias decays. The ceiling is not an artefact of the variant we study:
+the likelihood-weighted estimator Farquhar et al.\ designate as their main method normalises
+cluster likelihoods into a categorical distribution over the same at most $N$ observed
+clusters, so it obeys the same $\log N$ bound. The lattice \emph{is} an artefact of it---real
+weights leave no attainable values to count---so we scope every claim resting on discreteness
+and bracket, rather than assert, whether the empirical pile-up near the cap transfers.
+Second, the controls this measurement needs
 are stronger than the random-perturbation baseline that is standard in this literature. The
 attack reports a maximum over $\sim$$181$ candidates, and re-scoring each
 \emph{selected} paraphrase on an independent sample shows the effect shrinks

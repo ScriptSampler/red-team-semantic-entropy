@@ -22,7 +22,7 @@ often is not, and that changes what the false-alarm result is a result \emph{abo
 should be precise about the scope, and about which population each number comes from: on the
 score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) the detector
 separates the two moderately well (AUROC $0.704$ [$0.653$, $0.753$]), so this is not a claim
-that semantic entropy fails as a detector. It is a claim about one region of its range, and
+that discrete semantic entropy fails as a detector. It is a claim about one region of its range, and
 the counts that establish it are within-stratum frequencies measured on a sub-sample of that
 same pool---the attack campaign's $80$ correct-answer targets, scored clean, before anything
 is done to them. There, a tenth of the correct
@@ -35,8 +35,11 @@ criterion's $\delta{=}0.25$ is out of reach from the lower one and there is nowh
 upper one to go (Methods).
 
 The sharpest way to put the finding is therefore not ``we constructed an attack that defeats
-semantic entropy'' but ``semantic entropy has so little usable range at the top of its scale
-that the false-alarm direction is largely unmeasurable in the detector's own units.'' The
+semantic entropy'' but ``discrete semantic entropy has so little usable range at the top of
+its scale that the false-alarm direction is largely unmeasurable in the detector's own
+units.'' The qualifier is load-bearing and we do not drop it: the ceiling behind this reading
+is shared with the likelihood-weighted estimator, but the lattice that makes the range so
+coarse is not (Section~\ref{sec:methods}). The
 first claim invites the reply that a stronger detector, or a stronger optimiser, would settle
 the matter; the second does not, because the natural rebuttal---use an estimator with more
 range---concedes the point. That rebuttal is already being built: coverage-adjusted
