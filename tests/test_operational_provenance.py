@@ -364,11 +364,15 @@ KNOWN_SITES: dict[tuple[str, str, str], int] = {
     ("docs/START_HERE_overnight.md", "dead-anchor", "~67 GPU-h null control"): 1,
     ("docs/START_HERE_overnight.md", "stale-countdown", ""): 1,
     ("docs/definitive_run_plan.md", "dead-anchor", "~67 GPU-h null control"): 1,
-    # THE ONE IN THE PAPER. experiments.tex discloses a pre-registration deviation as
-    # triggered by a 228 GPU-h price tag; the measured figure is ~99. The deviation stands;
-    # the stated trigger is 2.3x too large, in the paragraph whose whole job is to let a
-    # reviewer check the rule was not tuned to the result.
-    ("paper/sections/experiments.tex", "dead-anchor", "228 GPU-h"): 1,
+    # RETIRED 2026-08-14. experiments.tex had disclosed a pre-registration deviation as
+    # triggered by a 228 GPU-h price tag; the measured figure is ~99, so the recorded trigger
+    # was 2.3x too large in the paragraph whose whole job is to let a reviewer check the rule
+    # was not tuned to the result. The paragraph now names the old figure AND corrects it, and
+    # the checker accepts that as a retirement -- which is the behaviour we want, since the
+    # dead literal is present deliberately rather than by neglect. The correction left one
+    # untagged figure behind (the measured ~99); that is carried in KNOWN_OPEN, because a
+    # paper's prose cannot hold a literal MEASURED token without addressing the reader in the
+    # wrong register.
     ("results/derived_paper_quantities.md", "dead-anchor", "228 GPU-h"): 2,
     ("results/judge_owed_conditions.md", "dead-anchor", "55 s / clustering"): 1,
     ("results/judge_owed_conditions.md", "dead-anchor", "6.1 s cheap-arm eval"): 1,
