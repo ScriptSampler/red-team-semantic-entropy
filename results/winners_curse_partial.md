@@ -8,10 +8,29 @@ are superseded by the numbers below.
 |---|---|
 | mean move at **selection** (the reported figure) | **+0.698 nats** (median +0.586) |
 | mean move on a **fresh seed** | **+0.315 nats** (median +0.165) |
-| **retention** | **45.2%**, bootstrap 95% CI **[25.1%, 64.7%]** |
+| **retention** | **45.2%**, paired bootstrap 95% CI **[25%, 65%]** |
 | **shrinkage** | **−0.383 nats**, 95% CI **[−0.529, −0.234]** |
 | targets keeping a positive move | 36/60 |
 | corr(selection, fresh) | +0.456 |
+
+**Provenance of the retention interval — read this before quoting it.** Until 2026-08-13 the
+interval had **no generating code**. The script computed retention as a bare ratio of means
+and bootstrapped only the *shrinkage*; the generated report printed retention with no
+interval at all, and the figure `[25.1%, 64.7%]` that appeared here, in `critique_log` 29 and
+in the paper came from a one-off computation by an audit agent that was never committed. It
+is now computed by `retention_ci()` in `scripts/winners_curse_reeval.py` and covered by
+`tests/test_winners_curse.py`, which pins it against the committed checkpoint.
+
+**The recomputation CONFIRMS the number** — it did not move. Code gives **45.2%,
+[25.0%, 64.9%]** (paired percentile bootstrap, 10,000 replicates, seed 0), against the prose
+`[25.1%, 64.7%]`: agreement to ~0.2 percentage points, which is inside the bootstrap's own
+Monte-Carlo wobble (across 12 seeds the endpoints range 24.4–25.1% and 64.6–65.6%). Two
+independent estimators corroborate it: the log-ratio bootstrap gives [25.0%, 64.9%] and
+Fieller's theorem gives [23.7%, 65.7%]. The ratio is well conditioned here — every
+selection-time move is positive (min +0.034 nats) so the denominator, +0.698 nats, sits ~11
+standard errors from zero (Fieller g = 0.031) and not one bootstrap replicate came near a
+zero denominator. **Because the tenths are RNG noise rather than data, quote the interval to
+whole percent: [25%, 65%].** That is exactly what the paper says, so no paper number changes.
 
 **Separate the two statements, because they have very different strengths.**
 
