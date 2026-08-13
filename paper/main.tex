@@ -31,13 +31,16 @@ that the uncertainty they report is invariant to how a question is phrased. We s
 break that claim with meaning-preserving paraphrases and found, first, that the detector has
 very little room in which to be broken. Semantic entropy over $N$ sampled answers is bounded
 above by $\log N$, and at the standard $N{=}10$ it lives on a lattice of just $39$ attainable
-values---of which only \emph{two} fall in the top tenth of its range. Across the $97$ targets
-of our attack campaign scored clean, a tenth of \emph{correct} answers already sit exactly at
-the ceiling before any attack, and a quarter sit on one of those two top-decile points; $22$
-of the $39$ values are realised at all. An optimised paraphrase attack drives a further
-$42\%$ onto the ceiling, taking the total there past half; whether ordinary rephrasing does
-the same is precisely what a budget-matched null control has to settle, and we do not yet
-claim it. Raising $N$ \emph{does} buy resolution---$N{=}20$ affords $455$ attainable values
+values---of which only \emph{two} fall in the top tenth of its range. On a score-independent
+pool of $400$ questions scored clean, $9.5\%$ [$6.2$, $14.4$] of \emph{correct} answers
+already sit exactly at the ceiling before any attack and $21.5\%$ [$16.4$, $27.7$] sit on one
+of those two top-decile points. For hallucinating answers it is $27.5\%$ and $44.5\%$: the
+cap compresses the class the detector exists to flag roughly twice as hard, which biases its
+clean AUROC downward. On the $80$ correct-answer targets of our attack campaign---a
+score-independent sub-sample of that pool's correct stratum---an optimised paraphrase attack
+drives a further $42\%$ onto the ceiling, taking the total there past half; whether ordinary
+rephrasing does the same is precisely what a budget-matched null control has to settle, and
+we do not yet claim it. Raising $N$ \emph{does} buy resolution---$N{=}20$ affords $455$ attainable values
 and seven in the top decile---but less of it reaches the region that matters than the cap
 implies: on $15$ saturated targets re-scored at $N{=}20$, lifting the cap by $0.693$ nats
 left $20\%$ still pinned, because the plug-in baseline climbs with the cap as its
@@ -56,8 +59,9 @@ equivalence oracle the attribution requires, an LLM-judge that clears the advers
 discrimination on which sentence embedders are near-chance ($0.93$ vs.\ $0.51$ on a
 domain-matched gold-alias proxy; validation on messy real sampled answers remains owed). The
 confirmatory evaluation at the pre-registered scale is under way under this protocol. The
-broader point is that a detector need not be badly calibrated to be fragile: on a separate
-score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) this one separates
+broader point is that a detector need not be badly calibrated to be fragile: on the wider
+score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) those targets are
+drawn from, this one separates
 the two moderately well (AUROC $0.70$), yet has so little usable range at the \emph{top} of
 its scale---the
 region a false alarm must reach---that the direction is compromised for reasons that precede

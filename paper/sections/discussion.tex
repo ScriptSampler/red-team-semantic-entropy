@@ -23,12 +23,12 @@ should be precise about the scope, and about which population each number comes 
 score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) the detector
 separates the two moderately well (AUROC $0.704$ [$0.653$, $0.753$]), so this is not a claim
 that semantic entropy fails as a detector. It is a claim about one region of its range, and
-the counts that establish it are measured elsewhere---on the $97$ targets of the attack
-campaign, scored clean, before anything is done to them. There, a tenth of the correct
+the counts that establish it are within-stratum frequencies measured on a sub-sample of that
+same pool---the $97$ targets of the attack campaign, scored clean, before anything is done to
+them. There, a tenth of the correct
 answers ($8/80$) already sit at the estimator's maximum, a quarter ($21/80$) sit within the
 top tenth of its range---a region containing just two of the estimator's $39$ attainable
-values, so those $21$ targets occupy one of two points---and only $22$ of the $39$ are
-realised anywhere in the pool---and it is exactly into that compressed
+values, so those $21$ targets occupy one of two points---and it is exactly into that compressed
 region that a false alarm must be pushed.
 
 The sharpest way to put the finding is therefore not ``we constructed an attack that defeats

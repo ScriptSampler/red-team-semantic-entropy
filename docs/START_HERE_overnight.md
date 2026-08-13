@@ -60,16 +60,38 @@ identifiable", and the class-separation-vs-noise claim (that used the quarantine
 
 ## THE TWO POPULATIONS — the project's most-repeated error
 
+**THEY ARE NESTED, NOT SEPARATE — read this before writing the word "separate".**
+`_stratum_ids(want, seed, labels)` seed-shuffles a stratum and `select_stratified` takes
+`[:n]`, so both pools are prefixes of the SAME seed-0 shuffle. Verified against the real
+campaign ids: the 80 FA targets are exactly `right[:80]` (80/80, in order) — i.e. **40% of the
+fair pool's correct stratum**; the hide targets are exactly `wrong[:41]`. Every attacked
+target is *inside* the fair pool.
+
 | | fair pool | attacked pool |
 |---|---|---|
 | composition | 200 correct + 200 hallucinating | 97 targets = 80 correct + 17 wrong |
-| AUROC | **0.704** [0.653, 0.753] | 0.579 |
+| relation | the wider sample | **a prefix of it**, one stratum per direction |
+| AUROC | **0.704** [0.653, 0.753] | 0.579 **[0.416, 0.728]** — contains 0.704 |
 | separation | 0.463 nats, d ≈ 0.76 | 0.184 nats, d = 0.28 — **QUARANTINED** |
 | carries | claims about "the detector" | ceiling + granularity statistics |
 
-This error has been found at **six** sites. Sites 1–3 were fixed manually; site 4
+**Why the quarantine still holds — and the reason has changed.** Not because the attacked
+pool is a different set of questions (it is not), but because it is a *selected sub-sample of
+a single correctness stratum per direction*, truncated on the hide side, and the sample the
+optimiser ran on. Within-stratum frequencies (ceiling, granularity) belong there;
+correct-vs-hallucinating contrasts do not.
+
+**Do NOT say the attacked pool "separates worse".** It is a score-independent sub-sample of
+the same strata, so 0.579 estimates the *same* quantity as 0.704 and its CI [0.416, 0.728]
+comfortably contains it. The gap is sampling error over ~1/30 as many ranked pairs. At the
+hide arm's current n=41 it is 0.641 [0.535, 0.742].
+
+This error has been found at **seven** sites. Sites 1–3 were fixed manually; site 4
 (Conclusion, "on the same pool") and site 5 (Discussion, by adjacency) were found by a
 44-agent sweep; **site 6 was found by the automated linter, in text written the same hour.**
+Site 7 (2026-08-13) is the "separate populations" framing corrected here — it reached a
+*pre-registration* (critique_log 32's tau rationale), which the linter cannot catch because it
+checks that numbers name a pool, not that a claimed relation between pools is true.
 
 **`scripts/check_population_labels.py` now runs in the test suite.** It anchors on NUMBERS,
 never phrases — a manual grep for "fair pool" missed `conclusion.tex` because the source

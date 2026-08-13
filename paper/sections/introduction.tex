@@ -59,10 +59,14 @@ whether any attack succeeds. That a plug-in entropy over at most $N$ observed cl
 cannot exceed $\log N$ is elementary, and we claim no novelty for it; our contribution is
 the measurement of \emph{how tightly that bound binds in deployment}. At the standard
 $N{=}10$, across the $97$ targets of our attack campaign scored clean ($80$ correct, $17$
-wrong---a different and smaller population than the fair pool below), the estimator realises
-$22$ of its $39$ attainable values, a tenth of \emph{correct} answers sit exactly at $\ln 10$
-before any intervention, and a quarter sit in the top tenth of the score's range---a region
-that contains only two attainable values in total. The general argument---that a score's distinct-value count caps
+wrong---a score-independent sub-sample of the fair pool below, one correctness stratum per
+attack direction), a tenth of \emph{correct} answers sit exactly at $\ln 10$ before any
+intervention, and a quarter sit in the top tenth of the score's range---a region containing
+only two of the estimator's $39$ attainable values. We do \emph{not} report a count of
+distinct values realised: that quantity is monotone in the number of targets scored (the
+same population yields $28$ at $n{=}200$ and $35$ at $n{=}2000$, and $22$ sits at the $37$th
+percentile of what a random $80$ produces), so it measures the sample, not the estimator.
+The lattice size does not move. The general argument---that a score's distinct-value count caps
 what an operator can do with it, however well it ranks---has been made and named for
 black-box LLM classification~\citep{sun2026granularity}; we instantiate it for a
 sampling-based generative detector, where the granularity limit is imposed by the sample

@@ -92,17 +92,40 @@ $0.923$ nats to the ceiling, while wrongly-answered questions sit at $1.843$, le
 $1.843$ nats to the floor: the false-alarm direction has almost exactly \emph{half} the
 headroom of the hide direction. The consequence is visible in the attacked cells: of the
 $80$ false-alarm targets, $42$ finish \emph{exactly} at the ceiling and $8$ began there (so
-no upward move was ever possible), whereas none of the $17$ hide targets scored so far
-reaches the floor---though that last comparison is on a hide cell that was truncated
-mid-campaign at $17$ of $80$, and we restate it with its final $n$ when that cell
-completes.
+no upward move was ever possible), whereas hide targets reach their floor only rarely. We
+deliberately attach no count to that second clause here: the hide cell is still filling
+against its planned $80$, so any figure we quote for it goes stale between drafts. We state
+the hide-side counts once, with their final $n$, when that cell completes.
 
-We label the population of every quantity we report, because the two differ materially and
-conflating them is easy: the fair pool gives a clean correct-versus-wrong separation of
-$0.463$ nats and AUROC $0.704$, whereas the \emph{attacked subset} gives $0.184$ nats and
-AUROC $0.579$. The attacked subset is a selected, partly truncated sample and is not a
-description of the detector; wherever we characterise the detector we use the fair pool, and
-wherever we describe what the attack did we say so explicitly.
+We label the population of every quantity we report. The two populations are \emph{nested},
+not disjoint, and being exact about how they are nested is what the labelling is for.
+Selection shuffles each correctness stratum under a fixed seed and takes a prefix: the fair
+pool takes the first $200$ of each stratum, and each attack direction takes a shorter prefix
+of one of them. The $80$ false-alarm targets are therefore \emph{literally} $80$ of the fair
+pool's $200$ correct items, and the hide targets are in the same way a prefix of its $200$
+hallucinating ones. No attacked target lies outside the fair pool, and the two are not
+different sets of questions.
+
+What disqualifies the attacked subset from characterising the detector is accordingly not
+that it is a different population but that it is a \emph{selected sub-sample of a single
+stratum}: each direction draws from one correctness class only, the hide arm is additionally
+still incomplete against its planned $80$, and it is the sample the optimiser was actually
+run on. A quantity computed there describes correct answers, or hallucinating ones,
+under the attack's own sampling---never the correct-versus-hallucinating contrast that ``the
+detector's AUROC'' names. The ceiling and granularity counts are \emph{within}-stratum
+frequencies among correct targets, so we report them on the attacked pool and label them as
+such, while every correct-versus-hallucinating claim is made on the fair pool.
+
+One consequence of the nesting cuts against a contrast we previously drew, and we state it
+rather than leave it implicit. Because the attacked targets are a score-independent
+sub-sample of the very same strata, a clean separation measured on them estimates the
+\emph{same} quantity as the fair pool's, only far less precisely. The attacked subset's
+$0.184$ nats and AUROC $0.579$ carry a bootstrap interval of [$0.416$, $0.728$] that
+comfortably contains the fair pool's $0.704$ [$0.653$, $0.753$]; the two are statistically
+consistent, and the gap between them is sampling error over roughly a thirtieth as many
+ranked pairs, not evidence that the detector behaves differently on attacked targets. We
+therefore quote the fair pool's value when we characterise the detector, and we do not
+present the attacked subset's as a rival measurement of it.
 
 Two things follow, and we apply them throughout. First, false-alarm effect sizes measured in
 nats are \emph{censored}: on a saturated target the attack and any other method that also

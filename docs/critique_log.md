@@ -1320,7 +1320,43 @@ to survive that censoring is the one we are not computing.
 threshold at 10% FPR on correct answers, i.e. the operating point at which a deployed
 detector would flag one correct answer in ten. A "crossing" is then a paraphrase pushing a
 correct answer's score above that threshold — which is what a false alarm *is*, operationally.
-Fixing it on the FAIR pool keeps the threshold independent of the attacked targets.
+~~Fixing it on the FAIR pool keeps the threshold independent of the attacked targets.~~
+**← THIS RATIONALE IS FALSE. Correction immediately below; the tau VALUE stands, its stated
+justification does not.**
+
+**CORRECTION 2026-08-13 — the independence claim in this pre-registration did not hold.**
+The two pools are **nested, not separate.** `_stratum_ids(want, seed, labels)` returns a
+seed-shuffled id list and `select_stratified` takes `[:n]`, so both pools are prefixes of the
+SAME shuffle at seed 0: the fair pool takes the first 200 of each stratum, the campaign takes
+a shorter prefix of one. Checked against the real campaign ids in
+`wk9_defb/triviaqa_se_false_alarm.jsonl`: the 80 FA targets are exactly `right[:80]`, in
+order, 80/80 match. So **40% of the 200 correct answers that define tau ARE the attacked
+targets.** (The hide targets are likewise exactly `wrong[:41]`.) "Fixing it on the FAIR pool
+keeps the threshold independent of the attacked targets" was simply wrong when written: the
+threshold is fixed on a sample of which the attacked targets are a large minority.
+
+**Numerically it happens not to matter here, and that is a fact about this dataset, not a
+defence.** Recomputing the same 10%-FPR threshold on the 120 HELD-OUT correct items (the fair
+pool's 200 minus the 80 attacked) gives **2.163956** — identical to the full-200 value, at
+every numpy quantile method tried (`linear`, `lower`, `higher`, `nearest`, `midpoint`). The
+dependence is real but inert at this sample. It does **not** rescue the stated rationale: had
+those 80 items been influential, the threshold would have been partly fixed on the very
+targets it is used to judge, and nothing in the design would have caught it — the error was
+found by reading the selector, not by any guard.
+
+**The honest rationale, replacing the withdrawn one.** tau is defensible because it is a
+CLEAN-score, pre-committed operating point — fixed before any paraphrase exists, so the
+attack cannot move it, which is the outcome-triggering this entry was guarding against. It is
+*not* defensible on independence grounds, because the sample defining it does not exclude the
+attacked targets. If the crossing test is ever promoted from disclosed secondary diagnostic
+to a claim statistic, fix tau on a genuinely disjoint split — the held-out 120, or the 1,224
+correct items outside the fair pool entirely — and say which was used.
+
+**Process note.** This is population error site **seven**, and the first to land in a
+*pre-registration* rather than in prose. `check_population_labels.py` could not have caught
+it: the linter checks that a number names its pool, not that a claimed *relation between*
+pools is true. Claims of independence between two samples need to be checked against the
+selector code, not asserted from the fact that the samples have different names.
 
 **Instrumentation verified present on disk** (this was worth checking, since the whole point
 of the `_defb` re-run was to capture it): `feasible_objs` and `n_feasible_at_best` are

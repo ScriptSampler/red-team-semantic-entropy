@@ -56,13 +56,14 @@ maximum outranks it with probability $1/(b{+}1)$, where $b$ is the number of att
 candidates also achieving that maximum. Simulation shows why the alternatives are
 inadmissible. At full saturation ($q{=}0.05$, $m{=}30$), counting ties strictly gives a null
 rejection rate of $0.995$ and counting them against the attack gives power $0.05$ at a
-two-fold effect, while the randomised rule retains power $0.51$ there at level $0.022$. At
-the pre-registered $m{=}50$, under the empirical $n{=}80$ headroom distribution, it reaches
-power $0.77$ at level $0.053$. We report the operating characteristics of the test
-\emph{as deployed}, against its analytic null. Simulation studies that instead calibrate a
-critical value from the same draws they evaluate report $0.71$ and $0.84$ for these two
-cells; that is an oracle upper bound, not the shipped test, and the gap
-($0.06$--$0.20$ in power) is the price of using a null that does not see the data. Both
+two-fold effect, while the randomised rule stays calibrated there (analytic-null level
+$0.021$). Under the empirical $n{=}80$ headroom distribution, the randomised rule against
+that same analytic null reaches power $0.51$ at level $0.035$ for $m{=}30$, and $0.77$ at
+level $0.053$ for the pre-registered $m{=}50$. We quote the deployed test throughout.
+Simulations that instead take a critical value calibrated against the true simulated
+null---an oracle the deployed test does not have---report $0.66$ and $0.84$ for those two
+cells, at levels $0.060$ and $0.078$; the shipped test is more conservative and pays for it
+in power, by $0.15$ at $m{=}30$ and $0.07$ at $m{=}50$. Both
 inadmissible rules are
 reported as diagnostics: their disagreement is a direct indicator that ceiling saturation,
 rather than attack strength, is driving a comparison. Note that $b$ must be \emph{measured}
@@ -80,7 +81,9 @@ the nats bands can be trusted, and the two inadmissible tie rules are shown so t
 disagreement between them is visible. Every cell is measured on the \emph{false-alarm attack
 pool}---the $n{\geq}80$ score-independently selected correct-answer targets the optimiser was
 run on---and not on the fair pool used to characterise the clean detector (Section
-\ref{sec:methods}); the two populations differ and no number is carried between them.
+\ref{sec:methods}). The two are nested: these targets are a prefix of the fair pool's correct
+stratum, so the distinction is not between disjoint question sets but one of scope---a single
+correctness stratum, under the optimiser's own selection---and no number is carried between them.
 \emph{Placeholder cells pending the definitive run}; confirmatory $n{\geq}80$, $m{=}50$.}
 \label{tab:nullcontrol}
 \begin{tabular}{lcccc}
