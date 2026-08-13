@@ -77,9 +77,14 @@ sizes rather than tight estimates.
 \paragraph{SRE fidelity and threat model.}
 We reproduce SRE with exact-match-then-NLI-union-find clustering rather than the
 paper's full energy-based hybrid, and our NLI backend (deberta-large-mnli) is
-weaker than the deberta-v2-xlarge used in some prior work: our \emph{SE} replication
-reaches AUROC $0.787$ against the paper's SE figure of $0.828$, and the SRE target
-(paper $0.871$) depends further on the clustering backend we simplified. Because SRE
+weaker than the deberta-v2-xlarge used in some prior work; the SRE target
+(paper $0.871$) depends further on the clustering backend we simplified. Our \emph{SE}
+replication reaches AUROC $0.694$ under the greedy alias-aware span oracle this paper
+operates with, against the paper's SE figure of $0.828$. We do not attribute that $0.134$
+gap to the backend. The nearer-looking $0.787$ is the same run scored under an
+all-samples-correct label, a convention mechanically coupled to semantic entropy that we use
+nowhere else (Section~\ref{sec:experiments}); backend and correctness convention are thus
+confounded in the gap, and separating them needs an ablation we have not run. Because SRE
 re-paraphrases its input
 internally, the attacker's chosen $q'$ is only one input to a detector that then
 generates its own reformulations; the SRE threat model (whether the attacker controls

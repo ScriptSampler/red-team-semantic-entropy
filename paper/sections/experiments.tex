@@ -8,11 +8,31 @@
 The victim model is Llama-3.1-8B-Instruct in 4-bit quantisation on a single 16\,GB GPU.
 Semantic entropy draws $N{=}10$ answers at temperature $1.0$ and clusters them by
 bidirectional DeBERTa-large-MNLI entailment; semantic reformulation entropy uses
-$R{=}3$ reformulations, $K{=}8$, temperature $0.8$. Our SE replication on TriviaQA
-reaches AUROC $0.787$ (published SE figure $0.828$; the gap is the NLI backend, see
-Limitations). Targets are drawn by the stratified score-independent sampler; on the
-resulting fair pool the clean detector scores AUROC $0.704$ [$0.653$, $0.753$], against
-the $1.0$ that score-dependent selection manufactures by construction.
+$R{=}3$ reformulations, $K{=}8$, temperature $0.8$. Our SE replication on TriviaQA does not
+have one AUROC: on a single run of $2000$ questions, the number depends on which correctness
+convention labels it, and the three we computed span $0.09$. Under the greedy alias-aware
+span oracle used everywhere else in this paper it is $0.694$; under a majority-of-samples
+label $0.730$; and under an all-samples-correct label the replication reaches $0.787$,
+against the published SE figure of $0.828$. We lead with the operative $0.694$, because a
+replication figure obtained under a
+label convention the paper does not otherwise use is not a check on the pipeline the paper
+actually runs. That choice puts the gap to the published figure at $0.134$ rather than
+$0.041$, and we do not attribute it: the NLI backend differs from the
+\texttt{deberta-v2-xlarge} of some prior work (Limitations), but so does the correctness
+convention, and we have not run the ablation that would separate the two.
+
+We flag the all-samples label specifically, because it is the one convention mechanically
+coupled to the score. It calls a question correct \emph{iff} all ten sampled answers are
+correct, and semantic entropy is the entropy of the clustering of those same ten samples---an
+all-correct sample set is far likelier to be semantically homogeneous, hence low-entropy, so
+part of the AUROC it awards is the score being scored against itself. Validating a paper
+whose third contribution is score-independent selection on the most score-entangled label
+available would undercut the contribution. Reporting the operative figure also resolves what
+would otherwise be an unexplained tension with the next sentence: targets are drawn by the
+stratified score-independent sampler, and on the resulting fair pool the clean detector
+scores AUROC $0.704$ [$0.653$, $0.753$], against the $1.0$ that score-dependent selection
+manufactures by construction---an interval that contains the operative replication figure
+but excludes the all-samples one.
 
 \paragraph{Reading the null control.}
 Table~\ref{tab:nullcontrol} places the optimised attack against two null bands---a

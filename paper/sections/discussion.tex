@@ -29,7 +29,10 @@ them. There, a tenth of the correct
 answers ($8/80$) already sit at the estimator's maximum, a quarter ($21/80$) sit within the
 top tenth of its range---a region containing just two of the estimator's $39$ attainable
 values, so those $21$ targets occupy one of two points---and it is exactly into that compressed
-region that a false alarm must be pushed.
+region that a false alarm must be pushed. Under our own success criterion they cannot register
+a success at all, whatever the paraphrase: those two points lie $0.139$ nats apart, so the
+criterion's $\delta{=}0.25$ is out of reach from the lower one and there is nowhere above the
+upper one to go (Methods).
 
 The sharpest way to put the finding is therefore not ``we constructed an attack that defeats
 semantic entropy'' but ``semantic entropy has so little usable range at the top of its scale
@@ -64,15 +67,13 @@ answers and sentence embedders are near-chance on the adversarial, word-preservi
 (Methods)---but a victim- and NLI-independent LLM-judge, validated to $0.93$ accuracy on
 the gold-alias hard negatives that proxy that adversarial discrimination (where the
 embedder scores $0.51$), can---for the false-alarm direction, under the disclosed
-re-scoped gate (Methods). Under it,
-the point estimates lean toward the structural reading: on the $n{=}6$ machinery-validation
-subset the attack's move ($+0.37$ nats) sits close to its move under the detector's own NLI
-($+0.46$) and far above the saturated
-exact-match ($+0.05$), placing it at nearly the same rank within the benign-move
-distribution as under the detector's own clusterer. But at the current sample size the
-interval is uninformative, so this is the \emph{first evidence bearing on} the structural
-question, not a resolution of it; the confirmatory $n{\geq}80$ run now under way is the
-gate on the claim. A single validated judge, however independent, is in any case not the
+re-scoped gate (Methods). Under it, the
+structural question is open. The only pass run so far is an $n{=}6$ machinery-validation
+sample, and it is evidence about the pipeline rather than about the mechanism: its interval
+includes zero, and its per-target statistics are quantised too coarsely to order the
+clusterer arms at all (Methods), so we quote no point estimate from it and draw no reading
+either way. The confirmatory $n{\geq}80$ run now under way is the gate on the claim, and we
+report it whichever way it falls. A single validated judge, however independent, is in any case not the
 last word; SE-to-SRE transfer, confounded by the shared DeBERTa backbone, is at best
 corroborating.
 

@@ -92,7 +92,10 @@ $0.923$ nats to the ceiling, while wrongly-answered questions sit at $1.843$, le
 $1.843$ nats to the floor: the false-alarm direction has almost exactly \emph{half} the
 headroom of the hide direction. The consequence is visible in the attacked cells: of the
 $80$ false-alarm targets, $42$ finish \emph{exactly} at the ceiling and $8$ began there (so
-no upward move was ever possible), whereas hide targets reach their floor only rarely. We
+no upward move was ever possible), with a further $13$ beginning one lattice point below it,
+where the total remaining headroom is $0.139$ nats---less than the success criterion's own
+$\delta$, as we set out under that criterion below---whereas hide targets reach their floor
+only rarely. We
 deliberately attach no count to that second clause here: the hide cell is still filling
 against its planned $80$, so any figure we quote for it goes stale between drafts. We state
 the hide-side counts once, with their final $n$, when that cell completes.
@@ -156,6 +159,29 @@ check these would be miscounted as attacks. We report the status-gated success
 rate alongside the weaker entropy-only rate so the attrition between them is
 explicit.
 
+\paragraph{A quarter of the false-alarm denominator cannot satisfy condition~(ii) at any
+usable $\delta$.}
+Condition~(ii) interacts with the discreteness of the score in a way we disclose here, where
+the criterion is defined, because it does not merely make some targets hard---it makes them
+impossible, while leaving them in the denominator of every rate we report. At $N{=}10$ the
+plug-in entropy is not just bounded by $\ln 10$; it is confined to the $39$ values obtainable
+as the Shannon entropy of an integer partition of $10$ into cluster sizes, and the top two of
+those, $2.164$ and $\ln 10 = 2.303$, lie $0.139$ nats apart. A target whose clean score is
+already $2.164$ thus has $0.139$ nats of headroom \emph{in total}: no paraphrase whatsoever,
+adversarial or benign, can move it $\delta{=}0.25$ nats upward, and a target already at
+$\ln 10$ cannot be moved upward at all. Those two points hold $21$ of the $80$ false-alarm
+targets ($8$ at the ceiling, $13$ one point below), so $26.2\%$ of the pool---[$17.9$,
+$36.8$], Wilson---is unwinnable by construction. At $\delta{=}0.25$ the unwinnable set coincides exactly with
+the top-decile set, because the next lattice point down, $2.025$, still leaves $0.277$ nats.
+The $\delta$-sweep we offer above does not rescue these targets: it re-prices the cutoff, not
+the headroom. Every $\delta \geq 0.139$ is unsatisfiable for all $21$ of them, and no
+$\delta > 0$ whatsoever is satisfiable for the $8$ already at the cap; only a cutoff below
+$0.139$ nats---finer than one step of the lattice near its top---could recover even the $13$.
+We therefore report this count alongside every false-alarm success rate, so that a rate is
+read against the part of its denominator that could in principle have produced a success.
+This is a property of the estimator at the deployed sample budget, not of our attack: it
+applies identically to any method evaluated with a fixed-$\delta$ criterion on this score.
+
 \paragraph{Evaluation and reporting.}
 We report every rate with a bootstrap $95\%$ confidence interval over questions.
 Beyond the aggregate score shift we report operating-point flips: fixing a
@@ -204,15 +230,18 @@ false-alarm adjudication under a hard-negative-primary criterion. This is an
 outcome-triggered re-specification of a pre-registered gate, which we flag rather than
 bury, and we report the NLI and exact-match bracket \emph{alongside} the judge so no
 conclusion rests on the re-scoped oracle alone. Re-clustering
-the answer samples under this validated judge, a preliminary $n{=}6$ machinery-validation
-pass leaves the attack's effect largely intact in the point estimates: the
-attack sits at the $76$th percentile of the benign-move distribution under the judge,
-essentially matching the confounded NLI arm ($80$th) and far above the saturated
-exact-match ($56$th)---in contrast to the exact-match collapse, which we thus attribute to
-that oracle's saturation rather than to a clusterer artifact. At this sample size the
-interval is uninformative (the net confidence interval includes zero), so we do \emph{not}
-claim the effect real; the confirmatory $n{\geq}80$ run under the validated judge is the
-gate on that claim. The statistic reported there is the randomised-tie exceedance test
+the answer samples under this validated judge has so far been exercised only on a
+preliminary $n{=}6$ machinery-validation pass, which establishes that the judge arm runs
+end-to-end and reports correctly, and nothing else. We deliberately quote no point estimate
+from it, for two independent reasons. The net confidence interval includes zero at that
+sample size, so the effect is not claimed. And the per-target statistics that pass would
+otherwise invite an arm-to-arm reading from are quantised far too coarsely to carry one: with
+$K{=}5$ benign draws per target, a target's percentile within its own benign-move
+distribution can take only six values, so a difference of a few percentile points between
+clusterer arms is smaller than a single benign draw, and the arms cannot be ordered at all at
+that resolution. Which arm the judge's verdict resembles is therefore still open, and the
+confirmatory $n{\geq}80$ run under the validated judge is the gate on that question as much
+as on the effect itself. The statistic reported there is the randomised-tie exceedance test
 described in Section~\ref{sec:experiments}, which prices the attacker's search budget into
 the null analytically; the percentile-in-benign indicator and the survival ratio are shown
 as diagnostics only, both being upward-biased by that same budget. Absent a cleared claim,
