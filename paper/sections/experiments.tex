@@ -10,14 +10,16 @@ Semantic entropy draws $N{=}10$ answers at temperature $1.0$ and clusters them b
 bidirectional DeBERTa-large-MNLI entailment; semantic reformulation entropy uses
 $R{=}3$ reformulations, $K{=}8$, temperature $0.8$. Our SE replication on TriviaQA does not
 have one AUROC: on a single run of $2000$ questions, the number depends on which correctness
-convention labels it, and the three we computed span $0.09$. Under the greedy alias-aware
-span oracle used everywhere else in this paper it is $0.694$; under a majority-of-samples
-label $0.730$; and under an all-samples-correct label the replication reaches $0.787$,
+convention labels it, and the three we computed span $0.096$. All three are adjudicated by
+the same alias-aware span oracle, so the convention is the only thing that varies across
+them. Under the greedy label used everywhere else in this paper the replication scores
+$0.694$; under a majority-of-samples label $0.729$; and under an all-samples-correct label
+it reaches $0.790$,
 against the published SE figure of $0.828$. We lead with the operative $0.694$, because a
 replication figure obtained under a
 label convention the paper does not otherwise use is not a check on the pipeline the paper
 actually runs. That choice puts the gap to the published figure at $0.134$ rather than
-$0.041$, and we do not attribute it: the NLI backend differs from the
+$0.038$, and we do not attribute it: the NLI backend differs from the
 \texttt{deberta-v2-xlarge} of some prior work (Limitations), but so does the correctness
 convention, and we have not run the ablation that would separate the two.
 
@@ -69,7 +71,7 @@ one-sided $p$-value follows by exact convolution over targets, and the effect si
 worth $n_{\mathrm{eff}}$ random paraphrases''.
 
 Ties are not a technicality here. Semantic entropy is bounded above by $\log N$
-(Section~\ref{sec:experiments}, Setup), and benign paraphrases reach that ceiling too, so
+(Section~\ref{sec:methods}), and benign paraphrases reach that ceiling too, so
 the score has an \emph{atom} where the exchangeability null assumes a continuum. We resolve
 ties by \textbf{randomised (exchangeable) breaking}: a benign draw tied with the attack's
 maximum outranks it with probability $1/(b{+}1)$, where $b$ is the number of attack
@@ -81,9 +83,9 @@ $0.021$). Under the empirical $n{=}80$ headroom distribution, the randomised rul
 that same analytic null reaches power $0.51$ at level $0.035$ for $m{=}30$, and $0.77$ at
 level $0.053$ for the pre-registered $m{=}50$. We quote the deployed test throughout.
 Simulations that instead take a critical value calibrated against the true simulated
-null---an oracle the deployed test does not have---report $0.66$ and $0.84$ for those two
-cells, at levels $0.060$ and $0.078$; the shipped test is more conservative and pays for it
-in power, by $0.15$ at $m{=}30$ and $0.07$ at $m{=}50$. Both
+null---an oracle the deployed test does not have---report $0.67$ and $0.84$ for those two
+cells, at levels $0.052$ and $0.068$; the shipped test is more conservative and pays for it
+in power, by $0.16$ at $m{=}30$ and $0.07$ at $m{=}50$. Both
 inadmissible rules are
 reported as diagnostics: their disagreement is a direct indicator that ceiling saturation,
 rather than attack strength, is driving a comparison. Note that $b$ must be \emph{measured}

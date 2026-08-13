@@ -42,10 +42,12 @@ direction to which the judge is re-scoped; Methods), a
 verdict we draw from that run rather than from the machinery-validation sample. Second,
 the meaning-preserving guarantee rests on an automatic gate; a human equivalence audit
 is needed before it is fully established. Whether a simple reformulation-averaging
-defense confers measurable robustness or merely raises the attacker's query cost is an
-open question we frame but do not yet settle; either way, a detector whose own
-reformulation step is its most natural defense suggests that robustness to paraphrase
-must be designed into these detectors rather than assumed. Taken together, the results argue that ``semantic'' uncertainty
+defense confers measurable robustness is an open question we frame but do not yet
+settle---the experiment is specified and has not been run---and we have specified it so
+that it can fail: the $d$-averaged arm must beat a cost-matched $d{=}1$ fresh-redraw control
+by a per-question paired margin whose $95\%$ interval excludes zero, and an interval
+covering zero means the defense bought the attacker's query cost rather than robustness.
+Taken together, the results argue that ``semantic'' uncertainty
 inherits the blind spots of whatever model defines its notion of meaning, and that
 detectors built on a learned equivalence relation should be evaluated as the
 adversarial targets they now are.

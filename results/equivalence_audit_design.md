@@ -73,28 +73,32 @@ Two different estimands, and the honest answer differs between them.
 | 60 | 3 | 0.05 | [0.017, 0.137] | 0.120 | [0.032, 0.078] | 0.046 |
 | 60 | 6 | 0.10 | [0.047, 0.201] | 0.155 | [0.073, 0.136] | 0.063 |
 | 60 | 12 | 0.20 | [0.118, 0.318] | 0.200 | [0.162, 0.245] | 0.083 |
-| 71 | 0 | 0.00 | [0.000, 0.051] | 0.051 | [0.000, 0.001] | 0.001 |
-| 71 | 4 | 0.06 | [0.022, 0.136] | 0.114 | [0.050, 0.063] | 0.013 |
-| 71 | 7 | 0.10 | [0.049, 0.190] | 0.141 | [0.091, 0.107] | 0.016 |
-| 71 | 14 | 0.20 | [0.121, 0.304] | 0.183 | [0.186, 0.208] | 0.022 |
-| 80 | 0 | 0.00 | [0.000, 0.046] | 0.046 | [0.000, 0.000] | 0.000 |
-| 80 | 4 | 0.05 | [0.020, 0.122] | 0.102 | [0.050, 0.050] | 0.000 |
-| 80 | 8 | 0.10 | [0.052, 0.185] | 0.134 | [0.100, 0.100] | 0.000 |
-| 80 | 16 | 0.20 | [0.127, 0.300] | 0.173 | [0.200, 0.200] | 0.000 |
-| 100 | 0 | 0.00 | [0.000, 0.037] | 0.037 | [0.000, 0.000] | 0.000 |
-| 100 | 5 | 0.05 | [0.022, 0.112] | 0.090 | [0.050, 0.050] | 0.000 |
-| 100 | 10 | 0.10 | [0.055, 0.174] | 0.119 | [0.100, 0.100] | 0.000 |
-| 100 | 20 | 0.20 | [0.133, 0.289] | 0.155 | [0.200, 0.200] | 0.000 |
-| 120 | 0 | 0.00 | [0.000, 0.031] | 0.031 | [0.000, 0.000] | 0.000 |
-| 120 | 6 | 0.05 | [0.023, 0.105] | 0.082 | [0.050, 0.050] | 0.000 |
-| 120 | 12 | 0.10 | [0.058, 0.167] | 0.109 | [0.100, 0.100] | 0.000 |
-| 120 | 24 | 0.20 | [0.138, 0.280] | 0.142 | [0.200, 0.200] | 0.000 |
+| 72 | 0 | 0.00 | [0.000, 0.051] | 0.051 | [0.000, 0.000] | 0.000 |
+| 72 | 4 | 0.06 | [0.022, 0.134] | 0.113 | [0.056, 0.056] | 0.000 |
+| 72 | 7 | 0.10 | [0.048, 0.187] | 0.139 | [0.097, 0.097] | 0.000 |
+| 72 | 14 | 0.19 | [0.120, 0.300] | 0.181 | [0.194, 0.194] | 0.000 |
+| 100 | 0 | 0.00 | [0.000, 0.037] | 0.037 | — | — |
+| 100 | 5 | 0.05 | [0.022, 0.112] | 0.090 | — | — |
+| 100 | 10 | 0.10 | [0.055, 0.174] | 0.119 | — | — |
+| 100 | 20 | 0.20 | [0.133, 0.289] | 0.155 | — | — |
+| 150 | 0 | 0.00 | [0.000, 0.025] | 0.025 | — | — |
+| 150 | 8 | 0.05 | [0.027, 0.102] | 0.074 | — | — |
+| 150 | 15 | 0.10 | [0.062, 0.158] | 0.097 | — | — |
+| 150 | 30 | 0.20 | [0.144, 0.271] | 0.127 | — | — |
 
-Read the FPC column for "how often did the gate leak among the 72 wins we are
-actually reporting" — that population is finite and small enough to **census**, which
-drives its sampling error to zero. Read the plain Wilson column for "what is the gate's
-false-pass rate as a property of the method", where these wins are one draw and a census
-still leaves binomial uncertainty of roughly ±0.07–0.10 at n≈72.
+Read the **FPC column** for the first estimand: *how often did the gate leak among the
+72 wins this paper actually reports*. That population is finite and small enough to
+**census**, which drives its sampling error to zero — which is why the default allocation
+takes all 72. Rows above n=72 are blank there because you cannot audit more
+pairs than exist.
+
+Read the **plain Wilson column** for the second estimand: *the gate's false-pass rate as a
+property of the method*, where these wins are one draw from a superpopulation. Here a
+census does **not** buy certainty: at n=72 and an observed 10%, the interval is
+still about [0.05, 0.19]. Rows at n=100/150 show what a larger campaign would buy — the
+width falls roughly as 1/√n, so halving it from here costs roughly four times the pool.
+This is the honest ceiling on what this audit can do, and it is a property of the pool
+size, not of the annotator.
 
 ## Blinding
 

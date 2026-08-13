@@ -78,8 +78,8 @@ embedder scores $0.51$), can---for the false-alarm direction, under the disclose
 re-scoped gate (Methods). Under it, the
 structural question is open. The only pass run so far is an $n{=}6$ machinery-validation
 sample, and it is evidence about the pipeline rather than about the mechanism: its interval
-includes zero, and its per-target statistics are quantised too coarsely to order the
-clusterer arms at all (Methods), so we quote no point estimate from it and draw no reading
+includes zero, and its per-target diagnostics are too coarse at that sample size to order
+the clusterer arms (Methods), so we quote no point estimate from it and draw no reading
 either way. The confirmatory $n{\geq}80$ run now under way is the gate on the claim, and we
 report it whichever way it falls. A single validated judge, however independent, is in any case not the
 last word; SE-to-SRE transfer, confounded by the shared DeBERTa backbone, is at best
@@ -99,10 +99,17 @@ be new here; the direction itself is not.
 \paragraph{Defence.}
 Averaging the detector score over several reformulations of whatever input is
 received---the mechanism SRE already builds in---should dilute a single adversarial
-phrasing. Our defence experiment asks whether this confers measurable robustness or
-merely raises the attacker's query cost; either way, a detector whose own
-reformulation step is its best defence suggests that robustness to paraphrase must be
-designed in, not assumed. Everything above is to be read against a null noise floor, so that
+phrasing. We state that expectation as a prediction the experiment can refute. Because the
+attacked paraphrase was selected as a maximum over $\sim$$181$ noisy estimates, merely
+re-scoring it on fresh samples shrinks the effect by roughly half with no defence of any
+kind, so the defended arm has to be measured against a \emph{cost-matched} control that pays
+exactly that re-sampling cost and nothing else---a $d{=}1$ fresh redraw of the same two
+inputs. The claim under test is that the per-question paired reduction of the $d$-averaged
+arm against that control is positive with a $95\%$ confidence interval excluding zero. Its
+failure condition is explicit: if the interval covers zero, reformulation-averaging has
+bought the attacker's query cost rather than robustness, and the defence claim is false.
+That experiment has not been run. Its arms and its statistic are fixed in advance, and we
+report the verdict whichever way it falls. Everything above is to be read against a null noise floor, so that
 what we ultimately claim are effects exceeding what benign rephrasing achieves by chance;
 the confirmatory run supplies that floor, and until it lands these remain readings of
 preliminary data rather than claims.

@@ -38,10 +38,13 @@ if the model's \emph{hallucination status} is unchanged under the paraphrase, ch
 with the same oracle that labelled the data; and (iii) effect sizes are reported
 \emph{net of a benign-paraphrase noise floor}, since the detector score is a
 finite-sample estimate and an optimiser selecting the extremum over many candidates
-otherwise mistakes sampling variance for success. In a preliminary evaluation the
-optimised attack moves the detector---beating benign paraphrasing as measured by the
-detector's own NLI clusterer, an effect the confirmatory run at scale is designed to
-quantify (Section~\ref{sec:experiments})---but that measure is precisely the one that cannot
+otherwise mistakes sampling variance for success. Whether the optimised attack moves the
+detector beyond what benign rephrasing achieves is not something we report here: the only
+pass run so far is an $n{=}6$ machinery-validation sample, which establishes that the
+pipeline runs and reports correctly and nothing else, so we quote no point estimate from it
+and draw no reading either way, leaving the confirmatory run at scale to decide the question
+(Section~\ref{sec:experiments}). The measure that pass exercises would in any case be the
+detector's own NLI clusterer---precisely the measure that cannot
 separate a change in the model's answer distribution from an inconsistency of the NLI
 model that the detector's clustering and the attack's equivalence gate \emph{share}.
 The independent oracles one would reach for to break this tie---sentence embedders---turn

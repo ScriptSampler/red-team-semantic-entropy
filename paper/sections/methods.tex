@@ -1,4 +1,5 @@
 % Methods. Draft prose --- target ~800 words; verify symbols at revision.
+\label{sec:methods}
 
 \paragraph{Detectors.}
 Given a question $q$, the target model $M$ samples $N$ answers
@@ -122,13 +123,16 @@ such, while every correct-versus-hallucinating claim is made on the fair pool.
 One consequence of the nesting cuts against a contrast we previously drew, and we state it
 rather than leave it implicit. Because the attacked targets are a score-independent
 sub-sample of the very same strata, a clean separation measured on them estimates the
-\emph{same} quantity as the fair pool's, only far less precisely. The attacked subset's
-$0.184$ nats and AUROC $0.579$ carry a bootstrap interval of [$0.416$, $0.728$] that
-comfortably contains the fair pool's $0.704$ [$0.653$, $0.753$]; the two are statistically
-consistent, and the gap between them is sampling error over roughly a thirtieth as many
-ranked pairs, not evidence that the detector behaves differently on attacked targets. We
-therefore quote the fair pool's value when we characterise the detector, and we do not
-present the attacked subset's as a rival measurement of it.
+\emph{same} quantity as the fair pool's, only far less precisely---so a discrepancy between
+the two would be sampling error over far fewer ranked pairs, not evidence that the detector
+behaves differently on attacked targets. We deliberately attach no number to that
+discrepancy here, for the same reason we attach none to the hide-side counts above: any
+correct-versus-hallucinating quantity computed on the attack campaign has to pool the
+complete false-alarm arm with the hide arm, which is still filling, so its value and its
+denominator both go stale between drafts. We therefore quote the fair pool's $0.704$
+[$0.653$, $0.753$] whenever we characterise the detector, we do not present an
+attacked-subset figure as a rival measurement of it, and we state the cross-stratum
+comparison once, with its final $n$, when the hide cell completes.
 
 Two things follow, and we apply them throughout. First, false-alarm effect sizes measured in
 nats are \emph{censored}: on a saturated target the attack and any other method that also
@@ -232,14 +236,18 @@ bury, and we report the NLI and exact-match bracket \emph{alongside} the judge s
 conclusion rests on the re-scoped oracle alone. Re-clustering
 the answer samples under this validated judge has so far been exercised only on a
 preliminary $n{=}6$ machinery-validation pass, which establishes that the judge arm runs
-end-to-end and reports correctly, and nothing else. We deliberately quote no point estimate
-from it, for two independent reasons. The net confidence interval includes zero at that
-sample size, so the effect is not claimed. And the per-target statistics that pass would
-otherwise invite an arm-to-arm reading from are quantised far too coarsely to carry one: with
-$K{=}5$ benign draws per target, a target's percentile within its own benign-move
-distribution can take only six values, so a difference of a few percentile points between
-clusterer arms is smaller than a single benign draw, and the arms cannot be ordered at all at
-that resolution. Which arm the judge's verdict resembles is therefore still open, and the
+end-to-end and reports correctly, and nothing else. We quote no point estimate from it, for
+three independent reasons. The net confidence interval includes zero at that sample size, so
+the effect is not claimed. The pass was specified in advance as a pipeline check, and its
+own record marks its figures as not for publication. And the per-target diagnostics that
+would otherwise invite an arm-to-arm reading are, at $n{=}6$, too coarse to support one. The
+last reason is worth stating exactly, because it is a resolution limit rather than a bound:
+the arm-level diagnostic is a mean over the six targets of each target's rank within its own
+benign-move distribution, and a target contributes at most $K{=}5$ benign draws, so the
+arm-level statistic moves in steps of roughly $1/30$---while the difference between the
+shared-NLI and the judge arm is about one such step. A gap that small reflects the sample
+size, not a measured ordering of the arms. Which arm the judge's verdict resembles is
+therefore still open, and the
 confirmatory $n{\geq}80$ run under the validated judge is the gate on that question as much
 as on the effect itself. The statistic reported there is the randomised-tie exceedance test
 described in Section~\ref{sec:experiments}, which prices the attacker's search budget into

@@ -231,7 +231,7 @@ def make_catch_pairs(pool: list[dict], n: int, rng: random.Random,
                        if overlap(left["question"], cand["question"]) <= max_overlap),
                       None)
         if mate_i is None:
-            continue
+            continue      # no unrelated mate left; drop rather than emit an arguable trial
         right = avail.pop(mate_i)
         pairs.append({
             "question": left["question"],
@@ -331,15 +331,20 @@ def _key_row(pair_id: str, rnd: int, stratum: str, orientation: str,
 
 
 def write_rows(rows: list[dict], cols: tuple[str, ...], path: Path) -> None:
+    # utf-8-SIG: the annotator opens these in a spreadsheet, and Excel on Windows
+    # mis-decodes BOM-less UTF-8, which would mangle the curly quotes and en dashes
+    # TriviaQA questions are full of. The stimulus must reach the annotator intact.
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", newline="", encoding="utf-8") as f:
+    with path.open("w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=list(cols), extrasaction="ignore")
         w.writeheader()
         w.writerows(rows)
 
 
 def read_rows(path: Path) -> list[dict]:
-    with path.open(newline="", encoding="utf-8") as f:
+    # utf-8-sig on read too, so a sheet re-saved by Excel (BOM) and one written by hand
+    # (no BOM) both parse, and the first header name never picks up a stray BOM.
+    with path.open(newline="", encoding="utf-8-sig") as f:
         return list(csv.DictReader(f))
 
 
@@ -355,7 +360,10 @@ def wilson(k: int, n: int, z: float = 1.959963985) -> tuple[float, float]:
     d = n + z * z
     centre = (k + z * z / 2) / d
     half = z / d * math.sqrt(k * (n - k) / n + z * z / 4)
-    return (max(0.0, centre - half), min(1.0, centre + half))
+    lo, hi = max(0.0, centre - half), min(1.0, centre + half)
+    # Wilson is analytically exact at the boundaries; pin them so float error cannot
+    # produce lo > 0 at zero events or hi < 1 at n events.
+    return (0.0 if k == 0 else lo, 1.0 if k == n else hi)
 
 
 def wilson_fpc(k: int, n: int, pop: int, z: float = 1.959963985) -> tuple[float, float]:
@@ -541,10 +549,13 @@ def main(argv: list[str] | None = None) -> int:
               "one. See results/equivalence_audit_protocol.md.", file=sys.stderr)
         return 2
 
+    import glob as _glob
     paths: list[Path] = []
     for pat in args.jsonl:
         p = Path(pat)
-        paths.extend([p] if p.exists() else sorted(Path().glob(pat)))
+        # glob.glob, not Path().glob: the latter raises on an absolute pattern, so a
+        # non-existent absolute path crashed instead of reporting "no files matched".
+        paths.extend([p] if p.exists() else [Path(m) for m in sorted(_glob.glob(pat))])
     paths = sorted({p for p in paths if p.exists()})
     if not paths:
         print(f"no JSONL files matched {args.jsonl}", file=sys.stderr)
@@ -563,6 +574,11 @@ def main(argv: list[str] | None = None) -> int:
 
     excluded = excluded_records(records)
     catch = make_catch_pairs(excluded, args.n_catch, random.Random(args.seed + 977))
+    if len(catch) < args.n_catch:
+        print(f"warning: only {len(catch)} of {args.n_catch} catch trials could be built "
+              f"from {len(excluded)} unused records — the rest would have paired questions "
+              f"too similar to be unambiguously non-equivalent. Catch trials are the only "
+              f"check on a rubber-stamping annotator; see the protocol.", file=sys.stderr)
     alloc = {"win": args.n_win, "flip": args.n_flip,
              "subthreshold": args.n_subthreshold, "catch": args.n_catch}
 

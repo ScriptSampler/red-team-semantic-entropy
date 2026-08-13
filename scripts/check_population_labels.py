@@ -5,25 +5,58 @@ error: it has now been found and fixed at SIX separate sites (critique_log 28, 3
 by a manual sweep, and each sweep found a site the previous one missed. A manual process that
 has failed six times should not be the guard on the seventh.
 
-TWO POPULATIONS, and they are not interchangeable:
+THREE POPULATIONS, and they are not interchangeable:
 
   fair pool      200 correct + 200 hallucinating, drawn score-independently.
                  AUROC 0.704 [0.653, 0.753]; separation 0.463 nats, d ~ 0.76.
                  Clean means 1.380 (correct) / 1.843 (wrong), headroom 0.923.
                  The ONLY population on which claims about "the detector" may be made.
 
-  attacked pool  97 targets = 80 correct + 17 wrong, the attack campaign's own targets,
-                 with the hide arm truncated mid-campaign.
+  attacked pool  the attack campaign's own targets. TWO STRATA, and only one of them is
+                 finished. NAME THE STRATUM, NEVER THE SUM:
+                   - false-alarm stratum: COMPLETE and frozen at its pre-registered
+                     n = 80 correct answers. A literal `80 correct` is true and stays a
+                     valid label.
+                   - hide stratum: STILL FILLING against its planned 80. It was 17 when
+                     this file was first written, 46 at commit 5d822b9, 52 today. Any
+                     literal count of it -- and therefore any total over both strata --
+                     is stale at the moment of writing. That is why 5d822b9 purged "97"
+                     from every .tex file, and why the guard now carries GROWING_CELLS
+                     rather than a list of the particular wrong totals it has seen.
                  AUROC 0.579; separation 0.184 nats, d = 0.28. QUARANTINED for any
                  class-separation claim. The ceiling and granularity statistics (8/80 at
-                 the cap, 21/80 in the top tenth, 22 of 39 values realised, 42/80 = 52.5%
-                 at the cap after attack) live HERE.
+                 the cap, 21/80 in the top tenth, 42/80 = 52.5% at the cap after attack)
+                 live HERE -- all of them 80-denominated, all inside the frozen stratum,
+                 which is exactly what made the moving total droppable at no cost.
 
-THEY ARE NESTED, NOT DISJOINT. The attacked targets are literally the first 80 of the fair
-pool's 200 correct (src/se/attacks/select.py, _stratum_ids + [:n]). So a sentence may
-legitimately mention the fair pool *as the provenance* of an attacked-pool number
+  replication    our own SE replication: one pass over 2000 TriviaQA questions, no attack,
+                 no stratified sampler (results/replication_results.md). This is NEITHER
+                 of the two above. Its AUROC has no single value -- it depends on which
+                 correctness convention labels the run:
+                   0.694  greedy alias-aware span  -- OPERATIVE: the convention the rest
+                          of the paper runs on, and the one the paper must lead with.
+                   0.730  majority-of-samples.
+                   0.787  all-samples-correct -- SCORE-COUPLED, and DEMOTED by commit
+                          8e54943. All-samples labels a question correct iff all ten
+                          samples are correct, and SE is the entropy of the clustering of
+                          those same ten, so part of the AUROC it awards is the score
+                          scored against itself. It flatters the pipeline (0.787 vs the
+                          published 0.828) and it is the one figure this paper may not
+                          present as its replication result. Guarded so that it can only
+                          appear WITH its convention named.
+
+TWO OF THEM ARE NESTED, NOT DISJOINT. The attacked targets are literally the first 80 of
+the fair pool's 200 correct (src/se/attacks/select.py, _stratum_ids + [:n]). So a sentence
+may legitimately mention the fair pool *as the provenance* of an attacked-pool number
 ("the 80 targets are drawn from the fair pool's correct stratum"). Nothing here may assume
-disjointness; see NON_BINDING_CUES.
+disjointness between those two; see NON_BINDING_CUES.
+
+THE REPLICATION POOL IS DISJOINT FROM BOTH -- a different dataset slice, 2000 questions,
+scored before any of this. There is no nesting to be tolerant of, so its rules are marked
+`exclusive`: a fair-pool or attacked-pool label in the SAME sentence as a replication AUROC
+is an error even when the word "replication" sits closer to the number. That is the case
+proximity arbitration gets wrong, because "On the fair pool our SE replication reaches
+0.694" puts the owning word nearer while the scope adverbial does the actual binding.
 
 THE MARKUP LESSON. The critic's own grep for "fair pool" missed conclusion.tex because the
 source reads `\\emph{fair} pool`. Phrase matching does not survive LaTeX. So we strip markup
@@ -35,7 +68,7 @@ WHAT THIS CHECKS (and why the first version of it was near-vacuous)
 An audit constructed eight genuine population errors and the original rule missed seven.
 Every miss had the same shape: the rule asked whether an allowed label was PRESENT within
 420 characters, which in a paper that discusses both pools contrastively in one paragraph is
-almost always true -- exactly where the error is likeliest. Four defects, all now closed:
+almost always true -- exactly where the error is likeliest. Five defects, all now closed:
 
   1. PRESENCE, never ATTACHMENT. `requires` was an OR satisfied by any allowed label in the
      window, and no label could ever cause a rejection.
@@ -48,7 +81,7 @@ almost always true -- exactly where the error is likeliest. Four defects, all no
   2. SELF-SATISFYING REQUIREMENTS. The granularity rule accepted the bare token `97` -- also
      satisfied by `0.97` and by the year `1997`; the quarantine rule accepted the bare word
      `attacked`, satisfied by "the detector we attacked".
-     FIX: labels are POOL PHRASES ("attack campaign", "attacked subset", "97 targets"), and
+     FIX: labels are POOL PHRASES ("attack campaign", "attacked subset", "80 correct"), and
      any label whose span lies inside the number's own span cannot label it. Nor may a
      label be built out of another number's DENOMINATOR: "the fair pool's 21/80 correct
      targets" was growing an attacked-pool label ("80 correct") out of the very count it
@@ -65,6 +98,20 @@ almost always true -- exactly where the error is likeliest. Four defects, all no
   4. strip_latex ate from a literal `\\%` to end of line, which blinded the checker to every
      number on Table 1's "Saturation rate (\\% at $\\log N$)" row. Fixed with a negative
      lookbehind; regression-tested.
+
+  5. THE LABELS THEMSELVES WENT STALE, AND HARDENING THE ATTACHMENT LOGIC DID NOT NOTICE.
+     Defects 1-4 all improved how a number is BOUND to a label. None of them asked whether
+     a label was still TRUE. `97 targets`, `97-target`, `17 wrong` and `17 hide` stayed on
+     the attacked pool's label list, and a whole rule ("97-target pool identity") existed to
+     legitimise the phrase -- so after the hardening the guard caught 14 of 14 probes and
+     still returned GREEN on "Across the 97 targets of the attack campaign (80 correct, 17
+     wrong)", a sentence in which BOTH counts are retired. It did worse than miss the error:
+     a retired count was a licence to attach anything to it.
+     FIX: those four labels are gone, the rule that protected them is deleted, and the class
+     is guarded generatively by GROWING_CELLS -- see the growing-denominator note there.
+     A label list is an assertion about the world and expires like any other; the standing
+     rule is that anything appearing in BOTH `labels` and the paper's numbers must be
+     re-derived from an artifact whenever that artifact is rerun.
 
 --------------------------------------------------------------------------------------
 WHAT IT STILL CANNOT CATCH (deliberate; false positives gate the suite)
@@ -83,6 +130,25 @@ WHAT IT STILL CANNOT CATCH (deliberate; false positives gate the suite)
     for the Abstract's "20% still pinned" on the 15-target N=20 re-score subset: a bare
     20% is indistinguishable from any other 20%, and an unanchored rule there would fire
     on every future percentage that happens to round to it.
+  * 0.698 COLLIDES, and the collision is mis-owned rather than merely unguarded -- the
+    hazard the 0.51 entry records, one step worse. It is guarded as the winner's-curse
+    selection-time mean intended move, which is 0.698 NATS on the 60 re-scored false-alarm
+    targets. It is also 0.6977 -> 0.698, the substring-oracle AUROC of the 2000-question
+    replication run (results/replication_auroc.json, greedy_correct) -- the figure commit
+    8e54943 refined to the alias-aware 0.694 while leading with it. A bare decimal cannot
+    tell a nats mean from an AUROC, so a replication 0.698 written into the paper would be
+    reported against the winner's-curse population and would demand a re-scoring label it
+    has no business carrying. If 0.698 ever needs to mean the AUROC again, it must be split
+    by unit ("0.698 nats" vs "AUROC 0.698") before it can be guarded.
+  * The `exclusive` rules (the replication family) fire on ANY same-sentence fair-pool or
+    attacked-pool label, so a legitimate cross-population comparison in one sentence trips
+    them. The escape hatch is the existing one: NON_BINDING_CUES disarms a label introduced
+    by "than", "unlike", "not", "rather than". "0.694, unlike the fair pool's 0.704" passes;
+    "0.694 on the fair pool" does not, which is the point.
+  * FROZEN_COUNTS is an allow-list of complete cells, so it needs one edit when a cell
+    completes -- when the hide arm finishes at its planned 80, its count and the 160 total
+    become writable only after being declared here. That edit is the feature: stating a
+    total should require asserting that the cell is closed.
   * The oracle-calibrated vs shipped power figures (0.84/0.71 vs 0.77/0.51) are a
     test-variant provenance problem, not a population one, and are not guarded here.
   * Numbers rendered as words ("a tenth", "a quarter", "past half", "nearly two fifths")
@@ -154,17 +220,19 @@ POOLS: dict[str, dict] = {
         ],
     },
     "attacked": {
-        "what": "attacked pool (the optimiser's own targets; 80 correct + a truncated "
-                "wrong stratum)",
+        "what": "attacked pool (the optimiser's own targets: a COMPLETE false-alarm "
+                "stratum of 80, plus a hide stratum that is still filling -- no total)",
+        # RETIRED as labels, 2026-08-13: `97 targets`, `97-target`, `17 wrong`, `17 hide`.
+        # They named a pool identity that stopped being true while they sat here. The FA
+        # stratum count is the only literal count of this pool that is frozen, so it is the
+        # only one that may license anything; every other count of it is now FLAGGED by
+        # GROWING_CELLS, including the ones that used to appear on this list.
         "labels": [
             r"attacked pool", r"attacked subset", r"attacked targets", r"attacked sample",
             r"attack pool", r"attack campaign", r"attack arm", r"attacked stratum",
             r"false-alarm attack pool", r"false-alarm targets", r"false-alarm arm",
-            r"97 targets", r"97-target",
             NOT_A_DENOMINATOR + r"\b80 correct",
             NOT_A_DENOMINATOR + r"\b80 false-alarm",
-            NOT_A_DENOMINATOR + r"\b17 wrong",
-            NOT_A_DENOMINATOR + r"\b17 hide",
             r"quarantin",
             r"targets the optimiser was run on", r"optimiser'?s own targets",
         ],
@@ -195,8 +263,15 @@ POOLS: dict[str, dict] = {
         ],
     },
     "replication": {
-        "what": "our own SE replication run on TriviaQA",
-        "labels": [r"replicat"],
+        "what": "our SE replication run (2000 TriviaQA questions, one pass, no attack and "
+                "no stratified sampler -- NEITHER the fair pool NOR the attacked pool)",
+        "labels": [
+            r"replicat",
+            NOT_A_DENOMINATOR + r"\b2000 questions", r"\b2000-question",
+            r"greedy alias-aware", r"alias-aware span",
+            r"majority-of-samples", r"all[- ]samples[- ]correct",
+            r"correctness convention", r"label convention",
+        ],
     },
     "published": {
         "what": "a figure reported by prior work, not measured here",
@@ -301,18 +376,13 @@ RULES: list[dict] = [
                     rf"42\.5{PCT}", rf"52\.5{PCT}", rf"\b42{PCT}"],
         "window": 420,
     },
-    {
-        "name": "97-target pool identity",
-        "owner": "attacked",
-        "foreign": ["fair"],
-        "numbers": [r"97 targets", r"across 97", r"97-target"],
-        # NOT the full attacked label list: "97 targets" must not license itself.
-        "requires": [r"attack campaign", r"attacked (?:pool|subset|targets)",
-                     r"attack (?:pool|arm)", NOT_A_DENOMINATOR + r"\b80 correct",
-                     NOT_A_DENOMINATOR + r"\b17 wrong",
-                     r"targets the optimiser was run on"],
-        "window": 300,
-    },
+    # DELETED 2026-08-13: the "97-target pool identity" rule. Its entire job was to check
+    # that a retired phrase was properly attached -- it asked whether "97 targets" named the
+    # attack campaign, never whether the attacked pool had 97 targets, which it has not
+    # since the hide arm passed 17. There is no pool identity left to state: the total is
+    # 80 + a live count. Its three number patterns (`97 targets`, `across 97`, `97-target`)
+    # now live in GROWING_CELLS, where 97 is flagged as one instance of a class rather than
+    # licensed as a label.
     {
         "name": "winner's-curse retention (re-scored subset)",
         "owner": "rescored",

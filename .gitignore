@@ -101,3 +101,8 @@ node_modules/
 # per-target resume checkpoints — must survive `git clean -fd`
 results/*.jsonl
 !results/*.md
+
+# the equivalence-audit sheet, key and labels are EVIDENCE, not derived output.
+# results/*.csv above would have silently excluded them, which breaks the
+# transparency-in-place-of-inter-annotator-kappa argument the protocol rests on.
+!results/equivalence_audit*.csv
