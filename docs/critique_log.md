@@ -1366,3 +1366,478 @@ is the conservative default and correct. So the primary claim statistic has its 
 so would the crossing test.
 
 ---
+
+## 33. 2026-08-13 (overnight, `edc22f8..8e54943`) — three of my own claims died, and two of the refutations were already in the repo
+
+The night's arithmetic: 17 commits, one claim **withdrawn as false**, one **retired as a
+category error**, one pre-registration rationale **falsified within four hours of my writing
+it**, and one live wrong answer in the statistics library. Tests 146 -> 263, citations 21 ->
+27. The first two commits of the range (`4c35975`, `a71d979`, both ~11:50) are the midday
+gate and are recorded in entry 31; they are summarised here only because the rest of the
+night is a consequence of them.
+
+**The through-line, and it is uncomfortable.** Of the four biggest corrections tonight, two
+were refuted by numbers already sitting in this repo (`CORRECTIONS_2026-08-02.md:43`, eleven
+days old; the campaign's union distinct-count, computable at any moment), one by reading a
+selector I wrote myself, and one by simulating a function whose docstring promised the
+opposite. None of the four needed new data. The bottleneck was not measurement; it was that
+nobody had made the artifacts argue with each other.
+
+### 1. The gate BLOCKed, I overruled one residual of four, and the overrule was sustained
+
+Recorded in full in entry 31; restated because the standing rule came out of it. The critic
+BLOCKed the ungated `edc22f8` and returned four residuals. Residual (3) said the judge
+accuracy had drifted 0.884 -> 0.92 -> 0.93 and demanded reconciliation. It had not:
+`results/judge_validation.md` line 7 reads 0.930 [0.900, 0.957] (n=300) and line 11 says
+"this number is the DEPLOYED config (symmetric) — cite THIS one". Applying the fix would have
+reverted the paper to the superseded ASYMMETRIC 0.884 — it would have *created* the drift it
+warned of. The critic's own diagnosis on re-gate: it had **required** the deployed-config
+re-measurement in the B3 ruling, I performed it, and it then flagged the result of its own
+requirement, reasoning from a stale read rather than re-opening the file.
+
+**STANDING RULE (new, and it now sits in `START_HERE`): check every gate ruling against the
+committed artifact before applying it.** The gate is not an oracle. Three of four residuals
+were right; had I applied all four on authority I would have shipped an error. This does not
+weaken the gate — the other three were correct, and one of them is why the sweep below
+happened at all — it means gate output is evidence, not instruction.
+
+### 2. The verification sweep: 31 confirmed claim errors, and the worst was never measured
+
+My own sweep of all eight paper files, run after the BLOCK: **40 candidates raised, 31
+confirmed, 9 refuted**, every one adversarially checked against a committed artifact. (The
+"44-agent" figure in `START_HERE:91` is an agent count, not a finding count, and no commit
+records it; 40/31/9 are the numbers with provenance.) Full list in entry 31. The one that
+must not be forgotten:
+
+**The Abstract asserted that ordinary benign rephrasing drives correct answers onto the
+ln(10) ceiling comparably to the attack. That rate has NEVER BEEN MEASURED.** This log's line
+826 (inside entry 24) lists it as OWED, and line 1126 (inside entry 28) pre-commits that the
+phrase "may not return until the measured benign-saturation rate exists." I wrote that rule
+and then broke it in the Abstract — and neither I nor the gate caught it; the sweep did.
+Removed, and replaced with a statement that the null control is what must settle it. *(For
+future citation: 826 and 1126 are LINE numbers in this file, not entry numbers. Entry 31
+called them "entries", which is wrong. Line references only survive at all because this log
+is append-only.)*
+
+### 3. WITHDRAWN AS FALSE: non-relaxability
+
+The single novelty this paper still asserted as its own — "raising N does not buy range,
+because the baseline rises with the cap" — is **false**. A hostile-reviewer agent refuted it
+in ten lines of arithmetic, which I re-derived myself before acting:
+
+    N=10   attainable SE values:  39    in the top tenth of range: 2   [2.1640, 2.3026]
+    N=20   attainable SE values: 455    in the top tenth of range: 7
+
+Granularity is emphatically **relaxable**: doubling the sample budget multiplies the
+attainable lattice by ~12x (455/39 = 11.7).
+
+**Three separate defects in one claim, worth naming individually:**
+
+1. **It conflated two quantities under one word.** GRANULARITY (attainable values; grows
+   superpolynomially in N) and FRACTIONAL HEADROOM (nats to the cap as a share of range).
+   Only the second was ever measured — by the n=15 pilot at N=20 — and the claim was asserted
+   for both.
+2. **Its stated mechanism is a paper we cite approvingly fifty lines earlier.** "The baseline
+   rises with the cap" *is* the plug-in estimator's negative bias decaying, i.e. exactly the
+   `mccabe2025alphabet` / `pan2026shade` account this paper cites as SUPPORT. It cannot be
+   both our mechanism and their finding.
+3. **The refutation was in our own artifacts for eleven days.**
+   `results/CORRECTIONS_2026-08-02.md:43` already recorded "a 39-point lattice", written
+   2026-08-02. I built a novelty claim on top of a file containing its counterexample.
+
+*Correction to how this was written up at the time:* commit `4683e26` also cites
+`critique_log:1063` as having "flagged it as an available-and-unstated datapoint". Re-reading
+line 1063 (entry 27), that phrase is about the **SEP paper** thresholding SE without
+remarking on ties or a lattice — a scoop-check observation about the literature, not a flag
+on our own number. Only the `CORRECTIONS:43` half of that provenance claim holds. The
+eleven-day figure is right; the two-source framing is not.
+
+**What replaces it is true and sharper, so the withdrawal costs the section nothing.** The
+estimator-level statement is the lattice, not the sample: at N=10 the top tenth of the range
+contains only TWO attainable values, so "a quarter of correct answers sit in the top decile"
+means those targets occupy one of two points. And the relaxability result has its own sting,
+which is the part to keep: **doubling N takes the top decile from 2 points to 7** — the
+lattice is sparsest exactly where the false-alarm claim lives, so relaxation is weakest where
+it would matter most. Applied at all five sites; contribution (1)'s non-relaxability
+attribution is replaced by the instantiation claim.
+
+**Superseded by this:** entry 31's contribution-(5) rewrite, which restated (2) as "DISCRETE
+and NON-RELAXABLE" and called non-relaxability "the part that is ours". It is not ours; it is
+not true.
+
+### 4. RETIRED ENTIRELY: "22 distinct values" — and my first fix was also wrong
+
+"Only 22 distinct values" was never an estimator property. It is a **sample size**, monotone
+in the number of targets scored, and it never converges. On the fair pool's correct stratum,
+drawing 80 at random gives **E[distinct] = 23.03 (MC sd 1.59)**; the attacked 80 realised
+**22**, the **37th percentile** of that reference distribution — an unremarkable draw. The
+same population yields **28 at n=200** and **35 at n=2000**, and even n=2000 is only 35/39 of
+the lattice. Chao1 from the n=400 fair pool predicted 35; the n=2000 pool then realised
+exactly 35.
+
+**My first attempt to fix this, earlier the same night, was itself wrong.** Entry 31 records
+me re-scoping the claim from "the 97-target pool" to "the 80 correct targets" — treating a
+category error as a population-labelling bug. An audit then caught the replacement being
+**falsified in real time**: the `_defb` hide cell grew 17 -> 43 during the session and the
+campaign union count was already 24, so the paper's new sentence was stale before the commit
+finished. A number that changes while you are typing it is not a property of an estimator.
+
+Removed from all four sites and replaced by the exact n-invariant fact (39 attainable at
+N=10, 2 of them in the top tenth). The Introduction now states **explicitly why no realised
+count is reported**, because a reader who does not see the count will otherwise assume we
+forgot it. `39 attainable` is deliberately left UNGUARDED by the population linter: it
+follows from p(10) = 42 with no data, so it is true of every population.
+
+### 5. THE TWO POOLS ARE NESTED, NOT SEPARATE — and this falsified a pre-registration I wrote the same night
+
+`_stratum_ids(want, seed, labels)` returns a seed-shuffled id list and `select_stratified`
+takes `[:n]`. Both pools are therefore prefixes of the SAME seed-0 shuffle. Checked against
+the real campaign ids in `wk9_defb/`: the 80 FA targets are exactly `right[:80]`, in order,
+**80/80**; the hide targets are exactly `wrong[:n]` (prefix True at n=43 under `_defb` and
+n=55 under `_def`). Controls that ran alongside: a subset check, `load_triviaqa` dropping
+0/200 from each stratum, and the recorded `entropy_before` being **bit-identical** to the
+fair pool's `entropy_nats` (max |Δ| = 0) — so ids and scores both line up. **I could not find
+a seed control in the committed code:** `verify_nesting` in `scripts/fair_pool_granularity.py`
+asserts the prefix property but has no negative control showing the assertion can fail at
+another seed. If one was run interactively it was not committed, and it should be.
+
+**Entry 32 is superseded on this point** (already struck through in place). Its tau
+pre-registration said "fixing it on the FAIR pool keeps the threshold independent of the
+attacked targets." That was simply false when written: **40% of the 200 correct answers that
+define tau ARE the attacked targets.** Numerically it happens not to bite — recomputing the
+same threshold on the 120 held-out correct items gives 2.163956, identical at every numpy
+quantile method — but that is a fact about this dataset, not a defence. The tau VALUE stands
+on a different rationale (a CLEAN-score, pre-committed operating point, so the attack cannot
+move it); the independence rationale is withdrawn.
+
+**Consequences that must not be lost:**
+
+- **0.579 and 0.704 must never be contrasted as different facts.** 0.579's CI is
+  **[0.416, 0.728]** and it contains 0.704. The attacked pool is a score-independent
+  sub-sample of the same strata, so it estimates the *same* quantity over ~1/30 as many
+  ranked pairs. "The attacked pool separates worse" is a sentence about sampling error.
+- The quarantine still holds, but **the reason has changed**: not a different question set,
+  but a selected sub-sample of a single correctness stratum per direction, truncated on the
+  hide side, and the sample the optimiser ran on.
+- This is population error **site seven**, and the first to land in a *pre-registration*
+  rather than in prose. The linter cannot catch it: it checks that a number names a pool, not
+  that a claimed *relation between* pools is true. **Claims of independence between two
+  samples get checked against the selector code, not inferred from the samples having
+  different names.**
+
+### 6. The crowding claim moves to the valid population — and be precise about what got stronger
+
+Methods states the paper's own rule (the attacked subset "is not a description of the
+detector") and the central measurement was violating it. Recomputed on the score-independent
+400 (CPU, no GPU; `results/fair_pool_granularity.md`), Wilson intervals throughout:
+
+| statistic | attacked subset | fair pool | direction |
+|---|---|---|---|
+| correct answers at the ceiling | 8/80 = 10.0% | 19/200 = **9.5% [6.2, 14.4]** | unchanged |
+| correct answers in the top tenth | 21/80 = 26.2% | 43/200 = **21.5% [16.4, 27.7]** | slightly weaker, intervals overlap |
+| ALL targets at the ceiling (pooled) | 12/97 = 12.4% | 74/400 = **18.5% [15.0, 22.6]** | stronger |
+| ALL targets in the top tenth (pooled) | 27/97 = 27.8% | 132/400 = **33.0% [28.6, 37.8]** | stronger |
+
+**Which half got stronger matters, and neither the commit message nor my own summary of it
+was careful here.** The two CORRECT-stratum numbers — the ones the false-alarm attack
+operates on, and the ones the Abstract quotes — are unchanged (9.5% vs 10.0%) and slightly
+weaker with overlapping intervals (21.5% vs 26.2%). What rose is the POOLED figure, and it
+rose because the fair pool is 50/50 while the attacked subset is 82/18 correct, and
+hallucinations are the crowded class. **Any pooled crowding number is a function of the class
+balance you assume**: at natural prevalence (n=2000, no selection at all) the same two
+statistics are 14.8% and 27.8%, i.e. between the two. The per-stratum rows are the
+prevalence-free statement and are what the paper should prefer. "The claim was being
+UNDER-stated on the invalid population" is true of the pooled row only, and half of that is
+class balance rather than population validity.
+
+### 7. NEW FINDING: the hallucinating stratum is censored two to three times harder
+
+The class the detector exists to flag is the one the ceiling compresses:
+
+| stratum (n=200 each) | at the ceiling | in the top tenth of the range |
+|---|---|---|
+| correct | 9.5% [6.2, 14.4] | 21.5% [16.4, 27.7] |
+| hallucinating | **27.5% [21.8, 34.1]** | **44.5% [37.8, 51.4]** |
+
+Non-overlapping Wilson intervals in both cases — 2.9x at the cap, 2.1x in the top tenth.
+Right-censoring at ln(10) therefore removes more of the hallucinating class's spread than the
+correct class's, which **biases the measured class separation, and so the 0.704 clean AUROC,
+DOWNWARD**. The attacked subset pointed the same way (24% vs 10% at the cap) but on n=17
+hallucinating targets; this is n=200 per stratum. Now in the Abstract. It is also the first
+finding tonight that makes the detector look *better* than measured, and it should be said
+that way rather than buried.
+
+### 8. The statistics audit: one live wrong answer, one dead bug confirmed dead, one free lunch
+
+An independent re-derivation agent simulated the exceedance machinery from first principles
+(20k trials x 12 cells, dependence models, a 30-cell median-p sweep) and **validated its own
+simulator by reproducing the old 99.6% bug to three decimals** before being allowed to report
+anything.
+
+- **NO Type-I violation exists in the shipped exceedance test.** Measured level
+  **0.020–0.043** against nominal 0.05, conservative in every cell. The 99.6% bug is
+  genuinely dead.
+- **`exceedance_test_over_seeds` IS structurally the old averaging bug.** Because the null
+  CDF is monotone and identical across seeds, **median(p) == p(median S) exactly** — it
+  contracts the statistic and compares it against a single-realisation null. But it **fails
+  SAFE**: measured level 0.0000 at full saturation, never above nominal across a 30-cell grid.
+  The old bug's damage was the ROUNDING (which deflates S toward the rejection region), not
+  the contraction. Kept, as a spread diagnostic only.
+- **NaN was being laundered into maximum significance.** `min(1.0, max(0.0, p))` returns
+  **0.0** for NaN, because Python's `max(0.0, nan)` is 0.0. So b=0 gave p=0.0 and a negative
+  candidate count gave p=0.0: degenerate input reported as the strongest possible result.
+  Replaced with `_clamp_p`, which propagates NaN. `flip_test_conditional` had a second route
+  to the same place — an impossible 2x2 row emptied the hypergeometric support, the stratum
+  was skipped, and its count stayed in the observed total, collapsing p to 0.0. It now raises,
+  as does an arm-length mismatch that `zip()` used to truncate silently.
+- **`operating_point` was a LIVE WRONG ANSWER, now fixed.** It returned
+  `np.quantile(neg, 1-target)` while its docstring promised achieved FPR <= target. On an
+  atomic score the quantile lands ON the ceiling atom and `>=` then flags all of it. Measured
+  at target 0.10 over 2000 trials: achieved **0.200** at a 20% atom, **0.299** at 30%,
+  **0.600** at 60%; P(achieved > target) was 0.9995–1.000 in every atom cell, and 1.000 on
+  *continuous* scores at n=5/41/61/301 whenever the interpolation index is integral. After the
+  fix: 0.000 in every cell. Thresholds now come from the ATTAINABLE grid and the function
+  returns threshold + achieved FPR + a contract flag, so no caller can quote a nominal number
+  again. *(The "3–6x" shorthand in the commit messages is loose: the measured atom cells are
+  2.0x / 3.0x / 6.0x. "Up to 6x, and essentially certain to overshoot" is the honest
+  sentence.)* Real-cell consequence: the old table printed "5% FPR" and "10% FPR" on two rows
+  **that were the same threshold, both running at 11.2%**. Flip counts unchanged — only the
+  label was wrong.
+- **THE b CLAMP IS NOT A CALIBRATION FIX, AND MY FRAMING OF IT WAS WRONG.** I asked for a
+  clamp and implied a test that it restores the level. The agent measured it and refused,
+  correctly: on saturated targets b ~ Binomial(N, q), so at a 5% atom the honest b is ~9
+  against N=181, and a 2x over-statement — enough to take the H0 level from 0.023 to ~0.87 —
+  **never comes near the clamp: it fires on 0% of targets and the level stays at 0.87.** Where
+  it does fire (q=0.5) it leaves ~0.92, because b=N drives the tie credit 1/(b+1) toward zero,
+  which is the strict rule, itself disqualified at 0.995. The failure is pinned by
+  `test_clamping_b_to_n_does_not_restore_calibration`, same idiom as the retired `flip_test`,
+  so nobody can later cite the clamp as a calibration argument. What it *does* guarantee is
+  measured and asserted: it can only ever RAISE p, never manufacture significance. The real
+  protection is the new `exceedance_test_over_tie_scales` (b scaled 0.25/0.5/1/2, returning
+  `survives_half_b` and `verdict_hinges_on_b`) — **run it before quoting any p from this
+  path.**
+- **GOOD NEWS, the only free lunch of the night: the median-N misspecification in
+  `null_control` is CONSERVATIVE.** Using one median budget as N for all targets while b is
+  per-target sounds anti-conservative; it is not, because 1/(N+1) is convex, so heterogeneous
+  true N_j produce MORE benign exceedances than a null at the median. Level 0.000–0.028
+  against nominal 0.05. The median-N choice is safe on its own; only the b it lets through is
+  not.
+- **`flip_test` retired behind a hard guard.** Its null is anti-conservative (H0 rejection
+  0.81 at m=30 through 0.35 at m=181, nominal 0.05) because P(cross) = 1-(1-pi)^N is concave
+  in pi and integrating an estimated pi over a wide posterior under-predicts crossings by
+  Jensen. It now raises unless `_documented_defect_opt_in=True`; the body is preserved because
+  the measured failure is itself a finding. Three tests asserting it *detects effects* were
+  deleted: **a green suite sitting next to a broken statistic reads as validation of it.**
+
+### 9. The paper had been quoting an ORACLE test's power for the SHIPPED test — and my first correction of that was also wrong
+
+Both published power tables took their critical value from a simulated null, which the
+deployed analytic-null test does not have. So the paper's power figures were an upper bound
+for a test we do not run. Shipped: **0.51 at m=30 and 0.77 at m=50** under the empirical n=80
+headroom DGP. Oracle: **0.66 and 0.84**, at levels 0.060 / 0.078. `experiments.tex` now
+reports the shipped figures and names the gap, and the pre-registration disclosure is amended:
+m=50 was chosen off the oracle 0.84, the ordering that drove the choice is unchanged and we do
+not re-choose after the fact, **but a non-rejection must be read against 0.77.**
+
+**My first correction (`f0d4cc3`) fused two simulations and misdescribed my own scripts** —
+the identical error class entry 31 had caught in the tie-rule sentence that morning, committed
+again twelve hours later:
+
+- It paired the full-saturation m=30 cell with the empirical-headroom m=50 cell, called them
+  "these two cells", and quoted oracle **0.71** for the first. 0.71 is the *full-saturation*
+  oracle figure; the within-DGP oracle counterpart of the shipped 0.51 is **0.66**. Rebuilt in
+  `e6e7629` so all four numbers come from one DGP. **If you see the pair "0.84 / 0.71", it is
+  the pre-correction fusion, not the shipped comparison.** The full-saturation m=30 cell now
+  contributes only its level (0.021).
+- It said the oracle simulations "calibrate a critical value from the same draws they
+  evaluate". They do not — they draw a separate null via `default_rng(seed+1)`. I asserted a
+  property of code I wrote, from memory, without reading it. The real point survives (an
+  oracle critical value the deployed test does not have), but the stated reason was false.
+
+### 10. The crossing test: three defects in my own pre-registration, and an arm that is not exchangeable
+
+`flip_test_conditional` was found to be dead code last night (entry 32). Building the script
+that would use it surfaced three measurement facts about entry 32's tau, all now printed at
+run time by `scripts/crossing_test.py` rather than quietly patched:
+
+1. **tau is not independent of the attacked targets** — section 5 above. Both taus (full 200,
+   held-out 120) are computed and reported.
+2. **"10% FPR" is not an attainable operating point on this detector.** Achievable FPRs jump
+   from 9.5% straight to **21.5%**; the quantile rule is exact only for a continuous score.
+   The realised FPR is now always printed next to tau. **Do not quote "10% FPR".** This is the
+   same defect as the `operating_point` bug in section 8, reached independently from the other
+   end — which is the strongest evidence that it was real.
+3. **At FPR <= 0.10 the operating point IS the ceiling (2.3026), which destroys the
+   censoring-immunity that motivated the test.** With a strict `>` nothing can cross the
+   maximum attainable score; with `>=`, "crossed" is identical to "saturated" and the crossing
+   statistic collapses back into the saturation statistic it was built to escape. Immunity
+   holds only when tau is strictly INTERIOR: the quantile-rule tau (2.1640) is interior, the
+   FPR<=0.10 tau is not. Both are computed; the interior one is the only usable one.
+
+**And the caveat that outranks all three: the attack arm is not exchangeable with a benign
+arm.** `feasible_objs` records a candidate only if it beat the RUNNING BEST *and* passed the
+equivalence gate — a monotone record filter, not a candidate sample. Measured on `_defb`,
+**zero of 3058 recorded candidates fall below their target's own clean score.**
+`flip_test_conditional`'s null assumes one exchangeable distribution across arms, so this
+biases upward even if the optimiser carries no signal at all. Any crossing p-value from this
+arm is an **UPPER BOUND on the evidence**; the proper fix needs the optimiser to log all
+candidate objectives, not only record-setting feasible ones. The benign arm does not exist
+until the null control runs, and without it the script declares the test NOT EVALUABLE rather
+than substituting a fabricated arm.
+
+### 11. The retention CI had no producing code
+
+**45% [25%, 65%]** appears in the Abstract, Introduction and Limitations, and until tonight
+**no code produced it** — `winners_curse_reeval.py` bootstrapped only the shrinkage, and the
+interval existed as hand-written prose attributed to a one-off audit computation. Now
+computed by `retention_ci()`: **45.2% [25.0%, 64.9%]**, from a PAIRED percentile bootstrap
+(each target's selection-time and fresh moves resampled together, because they are the same
+target measured twice). The hand-written [25.1%, 64.7%] agrees to ~0.2pp, inside the
+bootstrap's own Monte-Carlo wobble across 12 seeds. **The prose was right; this was a
+provenance defect only** — worth stating plainly, because most of tonight went the other way.
+The ratio estimator was checked rather than assumed (denominator ~11 SEs from zero, Fieller
+g = 0.031, log-ratio and Fieller intervals agree); the UNPAIRED interval [22.9%, 70.8%] is
+reported as the error the pairing avoids. Only the whole-percent interval is claimed; the
+tenths are RNG.
+
+Also fixed there, and it is the same class as the withdrawn "feasible rate 1.000": **a knob
+that could not vary.** The checkpoint path omitted `--fresh_seed` while the report title
+asserted it, so re-running at a new seed found every qid already done and republished the old
+numbers under the new seed's headline. Records now carry the seed, and a mismatched stamped
+checkpoint is a hard error.
+
+**Still `_def`, and it will move.** Both Abstract numbers come from the superseded cell.
+`entropy_before` is identical across runs so the pipeline is unchanged, but only 25 of
+`_defb`'s 69 moved targets share a `best_query` with an already-fresh-scored `_def` target; 44
+need fresh scoring (88 SE evals, ~15 min GPU, quantified and NOT launched). The `_defb`
+selection-time mean is already +0.609 over 69 targets against +0.698 over 60, so shrinkage and
+retention will both shift.
+
+### 12. Guards: the linter went from 1/14 to 14/14, and a new bug class got a name
+
+The population checker I wrote at 23:47 was **near-vacuous on the error class it existed
+for**. An audit constructed eight genuine population errors and it missed seven, because it
+tested for a MISSING label while every real error is a WRONG label with a right one somewhere
+in the window. The old version was extracted from HEAD and run against every probe:
+**OLD 1/14, NEW 14/14, with all 16 control constructions still clean.**
+
+- Presence became **ATTACHMENT**: every guarded number carries an OWNING pool, and a foreign
+  label that binds it more tightly is an error. Tightness is (sentence boundaries crossed,
+  distance), with a 250-char penalty on labels that FOLLOW the number, because English
+  attaches "on the fair pool ... 0.704" while a trailing label usually opens a contrast.
+- The nesting forced a design consequence: denial and provenance clauses ("not the attacked
+  subset", "sub-sample of", "prefix of") must be NON-BINDING, or the paper's own corrected
+  Methods and Introduction sentences all false-positive. The nesting correction and this check
+  had to land together.
+- Self-satisfaction closed: labels are pool PHRASES, never bare tokens like `97` (also matched
+  by 0.97 and by 1997). The agent then red-teamed its own fix and found a defect that was not
+  in my brief — a label could be built out of ANOTHER number's denominator, so "the fair
+  pool's 21/80 correct targets" grew an `80 correct` label out of the very count it was
+  mislabelling.
+- **It caught me within a minute.** Moving fair-pool statistics ahead of the 42%
+  attack-induced figure left the latter bound to the wrong pool; the checker flagged it with
+  the correct diagnosis before the edit was finished.
+- **A LaTeX bug in the guard, aimed straight at the site it exists to protect.** `strip_latex`
+  used `r"%.*?$"` with no negative lookbehind, so it deleted from a LITERAL `\%` to end of
+  line. Table 1's row reads `Saturation rate (\% at $\log N$)`, so on fill-in every number on
+  that row would have been invisible to the check built specifically for Table 1 fill-in.
+  Fixed with `(?<!\\)`.
+
+**NEW GUARD CLASS: RUN PROVENANCE.** The linter guards which POOL a number belongs to and
+structurally cannot catch a number outliving the RUN it was computed on. **Three such bugs
+were found by hand tonight**: 39/80 in `methods.tex` (the paper contradicting itself on its
+headline measurement while five other sites had already moved to the `_defb` 42/80), 39% in
+the Abstract, and corr(headroom, move) = +0.70/+0.67 which is +0.71/+0.68 under `_defb` (the
+uncensored subset shrank 41 -> 38 because the `>=` candidate filter drove three more targets
+to the cap). Eleven superseded-run patterns are now guarded. The figure script enforces the
+same rule from the other side: `make_ceiling_figures.py` **refuses to plot** — exit 2,
+discrepancy listed, nothing drawn — if the data stops reproducing the pre-registered counts,
+and that gate fired during development, which is how the stale correlation surfaced.
+
+**What the linter still cannot catch is enumerated in its module docstring** rather than left
+implicit: a wrong label smuggled inside a provenance clause (non-binding by necessity, since
+the pools are nested and the paper contrasts them constantly); 0.51, which collides with
+simulated power 0.51 at m=30; AUROC 1.0; the oracle-vs-shipped power figures, which are a
+test-variant provenance problem rather than a population one; and numbers written as words
+("a tenth", "past half"), which a number-anchored check cannot see — **which remains the
+reason prose still needs a human read.**
+
+### 13. Standing rules added tonight
+
+1. **Check every gate ruling against the committed artifact before applying it.** (§1)
+2. **Before claiming two samples are independent, read the selector.** Not the sample names,
+   not the design intent — the code. (§5)
+3. **A statistic that moves while you type it is a sample statistic.** Ask "monotone in n?"
+   before any count enters a sentence. (§4)
+4. **If an argument's mechanism is a paper you cite approvingly, the argument is theirs.** (§3)
+5. **Never assert a property of your own script from memory.** Two of tonight's errors were
+   descriptions of code I wrote and did not re-read. (§9)
+6. **A green test suite next to a known-broken statistic reads as validation of it.** Pin the
+   failure or delete the test. (§8)
+7. **Grep your own artifacts for the counterexample before publishing the claim.** Eleven
+   days. (§3)
+8. **An artifact that says "do NOT lift these numbers into the paper" is binding.** Read the
+   source file's own banner before quoting it, every time. (§15)
+9. **Validate a pipeline on the label the paper actually operates on.** An all-samples-correct
+   label is coupled to the score being validated. (§15)
+
+### 14. Deliberately NOT done, and why
+
+- **Nothing touching `null_control.py` or `recompute_fair.py` while the multi-day chain can
+  still read them.** Python reads the script at *invocation*, so an edit now takes effect on
+  the ~67 GPU-h null control when the matrix hands over — surfacing days later as a crash or
+  as silent garbage with no obvious link to tonight. Two specific edits are written out
+  verbatim in the agents' reports for when it is idle: printing achieved FPR in
+  `recompute_fair`'s sweep table, and passing `n_attack_candidates` on `null_control`'s
+  single-draw path.
+- **Declined: blanking the headline p to NaN on an invalid tie multiplicity.** Too destructive
+  for a marginal defect; it reports and warns instead.
+- **Not launched: the `_defb` winner's-curse re-scoring** (~15 min GPU) — it competes with the
+  hide cell for the device.
+
+
+### 15. Landed at 01:35, while this entry was being written: three more claim errors, and the best finding of the night
+
+`8e54943`. Recorded here rather than held for entry 34 because it is the same night and the
+first of the three changes what the FA cell's denominator *means*.
+
+- **THE SUCCESS CRITERION IS UNSATISFIABLE FOR 26% OF THE POOL, BY CONSTRUCTION.** The top two
+  lattice points at N=10 are 2.163956 and ln 10 — a gap of **0.1386 nats** — and the success
+  criterion requires delta = 0.25. So every target already at 2.163956 has less remaining
+  headroom than delta and **cannot register a success under any paraphrase whatsoever**.
+  Methods disclosed only the 8/80 at the exact ceiling; the true unwinnable set is the whole
+  top decile, **21/80 = 26.2% [17.9, 36.8]**. The next lattice point down (2.025) leaves 0.277
+  nats, so at delta = 0.25 the unwinnable set coincides **exactly** with the top-decile set —
+  and no delta >= 0.139 recovers the 21, no delta > 0 recovers the 8, so the delta-sensitivity
+  sweep re-prices the cutoff, not the headroom. This is the cleanest statement of the paper's
+  thesis yet produced, and it falls straight out of the lattice that replaced non-relaxability
+  four hours earlier (§3).
+- **The paper lifted numbers its own artifact forbids.** `results/null_control_3arm_judge_n6.md`
+  line 3 reads verbatim "Do NOT lift these numbers into the paper." Methods carried its
+  76th/80th/56th percentiles and Discussion its +0.37/+0.46/+0.05 nats, plus a "point
+  estimates lean toward the structural reading" inference resting on them. Removed. The
+  resolution defeats the reading anyway: with K=5 benign draws the per-target percentile takes
+  only six values, so 76 vs 80 is well under one benign draw.
+- **The replication validated the pipeline on the one label that is COUPLED TO THE SCORE.**
+  The paper reported AUROC 0.787 against the published 0.828 and blamed the NLI backend. 0.787
+  is the *all-samples-correct* convention; the paper operates everywhere else on greedy
+  alias-aware span, which gives **0.694** on the same cached run. All-samples labels a question
+  correct iff all ten samples are correct, and SE is the entropy of the clustering of those
+  same ten — **part of the AUROC it awards is the score scored against itself**, in a paper
+  whose third contribution is that score-entangled selection invalidates a clean AUROC. All
+  three conventions now reported, led by the operative one; the gap restated as 0.134; the
+  backend attribution dropped as unevidenced. It also resolves a tension the paper had left
+  open: the fair pool's 0.704 [0.653, 0.753] **contains 0.694 and excludes 0.787**.
+
+**My brief to that agent was corrected three times, all sustained** — the same pattern as §1,
+in the opposite direction. My "the paper says a tenth" framing was half wrong (four sites
+already carried 21/80; only the Methods parenthetical treated 10% as the unattackable share);
+percentile resolution is 1/K = 20 points, not the 1/6 = 16.7 I relayed from the review; and it
+led with 0.694 rather than 0.698 partly because **0.698 is guarded by the population linter as
+the winner's-curse selection-time mean**, so emitting it in Setup would have turned the checker
+red on a false positive. **The guard shaped an edit for the first time** — worth watching, since
+a linter that steers prose can also entrench a bad number.
+
+Not compile-tested: no LaTeX toolchain in that environment.
+
+---
