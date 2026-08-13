@@ -19,7 +19,8 @@ maximum only when the normalised cluster likelihoods are exactly equal. Whether 
 \emph{near} the cap would leave a near-atom, and so a near-floor, is the empirical question
 we bracket below rather than answer. Whether the \emph{empirical} pile-up near the cap transfers is genuinely
 open, and we would rather bracket it than assert it in either direction. Re-weighting our own
-cached cluster structure---the $1440$ greedy-correct questions of our $2000$-question
+cached cluster structure---the $1424$ greedy-correct questions (alias-aware span oracle, as
+everywhere else in this paper) of our $2000$-question
 replication pass---with simulated length-normalised likelihoods in place of sample counts
 reproduces a pile-up when the spread of within-cluster likelihoods is small and dissolves it
 when the spread is large, with the crossover falling inside the range we consider plausible.

@@ -76,17 +76,35 @@ the score has an \emph{atom} where the exchangeability null assumes a continuum.
 ties by \textbf{randomised (exchangeable) breaking}: a benign draw tied with the attack's
 maximum outranks it with probability $1/(b{+}1)$, where $b$ is the number of attack
 candidates also achieving that maximum. Simulation shows why the alternatives are
-inadmissible. At full saturation ($q{=}0.05$, $m{=}30$), counting ties strictly gives a null
-rejection rate of $0.995$ and counting them against the attack gives power $0.05$ at a
-two-fold effect, while the randomised rule stays calibrated there (analytic-null level
-$0.021$). Under the empirical $n{=}80$ headroom distribution, the randomised rule against
-that same analytic null reaches power $0.51$ at level $0.035$ for $m{=}30$, and $0.77$ at
-level $0.053$ for the pre-registered $m{=}50$. We quote the deployed test throughout.
-Simulations that instead take a critical value calibrated against the true simulated
-null---an oracle the deployed test does not have---report $0.67$ and $0.84$ for those two
-cells, at levels $0.052$ and $0.068$; the shipped test is more conservative and pays for it
-in power, by $0.16$ at $m{=}30$ and $0.07$ at $m{=}50$. Both
-inadmissible rules are
+inadmissible, and the two simulations it draws on have to be read separately, because they
+differ in how the tie multiplicity $b$ is generated. At
+full saturation ($q{=}0.05$, $m{=}30$), in the simulation that \emph{redraws} $b$ from its
+null distribution, counting ties strictly gives a null rejection rate of $0.995$ and
+counting them against the attack gives power $0.05$ at a two-fold effect; in that same
+simulation the randomised rule's analytic-null level is $0.051$. In the deployment-faithful
+simulation, which takes $b$ as \emph{measured} on the attack's own candidates, the
+randomised rule stays calibrated at that cell, with analytic-null level $0.021$. The
+measured-$b$ figure is the one that bears on the deployed test, because $b$ is measured in
+deployment; redrawing it runs $b$ about one higher, which shrinks the $1/(b{+}1)$ tie credit
+and pushes the level up.
+
+Under the empirical $n{=}80$ headroom distribution, the randomised rule against that
+analytic null reaches power $0.51$ at an achieved level of $0.025$ for $m{=}30$, and $0.77$
+at $0.041$ for the pre-registered $m{=}50$; levels and powers are paired on the same
+$4{,}000$ simulated trials per cell, and the analytic null's own nominal tails at those cut
+points are $0.031$ and $0.044$, so the shipped test is stricter than it believes itself to
+be. We quote the deployed test throughout. On the same draws, a critical value calibrated
+against the true simulated null---an oracle the deployed test does not have---reaches $0.66$
+at level $0.056$ and $0.84$ at $0.064$ for those two cells. The difference between the two
+columns is a level, not a statistic: at a common $m$ the analytic $p$-value is strictly
+increasing in the exceedance total alone, so the deployed and oracle tests are the same cut
+rule on the same statistic, applied at different cut points. Re-cut to the oracle's achieved
+level, the deployed test's power equals the oracle's to three decimals at every $m$ we
+simulate. The analytic null therefore costs nothing in discriminating power and buys
+conservatism---and, unlike the oracle, it delivers a level the pipeline can state without
+knowing the truth it is testing. What it does cost is the operating point rather than the
+statistic: the cut we ship is the stricter one, so a non-rejection must be read against the
+deployed power and not the oracle's. Both inadmissible rules are
 reported as diagnostics: their disagreement is a direct indicator that ceiling saturation,
 rather than attack strength, is driving a comparison. Note that $b$ must be \emph{measured}
 rather than estimated, since it is precisely where attack strength appears once the ceiling
@@ -132,12 +150,16 @@ Reframe~(a)---``the attack targets the detector''---is claimed iff, at $n{\geq}8
 $m{=}50$ benign paraphrases per target, the adjudicator clusterer's randomised-tie
 exceedance test rejects at the $5\%$ level in the direction of the attack. That design was
 fixed in advance at a simulated power of $0.84$ against a two-fold effect and $0.99$ against
-a three-fold one, chosen over a cheaper $m{=}30$ (power $0.67$) because our own
+a three-fold one, chosen over a cheaper $m{=}30$ (power $0.67$ at the design-time
+simulation settings, $0.66$ on the higher-precision re-run quoted above) because our own
 selection-on-noise measurement indicates the true effect is modest and the design must be
 able to see a small one. We disclose that those pre-registration figures were the
-oracle-calibrated ones; the deployed analytic-null test is less powerful ($0.77$ at
-$m{=}50$, $0.51$ at $m{=}30$). The ordering that drove the choice is unchanged and we do not
-re-choose $m$ after the fact, but the design is weaker than the number we picked it on, and
+oracle-calibrated ones; the deployed analytic-null test, cutting at its stricter achieved
+level, delivers $0.77$ at $m{=}50$ and $0.51$ at $m{=}30$. That shortfall is a level rather
+than a weaker statistic---re-cut to the oracle's level the two agree to three decimals, as
+above---but it is the operating point we actually ship. The ordering that drove the choice
+is unchanged and we do not re-choose $m$ after the fact, but the design rejects less
+readily than the number we picked it on, and
 a non-rejection must be read against $0.77$ rather than $0.84$. If the test does not reject, (a) is not claimed, and the
 NLI/exact-match bracket together with the judge's point estimate is reported as the honest
 bounded result.
@@ -148,7 +170,8 @@ sentence embedder to the LLM-judge, triggered by the embedder's $0.51$ hard-nega
 The benign floor moved from individual draws to a budget-corrected comparison, triggered by
 the winner's-curse mismatch surfaced in adversarial review. The budget correction then moved
 from brute-force matching to the analytic exceedance null, triggered by the matched design
-pricing out at roughly nine GPU-days. And the tie rule moved from conservative to randomised
+pricing out at $228$ GPU-hours, about nine and a half GPU-days. And the tie rule moved from
+conservative to randomised
 breaking, triggered by the simulation above showing the conservative rule has no power under
 the ceiling. Each trigger is objective, each was recorded before the corresponding data was
 seen, and the full sequence is given here rather than in an appendix precisely because a
