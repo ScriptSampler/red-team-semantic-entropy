@@ -67,13 +67,15 @@ def power(scale, hr, m, n_targets, mult, seed, trials=400, alpha=0.05):
 
 
 def main() -> int:
-    fa = Path(r"C:\Users\Abhi\AppData\Local\Temp\claude"
-              r"\I--GITHUBPROJECTS-SE-Research\85d40e73-48d6-4927-b8b8-9fe3d295986d"
-              r"\scratchpad\fa80.jsonl")
-    if not fa.exists():
-        print(f"missing {fa}"); return 1
-    hr = load_headroom(fa)
-    print(f"empirical headroom: n={len(hr)} mean {hr.mean():.3f} "
+    # The headroom used to come from a session-scoped temp file, so this script stopped
+    # being reproducible the moment that scratch directory was cleaned. It now resolves the
+    # same 80 targets from the attack cache, falling back to the committed mirror
+    # results/fa80_headroom.md (2026-08-13). The vector is byte-identical to the old scratch
+    # extract: same question ids, same order, same entropy_before.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from power_sim_deployed import resolve_headroom       # noqa: E402  (lazy: avoids a cycle)
+    hr, _qids, provenance = resolve_headroom()
+    print(f"empirical headroom from {provenance}: n={len(hr)} mean {hr.mean():.3f} "
           f"zero-headroom {int((hr <= 1e-9).sum())}")
 
     # calibrate the per-draw scale to the observed 49% attack saturation
