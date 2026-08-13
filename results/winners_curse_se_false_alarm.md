@@ -1,24 +1,24 @@
-# Winner's-curse re-evaluation — se_false_alarm (fresh seed 1 — asserted by --fresh_seed; 60 of 60 checkpoint records predate seed stamping)
+# Winner's-curse re-evaluation — se_false_alarm (fresh seed 1)
 
 The attack reports the MAXIMUM over ~181 noisy entropy estimates, so its move is inflated by selection-on-noise. Here the SELECTED paraphrase is re-scored on an INDEPENDENT sample (same N, different seed). Regression toward the mean measures the selection component directly; it does not answer whether benign paraphrasing achieves the same (that is the benign-floor control's job).
 
-- n = 60
-- mean move at selection: **+0.698** nats -> on fresh samples: **+0.315** nats
-- **retention = 45.2%** of the selection-time effect
-- median: +0.586 -> +0.165
-- targets keeping a positive move: 36/60 (60%)
-- shrinkage (fresh - selection): -0.383 [-0.529, -0.234] nats (a CI excluding 0 means the selection effect is provably inflated)
-- corr(selection move, fresh move) = +0.456
+- n = 69
+- mean move at selection: **+0.609** nats -> on fresh samples: **+0.268** nats
+- **retention = 44.0%** of the selection-time effect
+- median: +0.475 -> +0.139
+- targets keeping a positive move: 37/69 (54%)
+- shrinkage (fresh - selection): -0.341 [-0.469, -0.212] nats (a CI excluding 0 means the selection effect is provably inflated)
+- corr(selection move, fresh move) = +0.482
 
 ## Retention interval (ratio of means — read the estimator note)
 
-- **retention = 45.2%, paired percentile bootstrap 95% CI [25.0%, 64.9%]** (10,000 replicates, seed 0)
-- log-ratio bootstrap (same paired replicates): [25.0%, 64.9%]
-- Fieller's theorem interval: [23.7%, 65.7%]
-- denominator stability: Fieller g = 0.031 (g >= 1 would make the confidence set unbounded); 0.00% of bootstrap replicates have a denominator at or through zero
-- Monte-Carlo wobble of the endpoints across 12 bootstrap seeds: lower 24.4%–25.1%, upper 64.6%–65.6%. Only the whole-percent interval **[25%, 65%]** is supported by the resampling; the tenths are RNG noise, not data.
+- **retention = 44.0%, paired percentile bootstrap 95% CI [23.1%, 64.2%]** (10,000 replicates, seed 0)
+- log-ratio bootstrap (same paired replicates): [23.1%, 64.2%]
+- Fieller's theorem interval: [22.4%, 64.6%]
+- denominator stability: Fieller g = 0.041 (g >= 1 would make the confidence set unbounded); 0.00% of bootstrap replicates have a denominator at or through zero
+- Monte-Carlo wobble of the endpoints across 12 bootstrap seeds: lower 23.0%–24.3%, upper 63.8%–64.6%. Only the whole-percent interval **[23%, 64%]** is supported by the resampling; the tenths are RNG noise, not data.
 
-The 3 estimators agree to within 1.3% on the worst endpoint, the denominator (mean selection-time move) is bounded well away from zero, and no bootstrap replicate approaches a zero denominator — so the percentile interval is the one to quote. Resampling is PAIRED over targets: each target's selection-time and fresh moves are the same target measured twice and must move together.
+The 3 estimators agree to within 0.7% on the worst endpoint, the denominator (mean selection-time move) is bounded well away from zero, and no bootstrap replicate approaches a zero denominator — so the percentile interval is the one to quote. Resampling is PAIRED over targets: each target's selection-time and fresh moves are the same target measured twice and must move together.
 
 READING: retention near 1.0 means the selected paraphrase's advantage is a property of the paraphrase, not of the sample it was selected on. Retention near 0 means the reported effect was largely selection-on-noise — which the benign floor would then also show.
 

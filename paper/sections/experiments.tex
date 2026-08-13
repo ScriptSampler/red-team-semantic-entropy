@@ -170,7 +170,12 @@ sentence embedder to the LLM-judge, triggered by the embedder's $0.51$ hard-nega
 The benign floor moved from individual draws to a budget-corrected comparison, triggered by
 the winner's-curse mismatch surfaced in adversarial review. The budget correction then moved
 from brute-force matching to the analytic exceedance null, triggered by the matched design
-pricing out at $228$ GPU-hours, about nine and a half GPU-days. And the tie rule moved from
+pricing out at what we then costed as $228$ GPU-hours. We correct that figure here rather than
+leave it standing: re-derived from the wall clock of runs that have since executed, the matched
+design is about $99$ GPU-hours. The deviation still holds---an analytic null that costs nothing
+is preferable to a four-day matched arm---but the trigger we recorded was $2.3\times$ too
+large, and a reader checking whether the rule was tuned is entitled to the corrected number.
+And the tie rule moved from
 conservative to randomised
 breaking, triggered by the simulation above showing the conservative rule has no power under
 the ceiling. Each trigger is objective, each was recorded before the corresponding data was
