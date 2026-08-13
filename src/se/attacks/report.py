@@ -105,21 +105,48 @@ def summarize_cell(outcomes, *, cutoffs=(0.0, 0.1, 0.25, 0.5, 1.0)) -> dict:
     }
 
 
-def matrix_operating_point(hide_outcomes, fa_outcomes, *, target_fpr: float = 0.1) -> dict:
+def matrix_operating_point(hide_outcomes, fa_outcomes, *, target_fpr: float = 0.1,
+                           mode: str = "closest") -> dict:
     """Operating-point flips at a clean-data threshold (external review §6/B5).
 
     Needs BOTH classes so it is matrix-level, not per-cell: hide targets are the
     positives (model wrong), false-alarm targets the negatives (model right).
     clean score = entropy_before, attacked score = entropy_after. The threshold
-    is set on the CLEAN negatives to a target FPR, then flips are counted."""
+    is set on the CLEAN negatives to a target FPR, then flips are counted.
+
+    ⚠ QUOTE `achieved_fpr`, NOT `target_fpr` (defect 1, fixed 2026-08-13). Semantic entropy
+    is atom-valued at the log(N) ceiling, so a nominal FPR is generally not attainable: on a
+    realistic n=80 false-alarm cell with 11.2% of clean correct answers at the ceiling, the
+    old `np.quantile` rule returned the ceiling and this table called it "5% FPR" and "10%
+    FPR" on two separate rows that were both running at 11.2%. `se.stats.operating_point`
+    now returns the threshold WITH the FPR it realises, `flips_at_threshold` recomputes that
+    FPR from these same negatives, and `fpr_contract_honoured` is True iff achieved <=
+    target. RENDER THE ACHIEVED COLUMN — a table headed only by the target is the defect.
+
+    WHY mode='closest' AND NOT THE FUNCTION'S DEFAULT. `operating_point`'s own default
+    ('at_most') honours the <= target contract exactly, which on the cell above means the
+    5% and 10% rows have NO firing threshold and every flip count is 0. That is the correct
+    answer to "give me a threshold at 5% FPR", but it is the wrong question for this table,
+    whose job is to measure what the detector does at a realistic operating point. 'closest'
+    keeps the threshold the quantile rule was reaching for — so the flip counts here are
+    unchanged from what shipped — and replaces the nominal label with the true rate. The
+    contract-honouring answer is still reported, as `at_most_threshold` /
+    `at_most_achieved_fpr`, so both readings are on the page.
+    """
     labels = [1] * len(hide_outcomes) + [0] * len(fa_outcomes)
     clean = [o.entropy_before for o in hide_outcomes] + [o.entropy_before for o in fa_outcomes]
     attacked = [o.entropy_after for o in hide_outcomes] + [o.entropy_after for o in fa_outcomes]
-    thr = operating_point(labels, clean, target_fpr=target_fpr)
-    flips = flips_at_threshold(labels, clean, attacked, thr)
+    op = operating_point(labels, clean, target_fpr=target_fpr, mode=mode)
+    flips = flips_at_threshold(labels, clean, attacked, op)
     flips["target_fpr"] = target_fpr
     # The threshold at a low FPR is set on few negatives -> noisy; surface it.
     flips["n_negatives_for_threshold"] = len(fa_outcomes)
+    # The strictly contract-honouring operating point, for the record. Where it is inf the
+    # detector simply cannot run at this target FPR on this score.
+    strict = operating_point(labels, clean, target_fpr=target_fpr, mode="at_most")
+    flips["at_most_threshold"] = strict.threshold
+    flips["at_most_achieved_fpr"] = strict.achieved_fpr
+    flips["at_most_flags_nothing"] = strict.flags_nothing
     return flips
 
 
@@ -127,7 +154,13 @@ def matrix_operating_point_sweep(hide_outcomes, fa_outcomes,
                                  *, fprs=(0.05, 0.10, 0.20)) -> list[dict]:
     """Operating-point flips across a small FPR sweep (critic guidance on §6): a
     detector is a threshold family, not a point. Headline is 0.10; 0.05 sets the
-    threshold on few negatives (noisy at n~200) and should be read with care."""
+    threshold on few negatives (noisy at n~200) and should be read with care.
+
+    `fprs` are TARGETS. Each row's `achieved_fpr` is the rate the detector actually runs at,
+    and on an atom-valued score several targets COLLAPSE ONTO THE SAME achieved FPR — on the
+    definitive false-alarm cell the 0.05 and 0.10 rows are the same threshold running at
+    11.2%. Render the achieved column; a table headed only by the target is the defect this
+    sweep was corrected for, and it makes duplicate rows look like independent evidence."""
     return [matrix_operating_point(hide_outcomes, fa_outcomes, target_fpr=f)
             for f in fprs]
 

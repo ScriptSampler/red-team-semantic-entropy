@@ -34,8 +34,13 @@ quietly patched. They are measurement facts, not opinions, and each is printed a
   (2) "10% FPR" is not an attainable operating point on this detector. Semantic entropy at
       N=10 takes ~28 distinct values on the fair pool, with large atoms; the achievable
       false-positive rates jump from 9.5% (at the ceiling) straight to 21.5%. The quantile
-      rule that `se.stats.operating_point` implements is only exact for a continuous score.
-      So the REALISED FPR of tau is always printed next to tau. Do not quote "10% FPR".
+      rule the pre-registration used is only exact for a continuous score. So the REALISED
+      FPR of tau is always printed next to tau. Do not quote "10% FPR".
+      As of 2026-08-13 that quantile rule is no longer `se.stats.operating_point`'s default —
+      the default now returns the smallest ATTAINABLE threshold whose achieved FPR is <=
+      target, and every mode returns the achieved FPR with the threshold. This script asks
+      for the old rule BY NAME (`mode='nominal_quantile'`) because entry 32's tau is defined
+      by it; tau, the crossings and W1-W4 below are numerically unchanged.
 
   (3) At 10% FPR the operating point coincides with the CEILING, which destroys the very
       censoring-immunity that motivated this test. The smallest threshold whose realised FPR
@@ -263,23 +268,54 @@ def crossing_is_saturation(scores, tau: float, compare: str = "ge") -> bool:
 
 
 def compute_tau(scores, target_fpr: float = 0.10, compare: str = "ge") -> dict:
-    """The pre-registered tau plus everything needed to read it honestly."""
+    """The pre-registered tau plus everything needed to read it honestly.
+
+    tau IS THE QUANTILE-RULE THRESHOLD, ON PURPOSE. `se.stats.operating_point` was fixed on
+    2026-08-13 (defect 1: its default rule overshot its own <= target_fpr contract by 3-6x on
+    an atom-valued score). Entry 32's operating point is nevertheless DEFINED by that
+    quantile rule, so reproducing the pre-registered number requires it, and the fixed
+    function exposes it as the explicitly-named `mode='nominal_quantile'` — which returns the
+    REALISED FPR alongside it and reports `honours_contract=False`. That is the whole point:
+    the pre-registration stands as a matter of record, its label does not. The science here
+    is unchanged (same tau, same crossings, same W1-W4 narrative); what changed is that the
+    achieved FPR now travels with the threshold instead of being recomputed by hand and
+    hoped to agree. `_op_check` below asserts the two agree.
+
+    `tau_at_most_target_fpr` is what the fixed default (`mode='at_most'`) returns, and it is
+    cross-checked against this file's own `smallest_threshold_at_most_fpr`.
+    """
     s = np.asarray(scores, dtype=float)
-    tau = float(operating_point([0] * len(s), s, target_fpr=target_fpr))
+    op = operating_point([0] * len(s), s, target_fpr=target_fpr, mode="nominal_quantile")
+    tau = float(op)
     strict = smallest_threshold_at_most_fpr(s, target_fpr, compare)
+    rf = realised_fpr(s, tau, compare)
+    # The fixed default rule, for the record. It is the ATTAINABLE threshold whose achieved
+    # FPR is <= target; on this pool that is the ceiling, which is exactly warning [W3].
+    op_at_most = operating_point([0] * len(s), s, target_fpr=target_fpr, mode="at_most")
     return {
         "n_flagged_atoms": len(flagged_atoms(s, tau, compare)),
         "crossing_is_saturation": crossing_is_saturation(s, tau, compare),
         "crossing_is_saturation_at_most": (
             crossing_is_saturation(s, strict, compare) if strict is not None else False),
         "tau": tau,
+        "tau_rule": op.mode,
         "target_fpr": float(target_fpr),
-        "realised_fpr": realised_fpr(s, tau, compare),
+        # REALISED, under this script's atom-tolerant `crosses`. `op.achieved_fpr` is the
+        # same number computed with an exact `>=`; they may differ only if two real atoms sit
+        # within ATOM_TOL of each other, which on this pool they do not (~0.05 nats apart).
+        "realised_fpr": rf,
+        "achieved_fpr_from_stats": float(op.achieved_fpr),
+        "honours_target_fpr": bool(op.honours_contract),
         "n_scores": int(len(s)),
         "n_distinct": len(atoms(s)),
         "tau_at_most_target_fpr": strict,
         "realised_fpr_at_most": (realised_fpr(s, strict, compare) if strict is not None
                                  else float("nan")),
+        # The fixed default rule's answer, and whether it agrees with this file's version.
+        "tau_at_most_from_stats": float(op_at_most),
+        "achieved_fpr_at_most_from_stats": float(op_at_most.achieved_fpr),
+        "at_most_agrees_with_stats": bool(
+            strict is not None and abs(float(op_at_most) - strict) <= ATOM_TOL),
         # Censoring-immunity holds only if tau sits strictly BELOW the top of the attainable
         # range: at the top, '>' can never be satisfied and '>=' just re-measures saturation.
         "tau_is_interior": bool(tau < float(s.max()) - 1e-9),
@@ -444,9 +480,13 @@ def main(argv=None) -> int:
               f"on correct answers")
         print(f"fair pool     : {len(ids)} score-independent correct-answer items "
               f"({tau_info['n_distinct']} distinct scores)")
-        print(f"tau           : {tau:.6f} nats")
+        print(f"tau           : {tau:.6f} nats  (rule '{tau_info['tau_rule']}' — the "
+              f"pre-registered quantile rule, asked for by name)")
         print(f"REALISED FPR  : {tau_info['realised_fpr']:.1%}  "
               f"<-- QUOTE THIS, NOT '{args.target_fpr:.0%}'")
+        print(f"                se.stats agrees: achieved "
+              f"{tau_info['achieved_fpr_from_stats']:.1%}; honours the <= "
+              f"{args.target_fpr:.0%} contract: {tau_info['honours_target_fpr']}")
         print()
         print("  [W1] tau is NOT independent of the attacked targets, contrary to entry 32.")
         print(f"       {overlap}/{len(attacked)} attacked targets are IN the {len(ids)}-item "
@@ -466,6 +506,10 @@ def main(argv=None) -> int:
         print(f"  [W3] smallest threshold with realised FPR <= {args.target_fpr:.0%}: "
               f"{strict if strict is None else f'{strict:.6f}'} "
               f"(FPR {tau_info['realised_fpr_at_most']:.1%})")
+        print(f"       se.stats.operating_point's fixed DEFAULT rule returns "
+              f"{tau_info['tau_at_most_from_stats']:.6f} "
+              f"(achieved FPR {tau_info['achieved_fpr_at_most_from_stats']:.1%}); "
+              f"agrees with this script: {tau_info['at_most_agrees_with_stats']}")
         if tau_info["at_most_is_ceiling"]:
             print(f"       That threshold IS the log({CAP_N}) ceiling. Censoring-immunity "
                   f"needs tau strictly")

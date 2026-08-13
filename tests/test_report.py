@@ -91,17 +91,69 @@ def test_empty_cell():
     assert render_cell_md({"n": 0}) == ["(no outcomes)"]
 
 
-def test_matrix_operating_point_flips():
+def _op_cells():
     hide = [FakeOutcome("hide", "se", cb, ca, True, True, True, True)
             for cb, ca in [(0.5, 0.1), (0.6, 0.6), (0.7, 0.7)]]   # o1 flips down
     fa = [FakeOutcome("false_alarm", "se", cb, ca, True, True, True, True)
           for cb, ca in [(0.1, 0.5), (0.2, 0.2), (0.3, 0.3)]]     # o1 flips up
-    f = matrix_operating_point(hide, fa, target_fpr=0.1)
-    assert abs(f["threshold"] - 0.28) < 1e-9
+    return hide, fa
+
+
+def test_matrix_operating_point_flips():
+    """With 3 negatives the attainable FPRs are 1, 2/3, 1/3, 0 — so a 1/3 target has a real
+    operating point and the flip counting is exercised there.
+
+    CHANGED 2026-08-13 (defect 1): this used to assert threshold == 0.28, the interpolated
+    quantile of [0.1, 0.2, 0.3] at 90%, whose ACHIEVED FPR is 1/3 = 33% against a nominal
+    10%. An interpolated threshold is not an attainable operating point; the table now
+    reports what the detector really does.
+    """
+    hide, fa = _op_cells()
+    f = matrix_operating_point(hide, fa, target_fpr=1 / 3)
+    assert abs(f["threshold"] - 0.3) < 1e-9          # an ATTAINABLE value, not 0.28
+    assert abs(f["achieved_fpr"] - 1 / 3) < 1e-9
+    assert f["fpr_contract_honoured"] is True
     assert f["n_hide"] == 3 and f["hide_flagged_to_unflagged"] == 1
     assert f["n_false_alarm"] == 3 and f["fa_unflagged_to_flagged"] == 1
     assert abs(f["hide_flip_rate"] - 1 / 3) < 1e-9
     assert abs(f["fa_flip_rate"] - 1 / 3) < 1e-9
+
+
+def test_matrix_operating_point_labels_an_unattainable_target_honestly():
+    """REGRESSION (defect 1). 3 negatives cannot produce a 10% FPR: the coarsest non-zero
+    rate is 1/3. The old quantile rule returned 0.28 and quietly ran at 33% while the table
+    said "target FPR 0.10".
+
+    The threshold is deliberately UNCHANGED in spirit — this table's job is to measure flips
+    at a real operating point, so it keeps the nearest attainable one. What changed is that
+    the row now says 33%, admits it broke the contract, and carries the contract-honouring
+    alternative beside it."""
+    hide, fa = _op_cells()
+    f = matrix_operating_point(hide, fa, target_fpr=0.1)
+    assert abs(f["achieved_fpr"] - 1 / 3) < 1e-9      # the rate it REALLY runs at
+    assert f["fpr_contract_honoured"] is False        # ...and it says so
+    assert f["target_fpr"] == 0.1
+    assert abs(f["threshold"] - 0.3) < 1e-9           # attainable, not the 0.28 interpolant
+    assert f["hide_flagged_to_unflagged"] == 1 and f["fa_unflagged_to_flagged"] == 1
+    assert f["n_distinct_negative_scores"] == 3
+    # the strictly-<= answer is on the page too: no firing threshold qualifies at 10%
+    assert f["at_most_threshold"] == float("inf")
+    assert f["at_most_achieved_fpr"] == 0.0
+    assert f["at_most_flags_nothing"] is True
+    # and "10% FPR" appears nowhere as a claim
+    assert f["achieved_fpr"] > f["target_fpr"]
+
+
+def test_two_targets_can_collapse_onto_one_operating_point():
+    """The reporting hazard behind defect 1: on a coarse score, several sweep rows are the
+    SAME threshold at the SAME achieved FPR. Labelled by target they look like independent
+    evidence; labelled by achieved FPR the duplication is obvious."""
+    hide, fa = _op_cells()
+    a = matrix_operating_point(hide, fa, target_fpr=0.30)
+    b = matrix_operating_point(hide, fa, target_fpr=0.40)
+    assert a["threshold"] == b["threshold"]
+    assert a["achieved_fpr"] == b["achieved_fpr"] == 1 / 3
+    assert a["fpr_contract_honoured"] is False and b["fpr_contract_honoured"] is True
 
 
 def test_finding16_sampled_gate():
@@ -158,10 +210,15 @@ def test_matrix_answer_flip_breakdown_splits_by_direction():
 
 
 def test_operating_point_sweep_covers_fprs():
-    hide = [FakeOutcome("hide", "se", cb, ca, True, True, True, True)
-            for cb, ca in [(0.5, 0.1), (0.6, 0.6), (0.7, 0.7)]]
-    fa = [FakeOutcome("false_alarm", "se", cb, ca, True, True, True, True)
-          for cb, ca in [(0.1, 0.5), (0.2, 0.2), (0.3, 0.3)]]
+    hide, fa = _op_cells()
     sweep = matrix_operating_point_sweep(hide, fa)
     assert [row["target_fpr"] for row in sweep] == [0.05, 0.10, 0.20]
     assert all(row["n_negatives_for_threshold"] == 3 for row in sweep)
+    # Every row must carry the ACHIEVED rate, and must say whether it cleared its target
+    # (defect 1). The row is allowed to overshoot — it is NOT allowed to hide that.
+    for row in sweep:
+        assert "achieved_fpr" in row and "fpr_contract_honoured" in row
+        assert row["fpr_contract_honoured"] == (
+            row["achieved_fpr"] <= row["target_fpr"] + 1e-12)
+        assert "at_most_achieved_fpr" in row
+        assert row["at_most_achieved_fpr"] <= row["target_fpr"] + 1e-12

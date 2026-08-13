@@ -49,7 +49,10 @@ almost always true -- exactly where the error is likeliest. Four defects, all no
      satisfied by `0.97` and by the year `1997`; the quarantine rule accepted the bare word
      `attacked`, satisfied by "the detector we attacked".
      FIX: labels are POOL PHRASES ("attack campaign", "attacked subset", "97 targets"), and
-     any label whose span lies inside the number's own span cannot label it.
+     any label whose span lies inside the number's own span cannot label it. Nor may a
+     label be built out of another number's DENOMINATOR: "the fair pool's 21/80 correct
+     targets" was growing an attacked-pool label ("80 correct") out of the very count it
+     was mislabelling. See NOT_A_DENOMINATOR.
 
   3. GUARDED SET TOO NARROW. 8/80, 21/80, 42/80, 42.5%, 52.5%, 34/80, the 45% retention
      family, 0.93, 0.787, AUROC 1.0 and the fair-pool headroom means were all unguarded.
@@ -76,13 +79,22 @@ WHAT IT STILL CANNOT CATCH (deliberate; false positives gate the suite)
     one clause away from a fair-pool label by design ("AUROC 1.0 by construction, versus
     0.704 ... on the fair pool"), so a proximity rule there would cry wolf.
   * 0.51 (the embedder's hard-negative AUROC) is NOT guarded: the paper also reports
-    simulated power 0.51 at m=30, and a bare-decimal rule cannot tell them apart.
+    simulated power 0.51 at m=30, and a bare-decimal rule cannot tell them apart. Same
+    for the Abstract's "20% still pinned" on the 15-target N=20 re-score subset: a bare
+    20% is indistinguishable from any other 20%, and an unanchored rule there would fire
+    on every future percentage that happens to round to it.
   * The oracle-calibrated vs shipped power figures (0.84/0.71 vs 0.77/0.51) are a
     test-variant provenance problem, not a population one, and are not guarded here.
-  * Numbers rendered as words ("a tenth", "a quarter", "past half") are invisible to a
-    number-anchored check. They are the reason prose claims still need a human read.
+  * Numbers rendered as words ("a tenth", "a quarter", "past half", "nearly two fifths")
+    are invisible to a number-anchored check -- for staleness as much as for population.
+    They are the reason prose claims still need a human read.
   * Table 1's cells are placeholders ("--"). When they are filled, the numbers themselves
     become checkable; the caption already names the population.
+  * The guarded set is a LIST. A number this file has never heard of is unguarded, so a new
+    run's headline has to be added here as it is added to the paper. That is the standing
+    cost of anchoring on numbers rather than on prose, and it is why the fair-pool
+    granularity counts (results/fair_pool_granularity.md) are already listed below,
+    before they appear in the text.
 
 Run: python scripts/check_population_labels.py    (exit 1 on any problem)
 """
@@ -108,12 +120,21 @@ CUE_LOOKBACK = 30
 
 # A label that FOLLOWS the number is worth this many characters less than one that precedes
 # it. "on the fair pool ... 0.704" binds; "0.463 nats and AUROC 0.704, whereas the attacked
-# subset gives 0.184" does not bind 0.704 to the attacked subset.
-TRAILING_PENALTY = 120
+# subset gives 0.184" does not bind 0.704 to the attacked subset. Set generously (a trailing
+# label has to be very close to outrank a preceding one) so that the verdict does not flip
+# on an unrelated clause being added or removed between a number and its label. A trailing
+# foreign label with NO owning label anywhere in range is still an error either way.
+TRAILING_PENALTY = 250
 
 # When two labels are equally far in sentences, the foreign one must be this much closer
 # before we call it an error. Absorbs comma-level noise.
 MARGIN = 16
+
+# A count phrase must not be manufactured out of another number's DENOMINATOR. Without this,
+# "the fair pool's 21/80 correct targets" grows an attacked-pool label ("80 correct") out of
+# the 21/80 it is mislabelling, and licenses itself -- defect 2 wearing a different hat.
+# "$21$ of our $80$ correct targets" keeps its label, because there the 80 stands alone.
+NOT_A_DENOMINATOR = r"(?<![/\d])"
 
 
 # --------------------------------------------------------------------------------------
@@ -126,9 +147,10 @@ POOLS: dict[str, dict] = {
         "labels": [
             r"fair pool",                 # survives `\emph{fair} pool` after strip_latex
             r"score-independent pool",
-            r"200 correct",
-            r"200 hallucinating",
+            NOT_A_DENOMINATOR + r"\b200 correct",
+            NOT_A_DENOMINATOR + r"\b200 hallucinating",
             r"200\s*\+\s*200",
+            r"\b400 questions", r"\bscore-independent 400",
         ],
     },
     "attacked": {
@@ -139,7 +161,10 @@ POOLS: dict[str, dict] = {
             r"attack pool", r"attack campaign", r"attack arm", r"attacked stratum",
             r"false-alarm attack pool", r"false-alarm targets", r"false-alarm arm",
             r"97 targets", r"97-target",
-            r"\b80 correct", r"\b80 false-alarm", r"\b17 wrong", r"\b17 hide",
+            NOT_A_DENOMINATOR + r"\b80 correct",
+            NOT_A_DENOMINATOR + r"\b80 false-alarm",
+            NOT_A_DENOMINATOR + r"\b17 wrong",
+            NOT_A_DENOMINATOR + r"\b17 hide",
             r"quarantin",
             r"targets the optimiser was run on", r"optimiser'?s own targets",
         ],
@@ -244,8 +269,10 @@ RULES: list[dict] = [
         # property of the estimator, true of every population (results/
         # fair_pool_granularity.md derives it from p(10)=42 with no data at all). Only the
         # REALISED count is population-bound, and that is `22 of the 39`.
-        "numbers": [r"22 distinct", r"22 attainable", r"22 of (?:its |the )?39",
-                    r"\b8/80", r"\b8 of (?:the )?80", r"\b8 began",
+        # `22 distinct` is handled by SUPERSEDED instead: commit e6e7629 retired the
+        # realised-value count from all four sites, so its return is a staleness problem
+        # rather than a labelling one, whichever pool it is attached to.
+        "numbers": [r"\b8/80", r"\b8 of (?:the )?80", r"\b8 began",
                     r"\b21/80", r"\b21 of (?:our |the )?80", r"those 21 targets"],
         "window": 420,
     },
@@ -259,7 +286,11 @@ RULES: list[dict] = [
         "foreign": ["attacked"],
         "numbers": [r"31 distinct", r"31 of (?:the )?39", r"\b74/400", r"\b132/400",
                     r"\b19/200", r"\b43/200", r"\b28 of (?:the )?39",
-                    r"\b26 of (?:the )?39"],
+                    r"\b26 of (?:the )?39",
+                    # the rates the Abstract actually carries (commit e6e7629 moved the
+                    # crowding claim off the attacked subset and onto this population)
+                    rf"\b9\.5{PCT}", rf"\b21\.5{PCT}", rf"\b27\.5{PCT}", rf"\b44\.5{PCT}",
+                    rf"\b33\.0{PCT}", rf"\b18\.5{PCT}"],
         "window": 420,
     },
     {
@@ -277,7 +308,8 @@ RULES: list[dict] = [
         "numbers": [r"97 targets", r"across 97", r"97-target"],
         # NOT the full attacked label list: "97 targets" must not license itself.
         "requires": [r"attack campaign", r"attacked (?:pool|subset|targets)",
-                     r"attack (?:pool|arm)", r"\b80 correct", r"\b17 wrong",
+                     r"attack (?:pool|arm)", NOT_A_DENOMINATOR + r"\b80 correct",
+                     NOT_A_DENOMINATOR + r"\b17 wrong",
                      r"targets the optimiser was run on"],
         "window": 300,
     },
@@ -489,9 +521,7 @@ def _check_pools(raw: str, flat: str, terms: list[int], shown: str) -> list[str]
         for num_pat in rule["numbers"]:
             for hit in re.finditer(num_pat, flat, re.IGNORECASE):
                 span = (hit.start(), hit.end())
-                where = f"{shown}{_line_hint(raw, hit.group(0))}"
-                ctx = flat[max(0, hit.start() - 110):hit.end() + 110].strip()
-
+                token = hit.group(0).replace("\\", "")   # `42\%` reads better as `42%`
                 own_prox = _closest(span, pool_labels[owner], terms, prox)
                 foreign_best = None
                 for other in rule["foreign"]:
@@ -512,9 +542,11 @@ def _check_pools(raw: str, flat: str, terms: list[int], shown: str) -> list[str]
                         near = ("no owning-pool label within "
                                 f"{prox} chars" if own_prox is None
                                 else f"its own label '{own_prox[2]}' binds less tightly")
+                        where = f"{shown}{_line_hint(raw, hit.group(0))}"
+                        ctx = flat[max(0, hit.start() - 110):hit.end() + 110].strip()
                         problems.append(
                             f"{where}: [{rule['name']}] MISLABELLED POPULATION.\n"
-                            f"      '{hit.group(0)}' belongs to the "
+                            f"      '{token}' belongs to the "
                             f"{POOLS[owner]['what']},\n"
                             f"      but the closest binding label is '{ftext}' "
                             f"-> {POOLS[fpool]['what']} ({near}).\n"
@@ -524,9 +556,11 @@ def _check_pools(raw: str, flat: str, terms: list[int], shown: str) -> list[str]
 
                 # (2) POSITIVE assertion: the owning pool must actually be named.
                 if _closest(span, req_labels, terms, window) is None:
+                    where = f"{shown}{_line_hint(raw, hit.group(0))}"
+                    ctx = flat[max(0, hit.start() - 110):hit.end() + 110].strip()
                     problems.append(
                         f"{where}: [{rule['name']}] UNLABELLED.\n"
-                        f"      '{hit.group(0)}' belongs to the {POOLS[owner]['what']} "
+                        f"      '{token}' belongs to the {POOLS[owner]['what']} "
                         f"but no binding label appears within {window} chars.\n"
                         f"      needs one of: {req_desc}\n"
                         + (f"      {rule['note']}\n" if rule.get("note") else "")
@@ -549,7 +583,8 @@ def _check_provenance(raw: str, flat: str, shown: str) -> list[str]:
             snippet = flat[max(0, hit.start() - 110):hit.end() + 110].strip()
             problems.append(
                 f"{where}: [run provenance] STALE VALUE.\n"
-                f"      '{hit.group(0)}' is the {SUPERSEDED_RUN} value of "
+                f"      '{hit.group(0).replace(chr(92), '')}' is the {SUPERSEDED_RUN} "
+                f"value of "
                 f"{item['quantity']};\n"
                 f"      {CURRENT_RUN} (definitive) gives {item['current']}.\n"
                 f"      context: ...{snippet}...")
