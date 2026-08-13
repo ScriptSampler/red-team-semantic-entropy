@@ -21,6 +21,7 @@ Requires GPU (feature extraction). Run after the wk9 SE campaigns exist:
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -38,12 +39,31 @@ from se.attacks.harness import read_outcomes
 
 
 WK4_DIR = DEFAULT_SAMPLES_DIR / "wk4_full_2000q"
-CAMPAIGN_DIR = DEFAULT_SAMPLES_DIR / "attacks" / "wk9"
+
+# Was hardcoded to attacks/wk9 -- the SUPERSEDED pre-B1 campaign (15 outcomes, dated
+# 2026-06-26), whose own reports carry "Do NOT cite". The definitive campaign is wk9_defb
+# (80/80 in both cells). An audit flagged this the night the queue was about to run it:
+# the transfer percentages would have been computed on retired data and written to
+# results/seps_transfer.md unconditionally, where they read as current.
+# Override with SEPS_CAMPAIGN_TAG=_def to reproduce the old cell deliberately.
+_TAG = os.environ.get("SEPS_CAMPAIGN_TAG", "_defb")
+CAMPAIGN_DIR = DEFAULT_SAMPLES_DIR / "attacks" / f"wk9{_TAG}"
 TRAIN_FRAC = 0.7
+
+# What is and is not quotable from this script, stated where it is computed rather than
+# left for a reader to infer. The clean-set probe AUROC is a property of the SEP probe on
+# the Week-4 pool and does not depend on which attack campaign is loaded; the TRANSFER
+# percentages do, and inherit that campaign's n and its selection.
+_PROVENANCE = (
+    f"> Campaign: `attacks/wk9{_TAG}`. The clean-set probe AUROC below is campaign-"
+    f"independent (Week-4 pool, n=2000) and is the quotable result. The TRANSFER figures "
+    f"depend on this campaign's outcomes and inherit its n; quote them only with that n "
+    f"stated, and never from a superseded tag."
+)
 
 
 def main() -> int:
-    report: list[str] = []
+    report: list[str] = [_PROVENANCE, ""]
     def log(s: str = "") -> None:
         print(s, flush=True); report.append(s)
 

@@ -1841,3 +1841,60 @@ a linter that steers prose can also entrench a bad number.
 Not compile-tested: no LaTeX toolchain in that environment.
 
 ---
+
+## 34. 2026-08-13 — the batch gate's ruling, logged late; and my own rule caught me
+
+**PROCESS FAILURE FIRST.** A queue-planning agent checked my claim that "a critic gate ranked
+the N-scaling grid above the attack work" and found ZERO occurrences of `n_scaling`, `N=40` or
+"budget scaling" anywhere in this log across all 33 entries. It was right. The ruling existed
+only in the gate's response to me and in a commit message — never in a committed artifact.
+
+That is precisely the standing rule from entry 33 ("check every gate ruling against the
+committed artifact before applying it") failing in the other direction: not applying a bad
+ruling, but asserting a good one that nobody else could verify. A ruling that lives only in a
+transcript is indistinguishable from one I invented. Logging it now, late, and recording that
+the delay was the defect.
+
+**THE RULING, from the batch gate of edc22f8..bb3049b.** Verbatim in substance:
+
+> "Therefore the highest-value remaining experiment is not finishing the attack matrix — it is
+> measuring the achievable-FPR grid and ceiling-atom mass at N=20 and N=40 on the fair pool's
+> correct stratum. It is a clean, purely-clean-side measurement requiring no attack, no judge,
+> no null control. And every outcome is publishable: if the floor stays operationally coarse at
+> realistic budgets, the contribution is solid and general; if it resolves at N=40, the finding
+> becomes 'at the N this literature uses you cannot have a 5% FPR, and here is the budget you
+> need' — which is MORE useful to a practitioner, not less."
+
+Its reasoning: the operating-point claim inherits the same "just raise N" refutation that killed
+non-relaxability, because it is a claim about granularity at ONE budget. Its 33-day order was
+(1) N-scaling grid, (2) FA null control, (3) the judge's two owed validations, (4) Abstract
+rewrite; and it named the hide cell beyond current, SRE, SEP and the defence as cuts.
+
+**A CONFLICTING WRITTEN RULING EXISTS AND SHOULD BE RECONCILED.** `results/n_scaling_plan.md:410`
+says "Queue it behind the null control, not against it." That was written by the agent that
+COSTED the experiment, before the gate ruled. Both are now on the record; the gate is the later
+and better-informed of the two, but the disagreement is real and should not be silently resolved.
+
+**A LATENT BUG THE SAME AGENT FOUND, in a script I wrote hours earlier.**
+`scripts/run_definitive_chain.sh` does `if "$@"; then ... fi` and then `local rc=$?`. After a
+failed `if` with no `else`, POSIX defines `$?` as the exit status of the IF STATEMENT — zero. So
+the rc 130/143 guard, whose entire purpose was to distinguish "a human pressed Ctrl-C" from "the
+job crashed", HAS NEVER FIRED. The log printed "FAILED rc=0" and an interrupt was retried as a
+crash. Verified on this machine. `scripts/overnight_2026_08_13.sh` invokes bare and captures
+immediately, so the running queue is unaffected.
+
+**A TRAP CAUGHT WITH ~30 MINUTES TO SPARE.** `scripts/wk_seps_transfer.py` hardcoded
+`attacks/wk9` — the superseded pre-B1 campaign, 15 outcomes, dated 2026-06-26, whose own reports
+say "Do NOT cite" — and wrote `results/seps_transfer.md` UNCONDITIONALLY. It was job 4 of a
+running queue and would have produced retired transfer percentages in a file that reads as
+current, in a project that has spent this week building a linter specifically to catch `_def`
+numbers surviving into `_defb` text. Now defaults to `wk9_defb`, overridable by env var, and
+every report it writes opens with a provenance banner naming the campaign and stating that the
+clean-set probe AUROC is campaign-independent and quotable while the transfer figures are not.
+
+**RISK FLAGGED FOR THE PENDING null_control EDIT.** `null_control.py:338` keys checkpoint reuse
+on `{K, n_seeds, embedding_model, embed_threshold, judge_model}`. If `--dump_judge_detail` is
+added to that set, all 11 completed targets stop matching and the run silently restarts at
+target 1. Diff that line before setting the flag.
+
+---
