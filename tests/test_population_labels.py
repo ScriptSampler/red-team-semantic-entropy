@@ -130,7 +130,10 @@ PROBES: list[tuple[str, str, str]] = [
     ),
     (
         "granularity_licensed_by_a_bare_97",
-        # MISSED: the requirement was r"97", and `1997` and `0.97` both satisfy it.
+        # MISSED: the requirement was r"97", and `1997` and `0.97` both satisfy it. The
+        # claim has since been retired outright, so today it is the provenance rule that
+        # answers -- but the self-satisfaction hole it demonstrates is closed generally:
+        # labels are pool PHRASES now, never bare tokens.
         r"""
         Across the score-independent \emph{fair} pool the estimator realises only $22$
         distinct values; a similar crowding was reported in $1997$, at a rank correlation
@@ -290,10 +293,10 @@ def test_a_mislabelled_number_is_reported_as_mislabelled_not_merely_unlabelled(t
 def test_accepts_a_properly_labelled_pair(tmp_path):
     """The corrected form must pass, or the check is unusable."""
     problems = _check(tmp_path, r"""
-        Across the $97$ targets of the attack campaign, scored clean, the estimator
-        offers only $22$ distinct values. On the score-independent \emph{fair} pool
-        ($200$ correct, $200$ hallucinating) it separates correct from hallucinating
-        answers at AUROC $0.704$ [$0.653$, $0.753$].
+        Across the $97$ targets of the attack campaign, scored clean, a tenth of correct
+        answers ($8/80$) already sit at the estimator's maximum. On the score-independent
+        \emph{fair} pool ($200$ correct, $200$ hallucinating) it separates correct from
+        hallucinating answers at AUROC $0.704$ [$0.653$, $0.753$].
     """)
     assert not problems, _say(problems)
 
@@ -341,10 +344,26 @@ def test_a_sub_sample_clause_is_provenance_not_attachment(tmp_path):
     problems = _check(tmp_path, r"""
         At the standard $N{=}10$, across the $97$ targets of our attack campaign scored
         clean ($80$ correct, $17$ wrong---a score-independent sub-sample of the fair pool
-        below, one correctness stratum per attack direction), the estimator realises $22$
-        of its $39$ attainable values.
+        below, one correctness stratum per attack direction), a quarter of correct answers
+        ($21/80$) sit in the top tenth of the score's range.
     """)
     assert not problems, _say(problems)
+
+
+def test_the_retired_realised_value_count_is_flagged_wherever_it_reappears(tmp_path):
+    """Commit e6e7629 retired '22 distinct values' from all four sites: the count is
+    monotone in targets scored (22 at n=80, 28 at n=200, 35 at n=2000) and the hide cell
+    grew 17 -> 43 mid-session, falsifying the replacement claim before it was committed.
+    Attaching the correct pool to it does not make it true, so the provenance rule -- not a
+    population rule -- owns it."""
+    for text in (
+        r"Across the $97$ targets of the attack campaign the estimator realises only "
+        r"$22$ distinct values.",
+        r"On the score-independent \emph{fair} pool the estimator realises $22$ of the "
+        r"$39$ attainable values.",
+    ):
+        problems = _check(tmp_path, text)
+        assert any("STALE" in p for p in problems), _say(problems)
 
 
 def test_a_negation_earlier_in_the_sentence_does_not_disarm_a_later_label(tmp_path):

@@ -384,6 +384,17 @@ SUPERSEDED: list[dict] = [
      "quantity": "corr(headroom, move)", "near": _CORR_CTX},
     {"pattern": r"\+0\.67(?!\d)|r\s*=\s*0\.67(?!\d)", "current": "+0.68",
      "quantity": "corr(headroom, move) within the uncensored subset", "near": _CORR_CTX},
+    # Retired outright, not merely recomputed (commit e6e7629). A realised distinct-value
+    # count is monotone in targets scored and never converges: the same population gives 22
+    # at n=80, 28 at n=200, 35 at n=2000, and the hide cell grew 17 -> 43 mid-session, which
+    # falsified the replacement claim before it was committed. Only the LATTICE size is
+    # n-invariant. Attaching the right pool to it does not make it true, so it is guarded
+    # here rather than by a population rule.
+    {"pattern": r"22 distinct|22 attainable|22 of (?:its |the )?39",
+     "run": "n=80 FA cell", "quantity": "realised distinct-value count",
+     "replacement": "that count is a statement about the sample, not the estimator -- "
+                    "report the n-invariant lattice instead ($39$ attainable values at "
+                    "$N{=}10$, two of them in the top tenth of the range)"},
 ]
 SUPERSEDED_RUN = "wk9_def"
 CURRENT_RUN = "wk9_defb"
@@ -583,11 +594,12 @@ def _check_provenance(raw: str, flat: str, shown: str) -> list[str]:
             snippet = flat[max(0, hit.start() - 110):hit.end() + 110].strip()
             problems.append(
                 f"{where}: [run provenance] STALE VALUE.\n"
-                f"      '{hit.group(0).replace(chr(92), '')}' is the {SUPERSEDED_RUN} "
-                f"value of "
-                f"{item['quantity']};\n"
-                f"      {CURRENT_RUN} (definitive) gives {item['current']}.\n"
-                f"      context: ...{snippet}...")
+                f"      '{hit.group(0).replace(chr(92), '')}' is the "
+                f"{item.get('run', SUPERSEDED_RUN)} value of {item['quantity']};\n"
+                f"      "
+                + item.get("replacement",
+                           f"{CURRENT_RUN} (definitive) gives {item.get('current')}")
+                + f".\n      context: ...{snippet}...")
     return problems
 
 
