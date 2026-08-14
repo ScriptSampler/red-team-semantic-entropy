@@ -42,7 +42,8 @@ $27.8\%$). The atom, and therefore the false-alarm floor it induces, is a proper
 sample-proportion weighting; the crowding is not. Length normalisation is the choice doing
 that work: on raw sequence likelihoods the cluster softmax is nearly one-hot and rank
 agreement with the discrete estimator collapses to $\rho{=}0.38$, whereas length-normalised it
-is $\rho{=}0.99$ with a fair-pool AUROC of $0.703$ against $0.704$. Every AUROC in this paper
+is $\rho{=}0.99$, and on the score-independent fair pool ($200$ correct, $200$ hallucinating)
+it scores AUROC $0.703$ against the discrete estimator's $0.704$. Every AUROC in this paper
 therefore stands under Eq.~(5) as we compute it, and only the saturation arithmetic is
 estimator-specific.
 
