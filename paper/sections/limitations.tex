@@ -32,10 +32,19 @@ at $s{=}0.1$, and halves by $s \approx 0.46$. What we cannot say is where the re
 falls. Nothing we have measured constrains $s$ for length-normalised sequence log-likelihoods
 from our quantised model on these answers---our cache stores sample strings, not
 likelihoods---so we report the curve and decline to claim that its crossover falls inside a
-plausible range. Settling it needs the real weights: re-scoring our stored samples under the
-generating model's own sequence likelihoods would decide it directly, on the same questions and
-the same clusterings. That script is written; it has not been run, and we report nothing from
-it here.
+plausible range. Settling it needed the real weights, so we re-scored our stored samples under
+the generating model's own sequence likelihoods, on the same questions and the same
+clusterings, and computed all three estimators side by side. The simulation's prediction
+holds and sharpens: with length-normalised likelihoods the at-cap atom is \emph{gone}
+($0.0\%$ [$0.0$, $0.2$] against the discrete estimator's $14.8\%$), while near-cap crowding
+partially survives ($20.0\%$ [$18.3$, $21.8$] of clean answers in the top tenth, against
+$27.8\%$). The atom, and therefore the false-alarm floor it induces, is a property of
+sample-proportion weighting; the crowding is not. Length normalisation is the choice doing
+that work: on raw sequence likelihoods the cluster softmax is nearly one-hot and rank
+agreement with the discrete estimator collapses to $\rho{=}0.38$, whereas length-normalised it
+is $\rho{=}0.99$ with a fair-pool AUROC of $0.703$ against $0.704$. Every AUROC in this paper
+therefore stands under Eq.~(5) as we compute it, and only the saturation arithmetic is
+estimator-specific.
 
 \paragraph{Selection on a noisy estimator---measured, not merely acknowledged.}
 Semantic entropy is a finite-sample quantity: for each candidate we cluster
