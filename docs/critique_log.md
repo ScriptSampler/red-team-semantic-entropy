@@ -1898,3 +1898,64 @@ added to that set, all 11 completed targets stop matching and the run silently r
 target 1. Diff that line before setting the flag.
 
 ---
+
+## 35. 2026-08-19 (overnight) — two checks discovered within the hour, both green because they could not fail
+
+Not a claim audit. Both findings are about the machinery I built to make an unattended run
+trustworthy, and they share one structure, which is why they are logged together.
+
+**(a) The dashboard's status card had never worked, and failed in the most misleading direction.**
+The page is opened as `file:///...`, and Chromium blocks `fetch()` from a `file://` origin —
+it throws even for a file that exists, so it is the scheme, not the path. Measured in a real
+Chromium against a byte-identical copy: `fetch` and `XMLHttpRequest` both fail on every poll.
+The card therefore rendered "no status file yet / watcher may not be running" — the most
+alarming message it has — continuously, for the entire period in which the watcher was healthy
+and writing every 15 s. The staleness detector I had specifically built for the case of a dead
+watcher (`age > 60 -> WATCHER NOT REPORTING`) was itself dead code, and the button-disable on a
+completed stop could never fire.
+
+Two things make this worse than a broken feature. First, a control whose feedback channel always
+reads FAILED trains its user to ignore the channel, so it degrades the manual fallbacks too.
+Second, `dashboard/session_status.js` — dated 2026-08-11, doing exactly the thing that works —
+was still sitting in the directory. I had *replaced a working design with a cleaner one that
+cannot work in the environment it is deployed into*, and never opened the page to check.
+
+**(b) `check_population_labels.py` is silently unarmed on the family it was written for.**
+The winner's-curse numbers were superseded (`_def` n=60 -> `_defb` n=69). The guard still keys on
+the RETIRED values (45%, [25,65], 0.383, 0.698, 0.315, "36 of 60") and on `\b60 false-alarm` as a
+pool label. None of the live values (44%, [23,64], -0.341, +0.609, +0.268, "37 of 69", r=0.48) is
+guarded, and `69` is not a frozen count — it reportedly passes only because a neighbouring
+`80 false-alarm` supplies an admissible label. The checker returns green on this family *for the
+wrong reason*, so the seventh supersession failure would not have been caught either.
+
+**The shared structure, and the rule that follows.** In both cases a check was present, looked
+healthy, and could not have failed. The dashboard could not report a live watcher; the linter
+could not flag a live number. Neither had ever been observed to fire in the configuration it
+actually runs in. This is the same error as the one already logged for measurement — a probe
+validated in one context and then spent in another — except the context here is a deployment
+environment rather than a scale. The population checker was previously repaired by building a
+probe suite and watching it go from 1/14 to 14/14; that is the standard, and it was not applied
+to anything else I built.
+
+So, adopted: **a guard, monitor, or dashboard is not evidence until it has been shown both to
+fire on a planted failure and to stay quiet on a planted control, exercised in the environment it
+will run in.** For the dashboard that means opening the page from `file://`, not reasoning about
+it. For a linter it means a probe per rule keyed to the values that are live *today* — which
+implies re-arming the guard is part of a supersession, not a follow-up to it.
+
+**Repairs.** `stop_watcher_v2.sh` emits `session_status.js` (a `<script src>` load, which does
+work from `file://`) alongside the JSON, writes both atomically via tmp+mv (the in-place write
+was caught mid-truncate on 703 of 16218 concurrent reads, 4.3%, none partial-but-nonempty), and
+arbitrates a pre-existing signal on age rather than acting on it blindly. `STOP.txt.txt` is now
+watched, because `HideFileExt=1` on this machine means a hand-made "STOP.txt" is really
+STOP.txt.txt and two of the three documented fallback routes silently did nothing. The click
+handler no longer claims "Saved STOP.txt to Downloads" — the page cannot see whether a download
+completed, and asserting an unverified success is the failure mode of (a) in miniature. A
+supervisor keeps the watcher alive, and exits rather than re-arming once the status reads
+terminal. v2 is a new file rather than an edit because bash reads a script by byte offset while
+running it.
+
+The corresponding repair to (b) is in flight and owns `scripts/check_population_labels.py` and
+its probe suite.
+
+---
