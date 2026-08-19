@@ -611,16 +611,93 @@ def test_a_hide_count_no_one_has_ever_enumerated_is_flagged(tmp_path):
     assert any("61" in p for p in problems), _say(problems)
 
 
-def test_the_planned_hide_n_is_not_admissible_while_the_cell_is_open(tmp_path):
-    """The sign-flipped version of the same bug, and a hole in my first draft of the rule.
+def test_the_registry_is_still_keyed_by_cell_and_not_by_value(tmp_path):
+    """REWRITTEN 2026-08-19. This test used to be
+    test_the_planned_hide_n_is_not_admissible_while_the_cell_is_open, and it asserted that
+    '80 wrong' was an ERROR -- correct while the hide arm was filling THROUGH 80 on its way
+    to 80, and false from 2026-08-13, when the arm landed there. It went on asserting it for
+    six days, which is half of why nobody noticed the registry had expired: the guard said
+    the true sentence was wrong, and the suite said the guard was right. See defect 7.
 
-    The hide arm's planned n IS 80, and 80 is frozen for the FALSE-ALARM stratum. A registry
-    keyed by value alone would therefore bless '80 wrong' -- a count that is false today and
-    true later, which is stale-by-construction wearing the other hat. The registry is keyed
-    by cell, and the hide cell's admissible set is empty until someone closes it.
+    The structural point it existed to make is still true and still needs a test, so it is
+    made with values that are live. The registry is keyed by CELL, so a count frozen for one
+    cell is NOT admissible for another: 69 is the winner's-curse subset, 1424 is the full
+    labelled pool's correct stratum, and neither is a number of hide targets.
     """
-    problems = _check(tmp_path, r"The campaign covers $80$ correct and $80$ wrong targets.")
-    assert any("80 wrong" in p for p in problems), _say(problems)
+    for wrong in ("69", "1424", "300"):
+        problems = _check(
+            tmp_path, rf"The campaign covers $80$ correct and ${wrong}$ wrong targets.")
+        assert any(f"{wrong} wrong" in p for p in problems), \
+            f"{wrong} is frozen for a DIFFERENT cell and must not be admissible here:\n" \
+            + _say(problems)
+
+
+def test_the_closed_hide_stratum_may_state_its_count_and_its_total(tmp_path):
+    """THE control for defect 7, and the reason it is a defect rather than a safe default.
+
+    Both campaign strata closed at their pre-registered n=80 on 2026-08-13
+    (results/fair_recompute_report.md, 'SE / hide (n=80)' and an AUROC table at n=160;
+    commit 9e9347c, 'the true campaign total is 160'). HIDE_OPEN was not updated, so the
+    guard spent six days reporting each of these TRUE sentences as a growing-denominator
+    error. A guard that fires on true statements teaches its reader to skip it, which is
+    critique_log 35 -- 'a check that cannot fail is not a check' -- reached from the other
+    direction and faster, because a silent rule merely fails to help while a crying one
+    costs time on every run.
+    """
+    for true_now in (
+        r"The campaign covers $80$ correct and $80$ wrong targets.",
+        r"The attack campaign's $80$ hide targets are scored clean.",
+        r"Across all $160$ targets of the attack campaign, both strata are complete.",
+        r"The campaign covers $80$ hide and $80$ false-alarm targets, $160$ in total.",
+        r"""
+        Both arms of the attack campaign are now at their pre-registered $n$: the
+        false-alarm stratum at $80$ correct-answer targets and the hide stratum at $80$
+        wrong-answer targets, for $160$ targets in total.
+        """,
+    ):
+        problems = _check(tmp_path, true_now)
+        assert not problems, f"a TRUE statement was flagged:\n{true_now}\n" + _say(problems)
+
+
+def test_the_campaign_total_is_not_the_same_constant_as_the_hide_cell(tmp_path):
+    """The trap in the edit the previous pass left spelled out in a comment, and the reason
+    I did not apply it verbatim.
+
+    That note said the fix was `HIDE_OPEN = frozenset({80})`. But HIDE_OPEN was doing double
+    duty: it was the hide CELL's admissible set AND the admissible set for every 'the N
+    targets of the attack campaign' pattern -- the POOL AS A WHOLE. The two were the same
+    constant only because both were empty. Setting it to {80} would have licensed 'the 80
+    targets of the attack campaign', which asserts the campaign totals 80 -- half of it --
+    and that is the exact stratum/sum confusion the FA-versus-hide split exists to prevent.
+    The cell admits 80; the pool as a whole admits 160, and they are now two constants.
+    """
+    problems = _check(
+        tmp_path, r"Across the $80$ targets of the attack campaign we report saturation.")
+    assert any("80" in p and "growing denominator" in p for p in problems), \
+        "'the 80 targets of the campaign' claims a total of 80; the total is 160:\n" \
+        + _say(problems)
+
+    # ...while the same 80 QUALIFIED by its stratum is a stratum count, and correct.
+    ok = _check(
+        tmp_path,
+        r"Across the $80$ correct-answer targets of the attack campaign, a tenth sit at "
+        r"the cap.")
+    assert not ok, _say(ok)
+
+
+def test_a_stale_campaign_total_is_still_flagged_after_the_closure(tmp_path):
+    """Relaxing the registry must not relax the rule it belongs to. Every count the arm
+    passed THROUGH on its way to 80 is still wrong, and so is every total but 160."""
+    for text, token in (
+        (r"Across the $97$ targets of the attack campaign, a tenth sit at the cap.", "97"),
+        (r"The campaign covers $80$ correct and $52$ wrong targets.", "52"),
+        (r"The campaign covers $80$ correct and $17$ wrong targets.", "17"),
+        (r"The attack campaign's $132$ targets are scored clean.", "132"),
+        (r"We report $161$ targets in total for the attack campaign.", "161"),
+        (r"The $140$-target pool of the attack campaign is described below.", "140"),
+    ):
+        problems = _check(tmp_path, text)
+        assert any(token in p for p in problems), f"{token}: " + _say(problems)
 
 
 @pytest.mark.parametrize("text,token", [
@@ -691,8 +768,15 @@ def test_the_fair_pools_wrong_stratum_may_be_named_by_direction(tmp_path):
 
     results/fair_pool_report.md names the fair pool's strata by ATTACK DIRECTION -- 'the
     IDENTICAL 200 hide + 200 false-alarm ids' -- so a hide-word pattern reaches a stratum
-    that is complete. 200 is admissible there; 80 is not, and the asymmetry is the point:
-    the hide arm is planned at 80 and will pass through it, and can never be 200.
+    that is complete, and 200 is admissible there.
+
+    REWRITTEN 2026-08-19 (defect 7). The second half of this test used to assert that
+    '$80$ hide targets of the attack campaign' was an ERROR, on the reasoning that 'the hide
+    arm is planned at 80 and will pass through it, and can never be 200'. The arm stopped
+    passing through 80 on 2026-08-13: it LANDED there, at its pre-registered n. So the
+    asymmetry this test was built around is gone, and the sentence it called an error is the
+    campaign's completion. What remains true, and is what the second half now checks, is
+    that a hide-word pattern must not admit a count belonging to some other cell.
     """
     ok = _check(tmp_path, r"""
         The SRE campaigns use the identical $200$ hide and $200$ false-alarm ids from the
@@ -700,8 +784,67 @@ def test_the_fair_pools_wrong_stratum_may_be_named_by_direction(tmp_path):
     """)
     assert not ok, _say(ok)
 
-    bad = _check(tmp_path, r"The campaign covers $80$ hide targets of the attack campaign.")
-    assert any("80" in p for p in bad), _say(bad)
+    # the closed hide arm, named by direction -- true since 2026-08-13
+    closed = _check(tmp_path, r"The campaign covers $80$ hide targets of the attack campaign.")
+    assert not closed, _say(closed)
+
+    # ...but a count that belongs to no cell reachable by a hide word is still an error.
+    bad = _check(tmp_path, r"The campaign covers $52$ hide targets of the attack campaign.")
+    assert any("52" in p for p in bad), _say(bad)
+
+
+def test_the_frozen_registry_still_matches_the_artifact_that_closed_the_cell():
+    """THE TEST THAT WOULD HAVE CAUGHT DEFECT 7, and the reason it is worth more than the
+    probes around it.
+
+    Defect 5 retired stale LABELS, defect 6 stale VALUES, defect 7 a stale FROZEN COUNT.
+    Each was found by a human sweep, months apart, and each time the standing rule written
+    down afterwards was 'whoever reruns a cell owns the lists keyed to it' -- an instruction
+    to remember something, which is the control that had just failed. The winner's-curse
+    family got a real fix instead (test_the_guard_tracks_the_definitive_winners_curse_
+    checkpoint reads the checkpoint and fails if the registry disagrees). This is the same
+    fix for the campaign cells: the registry is checked against the artifact, so the next
+    time a cell's n moves the suite says so, on the day it moves, without anyone sweeping.
+    """
+    from check_population_labels import FROZEN_COUNTS, GROWING_CELLS, HIDE_OR_FAIR
+
+    report = (REPO / "results" / "fair_recompute_report.md").read_text(encoding="utf-8")
+
+    # The report writes each closed cell as "**SE / hide** (n=80)".
+    cells = dict((name, int(n)) for name, n in
+                 re.findall(r"\*\*SE / (\w+)\*\*\s*\(n=(\d+)\)", report))
+    assert set(cells) == {"false_alarm", "hide"}, (
+        f"the fair-recompute report no longer names both SE cells the way this test reads "
+        f"them (found {cells}). Re-derive the registry by hand and re-point this test.")
+
+    for cell, n in cells.items():
+        assert n in FROZEN_COUNTS, (
+            f"the {cell} cell stands at n={n} and {n} is not a declared frozen count "
+            f"(frozen: {sorted(FROZEN_COUNTS)}). If that cell is CLOSED, declare it -- an "
+            "undeclared closed cell makes the guard flag true statements, which is how "
+            "'80 wrong' was reported as an error for six days after it became correct.")
+
+    total = sum(cells.values())
+    assert total in FROZEN_COUNTS, (
+        f"both cells are at their n, so the campaign total is {total}, and it is not "
+        f"declared (frozen: {sorted(FROZEN_COUNTS)}).")
+    assert str(total) in FROZEN_COUNTS[total], FROZEN_COUNTS[total]
+
+    # ...and the hide cell's own count must be reachable by a hide-word pattern, or the
+    # declaration is inert: FROZEN_COUNTS is documented as "the union, for reporting only".
+    assert cells["hide"] in HIDE_OR_FAIR, (
+        f"the hide cell is closed at n={cells['hide']} and FROZEN_COUNTS knows it, but the "
+        "hide-word growing patterns still do not admit it, so the guard would go on "
+        "flagging '80 wrong'. Declaring a cell in FROZEN_COUNTS is not enough on its own.")
+
+    # The total must NOT leak into the sets that mean "one stratum": a stratum is 80.
+    stratum_only = [allowed for pat, what, allowed, _ in GROWING_CELLS
+                    if what.startswith("a named stratum")]
+    assert stratum_only, "the named-stratum patterns have been renamed"
+    for allowed in stratum_only:
+        assert total not in allowed, (
+            f"{total} is the campaign TOTAL and must not be admissible where a single "
+            "stratum is named -- that is the stratum/sum confusion the split exists for.")
 
 
 def test_target_counts_outside_this_campaign_are_none_of_the_rules_business(tmp_path):
@@ -938,7 +1081,15 @@ def test_no_guarded_number_is_also_a_superseded_one():
     probes = ["45%", "25%", "65%", "0.383", "0.698", "0.315", "0.529", "0.234",
               "36 of 60", "39/80", "31/80", "38.75", "22 distinct",
               "44%", "23%", "64%", "-0.341", "-0.469", "-0.212", "+0.609", "+0.268",
-              "37 of the 69", "r = 0.48", "42/80", "34/80", "0.704", "0.694"]
+              "37 of the 69", "r = 0.48", "42/80", "34/80", "0.704", "0.694",
+              # round four: the realised distinct-value shape, retired generatively. Every
+              # one of these WAS both guarded and retired before the strike -- guarded by
+              # the fair-pool granularity rule, retired by the shape SUPERSEDED already
+              # covered for numerator 22. That is exactly the clash this test names.
+              "31 distinct values", "31 of the 39", "28 of the 39", "26 of the 39",
+              "35 distinct values", "47 distinct values",
+              # ...and the fourth population's floor, which must be guarded and NOT retired.
+              "10.5%", "150/1424", "12.2"]
     clashes = []
     for probe in probes:
         guarded = [r["name"] for r in RULES
@@ -1063,6 +1214,178 @@ def test_the_n40_operating_point_is_guarded_and_bound_to_its_stratum(tmp_path):
         $5.0\%$.
     """)
     assert not ok, _say(ok)
+
+
+# ======================================================================================
+# ROUND FOUR (2026-08-19). A FOURTH POPULATION, NEVER REGISTERED -- AND THE GUARD WENT RED
+# ON IT.
+#
+# Defect 6 found values with no rule. This is a whole POPULATION with no POOLS entry: the
+# full labelled pool's correct stratum, n=1424, carrying the achievable-FPR floor
+# 150/1424 = 10.5% [9.0, 12.2] at four sites including the Abstract and the Conclusion.
+# Because 1424 and 576 were not declared frozen, the growing rule was reporting the paper's
+# own "(1424 correct and 576 hallucinating)" as counts of a cell that is still filling --
+# four false positives, defect 7's shape one population over.
+#
+# THE HARD PART IS THE NESTING. The fair pool's 200-answer correct stratum is a STRICT
+# SUBSET of the 1424, so the two estimate the same parameter and the Discussion crosses
+# between them on purpose. A genuine mislabelling must fire; the cross-reference must not.
+# ======================================================================================
+def test_the_full_pool_floor_is_guarded_at_all(tmp_path):
+    """150/1424 = 10.5% [9.0, 12.2] (results/achievable_fpr_grid.md, Appendix A). Live at
+    four sites, and no rule had ever heard of it."""
+    for token in ("10.5", "150/1424", "12.2"):
+        problems = _check(
+            tmp_path, rf"The lowest firing operating point sits at ${token}\%$.")
+        assert any(token in p for p in problems), f"{token} is unguarded"
+
+
+def test_the_full_pool_floor_may_not_be_read_as_the_fair_pools(tmp_path):
+    """THE probe. The fair pool's correct stratum has its OWN floor -- 19/200 = 9.5%
+    [6.2, 14.4] -- so attaching the superset's 10.5% to the subset is not a rounding
+    difference, it is quoting the wrong estimate of the same parameter and claiming the
+    wrong precision for it. The subset relation makes this MORE likely, not less."""
+    for text in (
+        r"""
+        On the score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating), the
+        lowest firing operating point sits at $10.5\%$ [$9.0$, $12.2$].
+        """,
+        r"""
+        Enumerated on the fair pool's $200$ correct answers, the achievable floor is
+        $150/1424$.
+        """,
+        r"""
+        Across the $80$ correct-answer targets of our attack campaign the ceiling atom
+        carries $10.5\%$ of the mass.
+        """,
+    ):
+        problems = _check(tmp_path, text)
+        assert any("MISLABELLED" in p for p in problems), _say(problems)
+
+
+def test_the_legitimate_subset_cross_reference_is_not_a_mislabelling(tmp_path):
+    """THE control, and the reason the rule is `coexist` rather than `exclusive`.
+
+    The Discussion's precision check is the whole point of having both populations: the
+    fair pool's correct stratum is a subset of the 1424, they estimate the same ceiling-atom
+    mass, and the wider one pins it. Naming both in one sentence is the argument, not an
+    error. Proximity alone gets the Introduction's rendering backwards -- the foreign label
+    lands 26 chars before the number and the owning label 25 chars after it, and a trailing
+    label pays TRAILING_PENALTY -- so the foreign pool wins on a sentence that is correct.
+
+    Both renderings the paper has carried this session are pinned, because it has already
+    swapped between them once while this guard was being written.
+    """
+    for text in (
+        # discussion.tex, live
+        r"""
+        Nor is the shortfall a property of our sample. The Wilson lower bound on the fair
+        pool's correct stratum is $6.2\%$, and the $1424$-answer superset that stratum is a
+        subset of estimates the same parameter with seven times the negatives, at $10.5\%$
+        [$9.0$, $12.2$].
+        """,
+        # introduction.tex, live wording (owning label first)
+        r"""
+        We put that probability at $9.5\%$ on the fair pool's correct stratum and, on the
+        $1424$-answer superset that stratum is a subset of, at $10.5\%$ [$9.0$, $12.2$],
+        whose lower bound closes off a $5\%$ budget at $95\%$ confidence.
+        """,
+        # ...and the wording it carried an hour earlier (owning label TRAILING), which is
+        # the one proximity arbitration cannot get right on its own.
+        r"""
+        We put that probability at $9.5\%$ on the fair pool's correct stratum and at
+        $10.5\%$ [$9.0$, $12.2$] on the $1424$-answer superset it is a subset of, whose
+        lower bound closes off a $5\%$ budget at $95\%$ confidence.
+        """,
+        # conclusion.tex, live
+        r"""
+        the probability that a clean correct answer yields $N$ mutually distinct meanings,
+        which the $1424$-answer superset puts at $10.5\%$ [$9.0$, $12.2$]. At $N{=}10$ a
+        $5\%$ budget is excluded at $95\%$ confidence on both populations.
+        """,
+        # main.tex, live
+        r"""
+        the lowest false-alarm rate a firing threshold can have \emph{is} the chance that a
+        clean correct answer yields $N$ mutually distinct meanings---$10.5\%$ [$9.0$,
+        $12.2$] over $1424$ clean correct answers. At that standard $N{=}10$ an operator
+        who specifies a $5\%$ false-alarm budget cannot have one, however well the score
+        ranks; the qualifier is load-bearing, since running the fair pool's $200$ correct
+        answers out to $N{=}40$ empties the atom.
+        """,
+    ):
+        problems = _check(tmp_path, text)
+        assert not problems, _say(problems)
+
+
+def test_coexist_still_accuses_when_the_owning_population_is_never_named(tmp_path):
+    """`coexist` must not become a blanket amnesty. It disarms a foreign label only when
+    the OWNING label is in the same sentence -- naming your own population is the
+    disclosure. A sentence that names only the fair pool is still a mislabelling, and this
+    is the pair that proves the tolerance is not vacuous."""
+    disclosed = _check(tmp_path, r"""
+        The fair pool's correct stratum puts the floor at $9.5\%$, and the $1424$-answer
+        superset puts it at $10.5\%$ [$9.0$, $12.2$].
+    """)
+    assert not disclosed, _say(disclosed)
+
+    undisclosed = _check(tmp_path, r"""
+        The fair pool's correct stratum puts the floor at $10.5\%$ [$9.0$, $12.2$].
+    """)
+    assert any("MISLABELLED" in p for p in undisclosed), _say(undisclosed)
+
+
+def test_the_intervals_lower_bound_is_not_armed_as_a_bare_decimal(tmp_path):
+    """THE collision control, and it is the reason the interval is armed as a PAIR.
+
+    $9.0$ is the LOWER bound of the 1424 floor's [9.0, 12.2]. It is ALSO the UPPER bound of
+    the N=40 grid's achieved $5.0\\%$ [$2.7$, $9.0$] -- a FAIR-POOL number, live in the
+    Abstract, the Introduction, the Discussion and the Conclusion. A bare `9.0` rule would
+    demand a 1424 label at every one of those sites. Same hazard as 0.51, 0.698 and 12.0%,
+    recognised before arming rather than after.
+    """
+    for text in (
+        r"""
+        So the $5\%$ budget that $N{=}10$ cannot honour at all is honoured at $N{=}40$, at
+        an achieved $5.0\%$ [$2.7$, $9.0$] on the fair pool's $200$ correct answers.
+        """,
+        r"""
+        running the fair pool's $200$ correct answers out to $N{=}40$ empties the atom and
+        a $5\%$ operating point then exists, at an achieved $5.0\%$ [$2.7$, $9.0$].
+        """,
+    ):
+        problems = _check(tmp_path, text)
+        assert not problems, "a bare 9.0 rule is crying wolf on the N=40 interval:\n" \
+            + _say(problems)
+
+
+def test_the_full_pool_strata_are_declared_and_no_longer_flagged(tmp_path):
+    """The four false positives defect 8 was actually reported through. methods.tex and
+    limitations.tex both name the replication pass by its split, and the growing rule was
+    reporting both halves as counts of a cell that is still filling."""
+    for text in (
+        r"""
+        Re-scoring the $2000$ cached sample sets of our replication pass ($1424$ correct and
+        $576$ hallucinating, at natural prevalence) under Eq.~(5) with the generating
+        model's own length-normalised sequence likelihoods.
+        """,
+        r"""
+        Over the $2000$ questions of the replication pass ($1424$ correct and $576$
+        hallucinating, at natural prevalence), with length-normalised likelihoods the
+        at-cap atom is gone.
+        """,
+    ):
+        problems = _check(tmp_path, text)
+        assert not problems, _say(problems)
+
+    # ...and a MIS-stated split is still caught, which is what makes the declaration a
+    # check rather than an amnesty. 1424 + 576 = 2000, and neither half may drift.
+    for wrong in ("1420", "1500", "574"):
+        bad = _check(
+            tmp_path,
+            rf"Our replication pass holds ${wrong}$ correct and $576$ hallucinating."
+            if wrong != "574" else
+            rf"Our replication pass holds $1424$ correct and ${wrong}$ hallucinating.")
+        assert any(wrong in p for p in bad), f"{wrong} was accepted:\n" + _say(bad)
 
 
 # --- the SECOND AXIS: measured, or derived? --------------------------------------------
@@ -1214,6 +1537,156 @@ def test_the_score_coupled_auroc_passes_when_its_convention_is_named(tmp_path):
 
 
 # ======================================================================================
+# ROUND FOUR, PART TWO: THE GUARD LICENSED A CLAIM IT HAD ALREADY RETIRED.
+#
+# `22 distinct` was retired outright by commit e6e7629, because a realised distinct-value
+# count is a SAMPLE statistic wearing a population parameter's clothes -- monotone in draws
+# taken, never converging, and in that instance not even low (the expected number of
+# distinct values among 80 draws is 23.0, putting 22 at the 37th percentile).
+#
+# The fair-pool granularity rule then listed `31 distinct`, `31 of the 39`, `28 of the 39`
+# and `26 of the 39` as LIVE guarded fair-pool numbers. So the guard's answer to the retired
+# claim was "correct, once you label it" -- which is worse than silence, because silence
+# does not tell an author the number is fine. The retirement note itself names two of them.
+#
+# The shape is now retired GENERATIVELY, on the `\b\d+/97\b` precedent: no numerator is
+# enumerated anywhere, and the n-invariant LATTICE sizes are the exclusion.
+# ======================================================================================
+RETIRED_DISTINCT_SHAPE: list[tuple[str, str]] = [
+    ("the enumerated one the rule used to guard",
+     r"On the score-independent \emph{fair} pool the estimator realises $31$ distinct "
+     r"values."),
+    ("the same claim as a fraction of the lattice",
+     r"On the score-independent \emph{fair} pool the estimator realises $31$ of the $39$ "
+     r"attainable values."),
+    ("the n=200 rendering, named in the retirement note",
+     r"At $n{=}200$ the estimator realises $28$ of the $39$ attainable values."),
+    ("the n=400 rendering",
+     r"Across the $400$-question pool the estimator realises $26$ of the $39$ values."),
+    ("the n=2000 rendering, which no rule covered at all",
+     r"Over the $2000$-question replication pass the estimator realises $35$ distinct "
+     r"values."),
+    ("a numerator nobody has ever written down",
+     r"The estimator realises only $47$ distinct entropy values across the pool."),
+    ("the original, still caught",
+     r"Across the $97$ targets of the attack campaign the estimator realises only $22$ "
+     r"distinct values."),
+]
+
+
+@pytest.mark.parametrize("why,text", RETIRED_DISTINCT_SHAPE,
+                         ids=[t[0].replace(" ", "_") for t in RETIRED_DISTINCT_SHAPE])
+def test_every_realised_distinct_value_count_is_retired_generatively(tmp_path, why, text):
+    """Enumerating numerators is the shape that failed for `97` and it failed identically
+    here: one numerator was retired while three more were guarded as live and a fourth was
+    not covered at all. The claim's defect is its SHAPE, so the shape is what gets retired,
+    and the numerator never has to be known in advance."""
+    problems = _check(tmp_path, text)
+    stale = [p for p in problems if "STALE" in p]
+    assert stale, f"{why}: the retired shape was accepted\n" + _say(problems)
+    assert any("sample" in p.lower() for p in stale), _say(stale)
+
+
+def test_a_fair_pool_label_does_not_license_the_retired_shape(tmp_path):
+    """The precise defect. The granularity rule OWNED these numbers, so a correctly
+    labelled fair-pool rendering came back green -- the guard certifying, as properly
+    attributed, a claim another of its own rules had retired. No population owns a
+    statistic that is a property of how many draws you took."""
+    problems = _check(tmp_path, r"""
+        On the score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating), the
+        estimator realises $31$ of the $39$ attainable values.
+    """)
+    assert any("STALE" in p for p in problems), \
+        "attaching the right pool does not repair the claim:\n" + _say(problems)
+
+
+def test_the_lattice_sizes_are_the_exclusion_and_stay_green(tmp_path):
+    """39 at N=10 and 455 at N=20 follow from p(10)=42 and p(20)=627 with no data at all.
+    They do not move with n, they are properties of the estimator, and they are precisely
+    what the paper is told to report INSTEAD. A rule that flagged them would be flagging
+    the replacement."""
+    for text in (
+        r"""
+        At $N{=}10$ the \emph{discrete} estimator is confined to a lattice of $39$
+        attainable values with an atom at the maximum.
+        """,
+        r"""
+        Quadrupling the budget puts the top tenth of the range at seven ($455$ attainable
+        values at $N{=}20$, against $39$ and two at $N{=}10$).
+        """,
+        r"""
+        At the standard $N{=}10$ the estimator lives on a lattice of just $39$ attainable
+        values, of which only two fall in the top tenth of its range.
+        """,
+    ):
+        problems = _check(tmp_path, text)
+        assert not problems, _say(problems)
+
+
+def test_the_papers_own_disavowal_of_the_retired_shape_is_not_flagged(tmp_path):
+    """THE CONTROL THAT MATTERS MOST IN THIS ROUND, and the one a careless generative rule
+    fails.
+
+    introduction.tex does not make the retired claim -- it ARGUES THE RETIREMENT, and to do
+    that it has to quote the counts it is disowning: 28 at n=200, 35 at n=2000, and 22 at
+    the 37th percentile of what a random 80 produces. A rule that matched bare numerals near
+    the word 'distinct' would go red on the passage that does the retiring, which is the
+    defect-7 failure mode (a guard flagging a true statement) planted deliberately by the
+    fix for defect 9. The pattern therefore anchors on the QUANTIFIED NOUN -- 'N distinct
+    values', 'N of the 39' -- and this passage quantifies nothing.
+    """
+    problems = _check(tmp_path, r"""
+        Nothing here rests on a count of distinct values realised: that quantity is monotone
+        in the number of targets scored (the same population yields $28$ at $n{=}200$ and
+        $35$ at $n{=}2000$, and $22$ sits at the $37$th percentile of what a random $80$
+        produces), so it measures the sample, not the estimator, and the total number of
+        operating points inherits the same defect. What does not move with the sample is the
+        lattice size, and at the low end the floor.
+    """)
+    assert not problems, \
+        "the guard is red on the passage that RETIRES the claim:\n" + _say(problems)
+
+
+def test_the_definition_of_the_ceiling_atom_is_not_a_distinct_value_count(tmp_path):
+    """'a clean correct answer yields $N$ mutually distinct meanings' is the DEFINITION of
+    the ceiling atom's mass, live in the Abstract, the Introduction, the Discussion and the
+    Conclusion. It counts meanings in one sample set, not values realised across a pool, and
+    the $N$ is a symbol rather than a numeral. It must not be touched."""
+    problems = _check(tmp_path, r"""
+        Every threshold above that maximum flags nothing, so the lowest false-alarm rate a
+        firing threshold can have \emph{is} the chance that a clean correct answer yields
+        $N$ mutually distinct meanings---$10.5\%$ [$9.0$, $12.2$] over $1424$ clean correct
+        answers.
+    """)
+    assert not problems, _say(problems)
+
+    # ...and Methods' cluster-count bound, where a decimal exponent sits next to the word.
+    ok = _check(tmp_path, r"""
+        Reaching the full range $[0, \log N]$ requires $K \geq \lceil N^{0.9} \rceil$
+        distinct meanings---at $N{=}10$, nine of them.
+    """)
+    assert not ok, _say(ok)
+
+
+def test_the_retired_distinct_patterns_are_gone_from_the_guarded_set():
+    """Named explicitly, the way round two named its four labels and round three its nine
+    values, so that a regression says which pattern came back rather than pointing at a
+    generic invariant."""
+    from check_population_labels import RULES
+
+    gran = [r for r in RULES if r["name"].startswith("fair-pool granularity")]
+    assert len(gran) == 1, [r["name"] for r in RULES]
+    flat = " ".join(_literal(p) for p in gran[0]["numbers"])
+    for retired in ("31 distinct", "31 of", "28 of", "26 of"):
+        assert retired not in flat, (
+            f"{retired!r} is a realised distinct-value count -- a sample statistic. It is "
+            "retired in SUPERSEDED and may not be a guarded fair-pool number.")
+    # ...and the crowding RATES, which are genuine population statistics, are still there.
+    for live in ("9.5", "21.5", "27.5", "44.5", "19/200", "74/400"):
+        assert live in flat, f"{live} is a live crowding statistic and must stay guarded"
+
+
+# ======================================================================================
 # Regression: the two original constructions
 # ======================================================================================
 def test_catches_an_unlabelled_fair_pool_auroc(tmp_path):
@@ -1259,6 +1732,15 @@ def test_every_rule_names_a_known_pool_and_compiles():
         # means nothing without foreign pools to exclude.
         if rule.get("exclusive"):
             assert rule["foreign"], rule["name"]
+        # `coexist` says the opposite -- "these populations are NESTED, so a foreign label
+        # accuses only where the owner is absent". Same precondition, and the two are
+        # contradictory: a rule claiming both would be saying its pools are disjoint and
+        # nested at once, and the disjoint branch would silently win.
+        if rule.get("coexist"):
+            assert rule["foreign"], rule["name"]
+            assert not rule.get("exclusive"), (
+                f"{rule['name']}: `exclusive` and `coexist` are opposites -- a rule cannot "
+                "declare its populations both disjoint and nested.")
         for pat in rule["numbers"] + list(rule.get("requires", [])):
             re.compile(pat)
     for item in SUPERSEDED:

@@ -5,9 +5,9 @@ error: it has now been found and fixed at SIX separate sites (critique_log 28, 3
 by a manual sweep, and each sweep found a site the previous one missed. A manual process that
 has failed six times should not be the guard on the seventh.
 
-THREE POPULATIONS, and they are not interchangeable:
+FOUR POPULATIONS, and they are not interchangeable:
 
-  (A fourth, smaller population is registered in POOLS below: the winner's-curse
+  (A fifth, smaller population is registered in POOLS below: the winner's-curse
   re-scored subset. It is nested inside the attacked pool's false-alarm stratum and is
   described there, because its whole identity is "the FA targets the optimiser found a
   paraphrase for".)
@@ -17,22 +17,35 @@ THREE POPULATIONS, and they are not interchangeable:
                  Clean means 1.380 (correct) / 1.843 (wrong), headroom 0.923.
                  The ONLY population on which claims about "the detector" may be made.
 
-  attacked pool  the attack campaign's own targets. TWO STRATA, and only one of them is
-                 finished. NAME THE STRATUM, NEVER THE SUM:
+  attacked pool  the attack campaign's own targets. TWO STRATA, and BOTH ARE NOW CLOSED
+                 (2026-08-13). NAME THE STRATUM ANYWAY -- the statistics differ per
+                 direction and the sum is rarely the quantity anyone means:
                    - false-alarm stratum: COMPLETE and frozen at its pre-registered
                      n = 80 correct answers. A literal `80 correct` is true and stays a
                      valid label.
-                   - hide stratum: STILL FILLING against its planned 80. It was 17 when
-                     this file was first written, 46 at commit 5d822b9, 52 today. Any
-                     literal count of it -- and therefore any total over both strata --
-                     is stale at the moment of writing. That is why 5d822b9 purged "97"
-                     from every .tex file, and why the guard now carries GROWING_CELLS
-                     rather than a list of the particular wrong totals it has seen.
+                   - hide stratum: COMPLETE at its pre-registered n = 80, as of
+                     results/fair_recompute_report.md (07:21, 2026-08-13) and commit
+                     9e9347c. It was 17 when this file was first written, 43 at the
+                     population-nesting correction, 46 at commit 5d822b9, 52 when
+                     GROWING_CELLS was built to catch exactly this, and 60 an hour
+                     before it closed. The campaign total is therefore 160, and it is
+                     declared in FROZEN_COUNTS. See the HIDE_OPEN note for why the
+                     GUARD went on denying this for six days after it became true.
                  AUROC 0.579; separation 0.184 nats, d = 0.28. QUARANTINED for any
                  class-separation claim. The ceiling and granularity statistics (8/80 at
                  the cap, 21/80 in the top tenth, 42/80 = 52.5% at the cap after attack)
-                 live HERE -- all of them 80-denominated, all inside the frozen stratum,
-                 which is exactly what made the moving total droppable at no cost.
+                 live HERE -- all of them 80-denominated, all inside the frozen FA
+                 stratum, which is exactly what made the moving total droppable at no
+                 cost while it was moving.
+
+  full labelled  the 1424 greedy-correct answers of the 2000-question replication pass
+  pool, correct  (alias-aware span oracle; 1424 correct + 576 hallucinating = 2000).
+  stratum        The achievable-FPR FLOOR lives here: 150/1424 = 10.5% [9.0, 12.2].
+                 THE FAIR POOL'S 200-ANSWER CORRECT STRATUM IS A STRICT SUBSET OF IT, so
+                 the two estimate the SAME parameter at different precision, and the
+                 Discussion uses the 1424 figure as a precision check on the fair pool's
+                 9.5% [6.2, 14.4]. That cross-reference is legitimate and load-bearing;
+                 see `coexist` for how the guard tells it apart from a mislabelling.
 
   replication    our own SE replication: one pass over 2000 TriviaQA questions, no attack,
                  no stratified sampler (results/replication_results.md). This is NEITHER
@@ -148,6 +161,66 @@ almost always true -- exactly where the error is likeliest. Six defects, all now
      registering the values without registering the rendering would only have moved the
      silence -- the two lists have to be extended together.
 
+  7. THE REGISTRY ITSELF EXPIRED, AND THE GUARD BEGAN FLAGGING TRUE STATEMENTS (2026-08-19).
+     Defects 5 and 6 are the same bug in `labels` and in `numbers`. This is the third copy
+     of it, in FROZEN_COUNTS -- the one list the file explicitly tells you to look at -- and
+     it is the only one whose sign is INVERTED. The hide arm closed at its pre-registered
+     n=80 on 2026-08-13 (results/fair_recompute_report.md, "SE / hide (n=80)", and its
+     AUROC table at n=160; commit 9e9347c, "both arms are now at their pre-registered n for
+     the first time ... the true campaign total is 160"). HIDE_OPEN was never updated. So
+     for six days the guard reported "80 wrong", "80 hide targets" and "the campaign's 160
+     targets" -- all three TRUE -- as growing-denominator errors, and TWO TESTS PINNED THAT
+     BEHAVIOUR, which is why nothing broke to say so.
+     The reason this is a defect and not a conservative default: critique_log 35 says "a
+     check that cannot fail is not a check". A check that fails on true statements has the
+     SAME end state by a different route -- its user learns to skip its output -- and it
+     gets there faster, because a silent check merely fails to help while a crying one
+     actively costs time on every run. Defects 5 and 6 both took a whole audit to find
+     precisely because a quiet rule looks exactly like a passing one; this defect announced
+     itself daily and was still not fixed, which is the more damning of the two.
+     FIX: the hide cell is declared closed, 160 is a frozen count, and -- the part the
+     spelled-out edit in the old HIDE_OPEN note got WRONG -- the cell's admissible set and
+     the POOL TOTAL's admissible set are now two different constants. See _TOTAL_OK.
+
+  8. A WHOLE POPULATION WAS NEVER REGISTERED, AND THE GUARD WENT RED ON IT (2026-08-19).
+     Defect 6's second half was "a new VALUE with no rule". This is a new POPULATION with no
+     POOLS entry: the full labelled pool's correct stratum, n=1424, which carries the
+     achievable-FPR floor 150/1424 = 10.5% [9.0, 12.2] at four sites including the Abstract
+     and the Conclusion. Because 1424 and 576 were not frozen counts, the growing-denominator
+     rule was flagging the paper's own "(1424 correct and 576 hallucinating)" in methods.tex
+     and limitations.tex -- four false positives, defect 7's shape one population over.
+     The interesting part is the NESTING. The fair pool's 200-answer correct stratum is a
+     STRICT SUBSET of the 1424, so the two estimate the same parameter and the Discussion
+     cross-references them on purpose. Proximity arbitration handles three of the four sites
+     unaided, but introduction.tex writes "at 9.5% on the fair pool's correct stratum and at
+     10.5% ... on the 1424-answer superset it is a subset of", which puts the FOREIGN label
+     26 characters before the number and the OWNING one 25 characters after it -- and a
+     trailing label pays TRAILING_PENALTY. That is proximity arbitration losing to a
+     perfectly correct sentence. `coexist` is the answer: where owner and foreign are
+     NESTED, a foreign label accuses only when the owning label is ABSENT from the sentence.
+     Note also that the interval could not be armed as two bare decimals: 9.0 is the LOWER
+     bound of [9.0, 12.2] and also the UPPER bound of the N=40 grid's [2.7, 9.0], three
+     sites away. It is armed as the PAIR. Same hazard as 0.51, 0.698 and 12.0%.
+
+  9. THE GUARD LICENSED A CLAIM SHAPE THAT SUPERSEDED HAD ALREADY RETIRED (2026-08-19).
+     `22 distinct` was retired outright because a realised distinct-value count is a SAMPLE
+     statistic wearing a population parameter's clothes: the expected number of distinct
+     values among 80 draws is 23.0, so 22 was the 37th percentile of nothing happening. The
+     fair-pool granularity rule then listed `31 distinct`, `31 of the 39`, `28 of the 39`
+     and `26 of the 39` as LIVE, guarded, fair-pool numbers -- so the guard's answer to the
+     retired claim was "correct, once you label it". Attaching the right population to a
+     quantity that is not a population parameter does not make it one.
+     FIX: the four are struck from the guarded set and the SHAPE is retired GENERATIVELY,
+     on the `\\b\\d+/97\\b` precedent -- any "N distinct/attainable values" and any "N of the
+     39", with the n-INVARIANT lattice sizes (39 at N=10, 455 at N=20) excluded, because the
+     lattice is the one thing here that is a property of the estimator. No numerator is
+     enumerated, so 35 at n=2000 and every future rerun's count are caught unwritten.
+     THE CONTROL MATTERS MORE THAN THE PROBE HERE. introduction.tex argues the retirement
+     explicitly -- "Nothing here rests on a count of distinct values realised ... the same
+     population yields 28 at n=200 and 35 at n=2000, and 22 sits at the 37th percentile" --
+     and a careless generative rule would go red on the passage that does the retiring. It
+     is pinned green by test_the_papers_own_disavowal_of_the_retired_shape_is_not_flagged.
+
 --------------------------------------------------------------------------------------
 WHAT IT STILL CANNOT CATCH (deliberate; false positives gate the suite)
 
@@ -185,9 +258,13 @@ WHAT IT STILL CANNOT CATCH (deliberate; false positives gate the suite)
     by "than", "unlike", "not", "rather than". "0.694, unlike the fair pool's 0.704" passes;
     "0.694 on the fair pool" does not, which is the point.
   * FROZEN_COUNTS is an allow-list of complete cells, so it needs one edit when a cell
-    completes -- when the hide arm finishes at its planned 80, its count and the 160 total
-    become writable only after being declared here. That edit is the feature: stating a
-    total should require asserting that the cell is closed.
+    completes. That edit is the feature: stating a total should require asserting that the
+    cell is closed. IT IS ALSO A LIABILITY, and 2026-08-19 collected the bill -- see
+    defect 7. The hide arm closed on 2026-08-13 and nobody made the declaration, so for six
+    days the guard reported the TRUE statements "80 wrong" and "the campaign's 160 targets"
+    as growing-denominator errors. An allow-list of facts about the world expires exactly
+    the way `labels` (defect 5) and `numbers` (defect 6) do; the only difference is the SIGN
+    of the failure, and an over-strict guard is not the safe direction to fail in.
   * MEASURED VS DERIVED is a SECOND AXIS, and this file now guards exactly one number on
     it. The oracle-calibrated vs shipped power figures (0.84/0.71 vs 0.77/0.51) are a
     test-variant provenance problem, not a population one, and are still not guarded. The
@@ -344,6 +421,30 @@ POOLS: dict[str, dict] = {
             r"the extreme one",
         ],
     },
+    "full_correct": {
+        # ADDED 2026-08-19 (defect 8). Live at four sites -- Abstract, Introduction,
+        # Discussion, Conclusion -- with no POOLS entry at any of them, while the growing
+        # rule went red on the paper's own "(1424 correct and 576 hallucinating)".
+        #
+        # This stratum is the CORRECT half of the replication pass, so it is nested inside
+        # `replication`, and the fair pool's 200-answer correct stratum is nested inside IT.
+        # All three estimate the same ceiling-atom mass; only the precision differs. The
+        # rule that owns 10.5% is therefore `coexist`, never `exclusive`.
+        "what": "the full labelled pool's CORRECT stratum (all 1424 greedy-correct answers "
+                "of the 2000-question replication pass; the fair pool's 200-answer correct "
+                "stratum is a STRICT SUBSET of it, estimating the same parameter less "
+                "precisely -- results/achievable_fpr_grid.md)",
+        "labels": [
+            r"1424-answer", r"\b1424-question",
+            NOT_A_DENOMINATOR + r"\b1424 clean correct",
+            NOT_A_DENOMINATOR + r"\b1424 greedy-correct",
+            NOT_A_DENOMINATOR + r"\b1424 correct",
+            NOT_A_DENOMINATOR + r"\b1424 labelled",
+            r"full labelled pool", r"full pool", r"labelled superset",
+            # the paper's own word for the relation, used at three of the four sites
+            r"answer superset", r"\bsuperset puts\b",
+        ],
+    },
     "replication": {
         "what": "our SE replication run (2000 TriviaQA questions, one pass, no attack and "
                 "no stratified sampler -- NEITHER the fair pool NOR the attacked pool)",
@@ -464,24 +565,26 @@ RULES: list[dict] = [
         # finding on the fair pool. Its counts are one nesting-slip away from the attacked
         # pool's: 19/200 = 9.5% at the cap on the fair correct stratum reads almost the same
         # as 8/80 = 10% on the attacked one. Guarded before they land in the text.
-        # !! ALSO FOUND 2026-08-19, ALSO NOT FIXED HERE: the four distinct-value patterns on
-        # the first line below (`31 distinct`, `31 of 39`, `28 of 39`, `26 of 39`) are the
-        # SAME CLAIM SHAPE that SUPERSEDED retires as `22 distinct`, and the retirement note
-        # there names two of them as instances of the problem: "the same population gives 22
-        # at n=80, 28 at n=200, 35 at n=2000". results/fair_pool_granularity.md agrees with
-        # itself on this -- Chao1 from the n=400 sample estimates 35.0 against 39 attainable,
-        # "so the realised count has not converged at n=400 either ... a distinct-value count
-        # is a statement about the sample, not about the estimator". So this rule LICENSES,
-        # as a properly-labelled fair-pool number, the very claim commit e6e7629 retired from
-        # all four sites; attaching the fair pool to it does not make it true. The n=2000
-        # rendering (35) is not guarded at all. The crowding rates on the remaining lines
-        # ARE population statistics and are correctly live.
+        # FOUR PATTERNS STRUCK 2026-08-19 (defect 9): `31 distinct`, `31 of 39`,
+        # `28 of 39`, `26 of 39`. They were the SAME CLAIM SHAPE that SUPERSEDED retires as
+        # `22 distinct`, and the retirement note there names two of them as instances of the
+        # problem: "the same population gives 22 at n=80, 28 at n=200, 35 at n=2000".
+        # results/fair_pool_granularity.md agrees with itself on this -- Chao1 from the
+        # n=400 sample estimates 35.0 against 39 attainable, "so the realised count has not
+        # converged at n=400 either ... a distinct-value count is a statement about the
+        # sample, not about the estimator". So this rule was LICENSING, as a
+        # properly-labelled fair-pool number, the very claim commit e6e7629 retired from all
+        # four sites. A population label cannot rescue a quantity that is not a population
+        # parameter, and offering one is worse than silence: it tells the author the number
+        # is fine.
+        # The shape is now retired GENERATIVELY in SUPERSEDED (see _DISTINCT_COUNT_ADVICE),
+        # which also covers the n=2000 rendering (35) that was never guarded at all.
+        # The crowding RATES below ARE population statistics and are correctly live.
         "name": "fair-pool granularity / crowding counts",
         "owner": "fair",
         "foreign": ["attacked"],
-        "numbers": [r"31 distinct", r"31 of (?:the )?39", r"\b74/400", r"\b132/400",
-                    r"\b19/200", r"\b43/200", r"\b28 of (?:the )?39",
-                    r"\b26 of (?:the )?39",
+        "numbers": [r"\b74/400", r"\b132/400",
+                    r"\b19/200", r"\b43/200",
                     # the rates the Abstract actually carries (commit e6e7629 moved the
                     # crowding claim off the attacked subset and onto this population)
                     rf"\b9\.5{PCT}", rf"\b21\.5{PCT}", rf"\b27\.5{PCT}", rf"\b44\.5{PCT}",
@@ -568,6 +671,38 @@ RULES: list[dict] = [
         "numbers": [rf"\b5\.0{PCT}", rf"\b2\.0{PCT}", r"\b10/200", r"\b4/200"],
         "window": 520,       # Discussion carries the label 476 chars back
         "prox_window": 300,
+    },
+    {
+        # ADDED 2026-08-19, defect 8: a FOURTH population, live at four sites and never
+        # registered. results/achievable_fpr_grid.md Appendix A: the lowest firing
+        # operating point on the full labelled pool's correct stratum is
+        # 150/1424 = 10.5% [9.0, 12.2], against 19/200 = 9.5% [6.2, 14.4] on the fair
+        # pool's correct stratum -- the SAME parameter, seven times the negatives.
+        #
+        # THE INTERVAL IS ARMED AS A PAIR, NOT AS TWO DECIMALS, and that is not fussiness:
+        # 9.0 is this interval's LOWER bound and also the UPPER bound of the N=40 grid's
+        # achieved 5.0% [2.7, 9.0], which is a FAIR-POOL number living three sites away in
+        # the same sections. A bare `\b9\.0` rule would demand a 1424 label at every one of
+        # them. This is the 0.51 / 0.698 / 12.0% hazard, recognised before it was armed
+        # rather than after. 12.2 is unique to this interval and is armed alone; 10.5 is
+        # unique to this floor and is armed alone.
+        "name": "achievable-FPR floor on the full labelled pool's correct stratum (n=1424)",
+        "owner": "full_correct",
+        "foreign": ["fair", "attacked", "replication"],
+        # NESTED, so `coexist` and never `exclusive`: fair-correct SUBSET full-correct
+        # SUBSET replication, and the Discussion's precision check names two of them in one
+        # sentence on purpose. A foreign label accuses only where the owner is ABSENT.
+        "coexist": True,
+        "numbers": [rf"\b10\.5{PCT}", rf"\b10\.53{PCT}", r"\b150/1424",
+                    r"\b9\.0\s*,\s*12\.2", rf"\b12\.2(?!\d)"],
+        "window": 420,
+        "prox_window": 300,
+        "note": "This floor is measured on the 1424 greedy-correct answers of the "
+                "replication pass, NOT on the fair pool's 200 correct answers (whose "
+                "floor is 9.5% [6.2, 14.4]) and NOT over all 2000 questions. The two "
+                "correct strata are nested and estimate the same parameter, so name "
+                "which one carries the number -- that is the whole content of the "
+                "Discussion's precision check.",
     },
     {
         # ADDED 2026-08-19, and it guards a DIFFERENT AXIS from every other rule here.
@@ -687,6 +822,23 @@ _WC_CTX = [r"re-scor", r"rescor", r"retention", r"retains", r"shrinkage",
            r"winner'?s.{0,3}curse", r"selection-time", r"at selection",
            r"fresh sample", r"independent sample", r"selected paraphrase"]
 
+# Why every realised distinct-value count is retired, whatever its numerator and whatever
+# population it is attached to. Shared by the two generative patterns below so the two
+# renderings of one claim cannot drift apart in what they say about it.
+_DISTINCT_COUNT_ADVICE = (
+    "a realised distinct-value count measures the SAMPLE, not the estimator. It is "
+    "monotone in the number of targets scored and it never converges: the same "
+    "population gives 22 at n=80, 28 at n=200 and 35 at n=2000, and Chao1 on the n=400 "
+    "sample already estimates 35.0 against 39 attainable "
+    "(results/fair_pool_granularity.md). 22 was not even low -- the expected number of "
+    "distinct values among 80 draws is 23.0, putting 22 at the 37th percentile, so the "
+    "original claim reported a coin landing as it was expected to. Commit e6e7629 retired "
+    "it from all four sites for that reason, and LABELLING IT DOES NOT REPAIR IT: no "
+    "population owns a statistic that is a property of how many draws you took. Report "
+    "the n-invariant lattice instead ($39$ attainable values at $N{=}10$, two of them in "
+    "the top tenth of the range; $455$ at $N{=}20$)"
+)
+
 SUPERSEDED: list[dict] = [
     {"pattern": r"\b39/80", "current": "42/80",
      "quantity": "targets at the log N ceiling after attack"},
@@ -714,11 +866,33 @@ SUPERSEDED: list[dict] = [
     # falsified the replacement claim before it was committed. Only the LATTICE size is
     # n-invariant. Attaching the right pool to it does not make it true, so it is guarded
     # here rather than by a population rule.
-    {"pattern": r"22 distinct|22 attainable|22 of (?:its |the )?39",
-     "run": "n=80 FA cell", "quantity": "realised distinct-value count",
-     "replacement": "that count is a statement about the sample, not the estimator -- "
-                    "report the n-invariant lattice instead ($39$ attainable values at "
-                    "$N{=}10$, two of them in the top tenth of the range)"},
+    #
+    # GENERATIVE SINCE 2026-08-19 (defect 9), on the `\b\d+/97\b` precedent below. The
+    # enumerated form -- `22 distinct|22 attainable|22 of the 39` -- retired ONE numerator
+    # while the fair-pool granularity rule went on licensing 31, 28 and 26 as live guarded
+    # numbers, and 35 (the n=2000 rendering named in this very note) was covered by neither.
+    # Enumerating numerators is the shape that failed for `97` and it failed identically
+    # here: what is wrong with the claim is the SHAPE, so the shape is what gets retired,
+    # and every future rerun's count is caught without anyone writing it down.
+    #
+    # THE EXCLUSIONS ARE THE WHOLE DESIGN. 39 (at N=10) and 455 (at N=20) are LATTICE sizes
+    # -- derived from p(10)=42 and p(20)=627 with no data at all -- so they are properties
+    # of the estimator, they do not move with n, and they are exactly what the paper is told
+    # to report INSTEAD. A rule that flagged them would be flagging the replacement.
+    {"pattern": r"(?<![/\d.])\b(?!39\b|455\b)\d+ "
+                r"(?:distinct|attainable|realised|realized)"
+                r"(?: entropy| SE| score)? values?",
+     "run": "a finite sample", "quantity": "a REALISED distinct-value count",
+     "replacement": _DISTINCT_COUNT_ADVICE},
+    # No lattice exclusion on THIS one, deliberately. "39 of the 39" is not the lattice
+    # size being reported, it is a claim that a particular sample realised all of it --
+    # the retired shape at its upper limit, and the likeliest rendering at n=2000, where
+    # Chao1 already estimates 35.0. The exclusion belongs on the pattern that can match a
+    # bare lattice statement, and this one cannot.
+    {"pattern": r"(?<![/\d.])\b\d+ of (?:its |the |our )?39\b",
+     "run": "a finite sample", "quantity": "a REALISED distinct-value count, "
+                                           "stated against the lattice size",
+     "replacement": _DISTINCT_COUNT_ADVICE},
     # NB: `97 targets`, `17 wrong` and friends are deliberately NOT listed here. Enumerating
     # the particular stale values is the shape that failed -- see GROWING_CELLS below.
     #
@@ -798,9 +972,20 @@ NEAR_WINDOW = 300
 # today -- a count that is false now and will be true later, which is the same
 # stale-by-construction bug with the sign flipped. A cell whose entry is an EMPTY set has no
 # admissible literal count at all, because it is still filling.
-_FA_STRATUM = "the FALSE-ALARM stratum -- COMPLETE at its pre-registered n=80 " \
-              "(results/fa_n80_milestone.md, 80/80)"
+_FA_STRATUM = "a campaign stratum -- BOTH are COMPLETE at their pre-registered n=80: " \
+              "false-alarm (results/fa_n80_milestone.md, 80/80) and hide " \
+              "(results/fair_recompute_report.md 'SE / hide (n=80)', commit 9e9347c)"
 _FAIR_STRATUM = "a fair-pool correctness stratum -- complete and score-independent"
+_CAMPAIGN_TOTAL = "the attacked pool as a whole, 80 false-alarm + 80 hide -- COMPLETE " \
+                  "since 2026-08-13 (results/fair_recompute_report.md reports both cells " \
+                  "at n=80 and its AUROC table at n=160; commit 9e9347c: 'both arms are " \
+                  "now at their pre-registered n for the first time ... the true campaign " \
+                  "total is 160')"
+_FULL_CORRECT = "the full labelled pool's CORRECT stratum -- all greedy-correct answers " \
+                "of the 2000-question replication pass, complete by construction because " \
+                "the pass is complete (results/achievable_fpr_grid.md, 1424 + 576 = 2000)"
+_FULL_WRONG = "the full labelled pool's HALLUCINATING stratum -- the complement of the " \
+              "1424 within the completed 2000-question pass (28.8% prevalence)"
 # 60 -> 69, 2026-08-19. The `_def` checkpoint had 60 rows; the definitive `_defb` one has
 # 69 (results/winners_curse_ckpt_se_false_alarm_defb.jsonl, wc -l = 69). 69 is not a sample
 # size anyone chose: scripts/winners_curse_reeval.py skips a target when
@@ -815,9 +1000,11 @@ _NO_PARAPHRASE = "the complement of the winner's-curse subset -- the 11 FA targe
 _PILOT = "the N=20 re-score subset (results/pilot_n20_ceiling.md) -- a closed pilot"
 
 FROZEN_COUNTS: dict[int, str] = {          # the union, for reporting only
-    11: _NO_PARAPHRASE, 15: _PILOT, 69: _WC_SUBSET, 80: _FA_STRATUM, 200: _FAIR_STRATUM,
+    11: _NO_PARAPHRASE, 15: _PILOT, 69: _WC_SUBSET, 80: _FA_STRATUM, 160: _CAMPAIGN_TOTAL,
+    200: _FAIR_STRATUM,
     300: "each judge-validation stratum -- complete (results/judge_validation.md)",
     400: "the fair pool, 200 + 200 -- complete",
+    576: _FULL_WRONG, 1424: _FULL_CORRECT,
     2000: "the TriviaQA replication run -- complete "
           "(results/replication_results.md, 2000 of 2000)",
 }
@@ -831,38 +1018,55 @@ _WC_OK = frozenset({69})            # the winner's-curse re-scored subset
 _NOPARA_OK = frozenset({11})        # its complement inside the FA cell
 _PILOT_OK = frozenset({15})         # the N=20 re-score pilot
 
-# HIDE_OPEN is empty. While the hide arm is filling there is NO literal count of it that is
-# true for longer than a session. When it closes at its planned 80, whoever closes it puts
-# 80 here, with the artifact that closed it -- and only then may the paper write a hide
-# count or a both-strata total.
+# THE HIDE CELL IS CLOSED, DECLARED 2026-08-19 for a closure that happened 2026-08-13.
 #
-# !! THE ARTIFACT NOW SAYS THAT CELL IS CLOSED, AND THE DECLARATION HAS NOT BEEN MADE.
-# results/fair_recompute_report.md (07:21, 2026-08-13) reports "SE / hide (n=80)", and
-# commit 9e9347c states it outright: "both arms are now at their pre-registered n for the
-# first time ... the true campaign total is 160". This registry was never updated, so the
-# guard has been asserting a fact about the world that expired six days ago -- the SAME
-# failure as defect 5 (a stale label) and defect 6 (stale values), in the one place the
-# file says to look. Its sign is opposite and that is the only reason it has not bitten:
-# the guard is now OVER-strict, and will flag the TRUE statements "80 wrong", "80 hide
-# targets" and "the campaign's 160 targets" as growing-denominator errors.
+# This constant was `frozenset()` for six days after it stopped being true, and the cost of
+# that is recorded as defect 7 in the module docstring: the guard reported "80 wrong",
+# "80 hide targets" and "the campaign's 160 targets" -- all TRUE -- as growing-denominator
+# errors, and two tests pinned the behaviour so nothing broke to say so.
 #
-# It is deliberately NOT fixed here. Declaring a cell closed RELAXES the guard, and
-# `HIDE_OPEN = frozenset({80})` plus 160 in FROZEN_COUNTS would license a both-strata total
-# throughout a paper that is under a critic gate and does not currently state one. Two
-# tests also pin the current behaviour on purpose -- test_the_planned_hide_n_is_not_
-# admissible_while_the_cell_is_open and test_the_fair_pools_wrong_stratum_may_be_named_by_
-# direction -- and both must be rewritten in the same commit, by whoever owns the claim.
-# The edit is: HIDE_OPEN = frozenset({80}); FROZEN_COUNTS[160] = "the attacked pool,
-# 80 + 80 -- complete (results/fair_recompute_report.md, commit 9e9347c)"; and
-# GROWING_ADVICE stops saying the arm is filling.
-HIDE_OPEN: frozenset[int] = frozenset()
+# THE CLOSURE, verified against the artifacts rather than taken from the note that asked
+# for this edit (a note is not evidence; the note being wrong is how we got here):
+#   results/fair_recompute_report.md   "**SE / hide** (n=80)", and its AUROC degradation
+#                                      table reports SE at n = 160 -- which is the exact
+#                                      condition results/fa_n80_milestone.md set when it
+#                                      said "Recompute only when hide reaches 80".
+#   commit 9e9347c (2026-08-13)        "se_hide 80/80 ... the true campaign total is 160".
+#   git log on the report              9e9347c is the last commit to touch it; nothing has
+#                                      reopened or re-run the cell since.
+# The live GPU job is scripts/null_control.py, the noise floor -- a different cell. It does
+# not reopen this one.
+#
+# ON RELAXING A GUARD ON A PAPER UNDER GATE, which is the reason the previous pass declined:
+# the worry is right in general and wrong here. critique_log 35 says "a check that cannot
+# fail is not a check". A check that fires on true statements reaches the same place by the
+# other road -- its reader learns to skip it -- and it gets there faster, because a silent
+# rule merely fails to help while a crying one costs time on every run and trains the habit
+# of overriding it. Defects 5 and 6 each needed a full audit to surface BECAUSE a quiet rule
+# is indistinguishable from a passing one. This one announced itself on every run for six
+# days. Keeping a known-false assertion in the registry to stay "conservative" is not
+# conservative: it is the guard telling its user a lie in the direction that feels safe.
+_HIDE_OK = frozenset({80})           # the hide stratum, closed at its pre-registered n
+
+# ...AND THE TOTAL IS A DIFFERENT CONSTANT. This is where the spelled-out edit left in the
+# old note was WRONG, and it matters. `HIDE_OPEN` was doing double duty: it was the hide
+# CELL's admissible set, and it was also the admissible set for every "the N targets of the
+# attack campaign" pattern -- the POOL AS A WHOLE. That worked only because both were empty.
+# They are not the same number now. The hide cell admits 80; the pool as a whole admits 160.
+# Setting `HIDE_OPEN = frozenset({80})` as the note instructed would have licensed "the 80
+# targets of the attack campaign" -- a claim that the campaign totals 80, which is false and
+# is precisely the half-the-campaign error the FA/hide split exists to prevent.
+_TOTAL_OK = frozenset({160})         # 80 false-alarm + 80 hide, both closed
 
 # The fair pool's wrong stratum can be named by DIRECTION rather than by correctness --
 # results/fair_pool_report.md says "the IDENTICAL 200 hide + 200 false-alarm ids" -- so a
-# hide-word pattern reaches it too. 200 is admissible there and 80 is not, and the
-# difference is not arbitrary: the hide ARM is planned at 80 and will pass through it, so
-# barring 80 is the whole point; it is planned at 80 and can never be 200.
-HIDE_OR_FAIR = frozenset({200})
+# hide-word pattern reaches it too, and 200 is admissible there as well as 80.
+#
+# The asymmetry that used to live here (200 yes, 80 no) was the whole point of the rule
+# while the hide arm was filling THROUGH 80 on its way to 80. That is over: the arm landed
+# on its planned n, so 80 is now the true hide count rather than a value it was about to
+# pass through, and barring it would flag the closure itself.
+HIDE_OR_FAIR = _HIDE_OK | frozenset({200})
 
 # (pattern, what it counts, the counts admissible for THAT cell, an optional context gate).
 # The gate exists only for patterns loose enough to reach counts outside this campaign.
@@ -877,7 +1081,15 @@ _QUAL = r"(?: [a-z-]+){1,2}"      # "80 CORRECT-ANSWER targets" -- names a strat
 _NUM = r"(?<![/\d.])\b(\d+)"
 # The union of the CLOSED campaign strata a "N targets of the campaign" phrase can name.
 # Composed from the per-cell sets above so that rerunning one cell moves one constant.
-_STRATUM_OK = _PILOT_OK | _WC_OK | _FA_OK
+# _HIDE_OK joins it now that the hide arm has landed on its pre-registered n; it contributes
+# no new value (both strata are 80) and is named anyway, so that the day either cell is
+# re-run at a different n the union follows without anyone remembering this line exists.
+_STRATUM_OK = _PILOT_OK | _WC_OK | _FA_OK | _HIDE_OK
+# A phrase loose enough to mean EITHER a stratum or the closed pool ("across all 160
+# targets", "the 80 targets"). Kept separate from _STRATUM_OK so that a phrase which can
+# only mean a stratum -- "80 correct-answer targets of the campaign" -- still cannot take
+# the total.
+_STRATUM_OR_TOTAL_OK = _STRATUM_OK | _TOTAL_OK
 
 GROWING_CELLS: list[tuple[str, str, frozenset, list | None]] = [
     # ---- A COUNT OF A STRATUM ---------------------------------------------------------
@@ -887,13 +1099,18 @@ GROWING_CELLS: list[tuple[str, str, frozenset, list | None]] = [
      HIDE_OR_FAIR, None),
     (r"(?<![/\d.])\b(\d+) hid(?:e|ing)\b", "the hide stratum", HIDE_OR_FAIR, None),
     # `hallucinating` reaches the fair pool's complete wrong stratum, not the hide arm.
+    # 576 added 2026-08-19 (defect 8): methods.tex and limitations.tex both write "our
+    # replication pass (1424 correct and 576 hallucinating, at natural prevalence)", and
+    # this rule was flagging it -- a closed stratum of a closed pass, reported as a cell
+    # that is still filling.
     (r"(?<![/\d.])\b(\d+) hallucinating\b", "a hallucinating-answer stratum",
-     frozenset({200}), None),
+     frozenset({200, 576}), None),
     # `correct`/`false-alarm` reach frozen cells; they are guarded anyway so that a
     # MIS-stated frozen count is caught -- the FA cell being closed is exactly what makes
     # any value but 80 there an error rather than a snapshot.
-    (r"(?<![/\d.])\b(\d+) correct\b", "a correct-answer stratum", frozenset({80, 200}),
-     None),
+    # 1424 added 2026-08-19, the other half of the same false positive.
+    (r"(?<![/\d.])\b(\d+) correct\b", "a correct-answer stratum",
+     frozenset({80, 200, 1424}), None),
     # ...and 200 here for the same reason: "200 false-alarm ids" is the fair pool's correct
     # stratum named by direction, complete, and not a count of the campaign's FA arm.
     # _WC_OK is in the union because "the 69 false-alarm targets" is how the re-scored
@@ -931,46 +1148,57 @@ GROWING_CELLS: list[tuple[str, str, frozenset, list | None]] = [
     #
     # "the 97 targets of the attack campaign" -- unqualified, so it is the SUM.
     (_NUM + r" targets? (?:of|in|from) (?:the |our |its )?" + _POOL_NOUN,
-     "the attacked pool as a whole", HIDE_OPEN, None),
+     "the attacked pool as a whole", _TOTAL_OK, None),
     # "...of our attack campaign" with a stratum named: a stratum count, frozen values only.
     (_NUM + _QUAL + r" targets? (?:of|in|from) (?:the |our |its )?" + _POOL_NOUN,
      "a named stratum of the attacked pool", _STRATUM_OK, None),
     # "the attack campaign's 97 targets", and its stratum-qualified form.
     (_POOL_NOUN + r"'?s? " + _NUM + r" targets?", "the attacked pool as a whole",
-     HIDE_OPEN, None),
+     _TOTAL_OK, None),
     (_POOL_NOUN + r"'?s? " + _NUM + _QUAL + r" targets?",
      "a named stratum of the attacked pool", _STRATUM_OK, None),
     # "the 97-target pool". The `\s*` is load-bearing: strip_latex leaves a space where it
     # removed a command, so `$\mathbf{97}$-target` flattens to `97 -target`.
-    (_NUM + r"\s*-\s*target\b", "a pool named by its size", HIDE_OPEN, None),
+    (_NUM + r"\s*-\s*target\b", "a pool named by its size", _TOTAL_OK, None),
     # "across the 97 targets", "all 97 targets", "a pool of 97". Frozen stratum sizes are
     # tolerated here because "all 80 targets" is far likelier to be the FA cell than a
-    # claimed total, and crying wolf on it would cost more than it catches.
+    # claimed total, and crying wolf on it would cost more than it catches. Since the
+    # campaign closed, this phrasing can also legitimately mean the whole pool ("across all
+    # 160 targets"), so the total joins the admissible set for THIS pattern only.
     (r"\b(?:across|all|a pool of|pool of|totalling|comprising) (?:the |our |its )?"
      + _NUM + r"\b(?=\s*(?:targets?|attack|campaign|[,.;:]|$))",
-     "the attacked pool as a whole", _STRATUM_OK, None),
+     "the attacked pool, as a stratum or as a whole", _STRATUM_OR_TOTAL_OK, None),
     (_NUM + r" targets?,? (?:in total|altogether|overall)",
-     "the attacked pool as a whole", HIDE_OPEN, None),
+     "the attacked pool as a whole", _TOTAL_OK, None),
     # "97 targets (80 correct, 17 wrong)" -- a total stated with its own strata breakdown,
     # which is the exact sentence commit 5d822b9 deleted.
     (_NUM + r" targets?[^.]{0,20}?\(?\s*(?<![/\d.])\d+ correct",
-     "the attacked pool as a whole, stated as a strata sum", HIDE_OPEN, None),
+     "the attacked pool as a whole, stated as a strata sum", _TOTAL_OK, None),
     # Bare "the 97 targets", with no pool noun attached. A DEFINITE determiner is required
     # so that the paper's subset counts stay green: "those 21 targets" and "15 saturated
     # targets" are counts of a slice, not assertions about the pool's size. Context-gated,
     # because "the 500 targets" of something else is none of this rule's business.
     (r"\b(?:the|our|its) " + _NUM + r" targets?\b",
-     "the attacked pool as a whole", _STRATUM_OK, _ATTACK_CTX),
+     "the attacked pool, as a stratum or as a whole", _STRATUM_OR_TOTAL_OK, _ATTACK_CTX),
 ]
 
+# REWRITTEN 2026-08-19. The old text asserted "the hide arm is STILL FILLING against its
+# planned 80 (17 -> 41 -> 46 -> 52 and counting)", which stopped being true on 2026-08-13
+# and was still being printed on every failure six days later -- so the guard's own advice
+# was telling authors to avoid stating a total that had become correct. Advice strings go
+# stale exactly like labels, values and frozen counts do; this is the fourth copy of that
+# lesson in one file (defects 5, 6, 7, and this string).
 GROWING_ADVICE = (
-    "the hide arm is STILL FILLING against its planned 80 (17 -> 41 -> 46 -> 52 and "
-    "counting), so this count -- and every total that sums over it -- is stale at the "
-    "moment of writing. Name the stratum that carries the statistic instead: the "
-    "false-alarm stratum is complete at 80 and its counts (8/80, 21/80, 42/80) are "
-    "stable. If a both-strata figure is wanted, the fair pool supplies one that is "
-    "complete and score-independent. If a cell has genuinely COMPLETED, declare it in "
-    "FROZEN_COUNTS with the artifact that closed it"
+    "a literal count is admissible only for a cell that is DECLARED CLOSED in "
+    "FROZEN_COUNTS, and this one is not. Both campaign strata closed at their "
+    "pre-registered n=80 on 2026-08-13 (results/fair_recompute_report.md, commit 9e9347c), "
+    "so the stratum counts (8/80, 21/80, 42/80) and the 160 total are all stable and "
+    "writable -- but a count that is neither is either a snapshot of something still "
+    "filling or a mis-statement of something closed, and the guard cannot tell which. "
+    "Name the stratum that carries the statistic. If a cell has genuinely COMPLETED, "
+    "declare it in FROZEN_COUNTS with the artifact that closed it, and do it the day it "
+    "closes: this registry has already spent six days asserting a cell was open after it "
+    "shut, and flagged three true statements for it"
 )
 
 
@@ -1124,6 +1352,27 @@ def _check_pools(raw: str, flat: str, terms: list[int], shown: str) -> list[str]
                 #     2000-question replication run is nested in either pool, so there is
                 #     nothing to tolerate. A label already disarmed by NON_BINDING_CUES
                 #     ("unlike the fair pool's 0.704") never reaches here.
+                # `coexist` is the OPPOSITE of `exclusive`, for populations that are nested
+                # so tightly that the paper compares them inside one sentence on purpose.
+                # The 1424-answer correct stratum is a strict SUPERSET of the fair pool's
+                # 200-answer one; they estimate the same ceiling-atom mass at different
+                # precision, and the Discussion's whole point in naming both is that the
+                # wider one pins the parameter. Proximity cannot arbitrate that, and gets
+                # introduction.tex backwards: "at 9.5% on the fair pool's correct stratum
+                # and at 10.5% ... on the 1424-answer superset it is a subset of" puts the
+                # FOREIGN label 26 chars before the number and the OWNING label 25 chars
+                # after it -- and a trailing label pays TRAILING_PENALTY, so the foreign one
+                # wins on a sentence that is exactly right.
+                #
+                # So: where owner and foreign are nested, a foreign label accuses only when
+                # the owning label is ABSENT from the same sentence-ish unit. Naming your
+                # own population is the disclosure; the error this still catches is the one
+                # that matters -- attributing the superset's number to the subset and never
+                # mentioning the superset at all.
+                if (foreign_best is not None and rule.get("coexist")
+                        and own_prox is not None and own_prox[0] == 0):
+                    foreign_best = None
+
                 if foreign_best is not None:
                     fc, fs, ftext, fpool = foreign_best
                     exclusive_hit = bool(rule.get("exclusive")) and fc == 0
