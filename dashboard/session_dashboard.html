@@ -35,6 +35,7 @@
   button#stop:hover { background:var(--stopdim) }
   button#stop:disabled { opacity:.45; cursor:default }
   .note { font-size:12.5px; color:var(--muted); margin-top:12px }
+  .hd { font-weight:600; margin-bottom:6px }
   code { background:var(--bg); border:1px solid var(--line); border-radius:5px;
          padding:1px 5px; font-size:12.5px }
   ol { margin:8px 0 0; padding-left:20px; font-size:13px; color:var(--muted) }
@@ -66,14 +67,32 @@
     </div>
   </div>
 
+  <!-- progress: scripts/progress_monitor.py writes dashboard/progress_status.json, which the
+       watcher mirrors into session_status.js. Kept as a SEPARATE object on purpose: a dead
+       monitor must not make the watcher look dead, nor a dead watcher hide progress. -->
   <div class="card">
-    <div style="font-weight:600;margin-bottom:6px">If the button doesn't work</div>
+    <div class="hd">Null control — progress</div>
+    <div class="kv">
+      <span>targets</span><b id="pgTargets">—</b>
+      <span>rate</span><b id="pgRate">—</b>
+      <span>projected finish</span><b id="pgEta">—</b>
+      <span>basis</span><b id="pgBasis">—</b>
+    </div>
+    <div class="note" id="pgWarn"></div>
+  </div>
+
+  <div class="card">
+    <div class="hd">If the button does not work</div>
     <ol>
       <li>Save any file named <code>STOP.txt</code> into <code>Downloads</code>, or</li>
-      <li>create <code>STOP.txt</code> in the repo root, or</li>
-      <li>run <code>wsl -d Ubuntu-24.04 -- pkill -f venv-wsl</code></li>
+      <li>in the repo root, right-click → New → Text Document and name it <code>STOP</code>
+          — file extensions are hidden on this PC, so typing <code>STOP.txt</code> there
+          really makes <code>STOP.txt.txt</code>. Both are watched, so either works.</li>
+      <li>run <code>wsl -d Ubuntu-24.04 -- pkill -f venv-wsl</code> — the
+          <code>-d Ubuntu-24.04</code> is required; the default distro is a different,
+          stopped one, and omitting it would silently match nothing.</li>
     </ol>
-    <div class="note">All three are watched. The watcher renames the file once it acts, so a
+    <div class="note">All of these are watched. The watcher renames the file once it acts, so a
       later relaunch is not immediately killed by a stale signal.</div>
   </div>
 
@@ -88,31 +107,95 @@ const LABEL = {
   stale:    "no status yet"
 };
 
-async function poll() {
-  try {
-    const r = await fetch("session_status.json?t=" + Date.now(), {cache:"no-store"});
-    if (!r.ok) throw new Error(r.status);
-    const s = await r.json();
-    const age = Math.max(0, Math.floor(Date.now()/1000 - (s.updated_epoch||0)));
-    // A status file older than a minute means the watcher itself died — say so rather
-    // than showing a reassuring stale "running".
-    const state = age > 60 && s.state === "running" ? "stale" : (s.state || "stale");
-    const el = document.getElementById("state");
-    el.className = "state " + state;
-    document.getElementById("stateText").textContent =
-      state === "stale" && age > 60 ? "WATCHER NOT REPORTING (" + age + "s ago)" : (LABEL[state] || state);
-    document.getElementById("detail").textContent  = s.detail || "—";
-    document.getElementById("procs").textContent   = (s.gpu_processes ?? "—");
-    document.getElementById("updated").textContent = (s.updated || "—") + "  (" + age + "s ago)";
-    if (state === "stopped" || state === "stopped_dirty") {
-      const b = document.getElementById("stop");
-      b.disabled = true; b.textContent = "STOPPED — GPU released";
-    }
-  } catch (e) {
-    document.getElementById("state").className = "state stale";
-    document.getElementById("stateText").textContent = "no status file yet";
-    document.getElementById("detail").textContent = "watcher may not be running";
+// WHY A SCRIPT TAG AND NOT fetch(): this page is opened as file:///... and Chromium blocks
+// fetch()/XHR from a file:// origin outright -- it throws even for a file that exists. The
+// previous version polled session_status.json with fetch() and therefore displayed
+// "watcher may not be running" permanently while the watcher was in fact healthy. A
+// <script src> load is not subject to that restriction, so the watcher writes the same
+// state as an assignment in session_status.js and we load that instead.
+let fails = 0, lastTick = null, lastTickSeenAt = 0;
+const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+function loadStatus() {
+  const s = document.createElement("script");
+  s.src = "session_status.js?t=" + Date.now();
+  s.onload  = () => { s.remove(); fails = 0; render(); };
+  s.onerror = () => { s.remove(); onFail(); };
+  document.head.appendChild(s);
+}
+
+function onFail() {
+  fails++;
+  // One missed poll is a rename landing between the read and the open, not a dead watcher.
+  // Keep the last good values and only degrade once the failures are consistent.
+  if (fails < 3) return;
+  document.getElementById("state").className = "state stale";
+  set("stateText", "NO STATUS FILE (" + fails + " failed polls)");
+  set("detail", "the watcher is probably not running");
+}
+
+function render() {
+  const s = window.SESSION_STATUS;
+  if (!s) return onFail();
+
+  const now = Math.floor(Date.now()/1000);
+  // Detect a cached script rather than a live one: if the payload tick never advances while
+  // we keep polling, we are reading the cache, and a frozen picture presented as current is
+  // worse than no picture at all.
+  if (window.STATUS_TICK !== lastTick) { lastTick = window.STATUS_TICK; lastTickSeenAt = now; }
+  const frozen = now - lastTickSeenAt > 90;
+
+  const age = Math.max(0, now - (s.updated_epoch || 0));
+  // A status file older than a minute means the watcher itself died -- say so rather
+  // than showing a reassuring stale "running".
+  const state = age > 60 && s.state === "running" ? "stale" : (s.state || "stale");
+  document.getElementById("state").className = "state " + state;
+  set("stateText", state === "stale" && age > 60
+        ? "WATCHER NOT REPORTING (" + age + "s ago)"
+        : (LABEL[state] || state));
+  set("detail", frozen ? "(page is reading a cached status — reload)" : (s.detail || "—"));
+  set("procs", s.gpu_processes != null ? s.gpu_processes : "—");
+  set("updated", (s.updated || "—") + "  (" + age + "s ago)");
+
+  if (state === "stopped" || state === "stopped_dirty") {
+    const b = document.getElementById("stop");
+    b.disabled = true; b.textContent = "STOPPED — GPU released";
   }
+  renderProgress(window.PROGRESS_STATUS, now);
+}
+
+function renderProgress(p, now) {
+  if (!p) {
+    set("pgTargets", "no progress file yet");
+    set("pgRate", "—"); set("pgEta", "—");
+    set("pgBasis", "run:  .venv\\Scripts\\python.exe scripts/progress_monitor.py --watch 300");
+    return;
+  }
+  const g = p.progress || {}, rt = p.rate || {}, pj = p.projection || {};
+  set("pgTargets", g.done + " / " + g.total + " done, " + g.remaining + " left" +
+      (g.produced_this_session != null
+        ? "  (" + g.produced_this_session + " this session, " + g.carried_over + " carried over)"
+        : ""));
+  if (!rt.sufficient) {
+    set("pgRate", "not measurable yet — " + (rt.targets_timed || 0) + " target(s) timed since resume");
+    set("pgEta", "—");
+    set("pgBasis", "a rate needs at least " + (rt.min_targets || 2) + " completed targets");
+  } else {
+    set("pgRate", "last-" + rt.last_k_targets + " " + Math.round(rt.last_k_s_per_target) +
+                  " s/target  ·  all-session " + Math.round(rt.all_time_s_per_target) + " s/target");
+    set("pgEta", pj.available ? new Date(pj.eta_epoch * 1000).toLocaleString() : "—");
+    set("pgBasis", pj.basis || "—");
+  }
+  const pAge = Math.floor(now - (p.generated_epoch || 0));
+  const warn = [];
+  if (rt.stable === false)
+    warn.push("RATE DISAGREEMENT " + Math.round(rt.disagreement * 100) + "% — the run is " +
+              rt.direction + ". Shown separately, never averaged.");
+  if (pAge > 900)
+    warn.push("this progress reading is " + Math.round(pAge/60) + " min old — the monitor is not running.");
+  const w = document.getElementById("pgWarn");
+  w.textContent = warn.join("  ");
+  w.style.color = warn.length ? "var(--warn)" : "var(--muted)";
 }
 
 document.getElementById("stop").addEventListener("click", () => {
@@ -124,13 +207,16 @@ document.getElementById("stop").addEventListener("click", () => {
   document.body.appendChild(a); a.click(); a.remove();
   const b = document.getElementById("stop");
   b.textContent = "STOP sent — waiting for the watcher…";
+  // Deliberately NOT "Saved STOP.txt to Downloads": the page cannot see whether the download
+  // completed, and claiming a success it has not verified is exactly the kind of reassurance
+  // that costs someone their machine.
   document.getElementById("stopNote").innerHTML =
-    "<b>Saved STOP.txt to Downloads.</b> The watcher polls every 15&nbsp;s and this page " +
-    "will switch to STOPPED once the GPU is free. If it does not within a minute, use one " +
-    "of the manual routes below.";
+    "<b>STOP.txt has been handed to the browser</b> — check the download bar to confirm it " +
+    "landed in Downloads. The watcher polls every 15&nbsp;s, and the card above will switch " +
+    "to STOPPED once the GPU is free. If it has not within a minute, use a manual route below.";
 });
 
-poll(); setInterval(poll, 10000);
+loadStatus(); setInterval(loadStatus, 10000);
 </script>
 </body>
 </html>

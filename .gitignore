@@ -106,3 +106,15 @@ results/*.jsonl
 # results/*.csv above would have silently excluded them, which breaks the
 # transparency-in-place-of-inter-annotator-kappa argument the protocol rests on.
 !results/equivalence_audit*.csv
+
+# Runtime status surfaces -- rewritten every 15 s by the stop watcher and every 300 s by the
+# progress monitor. Tracking them makes the tree permanently dirty and invites an accidental
+# commit of whatever a background agent happened to be mid-write on.
+dashboard/session_status.json
+dashboard/session_status.js
+dashboard/progress_status.json
+dashboard/progress_samples.jsonl
+dashboard/*.stdout
+dashboard/*.err
+dashboard/stop_watcher*.log
+dashboard/overnight_*.log
