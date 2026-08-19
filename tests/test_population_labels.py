@@ -220,13 +220,19 @@ def test_replication_auroc_must_not_read_as_a_fair_pool_number(tmp_path):
 
 
 def test_retention_must_not_be_attached_to_the_fair_pool(tmp_path):
-    """45% is retention on the 60 false-alarm targets the optimiser found a paraphrase for,
-    re-scored on an independent sample. It is not a fair-pool quantity."""
+    """44% is retention on the 69 false-alarm targets the optimiser found a paraphrase for,
+    re-scored on an independent sample. It is not a fair-pool quantity.
+
+    UPDATED 2026-08-19: this probe used to read $45\\%$, the `_def` value. It kept passing
+    after the rerun -- but only because 45% is now flagged as STALE, which is a different
+    rule answering a different question. A probe that no longer exercises the rule it was
+    written for is not a probe, so it now carries the live value and asserts MISLABELLED.
+    """
     problems = _check(tmp_path, r"""
         On the score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating),
-        only $45\%$ of the apparent effect survives re-scoring.
+        only $44\%$ of the apparent effect survives re-scoring.
     """)
-    assert any("45" in p for p in problems), _say(problems)
+    assert any("44" in p and "MISLABELLED" in p for p in problems), _say(problems)
 
 
 def test_a_denominator_cannot_manufacture_its_own_label(tmp_path):
@@ -431,16 +437,29 @@ def test_a_clause_break_keeps_two_correctly_labelled_claims_apart(tmp_path):
 
 
 def test_the_winners_curse_paragraph_carries_its_label_a_long_way(tmp_path):
-    """Limitations puts 45% some 500 characters after the label that scopes it. The rule's
-    window has to reach, without letting a distant fair-pool label accuse it."""
+    """Limitations puts the retention figure some 500 characters after the label that
+    scopes it. The rule's window has to reach, without letting a distant fair-pool label
+    accuse it.
+
+    REWRITTEN 2026-08-19, AND FOR THE SECOND TIME THIS FILE WAS COMPLICIT. The version
+    below used to be the `_def` paragraph verbatim -- $60$ false-alarm targets, $+0.698$ to
+    $+0.315$, shrinkage $-0.383$ $[-0.529, -0.234]$, retention $45\\%$ $[25\\%, 65\\%]$,
+    $36$ of $60$ -- and it asserted GREEN. The cell was rerun to `_defb` (n=69) and every
+    one of those ten numbers was superseded; the paper was updated and this control went on
+    certifying the retired paragraph, exactly as three controls certified `97 targets`
+    after commit 5d822b9 deleted it. The text below is the LIVE Limitations wording. All
+    ten retired values are now probes in RETIRED_WINNERS_CURSE.
+    """
     problems = _check(tmp_path, r"""
         We quantify the resulting inflation directly, by re-scoring each \emph{selected}
-        paraphrase on an independent sample. Across the $60$ false-alarm targets on which
-        the optimiser found a paraphrase, the mean intended move falls from $+0.698$ nats
-        at selection to $+0.315$ nats on fresh samples. The shrinkage is $-0.383$ nats with
-        a bootstrap interval of $[-0.529, -0.234]$ that excludes zero. Retention is a ratio
-        of means, and its interval is wide at $45\%$ $[25\%, 65\%]$. Signal remains either
-        way---$36$ of $60$ targets keep a positive move.
+        paraphrase on an independent sample. The re-scored set is the $69$ of the $80$
+        false-alarm targets on which the optimiser found a paraphrase at all; on the other
+        $11$ the search returned the original question, so there was no selection to
+        re-test. Across those, the mean intended move falls from $+0.609$ nats at selection
+        to $+0.268$ nats on fresh samples. The shrinkage is $-0.341$ nats with a bootstrap
+        interval of $[-0.469, -0.212]$ that excludes zero. Retention is a ratio of means,
+        and its interval is wide at $44\%$ $[23\%, 64\%]$. Signal remains either way---$37$
+        of the $69$ keep a positive move and the two measurements correlate at $r{=}0.48$.
     """)
     assert not problems, _say(problems)
 
@@ -703,6 +722,414 @@ def test_the_papers_refusal_to_quote_a_hide_count_passes(tmp_path):
         completes.
     """)
     assert not problems, _say(problems)
+
+
+# ======================================================================================
+# ROUND THREE (2026-08-19). THE GUARDED VALUES WENT STALE, AND THE RULE WENT QUIET.
+#
+# Round two retired four LABELS that had stopped being true. It did not ask the same
+# question of `numbers`. The winner's-curse cell was then rerun -- `_def` (n=60) to `_defb`
+# (n=69) -- and every figure in it moved, while the rule went on listing the old ones. A
+# rule pointed at values that no longer occur matches nothing, and a rule that matches
+# nothing cannot fail: the checker printed OK on this family while all ten live numbers,
+# across four sites in the paper, were unguarded.
+#
+# Every probe below was GREEN before the rearming. Each is paired with a control.
+# ======================================================================================
+LIVE_WINNERS_CURSE: list[tuple[str, str, str]] = [
+    # Unlabelled first: "unarmed" means the number could be written anywhere, attached to
+    # nothing, and the checker would print OK. Each of these was GREEN before the rearming.
+    (
+        "live_retention_and_its_interval_unlabelled",
+        r"Retention is $44\%$, with a bootstrap interval of $[23\%, 64\%]$.",
+        "44",
+    ),
+    (
+        "live_shrinkage_and_its_interval_unlabelled",
+        r"The shrinkage is $-0.341$ nats, with an interval of $[-0.469, -0.212]$.",
+        "0.341",
+    ),
+    (
+        "live_selection_and_fresh_means_unlabelled",
+        r"The mean intended move falls from $+0.609$ nats to $+0.268$ nats.",
+        "0.609",
+    ),
+    (
+        "live_positive_move_count_unlabelled",
+        r"$37$ of the $69$ keep a positive move, and the two correlate at $r{=}0.48$.",
+        "37 of the 69",
+    ),
+    # ...and then mislabelled, which is the error the hardening exists for: the owning
+    # label trails, so the fair pool is what actually binds.
+    (
+        "live_retention_bound_to_the_fair_pool",
+        r"""
+        On the score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating),
+        $44\%$ $[23\%, 64\%]$ of the apparent effect survives re-scoring.
+        """,
+        "44",
+    ),
+    (
+        "live_positive_move_count_bound_to_the_fair_pool",
+        r"""
+        On the score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating),
+        $37$ of the $69$ keep a positive move after re-scoring.
+        """,
+        "37 of the 69",
+    ),
+]
+
+
+@pytest.mark.parametrize("name,text,token", LIVE_WINNERS_CURSE,
+                         ids=[p[0] for p in LIVE_WINNERS_CURSE])
+def test_the_live_winners_curse_numbers_are_guarded_at_all(tmp_path, name, text, token):
+    """The rule listed `45%`, `0.698`, `0.315`, `36 of 60` and friends -- not one of which
+    survives the `_defb` rerun. Every probe here was accepted before 2026-08-19."""
+    problems = _check(tmp_path, text, name=f"{name}.tex")
+    assert problems, f"probe {name!r} was accepted -- the rule is unarmed on the live cell"
+    assert any(token in p for p in problems), _say(problems)
+
+
+# Each entry: the retired `_def` rendering, and the `_defb` value that replaced it.
+RETIRED_WINNERS_CURSE: list[tuple[str, str]] = [
+    (r"Re-scoring retains $45\%$ of the effect.", "44"),
+    (r"The retention interval on re-scoring is $[25\%, 65\%]$.", "23"),
+    (r"On re-scoring, the mean move at selection is $+0.698$ nats.", "0.609"),
+    (r"On re-scoring, the mean move on fresh samples is $+0.315$ nats.", "0.268"),
+    (r"The shrinkage on re-scoring is $-0.383$ nats.", "0.341"),
+    (r"The shrinkage interval on re-scoring is $[-0.529, -0.234]$.", "0.469"),
+    (r"On re-scoring, $36$ of $60$ targets keep a positive move.", "37 of the 69"),
+    (r"The two re-scored measurements correlate at $r{=}0.46$.", "0.48"),
+]
+
+
+@pytest.mark.parametrize("text,current", RETIRED_WINNERS_CURSE,
+                         ids=[t[1] for t in RETIRED_WINNERS_CURSE])
+def test_every_retired_winners_curse_value_is_flagged_as_stale(tmp_path, text, current):
+    """A superseded number must be reported wherever it reappears -- the mechanism this
+    repo already uses for `39/80` and `+0.70`. Before the rearming all eight of these were
+    LIVE ENTRIES in the guarded set, so writing one into the paper was not merely
+    unreported: it was certified as correctly labelled."""
+    problems = _check(tmp_path, text)
+    stale = [p for p in problems if "STALE" in p]
+    assert stale, _say(problems)
+    assert any(current in p for p in stale), _say(stale)
+
+
+def test_the_stale_winners_curse_gate_does_not_fire_on_the_replication_auroc(tmp_path):
+    """THE control for the `_WC_CTX` gate, and the resolution of a hazard the module
+    docstring has carried since the guard was written.
+
+    0.698 is two different quantities: the retired selection-time mean move in NATS, and
+    0.6977 -> 0.698, the substring-oracle AUROC of the 2000-question replication run. It
+    used to be owned by the winner's-curse rule outright, so a replication 0.698 was
+    reported against the wrong population and made to demand a re-scoring label. It is now
+    retired behind a re-scoring context gate: stale where the diagnostic is being discussed,
+    silent where it is not.
+    """
+    ok = _check(tmp_path, r"""
+        Under the substring oracle our SE replication on $2000$ questions reaches AUROC
+        $0.698$, which the alias-aware span oracle refines to $0.694$.
+    """)
+    assert not ok, _say(ok)
+
+    bad = _check(tmp_path, r"""
+        Re-scoring each selected paraphrase on an independent sample, the mean intended
+        move at selection is $+0.698$ nats.
+    """)
+    assert any("0.698" in p and "STALE" in p for p in bad), _say(bad)
+
+
+# --- the CELL, not the values: 69 is now a frozen count in its own right ----------------
+def test_the_re_scored_cell_size_cannot_borrow_its_neighbours_licence(tmp_path):
+    """THE defect this round of the audit was opened on.
+
+    The live phrasing is "the $69$ of the $80$ false-alarm targets". The only growing-cell
+    pattern that reached it captured `80 false-alarm`, found 80 admissible for the FA
+    stratum, and never looked at the 69 at all -- so the cell size passed on its
+    NEIGHBOUR's licence. The retired 60 and any future rerun's n passed with it.
+    """
+    for wrong in ("60", "71", "80"):
+        problems = _check(
+            tmp_path,
+            rf"The re-scored set is the ${wrong}$ of the $80$ false-alarm targets on "
+            r"which the optimiser found a paraphrase.")
+        assert any(wrong in p and "growing denominator" in p for p in problems), \
+            f"cell size {wrong} was accepted:\n" + _say(problems)
+
+
+def test_the_true_re_scored_cell_size_passes(tmp_path):
+    """...and the control, or the rule would take the live Limitations paragraph down."""
+    problems = _check(tmp_path, r"""
+        The re-scored set is the $69$ of the $80$ false-alarm targets on which the
+        optimiser found a paraphrase at all; on the other $11$ the search returned the
+        original question.
+    """)
+    assert not problems, _say(problems)
+
+
+def test_the_re_scored_cell_is_checked_as_a_denominator_too(tmp_path):
+    """`37 of the 69 keep a positive move` states the same cell as a denominator. A rerun
+    moves it, and the guard has to see it there as well as in the defining phrase."""
+    bad = _check(tmp_path, r"On re-scoring, $37$ of the $60$ keep a positive move.")
+    assert any("growing denominator" in p for p in bad), _say(bad)
+
+    ok = _check(tmp_path, r"On re-scoring, $37$ of the $69$ keep a positive move.")
+    assert not ok, _say(ok)
+
+
+def test_the_complement_of_the_re_scored_cell_is_guarded(tmp_path):
+    """$69 + 11 = 80$ is an identity, so the 11 moves whenever the 69 does. It is
+    context-gated: "the other 11" of something unrelated is none of this rule's business."""
+    bad = _check(tmp_path, r"""
+        Of the false-alarm targets, the optimiser found a paraphrase for most; on the other
+        $20$ the search returned the original question, so re-scoring had nothing to test.
+    """)
+    assert any("20" in p for p in bad), _say(bad)
+
+    unrelated = _check(tmp_path, r"The benign sweep covers the other $20$ questions.")
+    assert not unrelated, _say(unrelated)
+
+
+def test_an_escaped_percent_cannot_hide_the_retention_row(tmp_path):
+    """Defect 4, pointed at the newly armed family. `strip_latex` needs `(?<!\\)%`: without
+    the negative lookbehind a literal \\% eats to end of line and the whole row escapes
+    checking -- so the guard would go quiet on exactly the numbers just rearmed."""
+    row = (r"Retention (\% of the effect) & $44\%$ & measured on the "
+           r"score-independent \emph{fair} pool \\")
+    assert "44" in strip_latex(row), strip_latex(row)
+    problems = _check(tmp_path, row)
+    assert any("44" in p for p in problems), _say(problems)
+    # ...and the mechanism, stated directly: a literal \% survives, a real comment does not.
+    assert "44" in strip_latex(r"$44\%$ % secret comment")
+    assert "secret" not in strip_latex(r"$44\%$ % secret comment")
+
+
+# --- structural: the guarded VALUES expire exactly as the LABELS did --------------------
+def test_the_guard_tracks_the_definitive_winners_curse_checkpoint():
+    """The standing rule from round two -- "anything appearing in BOTH `labels` and the
+    paper's numbers must be re-derived from an artifact whenever that artifact is rerun" --
+    with the artifact actually read, so the NEXT rerun breaks a test instead of going quiet.
+
+    `_def` has 60 records and `_defb` has 69; the guard must key on the definitive one.
+    """
+    from check_population_labels import FROZEN_COUNTS, POOLS
+
+    defb = REPO / "results" / "winners_curse_ckpt_se_false_alarm_defb.jsonl"
+    n_live = sum(1 for line in defb.read_text(encoding="utf-8").splitlines() if line.strip())
+    assert n_live in FROZEN_COUNTS, (
+        f"the definitive winner's-curse cell holds {n_live} records and {n_live} is not a "
+        f"declared frozen count (frozen: {sorted(FROZEN_COUNTS)}). Whoever reran the cell "
+        "owns FROZEN_COUNTS, the rescored labels and the rule's `numbers` for it.")
+    assert "winner" in FROZEN_COUNTS[n_live].lower()
+
+    superseded = REPO / "results" / "winners_curse_ckpt_se_false_alarm_def.jsonl"
+    n_old = sum(1 for ln in superseded.read_text(encoding="utf-8").splitlines() if ln.strip())
+    assert n_old not in FROZEN_COUNTS, f"{n_old} is the SUPERSEDED cell size"
+    labels = " ".join(p for spec in POOLS.values() for p in spec["labels"])
+    assert str(n_old) not in labels, f"{n_old} is still a pool LABEL"
+
+
+def test_no_guarded_number_is_also_a_superseded_one():
+    """A value cannot be both live and retired. If it is, one of the two rules is keyed to
+    a run that no longer exists -- which is defect 6 in whichever direction it points."""
+    from check_population_labels import RULES, SUPERSEDED
+
+    probes = ["45%", "25%", "65%", "0.383", "0.698", "0.315", "0.529", "0.234",
+              "36 of 60", "39/80", "31/80", "38.75", "22 distinct",
+              "44%", "23%", "64%", "-0.341", "-0.469", "-0.212", "+0.609", "+0.268",
+              "37 of the 69", "r = 0.48", "42/80", "34/80", "0.704", "0.694"]
+    clashes = []
+    for probe in probes:
+        guarded = [r["name"] for r in RULES
+                   if any(re.search(p, probe, re.IGNORECASE) for p in r["numbers"])]
+        retired = [s["quantity"] for s in SUPERSEDED
+                   if re.search(s["pattern"], probe, re.IGNORECASE)]
+        if guarded and retired:
+            clashes.append(f"{probe!r}: guarded by {guarded} AND retired as {retired}")
+    assert not clashes, "\n  ".join(clashes)
+
+
+def test_the_retired_winners_curse_values_are_gone_from_the_guarded_set():
+    """Named explicitly, the way round two named its four labels, so that a failure says
+    which number came back rather than pointing at a generic invariant."""
+    from check_population_labels import RULES
+
+    wc = [r for r in RULES if r["name"].startswith("winner")]
+    assert len(wc) == 1
+    flat = " ".join(_literal(p) for p in wc[0]["numbers"])
+
+    def names(value: str) -> bool:
+        """Is this the whole number, not a fragment of a longer one? `60` must not be
+        found inside `+0.609`, which is what a naive substring check does."""
+        return bool(re.search(rf"(?<![\d.]){re.escape(value)}(?!\d)", flat))
+
+    for retired in ("45", "25", "65", "0.383", "0.698", "0.315", "0.529", "0.234", "60"):
+        assert not names(retired), f"{retired!r} is a retired `_def` value, not a live one"
+    for live in ("44", "23", "64", "0.341", "0.469", "0.212", "0.609", "0.268", "69"):
+        assert names(live), f"{live!r} is a live `_defb` value and must be guarded"
+
+
+# ======================================================================================
+# ROUND THREE, PART TWO: NEVER KEYED AT ALL.
+#
+# A rerun disarms a rule that exists. This is the other way to be silent -- a result
+# arrives, lands in the paper, and no rule was ever written for it. Six live values were in
+# that state on 2026-08-19: the N=40 achievable grid (5.0%, and 2.0% arriving), the N=20
+# replay floor (3.0%), and the Eq.(5)-vs-discrete saturation rates over the 2000-question
+# pass (14.8%, 20.0%, 27.8%).
+# ======================================================================================
+def test_the_eq5_saturation_rates_are_guarded_at_all(tmp_path):
+    """295/2000 at the cap, 399/2000 and 556/2000 in the top decile
+    (results/rescore_likelihoods.md). No rule had ever heard of any of them."""
+    for token in ("14.8", "20.0", "27.8"):
+        problems = _check(
+            tmp_path, rf"The at-cap share under the discrete estimator is ${token}\%$.")
+        assert any(token in p for p in problems), f"{token}% is unguarded"
+
+
+def test_an_eq5_rate_may_not_be_read_as_a_fair_pool_rate(tmp_path):
+    """These are rates over 2000 questions, not over the fair pool's 400. The paragraph
+    that carries them names the fair pool in its own scoping sentence, which is exactly the
+    adjacency that produced six of this project's population errors."""
+    problems = _check(tmp_path, r"""
+        On the score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating),
+        $14.8\%$ of answers sit at the cap under the discrete estimator.
+    """)
+    assert any("14.8" in p and "MISLABELLED" in p for p in problems), _say(problems)
+
+
+def test_the_live_eq5_wording_passes(tmp_path):
+    """Methods' actual sentence. The label is `2000 cached sample sets`, a rendering none of
+    the replication pool's labels matched until this pass -- so this control fails without
+    the label edit as surely as without the number edit."""
+    problems = _check(tmp_path, r"""
+        Re-scoring our $2000$ cached sample sets under Eq.~(5) with the generating model's
+        own length-normalised sequence likelihoods---holding the clustering fixed---puts
+        $0.0\%$ [$0.0$, $0.2$] of them at the cap, against $14.8\%$ [$13.3$, $16.4$] under
+        the discrete estimator.
+    """)
+    assert not problems, _say(problems)
+
+
+def test_the_27_8_collision_is_resolved_by_population_not_by_value(tmp_path):
+    """THE collision probe. $27.8\\%$ is TWO numbers: 556/2000 in the top decile of the
+    replication pass (live), and 27/97 on the attacked subset (retired -- 80 correct plus a
+    hide arm truncated at 17). A value-keyed rule must either miss the retired one or cry
+    wolf on the live one. Neither rule here is value-keyed: the live rate is owned by the
+    replication pass and reports a foreign label bound to it, and the retired rendering is
+    caught by its 97 DENOMINATOR, generatively, with no numerator enumerated anywhere.
+    """
+    live_but_mislabelled = _check(tmp_path, r"""
+        Across the $80$ correct-answer targets of our attack campaign, $27.8\%$ fall in the
+        top tenth of the range.
+    """)
+    assert any("27.8" in p and "MISLABELLED" in p for p in live_but_mislabelled), \
+        _say(live_but_mislabelled)
+
+    retired = _check(tmp_path, r"""
+        Across the targets of the attack campaign, $27/97$ fall in the top tenth of the
+        range and $12/97$ sit at the ceiling.
+    """)
+    stale = [p for p in retired if "STALE" in p]
+    assert any("27/97" in p for p in stale), _say(retired)
+    assert any("12/97" in p for p in stale), "the rule must be generative, not enumerated"
+
+    # ...and the live rate, correctly attributed, is clean.
+    ok = _check(tmp_path, r"""
+        Over our $2000$ cached sample sets, $27.8\%$ [$25.9$, $29.8$] fall in the top tenth
+        of the range under the discrete estimator.
+    """)
+    assert not ok, _say(ok)
+
+
+def test_the_n40_operating_point_is_guarded_and_bound_to_its_stratum(tmp_path):
+    """5.0% is 10/200 on the fair pool's CORRECT stratum -- the same 200 answers as the
+    9.5% floor it is contrasted with. It appears at three sites and was unguarded at all
+    three. 2.0% (4/200) is guarded before it lands, this file's standing practice."""
+    for token in ("5.0", "2.0"):
+        bare = _check(tmp_path, rf"A $5\%$ budget is honoured at an achieved ${token}\%$.")
+        assert any(token in p for p in bare), f"{token}% is unguarded"
+
+    mislabelled = _check(tmp_path, r"""
+        Across the $80$ correct-answer targets of the attack campaign, the $5\%$ budget is
+        honoured at $N{=}40$ at an achieved $5.0\%$.
+    """)
+    assert any("5.0" in p and "MISLABELLED" in p for p in mislabelled), _say(mislabelled)
+
+    ok = _check(tmp_path, r"""
+        Running the same $200$ correct answers out to $N{=}40$ buys the missing operating
+        point---the ceiling atom empties and a $5\%$ budget is honoured at an achieved
+        $5.0\%$.
+    """)
+    assert not ok, _say(ok)
+
+
+# --- the SECOND AXIS: measured, or derived? --------------------------------------------
+def test_a_replayed_floor_may_not_be_presented_as_a_measurement(tmp_path):
+    """A different kind of rule, for a different kind of error.
+
+    Only N=40 was run. Every smaller budget in results/n_scaling_grid.md is a replay of the
+    recorded pairwise verdicts on random subsets, and the report's own subsetting control
+    shows the replay is biased: against a directly measured N=10 floor of 9.5%, replay
+    gives a 12.0% median with all 20 replicates above the direct estimate. No POPULATION
+    label can catch that -- 3.0% and 9.5% are the same 200 correct answers -- so the rule
+    demands the disclosure instead, exactly as the 0.787 rule demands its convention.
+    """
+    for token in ("3.0", "3.1", "12.0"):
+        problems = _check(
+            tmp_path,
+            rf"On the score-independent \emph{{fair}} pool ($200$ correct, $200$ "
+            rf"hallucinating) the floor at $N{{=}}20$ is ${token}\%$.")
+        assert any("REPLAY-DERIVED" in p for p in problems), f"{token}%: " + _say(problems)
+
+
+def test_a_replayed_floor_passes_when_the_replay_is_disclosed(tmp_path):
+    """Discussion's live wording. The rule is a disclosure requirement, not a ban -- and
+    the paragraph that states the bias most plainly must be the one that passes."""
+    for text in (
+        r"""
+        We have now run the budget out to $N{=}40$, recording the full pairwise equivalence
+        verdicts so that any smaller budget is recoverable by replaying them on random
+        subsets. On the same $200$ correct answers the ceiling-atom floor falls from
+        $9.5\%$ [$6.2$, $14.4$] at $N{=}10$ to $3.0\%$ [$1.4$, $6.4$] at $N{=}20$.
+        """,
+        r"""
+        Replay \emph{over}states the floor, so the true $N{=}20$ floor is probably below
+        $3.0\%$ and a $5\%$ budget is more purchasable than we report.
+        """,
+        r"""
+        On the fair pool the floor is $9.5\%$ measured directly at $N{=}10$ against a
+        $12.0\%$ median over $20$ subset replays.
+        """,
+    ):
+        problems = _check(tmp_path, text)
+        assert not problems, _say(problems)
+
+
+def test_the_eq5_fair_pool_auroc_is_guarded_beside_its_neighbour(tmp_path):
+    """0.703 is the fair pool scored under length-normalised Eq.~(5); 0.704 is the same
+    pool under the discrete estimator. They appear in one clause, one digit apart, and only
+    0.704 was guarded -- so the cheapest slip in the paper had no check on it."""
+    bare = _check(tmp_path, r"The detector reaches AUROC $0.703$ under Eq.~(5).")
+    assert any("0.703" in p for p in bare), _say(bare)
+
+    ok = _check(tmp_path, r"""
+        On the score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) it
+        scores AUROC $0.703$ against the discrete estimator's $0.704$.
+    """)
+    assert not ok, _say(ok)
+
+
+def test_the_replay_rule_covers_the_incoming_correction(tmp_path):
+    """3.0% is replicate-0 only; the exact subset-averaged, seed-free value is 3.1%. Both
+    renderings are guarded on the 0.729/0.730 precedent, so restating the estimate cannot
+    silently un-guard it -- which is defect 6 in miniature."""
+    from check_population_labels import RULES
+
+    replay = [r for r in RULES if r["name"].startswith("REPLAY")][0]
+    flat = " ".join(replay["numbers"])
+    assert "3\\.0" in flat and "3\\.1" in flat
 
 
 # ======================================================================================

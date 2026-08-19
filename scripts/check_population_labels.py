@@ -7,6 +7,11 @@ has failed six times should not be the guard on the seventh.
 
 THREE POPULATIONS, and they are not interchangeable:
 
+  (A fourth, smaller population is registered in POOLS below: the winner's-curse
+  re-scored subset. It is nested inside the attacked pool's false-alarm stratum and is
+  described there, because its whole identity is "the FA targets the optimiser found a
+  paraphrase for".)
+
   fair pool      200 correct + 200 hallucinating, drawn score-independently.
                  AUROC 0.704 [0.653, 0.753]; separation 0.463 nats, d ~ 0.76.
                  Clean means 1.380 (correct) / 1.843 (wrong), headroom 0.923.
@@ -70,7 +75,7 @@ WHAT THIS CHECKS (and why the first version of it was near-vacuous)
 An audit constructed eight genuine population errors and the original rule missed seven.
 Every miss had the same shape: the rule asked whether an allowed label was PRESENT within
 420 characters, which in a paper that discusses both pools contrastively in one paragraph is
-almost always true -- exactly where the error is likeliest. Five defects, all now closed:
+almost always true -- exactly where the error is likeliest. Six defects, all now closed:
 
   1. PRESENCE, never ATTACHMENT. `requires` was an OR satisfied by any allowed label in the
      window, and no label could ever cause a rejection.
@@ -115,6 +120,34 @@ almost always true -- exactly where the error is likeliest. Five defects, all no
      rule is that anything appearing in BOTH `labels` and the paper's numbers must be
      re-derived from an artifact whenever that artifact is rerun.
 
+  6. THE GUARDED VALUES WENT STALE TOO, AND THE RULE STAYED GREEN BECAUSE OF IT (2026-08-19).
+     Defect 5 fixed the LABELS. It did not ask the same question of `numbers`. When the
+     winner's-curse cell was rerun (`_def`, n=60 -> `_defb`, n=69) every figure in it moved,
+     and the rule kept listing the OLD ones: 45%/25%/65%, 0.383, 0.698, 0.315, 0.529, 0.234,
+     `36 of 60`. Not one live value -- 44%, 23%, 64%, -0.341, -0.469, -0.212, +0.609,
+     +0.268, `37 of 69`, r=0.48 -- was guarded, so the paper's entire Limitations winner's-
+     curse paragraph, its Abstract sentence and two Introduction sentences were unprotected;
+     `\b60 false-alarm` was still a LABEL (defect 5's exact shape, one cell over); and 69 was
+     not a frozen count, passing only because the adjacent `80 false-alarm` was the token the
+     growing rule happened to capture. A rule pointed at values that no longer exist cannot
+     fail, and a check that cannot fail reports success. FIX: the retired nine are moved to
+     SUPERSEDED (the existing mechanism for a superseded number), the live ten are registered
+     with `rescored` as their owner, 69 and its complement 11 are declared in FROZEN_COUNTS,
+     and _WC_OK gives the cell its own admissible set so no neighbouring token can stand in
+     for it. THE GENERAL LESSON, and it is the one to carry forward: rerunning a cell
+     silently disarms every rule keyed to its old values. `numbers` expires exactly like
+     `labels` does. Whoever reruns a cell owns BOTH lists for it.
+
+     AND THERE IS A SECOND WAY TO BE SILENT, found in the same sweep: never keyed at all.
+     A rerun disarms an existing rule; a NEW result arrives with no rule at any time. Six
+     live values had entered the paper since the guard was last touched -- 5.0% and 2.0%
+     (the N=40 achievable grid, fair pool correct stratum), 3.0% (the N=20 floor, and a
+     REPLAY rather than a measurement), and 14.8%, 20.0%, 27.8% (Eq.(5) vs discrete
+     saturation over the 2000-question pass). Three new rules cover them. Note that the
+     `2000 cached sample sets` rendering matched none of the replication pool's labels, so
+     registering the values without registering the rendering would only have moved the
+     silence -- the two lists have to be extended together.
+
 --------------------------------------------------------------------------------------
 WHAT IT STILL CANNOT CATCH (deliberate; false positives gate the suite)
 
@@ -132,16 +165,20 @@ WHAT IT STILL CANNOT CATCH (deliberate; false positives gate the suite)
     for the Abstract's "20% still pinned" on the 15-target N=20 re-score subset: a bare
     20% is indistinguishable from any other 20%, and an unanchored rule there would fire
     on every future percentage that happens to round to it.
-  * 0.698 COLLIDES, and the collision is mis-owned rather than merely unguarded -- the
-    hazard the 0.51 entry records, one step worse. It is guarded as the winner's-curse
-    selection-time mean intended move, which is 0.698 NATS on the 60 re-scored false-alarm
-    targets. It is also 0.6977 -> 0.698, the substring-oracle AUROC of the 2000-question
-    replication run (results/replication_auroc.json, greedy_correct) -- the figure commit
-    8e54943 refined to the alias-aware 0.694 while leading with it. A bare decimal cannot
-    tell a nats mean from an AUROC, so a replication 0.698 written into the paper would be
-    reported against the winner's-curse population and would demand a re-scoring label it
-    has no business carrying. If 0.698 ever needs to mean the AUROC again, it must be split
-    by unit ("0.698 nats" vs "AUROC 0.698") before it can be guarded.
+  * 0.698 COLLIDES, and the collision USED to be mis-owned -- the hazard the 0.51 entry
+    records, one step worse. It was guarded as the winner's-curse selection-time mean
+    intended move, 0.698 NATS on the 60 re-scored false-alarm targets. It is also
+    0.6977 -> 0.698, the substring-oracle AUROC of the 2000-question replication run
+    (results/replication_auroc.json, greedy_correct) -- the figure commit 8e54943 refined to
+    the alias-aware 0.694 while leading with it. A bare decimal cannot tell a nats mean from
+    an AUROC, so a replication 0.698 was reported against the winner's-curse population and
+    made to demand a re-scoring label it had no business carrying. THE `_defb` RERUN
+    DISSOLVED THIS: 0.698 is now the RETIRED selection-time mean (+0.609 replaces it), so it
+    moved to SUPERSEDED behind a `_WC_CTX` gate. A 0.698 with re-scoring words around it is
+    reported as the stale nats mean; a 0.698 in a replication sentence is not reported at
+    all, which is the correct silence -- it is unguarded, not mis-owned. If 0.698 ever needs
+    to mean the AUROC again it must still be split by unit ("0.698 nats" vs "AUROC 0.698")
+    before it can be guarded positively.
   * The `exclusive` rules (the replication family) fire on ANY same-sentence fair-pool or
     attacked-pool label, so a legitimate cross-population comparison in one sentence trips
     them. The escape hatch is the existing one: NON_BINDING_CUES disarms a label introduced
@@ -151,8 +188,34 @@ WHAT IT STILL CANNOT CATCH (deliberate; false positives gate the suite)
     completes -- when the hide arm finishes at its planned 80, its count and the 160 total
     become writable only after being declared here. That edit is the feature: stating a
     total should require asserting that the cell is closed.
-  * The oracle-calibrated vs shipped power figures (0.84/0.71 vs 0.77/0.51) are a
-    test-variant provenance problem, not a population one, and are not guarded here.
+  * MEASURED VS DERIVED is a SECOND AXIS, and this file now guards exactly one number on
+    it. The oracle-calibrated vs shipped power figures (0.84/0.71 vs 0.77/0.51) are a
+    test-variant provenance problem, not a population one, and are still not guarded. The
+    N=20 floor is the same shape with a headline attached: only N=40 was measured, every
+    smaller budget in results/n_scaling_grid.md is a replay of the recorded verdicts on
+    random subsets, and the report's own control shows replay OVERSTATES the floor (12.0%
+    median against a directly measured 9.5%, all 20 replicates above). No population label
+    can detect that -- 3.0% and 9.5% are the same 200 correct answers -- so the replay rule
+    uses `requires` to demand the disclosure instead, the way the 0.787 rule demands its
+    convention. Every other derived quantity in the paper is unguarded on this axis.
+  * 12.0% COLLIDES: it is the replay median above, and it is also 24/200 = 12.0%, the fair
+    pool's correct-stratum rate within 0.01 nats of the top (results/
+    fair_pool_granularity.md). Only the first is in the paper. If the second ever lands,
+    the replay rule will demand a replay disclosure for a directly measured number, and the
+    two must then be split by what they are a rate OF before either can be guarded.
+  * THE 2000-QUESTION SATURATION RATES SIT 1400+ CHARACTERS FROM THEIR ONLY LABEL, and the
+    rule tolerates it rather than reporting it. In limitations.tex the Eq.(5) paragraph
+    declares its population once at the top -- "the 1424 greedy-correct questions ... of
+    our 2000-question replication pass" -- and then argues for eleven hundred characters
+    before quoting 14.8%, 20.0% and 27.8%. The nearest population label to those three
+    rates is a FAIR-POOL one, about 400 characters after them, and they are not fair-pool
+    rates: they are 295/2000, 399/2000 and 556/2000. Nothing here is false, but a reader
+    arriving at that sentence has no denominator, and the paragraph's own scoping sentence
+    names 1424 and 200 while the rates that follow are over 2000. That is a PAPER-side gap;
+    the window is set to 1600 so the guard does not go red on it, and the protection that
+    remains is proximity: a fair-pool or attacked-pool label written NEXT to one of these
+    rates is still reported. Narrowing the window is the right move the moment the
+    paragraph restates its denominator closer to the numbers.
   * Numbers rendered as words ("a tenth", "a quarter", "past half", "nearly two fifths")
     are invisible to a number-anchored check -- for staleness as much as for population,
     and now for growing denominators too: "across the ninety-seven targets of the attack
@@ -252,12 +315,17 @@ POOLS: dict[str, dict] = {
         ],
     },
     "rescored": {
-        "what": "winner's-curse subset (the 60 false-alarm targets re-scored on an "
-                "independent sample)",
+        # RETIRED as a label, 2026-08-19: `\b60 false-alarm`. The cell was rerun (`_def`
+        # n=60 -> `_defb` n=69) and the label went on asserting the old size, which is
+        # defect 5 one cell over. 69 is the live size and is DECLARED in FROZEN_COUNTS, so
+        # it may be a label; 60 is now caught by the cell-keyed growing rule instead.
+        "what": "winner's-curse subset (the 69 false-alarm targets on which the optimiser "
+                "found a paraphrase, re-scored on an independent sample)",
         "labels": [
             r"re-scor", r"rescor", r"selected paraphrase", r"independent sample",
-            r"fresh sample", r"\b60 false-alarm", r"selection-time", r"at selection",
-            r"winner'?s.{0,3}curse",
+            r"fresh sample", NOT_A_DENOMINATOR + r"\b69 false-alarm",
+            r"selection-time", r"at selection", r"winner'?s.{0,3}curse",
+            r"found a paraphrase",      # the phrase that DEFINES the subset, count-free
         ],
     },
     "judge_val": {
@@ -282,6 +350,12 @@ POOLS: dict[str, dict] = {
         "labels": [
             r"replicat",
             NOT_A_DENOMINATOR + r"\b2000 questions", r"\b2000-question",
+            # methods.tex writes "our $2000$ cached sample sets" for the same pass. The
+            # three renderings above did not match it, so the Eq.(5) rates below had no
+            # reachable label there at all -- registering the values without registering
+            # the rendering only moves the silence.
+            NOT_A_DENOMINATOR + r"\b2000 cached",
+            r"\bcached sample sets", r"\b2000 sample sets",
             r"greedy alias-aware", r"alias-aware span",
             r"majority-of-samples", r"all[- ]samples[- ]correct",
             r"correctness convention", r"label convention",
@@ -329,7 +403,11 @@ RULES: list[dict] = [
         "name": "fair-pool AUROC / separation",
         "owner": "fair",
         "foreign": ["attacked"],
-        "numbers": [r"0\.704", r"0\.653", r"0\.753", r"0\.463",
+        # 0.703 added 2026-08-19: the SAME fair pool scored under length-normalised
+        # Eq.(5) on identical clusterings (results/post_overnight_claim_review.md M4). It
+        # is live in limitations.tex, it was unguarded, and it sits one digit from 0.704 in
+        # the same clause -- the cheapest possible slip between two estimators on one pool.
+        "numbers": [r"0\.704", r"0\.703", r"0\.653", r"0\.753", r"0\.463",
                     r"AUROC 0\.70(?!\d)", r"d\s*=\s*0\.7[56]\d?"],
         "window": 420,
     },
@@ -342,6 +420,22 @@ RULES: list[dict] = [
         "window": 420,
     },
     {
+        # !! FOUND BY THE 2026-08-19 SWEEP, NOT FIXED HERE: ALL FIVE OF THESE ARE `_def`-ERA
+        # VALUES OF A POPULATION THAT NO LONGER EXISTS. results/dynamic_range_finding.md
+        # line 66 computes them on "the 80 FA + 17 hide campaign targets" -- the 97-target
+        # pool, with the hide arm truncated at n=17. The hide arm was 43, then 52, and
+        # closed at 80 on 2026-08-13, so a recomputation today returns different numbers
+        # for every one of them. The guard demands an attacked-pool label for five corpses
+        # and would say nothing at all about their live replacements. This is defect 6
+        # exactly, and it is the SECOND family in that state.
+        #
+        # It is not rearmed because there is nothing to rearm it WITH: the separation
+        # statistic is QUARANTINED (a correct-versus-hallucinating contrast may not be made
+        # on a selected sub-sample of one stratum per direction), so no one recomputes it
+        # and there is no live value. The correct fix when the quarantine is next revisited
+        # is to move all five to SUPERSEDED behind an attacked-pool context gate -- a
+        # quarantined number reappearing is a staleness problem as much as a labelling one,
+        # and the guard currently reports only the second half of that.
         "name": "QUARANTINED attacked-pool separation",
         "owner": "attacked",
         "foreign": ["fair"],
@@ -370,6 +464,18 @@ RULES: list[dict] = [
         # finding on the fair pool. Its counts are one nesting-slip away from the attacked
         # pool's: 19/200 = 9.5% at the cap on the fair correct stratum reads almost the same
         # as 8/80 = 10% on the attacked one. Guarded before they land in the text.
+        # !! ALSO FOUND 2026-08-19, ALSO NOT FIXED HERE: the four distinct-value patterns on
+        # the first line below (`31 distinct`, `31 of 39`, `28 of 39`, `26 of 39`) are the
+        # SAME CLAIM SHAPE that SUPERSEDED retires as `22 distinct`, and the retirement note
+        # there names two of them as instances of the problem: "the same population gives 22
+        # at n=80, 28 at n=200, 35 at n=2000". results/fair_pool_granularity.md agrees with
+        # itself on this -- Chao1 from the n=400 sample estimates 35.0 against 39 attainable,
+        # "so the realised count has not converged at n=400 either ... a distinct-value count
+        # is a statement about the sample, not about the estimator". So this rule LICENSES,
+        # as a properly-labelled fair-pool number, the very claim commit e6e7629 retired from
+        # all four sites; attaching the fair pool to it does not make it true. The n=2000
+        # rendering (35) is not guarded at all. The crowding rates on the remaining lines
+        # ARE population statistics and are correctly live.
         "name": "fair-pool granularity / crowding counts",
         "owner": "fair",
         "foreign": ["attacked"],
@@ -398,13 +504,104 @@ RULES: list[dict] = [
     # now live in GROWING_CELLS, where 97 is flagged as one instance of a class rather than
     # licensed as a label.
     {
+        # REARMED 2026-08-19 on the `_defb` rerun (n=60 -> n=69). Every number below moved,
+        # and until this edit the rule still listed the `_def` set -- 45/25/65%, 0.383,
+        # 0.698, 0.315, 0.529, 0.234, `36 of 60` -- none of which appears in the paper any
+        # more. The rule therefore matched nothing and could not fail, while the four live
+        # sites (Abstract, Introduction x2, Limitations) carried ten unguarded numbers.
+        # The retired nine are in SUPERSEDED; see defect 6 in the module docstring.
         "name": "winner's-curse retention (re-scored subset)",
         "owner": "rescored",
         "foreign": ["fair"],
-        "numbers": [rf"\b45{PCT}", rf"\b25{PCT}", rf"\b65{PCT}", r"0\.383", r"0\.698",
-                    r"0\.315", r"0\.529", r"0\.234", r"36 of 60"],
+        "numbers": [rf"\b44{PCT}", rf"\b23{PCT}", rf"\b64{PCT}",
+                    r"-0\.341", r"-0\.469", r"-0\.212",
+                    r"\+0\.609", r"\+0\.268",
+                    r"37 of (?:the )?69",
+                    r"r\s*=\s*0\.48(?!\d)", r"\+0\.48(?:2)?(?!\d)"],
         "window": 700,      # the Limitations paragraph carries its label a long way
         "prox_window": 300,  # but only a NEARBY foreign label is evidence of mislabelling
+        "note": "These are the `_defb` winner's-curse figures on the 69 false-alarm "
+                "targets the optimiser found a paraphrase for. They are NOT fair-pool "
+                "quantities and not properties of 'the detector'.",
+    },
+    {
+        # ADDED 2026-08-19. THE SECOND FAILURE MODE: never keyed at all. These entered the
+        # paper after the guard was last touched, so no rule had ever heard of them -- the
+        # standing cost the docstring names, come due. results/rescore_likelihoods.md,
+        # 2000 questions: discrete 295/2000 = 14.8% at cap and 556/2000 = 27.8% in the top
+        # decile; farquhar_eq5_lennorm 399/2000 = 20.0% in the top decile; Spearman 0.9892.
+        #
+        # 27.8% COLLIDES with a RETIRED number and the collision is the exact confusion this
+        # file exists to prevent: 27/97 = 27.8% is the attacked subset's pooled top-tenth
+        # rate from the `_def` era. A value-keyed rule cannot separate them. A POPULATION-
+        # keyed one can, and that is the answer: this rate is owned by the replication pass,
+        # so an attacked-pool label bound to it is an error, while the retired rendering is
+        # caught by its 97 DENOMINATOR in SUPERSEDED. Probe and control both in the tests.
+        "name": "Eq.(5) / discrete-estimator saturation rates (2000-question pass)",
+        "owner": "replication",
+        "foreign": ["fair", "attacked"],
+        "numbers": [rf"\b14\.8{PCT}", rf"\b20\.0{PCT}", rf"\b27\.8{PCT}",
+                    r"\b295/2000", r"\b556/2000", r"\b399/2000", r"0\.9892"],
+        # NOT `exclusive`, unlike the replication AUROCs. Those are headline numbers quoted
+        # on their own; these are argued in a paragraph whose SUBJECT is the nesting -- "the
+        # 1424 greedy-correct questions of our 2000-question replication pass, and the
+        # 200-question correct stratum of the fair pool nested within it" names both
+        # populations in one sentence, legitimately, and exclusivity would fire on it.
+        "window": 1600,
+        "prox_window": 300,
+        "note": "These are rates over the 2000-question cached pass, NOT over the fair "
+                "pool's 400 and NOT over the attacked pool's 80.",
+    },
+    {
+        # ADDED 2026-08-19, same failure mode: the N=40 budget-scaling numbers landed in the
+        # Abstract, Introduction and Discussion in the uncommitted edit and no rule covered
+        # them. results/n_scaling_grid.md section 3: at N=40 an `at_most` 5% budget is
+        # achieved at 5.0% (10/200), and the smallest non-zero achievable rate is 2.0%
+        # (4/200). Both are on the fair pool's CORRECT stratum, n=200 -- the same
+        # population as the 9.5% floor they are contrasted with.
+        #
+        # 2.0% is guarded BEFORE it appears, which is this file's standing practice for a
+        # number that is about to land (see the fair-pool granularity rule).
+        "name": "achievable-FPR grid at larger sample budgets (fair pool, correct stratum)",
+        "owner": "fair",
+        "foreign": ["attacked"],
+        "numbers": [rf"\b5\.0{PCT}", rf"\b2\.0{PCT}", r"\b10/200", r"\b4/200"],
+        "window": 520,       # Discussion carries the label 476 chars back
+        "prox_window": 300,
+    },
+    {
+        # ADDED 2026-08-19, and it guards a DIFFERENT AXIS from every other rule here.
+        #
+        # The question these rules ask is "which POPULATION". 3.0% raises a second one that
+        # this file has met before and never armed: MEASURED, OR DERIVED? Only N=40 was run.
+        # Every smaller budget in results/n_scaling_grid.md is a replay of the recorded
+        # pairwise verdicts on random subsets, and the report's own subsetting control shows
+        # replay is BIASED: against a directly measured N=10 floor of 9.5%, replay gives a
+        # 12.0% median with all 20 replicates above the direct estimate. So a replayed floor
+        # quoted as a measurement overstates it, and no population label detects that --
+        # 3.0% and 9.5% are the same 200 correct answers.
+        #
+        # `requires` is therefore the disclosure, not a pool, exactly as the 0.787 rule
+        # demands its convention be named. The pre-existing instance of this axis is noted
+        # in the docstring (oracle-calibrated vs shipped power, 0.84/0.71 vs 0.77/0.51) and
+        # is still unguarded; this is the first time it carries a headline number.
+        "name": "REPLAY-derived budget figures (subset replay, not a direct measurement)",
+        "owner": "fair",
+        "foreign": ["attacked"],
+        # 3.1% is the exact subset-averaged value that supersedes the replicate-0 3.0%.
+        # Both renderings are guarded, on the 0.729/0.730 precedent: a guard that tracked
+        # only the current one would go quiet the moment the estimate was restated.
+        "numbers": [rf"\b3\.0{PCT}", rf"\b3\.1{PCT}", rf"\b12\.0{PCT}"],
+        "requires": [r"replay", r"replaying", r"replicates?\b", r"subsets?\b",
+                     r"recorded (?:pairwise )?(?:equivalence )?verdicts",
+                     r"derived by", r"not (?:a )?direct"],
+        "window": 420,
+        "prox_window": 300,
+        "missing_label": "REPLAY-DERIVED FIGURE PRESENTED AS A MEASUREMENT",
+        "note": "Only N=40 was measured. Every smaller budget is a replay of the recorded "
+                "verdicts on random subsets, and the subsetting control shows replay "
+                "OVERSTATES the floor (12.0% median against a directly measured 9.5%, all "
+                "20 replicates above). Say that it is a replay wherever it is quoted.",
     },
     {
         "name": "circularity artefact (score-DEPENDENT selection)",
@@ -483,6 +680,12 @@ RULES: list[dict] = [
 # --------------------------------------------------------------------------------------
 _SAT_CTX = [r"satur", r"ceiling", r"\bcap\b", r"pinned", r"log N", r"ln 10", r"2\.30"]
 _CORR_CTX = [r"correlat", r"\bcorr\b", r"headroom", r"uncensored", r"\br\s*="]
+# Winner's-curse context. Deliberately NARROW: `paraphrase`, `selection` and `attack` are
+# everywhere in this paper, and a gate built from them would reach half the Discussion.
+# These are the words that only the re-scoring diagnostic uses.
+_WC_CTX = [r"re-scor", r"rescor", r"retention", r"retains", r"shrinkage",
+           r"winner'?s.{0,3}curse", r"selection-time", r"at selection",
+           r"fresh sample", r"independent sample", r"selected paraphrase"]
 
 SUPERSEDED: list[dict] = [
     {"pattern": r"\b39/80", "current": "42/80",
@@ -518,6 +721,51 @@ SUPERSEDED: list[dict] = [
                     "$N{=}10$, two of them in the top tenth of the range)"},
     # NB: `97 targets`, `17 wrong` and friends are deliberately NOT listed here. Enumerating
     # the particular stale values is the shape that failed -- see GROWING_CELLS below.
+    #
+    # ANY DENOMINATOR OF 97 IS STALE, generatively, without enumerating the numerators.
+    # docs/START_HERE_overnight.md states the rule outright: "Any statistic with 97 in its
+    # denominator is stale by construction." 97 was 80 correct + a hide arm truncated at 17;
+    # the arm ran on to 43, 52 and finally 80, so 27/97, 12/97 and every sibling describe a
+    # pool that existed for one afternoon. This is also half the answer to the 27.8%
+    # collision: the RETIRED rendering is caught here by its denominator, and the LIVE
+    # 27.8% (556/2000, the replication pass) is caught by its population rule.
+    {"pattern": r"(?<![/\d.])\b\d+/97\b", "run": "the 97-target `_def`-era pool",
+     "quantity": "a rate over 80 correct + a hide arm truncated at 17",
+     "replacement": "that denominator never existed for longer than an afternoon -- the "
+                    "hide arm ran 17 -> 43 -> 52 -> 80. Restate the statistic on a closed "
+                    "cell: the FA stratum (80) or the fair pool (200 / 400)"},
+    #
+    # ---- THE WINNER'S-CURSE CELL, `_def` (n=60) -> `_defb` (n=69), 2026-08-19 -----------
+    # results/winners_curse_se_false_alarm.md is regenerated from
+    # results/winners_curse_ckpt_se_false_alarm_defb.jsonl (69 rows; the `_def` checkpoint
+    # has 60). EVERY figure moved, so every one of them is listed: leaving even one off is
+    # what let the whole family go quiet. These are VALUES, so they belong here; the cell
+    # SIZE (60 -> 69) is a count and is keyed to its cell in _WC_OK instead. Percentages and
+    # bare decimals carry a `near` gate, because a future 25% of something else is not this.
+    {"pattern": rf"\b45(?:\.2)?{PCT}", "current": "44% (44.0%)",
+     "quantity": "retention of the selection-time effect on re-scoring",
+     "near": _WC_CTX},
+    {"pattern": rf"\b25(?:\.0)?{PCT}", "current": "23%",
+     "quantity": "LOWER end of the retention bootstrap interval", "near": _WC_CTX},
+    {"pattern": rf"\b65(?:\.0)?{PCT}", "current": "64%",
+     "quantity": "UPPER end of the retention bootstrap interval", "near": _WC_CTX},
+    {"pattern": r"\+?0\.698(?!\d)", "current": "+0.609 nats",
+     "quantity": "mean intended move AT SELECTION",
+     # The gate is what keeps the replication's substring-oracle AUROC 0.6977 -> 0.698 out
+     # of this rule; see the 0.698 entry in the module docstring's limitation list.
+     "near": _WC_CTX},
+    {"pattern": r"\+?0\.315(?!\d)", "current": "+0.268 nats",
+     "quantity": "mean intended move ON FRESH SAMPLES", "near": _WC_CTX},
+    {"pattern": r"-?0\.383(?!\d)", "current": "-0.341 nats",
+     "quantity": "shrinkage (fresh - selection)", "near": _WC_CTX},
+    {"pattern": r"-?0\.529(?!\d)", "current": "-0.469 nats",
+     "quantity": "LOWER end of the shrinkage bootstrap interval", "near": _WC_CTX},
+    {"pattern": r"-?0\.234(?!\d)", "current": "-0.212 nats",
+     "quantity": "UPPER end of the shrinkage bootstrap interval", "near": _WC_CTX},
+    {"pattern": r"\b36 of (?:the |our )?(?:60|69)\b", "current": "37 of the 69",
+     "quantity": "re-scored targets keeping a positive move"},
+    {"pattern": r"\+0\.456(?!\d)|r\s*=\s*0\.46(?!\d)", "current": "r = 0.48 (+0.482)",
+     "quantity": "corr(selection move, fresh move)", "near": _WC_CTX},
 ]
 SUPERSEDED_RUN = "wk9_def"
 CURRENT_RUN = "wk9_defb"
@@ -553,22 +801,60 @@ NEAR_WINDOW = 300
 _FA_STRATUM = "the FALSE-ALARM stratum -- COMPLETE at its pre-registered n=80 " \
               "(results/fa_n80_milestone.md, 80/80)"
 _FAIR_STRATUM = "a fair-pool correctness stratum -- complete and score-independent"
-_WC_SUBSET = "the winner's-curse subset (the FA targets the optimiser found a paraphrase " \
-             "for), frozen with the FA cell"
+# 60 -> 69, 2026-08-19. The `_def` checkpoint had 60 rows; the definitive `_defb` one has
+# 69 (results/winners_curse_ckpt_se_false_alarm_defb.jsonl, wc -l = 69). 69 is not a sample
+# size anyone chose: scripts/winners_curse_reeval.py skips a target when
+# `o.best_query == o.question` -- the optimiser found no paraphrase, so there was no
+# selection to re-test -- and that `continue` fires on 11 of the 80.
+_WC_SUBSET = "the winner's-curse subset: the 69 of the 80 FALSE-ALARM targets on which " \
+             "the optimiser found a paraphrase at all, re-scored on an independent " \
+             "sample. CLOSED, because the FA cell is closed at 80 and the skip rule is " \
+             "deterministic (results/winners_curse_se_false_alarm.md, n=69)"
+_NO_PARAPHRASE = "the complement of the winner's-curse subset -- the 11 FA targets whose " \
+                 "search returned the original question. 80 - 69, closed with both"
 _PILOT = "the N=20 re-score subset (results/pilot_n20_ceiling.md) -- a closed pilot"
 
 FROZEN_COUNTS: dict[int, str] = {          # the union, for reporting only
-    15: _PILOT, 60: _WC_SUBSET, 80: _FA_STRATUM, 200: _FAIR_STRATUM,
+    11: _NO_PARAPHRASE, 15: _PILOT, 69: _WC_SUBSET, 80: _FA_STRATUM, 200: _FAIR_STRATUM,
     300: "each judge-validation stratum -- complete (results/judge_validation.md)",
     400: "the fair pool, 200 + 200 -- complete",
     2000: "the TriviaQA replication run -- complete "
           "(results/replication_results.md, 2000 of 2000)",
 }
 
+# Per-CELL admissible sets. The registry is keyed by cell, never by value -- keying it by
+# value is the mistake that would bless "80 wrong" the moment 80 became frozen for the FA
+# stratum. A pattern's `allowed` set is the UNION of the cells that pattern can reach, and
+# nothing wider.
+_FA_OK = frozenset({80})            # the false-alarm stratum
+_WC_OK = frozenset({69})            # the winner's-curse re-scored subset
+_NOPARA_OK = frozenset({11})        # its complement inside the FA cell
+_PILOT_OK = frozenset({15})         # the N=20 re-score pilot
+
 # HIDE_OPEN is empty. While the hide arm is filling there is NO literal count of it that is
 # true for longer than a session. When it closes at its planned 80, whoever closes it puts
 # 80 here, with the artifact that closed it -- and only then may the paper write a hide
 # count or a both-strata total.
+#
+# !! THE ARTIFACT NOW SAYS THAT CELL IS CLOSED, AND THE DECLARATION HAS NOT BEEN MADE.
+# results/fair_recompute_report.md (07:21, 2026-08-13) reports "SE / hide (n=80)", and
+# commit 9e9347c states it outright: "both arms are now at their pre-registered n for the
+# first time ... the true campaign total is 160". This registry was never updated, so the
+# guard has been asserting a fact about the world that expired six days ago -- the SAME
+# failure as defect 5 (a stale label) and defect 6 (stale values), in the one place the
+# file says to look. Its sign is opposite and that is the only reason it has not bitten:
+# the guard is now OVER-strict, and will flag the TRUE statements "80 wrong", "80 hide
+# targets" and "the campaign's 160 targets" as growing-denominator errors.
+#
+# It is deliberately NOT fixed here. Declaring a cell closed RELAXES the guard, and
+# `HIDE_OPEN = frozenset({80})` plus 160 in FROZEN_COUNTS would license a both-strata total
+# throughout a paper that is under a critic gate and does not currently state one. Two
+# tests also pin the current behaviour on purpose -- test_the_planned_hide_n_is_not_
+# admissible_while_the_cell_is_open and test_the_fair_pools_wrong_stratum_may_be_named_by_
+# direction -- and both must be rewritten in the same commit, by whoever owns the claim.
+# The edit is: HIDE_OPEN = frozenset({80}); FROZEN_COUNTS[160] = "the attacked pool,
+# 80 + 80 -- complete (results/fair_recompute_report.md, commit 9e9347c)"; and
+# GROWING_ADVICE stops saying the arm is filling.
 HIDE_OPEN: frozenset[int] = frozenset()
 
 # The fair pool's wrong stratum can be named by DIRECTION rather than by correctness --
@@ -589,7 +875,9 @@ _POOL_NOUN = (r"(?:attack(?:ed)?(?: campaign| pool| subset| arm| cells?)?|campai
               r"|optimiser'?s own targets)")
 _QUAL = r"(?: [a-z-]+){1,2}"      # "80 CORRECT-ANSWER targets" -- names a stratum
 _NUM = r"(?<![/\d.])\b(\d+)"
-_STRATUM_OK = frozenset({15, 60, 80})
+# The union of the CLOSED campaign strata a "N targets of the campaign" phrase can name.
+# Composed from the per-cell sets above so that rerunning one cell moves one constant.
+_STRATUM_OK = _PILOT_OK | _WC_OK | _FA_OK
 
 GROWING_CELLS: list[tuple[str, str, frozenset, list | None]] = [
     # ---- A COUNT OF A STRATUM ---------------------------------------------------------
@@ -608,8 +896,32 @@ GROWING_CELLS: list[tuple[str, str, frozenset, list | None]] = [
      None),
     # ...and 200 here for the same reason: "200 false-alarm ids" is the fair pool's correct
     # stratum named by direction, complete, and not a count of the campaign's FA arm.
+    # _WC_OK is in the union because "the 69 false-alarm targets" is how the re-scored
+    # subset is named; it was `60` here until the `_defb` rerun.
     (r"(?<![/\d.])\b(\d+) false-alarm\b", "the false-alarm stratum",
-     frozenset({60, 80}) | HIDE_OR_FAIR, None),
+     _WC_OK | _FA_OK | HIDE_OR_FAIR, None),
+
+    # ---- THE WINNER'S-CURSE SUBSET, IN ITS OWN RIGHT ----------------------------------
+    # Before 2026-08-19 the live phrasing -- "the 69 of the 80 false-alarm targets on which
+    # the optimiser found a paraphrase" -- was checked only through its NEIGHBOUR: the rule
+    # above captured `80 false-alarm`, found 80 admissible, and never looked at the 69. So
+    # `the 60 of the 80` (the retired size) and `the 71 of the 80` (a future rerun) both
+    # passed. The cell now has its own pattern and its own admissible set.
+    #
+    # A DEFINITE determiner is required, exactly as in the loose "the N targets" rule below,
+    # so that ordinary subset counts stay green: "8 of the 80 false-alarm targets sit at the
+    # ceiling" quantifies a property, "THE 69 of the 80 false-alarm targets" names the cell.
+    (r"\b(?:the|those|these) " + _NUM + r" of (?:the |our |its )?\d+ false-alarm",
+     "the winner's-curse re-scored subset", _WC_OK, None),
+    # "37 of the 69 keep a positive move" -- the same cell as a DENOMINATOR. Anchored on the
+    # retention verb rather than on context, because a bare "N of the M" rule reaches every
+    # ratio in Methods.
+    (r"(?<![/\d.])\b\d+ of (?:the |our |its )?" + r"(\d+) (?:keep|kept|retain|retained)\b",
+     "the winner's-curse re-scored subset, as a denominator", _WC_OK, None),
+    # "on the other 11 the search returned the original question" -- 80 - 69, and it moves
+    # whenever 69 does. Context-gated: "the other 11" of something else is not this cell.
+    (r"\bthe other " + _NUM + r"\b", "the FA targets with no paraphrase to re-test",
+     _NOPARA_OK, _WC_CTX + [r"false-alarm", r"original question"]),
 
     # ---- A COUNT OF THE POOL AS A WHOLE -----------------------------------------------
     # The sum, which is 80 + a live number, and therefore has no admissible value at all.
