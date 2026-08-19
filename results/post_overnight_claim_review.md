@@ -271,12 +271,16 @@ same 200+200 targets, paired:
 
 | statistic | direct | replay (median) | paired difference |
 | --- | --- | --- | --- |
-| floor | 9.5% | 12.0% (range 10.0–14.5) | +2.5 pts [−2.5, +7.0] |
+| floor | 9.5% | 12.0% (range 10.0–14.5) | +2.5 pts [−0.7, +5.5] *(corrected 2026-08-19; as printed here it was [−2.5, +7.0])* |
 | AUROC | 0.704 | 0.718 (range 0.695–0.742) | +0.014 [−0.033, +0.059] |
 | TPR @ 9.5% | 27.5% | 22.6% | −4.9 pts [−12.6, +7.5] |
 | pAUC ≤ 10% | 0.145 | 0.113 | −0.032 [−0.103, +0.045] |
 
-Every interval covers zero, so the control **passes** on the stated criterion. But the point
+Every interval covers zero, so the control **passes** on the stated criterion — with one
+caveat added 2026-08-19: outside the floor row those intervals still redraw the subset on
+top of a target resample that already contains it, so they are too wide for the point
+estimates beside them, and their covering zero is a reason to claim nothing rather than
+evidence that nothing is there. Re-deriving them matched is owed work. But the point
 biases are +26% relative on the floor and −4.9 points on TPR — and as §1.1 showed, the TPR
 bias exceeds the budget effect it would be used to establish. **The control licenses the
 existence claims and not the trend claims.**
@@ -291,18 +295,74 @@ was not, so the report emits the subsetting control instead. Neither component i
 separately identified. A fresh direct N=10 pass on the current box would separate them for
 roughly one-quarter of the N=40 cost and is the single highest-value cheap run outstanding.
 
-### 3.3 The published N=20 interval is understated
+### 3.3 ~~The published N=20 interval is understated~~ — **RETRACTED 2026-08-19. This
+section was wrong, and it is the origin of the error.**
 
-`results/n_scaling_grid.md` quotes N=20 floor **3.0% [1.4%, 6.4%]**. That is a Wilson
-interval on replicate 0 only; it carries target-sampling variance and not subset-choice
-variance. With both components: **median 2.75%, [0.5%, 5.5%]**, replicate range
-[1.5%, 4.0%]. Every replayed row in that report has the same defect.
+**What this section said, and what was wrong with it.** It said that
+`results/n_scaling_grid.md`'s N=20 floor, **3.0% [1.4%, 6.4%]**, is a Wilson interval on
+replicate 0 that "carries target-sampling variance and not subset-choice variance", and
+prescribed a two-component replacement, **median 2.75%, [0.5%, 5.5%]**. The premise is
+false. A Wilson interval on one replicate carries *both* components, because they are not
+separate things to be added — they are the two halves of one binomial variance.
+
+**The arithmetic.** Let p_i be question i's probability that a random k-subset of its
+recorded 40 samples comes out all-singletons. One replicate's floor is a mean of
+independent indicators X_i with P(X_i = 1) = p_i, so
+
+```
+    mean_i p_i(1-p_i)   +   var_i(p_i)     =   pbar(1-pbar)
+    \___ subset draw __/     \_ questions _/     \_ the binomial/Wilson SE _/
+```
+
+identically. On the fair pool's 200 correct answers, from
+`results/n_scaling_ckpt.jsonl` (standard deviations in rate points on the floor):
+
+| budget | subset-draw component | question component | root-sum-square | sqrt(pbar(1-pbar)/200) |
+| --- | --- | --- | --- | --- |
+| N=10 | 1.612 | 1.635 | 2.296 | 2.296 |
+| N=20 | 0.983 | 0.743 | 1.232 | 1.232 |
+
+The subset-draw component was already inside the interval this section called
+one-component. Adding it produced an interval roughly **twice as wide as the estimator
+being quoted deserves**, and the prescription then travelled: into
+`results/replay_control.md` §2, whose bootstrap resamples targets *and* redraws the subset,
+and from there into `paper/sections/discussion.tex`, which stated it as the paper's
+interval discipline.
+
+**The rule that replaces it.** An interval belongs to an *estimator*, and may resample
+exactly what that estimator leaves varying:
+
+| estimator | interval |
+| --- | --- |
+| one replicate's replayed floor | Wilson on the count — already both components |
+| the subset-averaged replayed floor (**what we quote**) | a bootstrap over the 200 questions only; the subset draw has been averaged out and must not be put back |
+| a measured or direct floor | Wilson on the count |
+
+**The corrected numbers**, from `results/replay_control.md` §2b:
+
+| budget | floor | corrected 95% | what §3.3 and the earlier reports gave |
+| --- | --- | --- | --- |
+| replay N=10 | 12.0% | [8.9%, 15.3%] | 11.9% [7.0%, 17.5%] |
+| replay N=20 | 3.1% | [1.8%, 4.7%] | 3.0% [0.5%, 6.5%] |
+| measured N=40 | 2.0% | [0.8%, 5.0%] (Wilson on 4/200) | unchanged |
+
+The point estimates moved because they are now the mean of the 200 per-question p_i
+(Monte-Carlo error under 0.01 points) instead of an average over 200 whole replicates,
+whose own Monte-Carlo error straddled the first decimal place.
+
+**What did not change.** The headline still holds and is now tighter: the floor falls
+**10.0 points [7.2, 12.9]** from replayed N=10 to measured N=40, which still excludes
+zero. The direct-vs-replay step at N=10 is +2.5 points [-0.7, +5.5] and still covers zero,
+so §3.2's "neither component is separately identified" stands. What *did* change is the
+N=20 pre-registration reading: the corrected interval stops at 4.7% and no longer covers
+the whole 3.5–5.3% predicted band, so `discussion.tex` can no longer say it does.
 
 ### 3.4 How much weight the N=20 row can carry — recommendation
 
-**Report N=20 as an estimate, explicitly labelled "replayed, not measured", with a
-two-component interval. Do not let any claim rest on it that a direct measurement could
-overturn.**
+**Report N=20 as an estimate, explicitly labelled "replayed, not measured", with the
+matched question-bootstrap interval of `results/replay_control.md` §2b — 3.1% [1.8%, 4.7%]
+— and not the retracted two-component one. Do not let any claim rest on it that a direct
+measurement could overturn.**
 
 The one thing it *can* carry is the claim that costs the paper something: *a 5% budget is
 honourable at N=20*. That is robust across all 20 subset draws (worst-case floor 4.0% < 5%),
@@ -582,11 +642,14 @@ Ordered by how much damage each would do if it reached a referee.
    and N=20 the two definitions coincide, so the bug only surfaces at N=40 — where it makes
    the row read "any false-alarm rate down to zero is available". Fix
    `scripts/n_scaling_grid.py` before this number is quoted anywhere.
-2. **Every replayed row in `n_scaling_grid.md` carries a one-component interval.** The
-   Wilson interval is computed on replicate 0 and omits subset-choice variance. N=20 floor
-   is 3.0% [1.4, 6.4] as printed; with both components it is 2.75% [0.5, 5.5], replicate
-   range [1.5, 4.0]. Either add the second component or label the interval as
-   target-sampling only.
+2. ~~**Every replayed row in `n_scaling_grid.md` carries a one-component interval.**~~
+   **RETRACTED 2026-08-19 — see §3.3.** A Wilson interval on one replicate does not omit
+   subset-choice variance; mean_i p_i(1-p_i) + var_i(p_i) = pbar(1-pbar), so it carries
+   both. The real defect in those rows is the opposite one and is about *labelling*: the
+   Wilson interval printed there is correct for a single replicate, but the number beside
+   it in this project's later reports is the subset-AVERAGED floor, which is a different
+   estimator with a smaller variance and takes the question-bootstrap interval of
+   `results/replay_control.md` §2b. Label each row with the estimator its interval is for.
 3. **The drift control never fired.** `n_scaling_grid.py` emits the drift control only when
    N=10 is directly re-measured on the same box; it was not, so subsetting error and
    generation drift between the June cache and the August run are unidentified. A clean
@@ -641,5 +704,8 @@ artefacts; nothing was written into `results/` except this file.
 Scratch scripts (not committed):
 `…/scratchpad/budget_tradeoff.py`, `budget_tradeoff2.py`, `budget_tradeoff3.py`.
 Fold the parts worth keeping into `scripts/n_scaling_grid.py` — specifically the matched-FPR
-TPR comparison, the band-decomposed pAUC, and the two-component interval — so the report
-regenerates them rather than depending on scratch files.
+TPR comparison and the band-decomposed pAUC — so the report regenerates them rather than
+depending on scratch files. **Not** the two-component interval: it is retracted (§3.3), and
+the construction that replaces it lives in `scripts/replay_control.py` (`quote`,
+`saturation_probs`, `floor_variance_split`), which refuses to attach an interval to an
+estimator it does not belong to.

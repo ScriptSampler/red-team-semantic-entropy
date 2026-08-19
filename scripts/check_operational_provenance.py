@@ -272,7 +272,12 @@ COUNTDOWN = re.compile(r"(\d{1,4})\s*days?\b[^.\n]{0,70}?(\d{4}-\d{2}-\d{2})")
 # Files absent from this map must be clean (baseline 0).
 # --------------------------------------------------------------------------------------
 KNOWN_OPEN: dict[str, int] = {
-    "docs/START_HERE_overnight.md": 2,
+    # 2 -> 0 on 2026-08-19. The two figures were a dead "~67 GPU-h" carried as a live cost and
+    # a "~70 GPU-h" hide-cell price that no one could re-derive. The document was rewritten:
+    # the live costs are now measured off the running checkpoint and tagged, the retired
+    # figure is named and marked superseded, and the un-re-derivable one is gone rather than
+    # restated. Debt PAID, not reclassified.
+    "docs/START_HERE_overnight.md": 0,
     "docs/definitive_run_plan.md": 2,
     "docs/framing_decision.md": 2,
     # 1 -> 2 on 2026-08-14: correcting the dead 228 anchor introduced the measured ~99
@@ -282,7 +287,13 @@ KNOWN_OPEN: dict[str, int] = {
     # checker cannot read. Paper numbers are guarded by check_population_labels.py and
     # by the standing rule that each trace to a committed artifact.
     "paper/sections/experiments.tex": 2,
-    "results/derived_paper_quantities.md": 3,
+    # 3 -> 0 on 2026-08-19, and this is the case the ratchet was built to reward. The debt was
+    # paid AT THE GENERATOR: `scripts/derived_paper_quantities.py` grew a `note` field --
+    # commented in the source as "provenance tag, for the operational-figure checker" -- and
+    # now emits MEASURED/MODELLED into a provenance column, so all 14 operational figures in
+    # the report carry a tag and the two MODELLED ones name the 55 s unit they came from. A
+    # regenerated file keeps its tags. Hand-tagging would not have survived the next run.
+    "results/derived_paper_quantities.md": 0,
     "results/judge_owed_conditions.md": 12,
     "results/n_scaling_plan.md": 40,
     "results/null_control_cost_options.md": 24,
@@ -290,6 +301,30 @@ KNOWN_OPEN: dict[str, int] = {
     "results/power_under_ceiling.md": 1,
     "scripts/overnight_2026_08_13.sh": 2,
     "scripts/overnight_queue.sh": 5,
+    # DELIBERATELY ABSENT: scripts/overnight_2026_08_14.sh, which carries 3 untagged figures
+    # (`~25 GPU-h`, `1191 s/target`, `~4 GPU-h`) and therefore fails against its implied
+    # baseline of 0. Registering it at 3 would make the suite green in one line, and the
+    # argument for doing so is not weak: the file is on the do-not-edit list, it is the live
+    # GPU wrapper, and the module docstring above warns that a permanently red guard "reads as
+    # nothing at all". It is still wrong, for a reason the 08_13 entry does not share. That
+    # entry recorded debt that already existed when this register was struck on 2026-08-14.
+    # This file was first committed on 2026-08-19, five days later: it is debt that arrived
+    # AFTER the ratchet, which is the one thing a ratchet exists to refuse. The failure message
+    # this check prints says "Do not raise the baseline to make this pass", and it is addressed
+    # to exactly this situation.
+    #
+    # It is also not costless to bless. The three figures are the post-audit MEASURED values
+    # and their only defect is that "measured" is written in lower case -- but that is a
+    # type-(d) judgement about whether an anchor fits, made from outside, on a file that cannot
+    # be opened for editing, and whose own numbers are already stale (it says 69 remaining;
+    # 57 remain). The docstring is explicit that this class of judgement is not mechanisable
+    # and not the checker's to make.
+    #
+    # RETIREMENT CONDITION, so this comment cannot outlive its reason: when the null control
+    # finishes and the no-edit rule lifts, tag those three figures in the script. The suite
+    # then goes green with no change to this register at all. If a future session decides to
+    # register it anyway, that is a defensible call -- but make it in a commit that says so,
+    # not as a side effect of clearing a red.
 }
 
 

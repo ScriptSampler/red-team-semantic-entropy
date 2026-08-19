@@ -19,14 +19,20 @@ is pinned here:
      may be printed without the n it assumed.
   5. THE LOOP. Checkpoint, resume, and tolerance of a torn line, driven with a fake
      scorer.
-  6. THE GRID at N=20/40, including that the floor is the ceiling atom and that averaging
-     k runs cannot push the atom below the deterministic-saturation mass.
+  6. THE GRID at N=20/40, including that the floor is the FIRST FIRING POINT and not the
+     ceiling atom -- they coincide only while the atom is non-empty, and the report row
+     read the atom under a "floor" header until N=40 emptied it -- and that averaging k
+     runs cannot push the atom below the deterministic-saturation mass.
+  7. THE REPORT'S OWN PROSE, where it carries a rule or a borrowed number. A decision rule
+     that licenses retiring results, and a value copied out of another file, are both
+     things that go stale silently in a generated document that reads as current.
 
 CPU only: no GPU, no model, no sample cache, no network.
 """
 from __future__ import annotations
 
 import math
+import re
 import sys
 from itertools import combinations
 from pathlib import Path
@@ -438,7 +444,10 @@ def _atomic(n_neg: int, k_at_cap: int, budget: int, rng):
 
 
 @pytest.mark.parametrize("budget,k", [(20, 8), (40, 3), (20, 1), (40, 19)])
-def test_the_floor_is_the_ceiling_atom_at_every_budget(budget, k):
+def test_the_floor_is_the_ceiling_atom_WHILE_THE_ATOM_IS_NON_EMPTY(budget, k):
+    """Note the scope in the name: every case here has k >= 1 at the cap. The identity
+    holds only there, and reading this test as "the floor IS the atom" unqualified is
+    what put the atom in the floor column of the report. See the k=0 test below."""
     rng = np.random.default_rng(budget + k)
     neg = _atomic(200, k, budget, rng)
     vals, fprs = attainable_fprs(neg)
@@ -446,6 +455,88 @@ def test_the_floor_is_the_ceiling_atom_at_every_budget(budget, k):
     assert NS.ceiling_atom(neg, budget) == (k, 200)
     op = operating_point(np.zeros(200, int), neg, target_fpr=k / 200 / 2, mode="at_most")
     assert op.flags_nothing, "a budget below the atom must not be honoured by firing"
+
+
+def test_an_empty_ceiling_atom_does_not_mean_a_zero_floor():
+    """REGRESSION. The published N=40 row read "0/200 = 0.0% [0.0%, 1.9%]" under a header
+    saying "floor = min non-zero FPR", because the cell was filled with `ceiling_atom`.
+    At N=10 and N=20 some negative sits at the cap, so the atom and the floor coincide and
+    the row was right by coincidence; at N=40 the atom is empty and the real floor is the
+    largest score strictly below ln 40. Zero in the floor column reads as "a sub-1%
+    operating point may exist", and none does."""
+    rng = np.random.default_rng(40)
+    neg = _atomic(200, 0, 40, rng)                    # nothing at the cap
+    rows = NS.grid_for(neg, np.array([math.log(40)]))
+    firing = [r for r in rows if r["fires"]]
+
+    assert NS.ceiling_atom(neg, 40) == (0, 200), "this fixture must have an empty atom"
+    assert firing, "an empty atom must still leave firing thresholds"
+    assert firing[0]["fpr"] > 0, "the floor is a NON-ZERO achievable rate"
+    assert firing[0]["k_fp"] >= 1
+
+    c = NS.floor_cells(neg, rows, 40)
+    assert c["at_cap_k"] == 0
+    assert c["floor_k"] == firing[0]["k_fp"]
+    assert c["floor_fpr"] == pytest.approx(firing[0]["fpr"])
+    assert c["floor"] != c["at_cap"], "the floor cell must not be the at-cap cell"
+    assert not c["floor"].startswith("0/200"), "the atom leaked back into the floor column"
+    assert c["atom_is_empty_so_floor_differs"]
+
+
+@pytest.mark.parametrize("budget,k", [(20, 8), (40, 3), (40, 0), (20, 0)])
+def test_the_floor_cell_is_always_the_first_firing_point(budget, k):
+    """The invariant the report row depends on, atom or no atom: the floor cell is the
+    first firing point, the next cell is the second, and the at-cap cell is the atom."""
+    rng = np.random.default_rng(1000 + budget + k)
+    neg = _atomic(200, k, budget, rng)
+    rows = NS.grid_for(neg, np.array([math.log(budget)]))
+    firing = [r for r in rows if r["fires"]]
+    c = NS.floor_cells(neg, rows, budget)
+
+    # The COUNT and the RATE are the invariant; whether an interval rides along with them
+    # is decided separately, by the atom -- see the test below.
+    assert c["floor"].startswith(f"{firing[0]['k_fp']}/200 = {firing[0]['fpr']:.1%}")
+    assert c["at_cap"] == NS.fmt_prop(k, 200)
+    assert c["next"] == f"{firing[1]['fpr']:.1%}"
+    # the floor can never be below the atom, and equals it exactly when the atom is there
+    assert c["floor_k"] >= k
+    assert (c["floor_k"] == k) == (k > 0)
+
+
+@pytest.mark.parametrize("budget,k", [(20, 8), (40, 3), (40, 0), (20, 0)])
+def test_the_floor_carries_an_interval_only_while_the_ceiling_atom_has_mass(budget, k):
+    """The 2026-08-19 ruling, as an executable rule rather than a note.
+
+    While the atom carries mass the floor IS the atom: a binomial proportion at ln N, a
+    threshold fixed before the data, and Wilson prices it. Once the atom empties, the
+    threshold becomes the top score this pool happened to reach, which is not the top of
+    the population's support -- a larger pool reaches a higher rung and reports a smaller
+    floor -- so the estimand moves with the pool. Measured coverage at nominal 95% is 53.7%
+    for Wilson and 0.00% for a question bootstrap
+    (`results/n40_floor_estimator_ruling.md`), so the cell must print no interval.
+
+    Both directions are asserted: an interval must appear when k > 0 and must NOT appear
+    when k == 0. A one-directional version of this test would pass on a cell that never
+    printed an interval at all."""
+    rng = np.random.default_rng(1000 + budget + k)
+    neg = _atomic(200, k, budget, rng)
+    rows = NS.grid_for(neg, np.array([math.log(budget)]))
+    c = NS.floor_cells(neg, rows, budget)
+
+    atom_empty = (k == 0)
+    assert c["atom_is_empty_so_floor_differs"] is atom_empty
+    if atom_empty:
+        assert "[" not in c["floor"], (
+            f"the floor cell {c['floor']!r} carries an interval with an EMPTY ceiling "
+            "atom. Both candidates were withdrawn on measured coverage; see "
+            "results/n40_floor_estimator_ruling.md.")
+        assert "no interval" in c["floor"], c["floor"]
+    else:
+        assert c["floor"] == NS.fmt_prop(c["floor_k"], 200), (
+            "with a non-empty atom the floor is a count at a threshold fixed in advance "
+            "and keeps its Wilson interval.")
+    # The at-cap cell keeps its interval either way: ln N is fixed a priori.
+    assert "[" in c["at_cap"]
 
 
 def test_a_denser_lattice_alone_does_not_make_the_grid_fine():
@@ -513,3 +604,80 @@ def test_beta_binomial_prediction_is_monotone_and_bounded_by_the_coupling():
     preds = [NS._beta_binomial_predictive(sizes, N) for N in (10, 20, 40, 80)]
     assert all(a >= b for a, b in zip(preds, preds[1:]))
     assert preds[0] <= 1.0 and preds[-1] >= 0.0
+
+
+# ========================================================== the report's prose and pointers
+# `results/n_scaling_grid.md` is generated, so it reads as current no matter how old its
+# reasoning is. Two things in it are therefore pinned here: the decision rule it used to
+# carry, and the one number in it that is copied from another file rather than computed.
+RC = REPO / "results" / "replay_control.md"
+GRID_MD = REPO / "results" / "n_scaling_grid.md"
+
+RETIRED_RULE = "no replayed budget in this report may be quoted"
+RETIREMENT_MARKERS = ("WITHDRAWN", "used to close", "That rule is")
+
+
+def _paragraphs(text: str) -> list[str]:
+    return text.split("\n\n")
+
+
+@pytest.mark.skipif(not GRID_MD.exists(), reason="report not generated in this tree")
+def test_the_retired_subsetting_gate_never_reads_as_a_live_rule():
+    """REGRESSION. The subsetting control used to close with: if the direct and replayed
+    arms disagree beyond the Wilson interval, the subsetting is unsound and no replayed
+    budget may be quoted. `results/replay_control.md` section 1 refutes the inference --
+    the replicates are not coin flips about the direct value, so 20-of-20 on one side is a
+    probability of a few tenths and not 2^-20.
+
+    The rule may still be QUOTED, because a correction has to say what it corrects. What it
+    may not do is stand unmarked. So the test is not "the string is absent" -- that would
+    forbid the retraction along with the claim -- but "wherever the string appears, its
+    own paragraph marks it as retired", which is the same window rule
+    `test_operational_provenance.py` arrived at for the paper's dead cost anchors."""
+    text = GRID_MD.read_text(encoding="utf-8")
+    hits = [p for p in _paragraphs(text) if RETIRED_RULE in p]
+    for p in hits:
+        assert any(m in p for m in RETIREMENT_MARKERS), (
+            "the retired subsetting gate appears in a paragraph that does not mark it "
+            f"as retired, so it reads as the report's live rule:\n\n{p}")
+
+
+@pytest.mark.skipif(not GRID_MD.exists(), reason="report not generated in this tree")
+def test_the_report_carries_the_correct_account_and_points_at_the_control():
+    """The replacement has to say the three things that make the retraction load-bearing,
+    and it has to name the file that derives them -- grep returned zero cross-references
+    between these two reports in either direction when the rule was found still standing."""
+    text = GRID_MD.read_text(encoding="utf-8")
+    assert "results/replay_control.md" in text, "the report must name the replay control"
+    low = text.lower()
+    assert "exchangeab" in low, "the unbiasedness argument is the exchangeability one"
+    assert "union-find" in low, "unbiasedness needs the subset-clustering step, not just i.i.d."
+    assert "correlates the replicates" in low or "correlated" in low
+    assert "different parameters" in low, (
+        "the two arms are unbiased for DIFFERENT generation runs; without that sentence "
+        "the reader is left to decide which arm is the odd one out")
+
+
+@pytest.mark.skipif(not RC.exists(), reason="replay control not generated in this tree")
+def test_the_quoted_subset_averaged_floor_still_matches_replay_control():
+    """The report prints the subset-averaged floor -- the number the PAPER quotes -- but
+    does not compute it; `scripts/replay_control.py` owns it, and a second implementation
+    of a printed number is how two files come to disagree unnoticed. So the copy is pinned
+    to the source. If this fails, `results/replay_control.md` has moved and
+    `NS.SUBSET_AVERAGED_FLOOR` is now a retired number sitting in a current-looking report:
+    fix the constant, and check `paper/sections/discussion.tex` for the same value."""
+    rows = dict(
+        (int(m.group(1)), (m.group(2), m.group(3)))
+        for m in re.finditer(
+            r"^\|\s*replay N=(\d+)\s*\|\s*([\d.]+%)\s*\|\s*(\[[^\]]*\])\s*\|",
+            RC.read_text(encoding="utf-8"), re.M)
+    )
+    assert rows, "no `replay N=<k>` floor row found in results/replay_control.md"
+    for budget, quoted in NS.SUBSET_AVERAGED_FLOOR.items():
+        assert budget in rows, (
+            f"N={budget} is quoted in the grid report but no longer tabulated in "
+            f"{RC.name}; the report is quoting a number its source has dropped")
+        assert rows[budget] == quoted, (
+            f"N={budget}: the grid report quotes {quoted} but {RC.name} now says "
+            f"{rows[budget]}. The generated report is not the authority -- fix "
+            f"NS.SUBSET_AVERAGED_FLOOR, then check paper/sections/discussion.tex")

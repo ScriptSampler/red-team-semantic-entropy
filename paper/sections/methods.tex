@@ -73,9 +73,47 @@ real-valued weights. Eq.~(5) attains its own maximum only when the normalised cl
 likelihoods are exactly equal, an event of measure zero, so it has no ceiling \emph{atom} and
 hence no floor on the false-positive rates it can be operated at; the ceiling is shared, the
 atom that makes the ceiling an operating constraint is not.
-Whether the empirical \emph{crowding} near the cap survives the substitution is unsettled, and
-we report a simulation rather than assert it either way (Limitations); the \emph{atom} does not
-survive it, as the argument above already implies.
+
+We state the consequence for the main method plainly, where the scoping is introduced,
+rather than leave a reader to derive it from the argument, because it is the least
+favourable reading of our own result and it is now measured rather than argued. Re-scoring
+all $2000$ cached sample sets of our replication pass---natural prevalence over the
+$1424$-answer clean-correct superset and its complement, not the fair pool---under Eq.~(5)
+with the generating model's own
+length-normalised sequence likelihoods---holding the clustering fixed, so that the weighting
+rule is the only thing that varies---puts $0.0\%$ [$0.0$, $0.2$] of them at the cap, against
+$14.8\%$ [$13.3$, $16.4$] under the discrete estimator. \textbf{The estimator
+\citet{farquhar2024detecting} designate as their main method does not exhibit the atom at
+all}, and the false-alarm floor the atom induces is therefore a property of sample-proportion
+weighting rather than of semantic entropy. Three things bound how far that reaches and none
+of them undoes it, so we give them here and not only in mitigation. The reweighting preserves
+the ordering---Spearman $\rho{=}0.99$ against the discrete estimator---so every AUROC in this
+paper stands under Eq.~(5) \emph{as we compute it}, and only the saturation arithmetic is
+estimator-specific. The qualifier is not a formality: length normalisation is the modelling
+choice that decides this, and on raw sequence likelihoods the cluster softmax is nearly
+one-hot and rank agreement with the discrete estimator collapses to $\rho{=}0.38$
+(Section~\ref{sec:limitations}).
+Near-cap \emph{crowding} partially survives: $20.0\%$ [$18.3$, $21.8$] of the same questions
+still fall in the top tenth of the range under Eq.~(5), against $27.8\%$ [$25.9$, $29.8$]
+under the discrete estimator, so the range is genuinely crowded near its top under both and
+only the discrete estimator turns that crowding into a floor. And one ceiling-derived claim
+is invariant to the weighting altogether. Because every variant scores the \emph{same}
+clustering and differs only in how the clusters are weighted, and because $H \leq \log K$ for
+any normalised weighting over $K$ observed clusters, a score in the top tenth of the range
+$[0, \log N]$ requires $K \geq \lceil N^{0.9} \rceil$ distinct meanings---at $N{=}10$,
+$K \geq 8$, since $\log 8 = 2.079$ exceeds $0.9 \log 10 = 2.072$ while $\log 7 = 1.946$ does
+not. That is a necessary condition on the clustering, which the estimators share, rather than
+on the weighting, which is what they disagree about; on the fair pool it is met by $58$ of
+$200$ correct answers ($29.0\%$ [$23.2$, $35.6$]) against $115$ of $200$ hallucinating ones
+($57.5\%$ [$50.6$, $64.1$]), so for most of the correct stratum the top of the scale is
+unreachable under any weighting rather than merely unreached under ours. The bound follows
+from the $\log N$ ceiling, so it too is silent about Kuhn's Eq.~(4). Two disclosed gaps ride
+along with the re-scoring and we do not paper over them: the cache stores decoded answer
+strings rather than the token ids the sampler emitted, so teacher forcing scores each answer
+under its \emph{canonical} tokenisation---$17$ of $20{,}000$ samples retokenise past the
+generation budget, which proves the two differ for at least those---and the sampling manifest
+pins neither the quantisation type nor the model revision. The full estimator comparison is
+in Section~\ref{sec:limitations}.
 
 Semantic Reformulation Entropy (SRE)~\citep{tong2025sre} first generates
 $R$ paraphrases of $q$, draws $K$ samples from each, pools all $R{\times}K$

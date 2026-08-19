@@ -78,12 +78,27 @@ false-alarm rate at a value some clean correct answer actually took, so the rate
 run at are a short finite list. Scored clean on the fair pool's $200$ correct answers, the
 achievable clean false-positive rates below one in four are $0\%$, $9.5\%$ [$6.2$, $14.4$]
 and $21.5\%$ [$16.4$, $27.7$], with nothing in between; an operator who specifies a $5\%$
-false-alarm budget cannot have one, because the only threshold that honours it never fires.
+false-alarm budget cannot have one at that sample budget, because the only threshold that
+honours it never fires. Running the same $200$ correct answers out to $N{=}40$ buys the
+missing operating point---the ceiling atom empties and a $5\%$ budget is honoured at an
+achieved $5.0\%$ [$2.7$, $9.0$]---so the claim is scoped to $N{=}10$ wherever we make it
+(Section~\ref{sec:discussion}).
 That floor is an identity, not a measurement we happened to make: every threshold above
 $\ln N$ flags nothing, so the smallest false-positive rate a firing threshold can have
 \emph{is} the probability that a clean correct answer yields $N$ mutually distinct meanings.
-We put that probability at $9.5\%$ on the fair pool's correct stratum and at $10.5\%$ [$9.0$,
-$12.2$] on the $1424$-answer superset it is a subset of, whose lower bound closes off a $5\%$
+The identity binds only while the cap carries mass. At $N{=}10$ it does, on the direct
+cache. At $N{=}20$ it does as well, but that figure is a \emph{replay}---the $N{=}40$ run's
+samples subset down to $20$, which by exchangeability is an unbiased estimator of a direct
+$N{=}20$ pass but is not one: no direct measurement of the grid at $N{=}20$ exists, the
+only answers this project has ever scored at that budget being the $15$ saturated targets
+of the headroom pilot below, which were selected on their attacked $N{=}10$ score. At
+$N{=}40$ it does not: no clean correct answer reaches $\ln 40$---the at-cap mass is
+$0.0\%$ [$0.0$, $1.9$]---the floor reverts to an ordinary order statistic, and the cheapest
+threshold that fires at all costs $2.0\%$ rather than nothing. We attach no interval to that
+$2.0\%$; Section~\ref{sec:discussion} says why.
+We put that probability at $9.5\%$ on the fair pool's correct stratum and, on the
+$1424$-answer superset that stratum is a subset of, at $10.5\%$ [$9.0$, $12.2$], whose lower
+bound closes off a $5\%$
 budget at $95\%$ confidence; a $10\%$ budget sits on the boundary, and the two populations
 land on opposite sides of it, so we claim only that the floor is about one correct answer in
 ten. The claim is about \emph{deterministic} rules, which is what a deployment can be audited
@@ -114,12 +129,12 @@ and correct for. They are not mutually exclusive and both are active at deployed
 claim agreement with their finding rather than an explanation of it.
 (2) \textbf{A measured account of how much of a paraphrase-attack effect is an artefact of
 its own search.} Re-scoring each \emph{selected} paraphrase on an independent sample, we
-find only $45\%$ of the apparent effect survives ($95\%$ CI $[25\%, 65\%]$). The two
+find only $44\%$ of the apparent effect survives ($95\%$ CI $[23\%, 64\%]$). The two
 statements this supports have very different strengths and we keep them apart: \emph{that}
-the selection-time figure is inflated is established, since the shrinkage is $-0.383$ nats
-with a $95\%$ CI of $[-0.529, -0.234]$ that excludes zero; \emph{how much} is not, since the
-retention interval runs from a quarter to two-thirds. Roughly half of what an uncorrected
-report would claim is selection on sampling noise. That attack success scales with the search budget is
+the selection-time figure is inflated is established, since the shrinkage is $-0.341$ nats
+with a $95\%$ CI of $[-0.469, -0.212]$ that excludes zero; \emph{how much} is not, since the
+retention interval runs from under a quarter to two-thirds. Roughly half of what an
+uncorrected report would claim is selection on sampling noise. That attack success scales with the search budget is
 known~\citep{hughes2024bon}, as is the case that success-rate comparisons need explicit
 measurement validity~\citep{chouldechova2025comparison}; what we add is the measurement for
 a \emph{stochastic detector score}, where the randomness being resampled lives inside the
@@ -156,16 +171,19 @@ same model. The effect is therefore unattributable without an oracle independent
 detector. That confound cannot arise for a constraint given by an $\ell_p$ ball, which is
 model-free and definitional, nor for a classifier, whose score is not an equivalence
 relation at all. Second, the score is a finite-sample estimate, so a maximum over candidates
-inflates: we measure $45\%$ retention on re-scoring. This does not arise against the
+inflates: we measure $44\%$ retention on re-scoring. This does not arise against the
 deterministic classifiers targeted in the work above, though it would against any stochastic
 scorer. Third, the estimator is not merely bounded---classifier confidence is bounded
 too---but \emph{discrete}, and coarsest exactly where the attack must land: at $N{=}10$ the
 estimator's attainable lattice has $39$ points, and its top two lie $0.139$ nats apart---less
 than the success criterion's own $\delta$---so $21$ of our $80$ correct targets cannot
 register a success at any usable $\delta$, whatever the paraphrase. Raising $N$
-relaxes this ($N{=}20$ affords $455$ points, seven of them in the top tenth of the range), but
-buys less usable headroom than the cap implies, because the clean baseline climbs along with
-the cap (Section~\ref{sec:discussion}). Effect sizes are
+relaxes this, and substantially ($N{=}20$ affords $455$ points, seven of them in the top
+tenth of the range); what a lifted cap returns in \emph{usable headroom} is a different
+quantity and the only one of the two we measured, at $+0.304$ nats against a nominal
+$+0.693$ on a pilot of $15$ saturated targets, selected on their \emph{attacked}
+$N{=}10$ score---a measurement we report without a mechanism for it
+(Section~\ref{sec:discussion}). Effect sizes are
 therefore right-censored and any null must stay valid under ties at the cap. The discreteness
 half of this is the score-granularity gap named by~\citet{sun2026granularity}; what we add
 is its instantiation for a sampling-based detector, where the lattice is set by the sample

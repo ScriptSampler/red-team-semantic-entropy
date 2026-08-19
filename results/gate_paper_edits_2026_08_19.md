@@ -9,6 +9,14 @@ Nothing here has been applied; no file outside this one was touched.
 The BLOCK is narrow: it is the N=20 paragraph in `discussion.tex`, and specifically the
 significance argument inside it. Everything else is fixable in place.
 
+> **READ THE ADDENDUM AT THE END OF THIS FILE BEFORE ACTING ON ANY OF IT.**
+> `results/replay_control.md` landed while this gate was in progress. I verified it
+> independently and it changes the *reason* for the BLOCK on item 3 — the paragraph's
+> disclosure is not merely overstated, it has the wrong subject. The addendum also closes
+> item 1's required guard fix (landed and verified), makes the N=40 floor of 2.0%
+> compulsory rather than optional, and specifies the replacement text for the blocked
+> paragraph. Sections A1-A7.
+
 ---
 
 ## 0. The quarantine check (the thing that had to be clean, and is)
@@ -478,3 +486,264 @@ reviewer to find, because the refutation is 40 lines away in the same paper.
 *Not done, deliberately:* nothing in `paper/`, `scripts/` or `docs/` was modified; no GPU work
 was run; `null_control.py` (PID 473) was not touched. All recomputation in §A and §B was
 pure-CPU replay of committed checkpoints in a scratch directory.
+
+---
+---
+
+# ADDENDUM — `results/replay_control.md` lands mid-gate (2026-08-19, later)
+
+The coordinator supplied `results/replay_control.md` (406 lines, `scripts/replay_control.py`,
+`tests/test_replay_control.py` — all three untracked at time of writing; 13 tests, all pass)
+and asked me to rule on item 3 against it rather than take it on authority. I did not take it
+on authority. **Everything load-bearing in it reproduces, and my ruling on item 3 hardens
+rather than softens.** Two things in the framing overreach, and the artifact slips its own
+standard twice, in the two places most likely to be lifted.
+
+## A1. What I checked, and what it came back as
+
+**The mechanism premise of the exchangeability theorem is sound, and I verified it in the
+source rather than in the prose.** `src/se/entropy.py:30-68` — `cluster_samples` builds all
+`C(n,2)` pairs, batches them through the NLI, and runs union-find. Connected components are
+order-invariant, so a subset's clustering depends *only* on the verdicts inside it and is
+exactly what a direct run on those samples would compute. This was the premise that could
+have failed — a representative-based incremental clusterer (the common implementation) would
+have broken it — and it does not. The one residual caveat is that the N=40 pass batches 780
+pairs against a direct run's 45, so batch composition is not literally identical; NLI forward
+passes are batch-invariant under correct masking, so this is a footnote, not a hole.
+
+**I also probed exchangeability empirically, which the artifact does not do.** If the 40
+samples within a run were not exchangeable, the theorem would fail even with a perfect
+clusterer. Comparing fixed index windows against the random-subset distribution (300 draws):
+
+| stratum | first 10 | last 10 | random-10 mean | sd | 2.5 / 97.5 |
+| --- | --- | --- | --- | --- | --- |
+| correct | 12.50% | 10.50% | 11.90% | 1.59 pp | 9.0% / 15.0% |
+| hallucinating | 23.50% | 29.00% | 27.76% | 2.39 pp | 23.0% / 32.0% |
+
+Three of four fixed windows sit comfortably inside; the hallucinating first-10 sits at the
+bottom edge, which is what one expects from four probes. **No evidence against within-run
+exchangeability.** The premise survives a test it was not given.
+
+**Every quantitative claim I could recompute, reproduced.** All from
+`results/n_scaling_ckpt.jsonl` on CPU, independently implemented (own union-find, own AUROC,
+own Poisson-binomial DP):
+
+| quantity | `replay_control.md` | my recomputation | ok |
+| --- | --- | --- | --- |
+| N=40 floor | 2.0% | 2.00% (4/200) | yes |
+| N=40 AUROC | 0.746 | 0.7455 | yes |
+| N=40 pAUC ≤10% | 0.126 | 0.1259 | yes |
+| N=40 pAUC ≤5% | 0.069 | 0.0688 | yes |
+| replay-10 floor | 11.9% | 11.86% | yes |
+| replay-10 AUROC | 0.7219 | 0.7247 | yes |
+| replay-10 pAUC ≤10% | 0.1185 | 0.1189 | yes |
+| replay-20 floor | 3.0% | 3.11% | yes |
+| replay-20 AUROC | 0.738 | 0.7373 | yes |
+| E[at-cap count], correct, k=10 | 24.0, sd 3.23 | **23.93, sd 3.22** | yes |
+| exact Poisson-binomial P(X ≤ 19) | **0.081** | **0.083** | yes |
+| E[at-cap], hallucinating | 55.2, sd 4.75 | 55.33, sd 4.74 | yes |
+| P(X ≤ 55) | 0.527 | 0.517 | yes |
+| like-for-like AUROC gain | +0.0236 | +0.0208 | yes |
+| like-for-like pAUC ≤10% gain | +0.0074 | +0.0070 | yes |
+| draws below the direct floor | 10/200 = 5.0% | 3.6% strictly, 6.6% at-or-below (500 draws) | yes |
+
+**So the refutation stands, and it is stronger than the coordinator stated it.** My own
+pre-addendum finding — reached independently, before this artifact existed — was that 9.5%
+sits at the 3.6th percentile of the replay distribution and that `2^-20` is an artefact of
+running 20 replicates. The artifact reaches the same place from the theory side. Two
+independent routes, same conclusion: **the sign test is invalid, the replay estimator is
+unbiased, and reusing one verdict matrix correlates the replicates rather than biasing their
+mean.** Blocker 3.1 is upgraded from "computed under a null nobody holds" to "computed under
+a null that is provably false".
+
+**One number I could not reproduce at the stated value.** The artifact says the N=40 budget
+ranks better in **197 of 200** draws; I get **190 of 200**, which is exactly what my slightly
+higher replay-10 AUROC mean (0.7247 vs 0.7219) predicts. The figure is implementation- and
+seed-sensitive at the ±7 level and is doing rhetorical work ("the direction is consistent").
+Quote it as "the large majority of draws" or pin the seed; do not print 197 as though it were
+stable.
+
+## A2. Where the framing overreaches — and this is the part I would not sign
+
+> coordinator: "the evidence says the replay is unbiased and **the direct row is the odd one
+> out**."
+> artifact section 3: "**the replay is the sounder of the two measurements**, and the direct
+> N=10 cache is the row whose provenance deserves the scrutiny."
+
+That step does not follow, and the artifact supplies the reason itself three paragraphs
+earlier. The exchangeability theorem establishes that the replay is unbiased **for the August
+generation distribution**. The direct cache is an unbiased single realisation of the **June**
+distribution. The artifact then demonstrates that those two distributions differ: mean answer
+length +3.63 ± 0.91 chars (z = +4.0), terminal-punctuation rate −0.0163 ± 0.0071 (≈ 2.3 sd).
+So **neither estimator is biased. They estimate different parameters.** "Which is sounder" is
+not a statistical question once that is true; it is a question of which generation run the
+rest of the paper lives on.
+
+And the answer to *that* is unambiguous, and the artifact does not address it: **every other
+N=10 number in the paper is welded to the June cache.** The 9.5% floor, the 21.5% top decile,
+19/200 at the cap, AUROC 0.704 [0.653, 0.753], the whole of
+`results/fair_pool_granularity.md`, the 1424-superset 10.5% — and, decisively, the attack
+campaign, whose recorded `entropy_before` critique_log 33 section 5 reports as
+**bit-identical** to the fair pool's `entropy_nats` (max |Δ| = 0). Adopting 11.9% as the
+paper's N=10 floor to make the budget table like-for-like would put the Discussion in
+contradiction with the Abstract, the Introduction, the Conclusion and the entire attack
+chapter, and would decouple the headline from the campaign the rest of the paper is about.
+
+**So the correct resolution is not "replace the direct row".** It is:
+
+- keep **9.5% [6.2, 14.4]** as the paper's N=10 figure, on its June provenance, everywhere it
+  currently appears;
+- report the **budget trend entirely inside the replay family** — 11.9% → 3.0% → 2.0% — as a
+  like-for-like internal comparison, explicitly labelled as such;
+- state that the two N=10 estimates **agree within sampling error** (P(X ≤ 19) = 0.08 exact
+  Poisson-binomial), so nothing in the paper is destabilised by the gap;
+- and drop the language of bias in either direction.
+
+This is what the artifact's numbers support and it is all they support.
+
+## A3. Item 3 — verdict UNCHANGED (**BLOCK**), blockers restated against the corrected picture
+
+The disclosure the applying agent wrote is not merely overstated. **It has the wrong
+subject.** It says the replay is biased upward; the evidence says the replay is unbiased and
+the gap is a run difference plus a one-cell sampling fluctuation. And the consolation drawn
+from it — that the bias "runs against our own claim", which the paragraph gives as *the reason
+the row is quotable* — is now unsupported outright, because there is no established bias to
+run in any direction.
+
+**What `discussion.tex:158-176` must say instead.** Concretely:
+
+1. **Delete** "which is about $2^{-20}$ under a sign test: systematic upward bias, not an
+   interval touched at its edge." It is a p-value under a false null. Replace with the
+   measured fact: over 200 subset draws the direct 9.5% sits near the 5th percentile of the
+   replay distribution, so a unanimous run of 20 has probability ≈ 0.36 — and the replicates
+   are positively correlated, so higher still.
+2. **Delete** "Replay *over*states the floor, so the true $N{=}20$ floor is probably below
+   $3.0\%$ ... the bias runs against our own claim, and a concession computed on a statistic
+   biased in our favour would be worth less than one computed on a statistic biased against
+   us." Every clause of that is now refuted. Do not replace it with the mirror image ("the
+   direct row is the odd one out") — see A2.
+3. **Replace** with the unbiasedness statement, which is stronger and shorter: a uniform
+   k-subset of an i.i.d. N-tuple is distributed as k i.i.d. draws, and the clusterer is
+   union-find over pairwise verdicts, so the replayed score at budget k is exactly what a
+   direct k-run would have produced. Reusing one verdict matrix therefore **correlates the
+   replicates without biasing their mean** — which is why the published replayed intervals are
+   too narrow, and why no bias correction is owed.
+4. **State the residual honestly:** the direct N=10 cache and the N=40 checkpoint were
+   generated in June and August; answers in the later run are 3% longer and slightly more
+   often truncated, the right sign to nudge the atom, and the cluster-count marginal is
+   statistically indistinguishable (chi-square 7.39, df 9, p = 0.60 on the correct stratum).
+   The two N=10 estimates differ by one tail cell, 19 against 24.0 expected, exact
+   Poisson-binomial p = 0.081. A fresh direct N=10 pass on the current machine is what
+   separates drift from chance, and it has not been run.
+5. **Quote the trend like-for-like:** floor 11.9% → 3.0% → 2.0%, with the N=10 → N=40 fall of
+   **−9.9 points [−15.5, −5.0]** clearing zero, and the N=20 → N=40 step on its own not
+   clearing it. This is the sentence the paragraph was reaching for and could not previously
+   support.
+
+**Blocker 3.3 and the interval question are both settled by this artifact, in my favour and in
+the applying agent's.** The N=20 floor now has *three* published intervals for one quantity —
+[1.4, 6.4] (`n_scaling_grid.md`, replicate-0 Wilson), [0.5, 5.5]
+(`post_overnight_claim_review.md` section 3.3), [0.5, 6.5] (`replay_control.md` section 2,
+paired bootstrap over targets *and* subset draw, 4000 resamples). **Quote the last**; it is
+the only one with both variance components and an audited producing script. Record the
+supersession chain in the artifacts so a future agent does not pick the narrowest.
+
+Related hazard, new: `replay_control.md` section 2 gives the *direct* N=10 floor as
+**9.5% [5.5%, 13.5%]**, a bootstrap interval, against the paper's Wilson **[6.2, 14.4]** for
+the same number. Two intervals for the paper's single most-quoted statistic. Rule: the direct
+row keeps Wilson (as everywhere else in the paper); replayed rows take the paired bootstrap;
+never mix them in one table without saying which is which.
+
+## A4. The N=40 floor of 2.0% — **it goes in, and it is now compulsory**
+
+The diagnosis in the coordinator's message matches the one I reached from the code
+independently: `scripts/n_scaling_grid.py:1517-1521` fills the cell headed "floor = min
+non-zero FPR" with `ceiling_atom(...)` while "next FPR" takes `firing[1]`; the two coincide at
+N=10 and N=20 because the at-cap mass *is* the first firing point there, and diverge at N=40
+where it is zero.
+
+**One thing the coordinator caught that I did not, and it is right:** section 2's caption —
+"The `correct` row IS the achievable-FPR floor as a function of the sample budget" — inherits
+the same error. That row reads 0.000 at k=40, which is the atom, not the floor. The caption is
+true at every k where the cap carries mass and false at k=40 only. Fix both cells and the
+caption.
+
+**Ruling: 2.0% [0.8, 5.0] must now enter the paper**, and not merely may. Before this artifact
+the applying agent's caution was defensible — the number was not in a report the paper cited.
+It is now the terminal value of the one trend that survives like-for-like (11.9 → 3.0 → 2.0),
+so the paper cannot state that trend and omit its endpoint. I verified 4/200 = 2.0% and
+hand-checked the Wilson interval.
+
+## A5. Does the artifact slip its own underpowered-vs-null standard? **Yes, twice — and in the two places most likely to be lifted**
+
+The coordinator asked me to hold it to this. In long form it is exemplary:
+
+> "This is an underpowered comparison, not a demonstration that the budget does nothing... The
+> right sentence is 'rises by a fraction of the advertised amount, and not distinguishable
+> from flat at this sample size'; the wrong ones are 'makes it a better ranker' and 'is flat'."
+
+That is the correct standard, stated better than the paper states it. But the discipline does
+not survive into the summary:
+
+- **Slip 1 — the up-front bullet 3:** "the low-FPR pAUC **does not fall with budget, it rises
+  by +0.007**". The interval on that is [−0.0677, +0.0768] — ten times the point estimate,
+  covering zero in both directions. "Does not fall" *is* acceptance of a null, and "it rises"
+  asserts a direction the data cannot carry. The defensible statement is only that **the
+  claimed fall is unsupported and the point estimate's sign reverses**. This is the same error
+  class as the claim it corrects, in the paragraph a reader will quote.
+- **Slip 2 — "What DOES survive like-for-like", third bullet:** "**and it buys almost
+  nothing**: TPR at a matched 5% is 12.3% at N=10 against 13.2% at N=40." No interval is
+  shown; the neighbouring matched-9.5% TPR difference is +0.6 pts [−7.7, +10.3]. "Buys almost
+  nothing" is an accepted null wearing a point estimate. **And note its shape: this is the
+  blocked cross-budget TPR claim, resurrected with the sign flipped.** It must not enter the
+  paper, and it is one copy-paste away from doing so.
+
+**Consequential quarantine update.** `results/replay_control.md` section 2's tables now
+contain the entire blocked set in one place — 11.0, 14.5, 13.2, 24.0, 25.5, 0.145, 0.126,
+0.746, and pAUC by band. The quarantine list must be extended to name this file as a source,
+and the file should carry a banner saying which of its cells are not liftable, on the
+precedent of `results/null_control_3arm_judge_n6.md` (standing rule 8). Without that, the next
+agent to open it for the floor trend will find the blocked numbers sitting in the adjacent
+column, as the applying agent nearly did with `n_scaling_grid.md` section 3.
+
+**On the two blocked claims themselves:** the coordinator is right that they are now dead on
+their merits and not merely unproven — the AUROC gain is +0.024 [−0.013, +0.059] like-for-like
+with 43% of the advertised +0.041 attributable to the change of cache (I reproduce +0.021),
+and the pAUC claim fails with its sign reversed (I reproduce +0.0070 against the claimed
+−0.0187). But "dead on their merits" means **the claims as written are refuted**, not that
+their negations are established. Both blocks stand, and neither may be re-entered in inverted
+form.
+
+## A6. Tree state changed under this gate
+
+Re-run at the end of the addendum:
+
+- `pytest -q` → **3 failed, 740 passed, 1 skipped**. Failure set **still identical** to
+  baseline (same three `tests/test_operational_provenance.py` tests, same
+  `scripts/overnight_2026_08_14.sh` trigger). `tests/test_replay_control.py` → 13 passed.
+- **`scripts/check_population_labels.py` has been re-armed since my main ruling** — now 62
+  number patterns, 21 superseded-run patterns, 18 growing-cell patterns over 8 frozen counts,
+  against 60 / 11 / 15 / 7 earlier. I verified the substance rather than the banner:
+  `37 of (?:the )?69` is guarded (line 473), the nine retired `_def` values are now SUPERSEDED
+  patterns each naming its live replacement (lines 614-627), `\b69 false-alarm` has replaced
+  `\b60 false-alarm` as the label, and the 0.698 collision has been resolved by demoting it to
+  a superseded value behind a context gate. **The required follow-up from item 1 is CLOSED.**
+  The guard still passes, and now passes for a reason.
+- `results/schedule_2026_08_19.md` and `results/stop_mechanism_verification_v2.md` also
+  appeared; out of scope for this gate.
+
+## A7. Net effect on the ruling
+
+| item | before addendum | after |
+| --- | --- | --- |
+| 1 winner's curse | APPROVE + required guard fix | **APPROVE**, guard fix landed and verified |
+| 2 methods estimator scoping | APPROVE WITH CONDITIONS | unchanged |
+| 3 N=20 row | BLOCK | **BLOCK**, hardened — the disclosure has the wrong subject, and A3 specifies the replacement |
+| 4 pre-registration | APPROVE WITH CONDITIONS | unchanged; add that N=20's comparison value is a replay whose estimator is now shown unbiased |
+| 5 headline scoping | APPROVE WITH CONDITIONS | unchanged |
+| quarantine | CLEAN | CLEAN, but extend the list to cover `results/replay_control.md` |
+
+The paper is now **better off** than before the addendum: the concession it wants to make is
+supportable, the trend it wants to state (11.9 → 3.0 → 2.0, −9.9 points [−15.5, −5.0]) clears
+zero, and it needs no AUROC to make it. What it must give up is the bias story — in both
+directions.

@@ -839,7 +839,49 @@ _DISTINCT_COUNT_ADVICE = (
     "the top tenth of the range; $455$ at $N{=}20$)"
 )
 
+# --------------------------------------------------------------------------------------
+# THE WITHDRAWN N=40 FLOOR INTERVALS (2026-08-19).
+#
+# `results/n40_floor_estimator_ruling.md` withdrew BOTH candidate intervals for the
+# measured N=40 achievable false-alarm floor, on measured coverage: against a population
+# model validated out-of-sample on the N=20 and N=10 ceiling atoms, Wilson on 4/200 covers
+# the true floor 53.7% of the time and the question bootstrap 0.00%, at a nominal 95%.
+# Neither estimator is broken; the estimand is, once the ceiling atom empties. The paper
+# now prints the point, 2.0%, with no interval, and carries the at-cap mass
+# 0/200 = 0.0% [0.0, 1.9] as the quantity that does have one.
+#
+# WHY HERE AND NOT ONLY IN `derived_paper_quantities.py`. That script pins the literals it
+# knows about, site by site, and it is the right guard for "this exact string came back".
+# It is the wrong guard for "this VALUE came back in some other markup" -- and the reason
+# these four are armed at all is that the digit `5.03` survived a whole round of edits
+# unguarded. `PCT` is a REQUIRED percent sign, so the fair-pool rule's `\b5\.0\\?%` cannot
+# match `5.03`; it never could, and the concession turned on that digit at three sites.
+#
+# ARMED AS PAIRS WHERE THE ENDPOINTS ARE COMMON, on this file's standing precedent
+# (`\b9\.0\s*,\s*12\.2`). `0.5`, `4.0`, `0.8` and `5.0` are all live numbers elsewhere in
+# the paper; only their ADJACENCY is the retired interval. `5.03` and `0.78` are unique to
+# this interval and are armed alone -- `0.78` with a lookahead, because `0.787` is the
+# score-coupled replication AUROC and is a different number entirely.
+_FLOOR_WITHDRAWN = (
+    "the N=40 floor is printed as a POINT with no interval; the interval that survives "
+    "at that budget is the at-cap mass, 0/200 = 0.0% [0.0, 1.9] (threshold ln 40, fixed "
+    "a priori). See results/n40_floor_estimator_ruling.md"
+)
+
 SUPERSEDED: list[dict] = [
+    {"pattern": r"\b5\.03", "quantity": "Wilson UPPER end on 4/200 for the N=40 floor",
+     "run": "pre-ruling", "replacement": _FLOOR_WITHDRAWN},
+    {"pattern": r"\b0\.78(?!\d)",
+     "quantity": "Wilson LOWER end on 4/200 for the N=40 floor",
+     "run": "pre-ruling", "replacement": _FLOOR_WITHDRAWN},
+    {"pattern": r"\b0\.5\s*,\s*4\.0(?!\d)",
+     "quantity": "question-bootstrap interval for the N=40 floor (its lower endpoint is "
+                 "pinned at 1/200 by construction and exceeds the true floor in 100% of "
+                 "simulated pools)",
+     "run": "pre-ruling", "replacement": _FLOOR_WITHDRAWN},
+    {"pattern": r"\b0\.8\s*,\s*5\.0(?!\d)",
+     "quantity": "Wilson interval on 4/200 for the N=40 floor, rounded to 1 dp",
+     "run": "pre-ruling", "replacement": _FLOOR_WITHDRAWN},
     {"pattern": r"\b39/80", "current": "42/80",
      "quantity": "targets at the log N ceiling after attack"},
     {"pattern": r"\b39 of (?:the )?80", "current": "42 of the 80",

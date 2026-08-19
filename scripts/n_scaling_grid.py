@@ -725,6 +725,81 @@ def fmt_prop(k: int, n: int) -> str:
     return f"{k}/{n} = {p:.1%} [{lo:.1%}, {hi:.1%}]"
 
 
+# ------------------------------------- the replayed floor the PAPER quotes (not computed here)
+# Every replayed row in this report is ONE subset draw (`replicate=0`). That is a legitimate
+# estimator with a legitimate interval -- Wilson on its own count, which by the variance
+# identity in `results/replay_control.md` section 2b already contains the subset draw -- but
+# it is not the number the paper quotes. The paper quotes the subset-AVERAGED floor: the mean
+# of the 200 per-question saturation probabilities, intervalled by a bootstrap over questions
+# only, because the subset draw has been averaged out of the point estimate and may not be put
+# back into its interval.
+#
+# That quantity is NOT recomputed here on purpose. `scripts/replay_control.py` owns it, and a
+# second implementation of a number the paper prints is how two files come to disagree without
+# anyone noticing. What is recorded below is a POINTER plus the value as of the stamp, so that
+# a stale copy is self-identifying rather than silently current-looking, and
+# `tests/test_n_scaling_grid.py::test_the_quoted_subset_averaged_floor_still_matches_replay_control`
+# fails the moment `results/replay_control.md` stops printing it. If the two ever disagree,
+# THAT FILE WINS and this constant is the thing to fix.
+SUBSET_AVERAGED_FLOOR = {10: ("12.0%", "[8.9%, 15.3%]"), 20: ("3.1%", "[1.8%, 4.7%]")}
+SUBSET_AVERAGED_FLOOR_FILE = "results/replay_control.md"
+SUBSET_AVERAGED_FLOOR_SEC = "section 2b"
+SUBSET_AVERAGED_FLOOR_ASOF = "2026-08-19"
+
+
+def floor_cells(neg: np.ndarray, rows: list[dict], budget: int) -> dict:
+    """The three false-alarm cells of the section-1 row, computed in one place.
+
+    THE FLOOR AND THE CEILING ATOM ARE TWO DIFFERENT QUANTITIES and this function exists
+    so that they cannot be swapped again:
+
+    * `floor` is the smallest false-alarm rate a firing threshold can actually realise --
+      the first row of the ascending-FPR grid that fires. It is what an operator can buy.
+    * `at_cap` is the ceiling-atom mass, the negatives sitting exactly at ln N.
+
+    They are EQUAL exactly while the atom is non-empty, because the first threshold that
+    fires is then ln N itself and it flags precisely the at-cap targets. That held at
+    every budget this report was originally written against (N=10, N=20), so the floor
+    column carried the atom for a long time and agreed with its own header by coincidence.
+    Once the atom empties the two part company: `at_cap` is 0 while the floor is not, and
+    printing the atom under a "floor" header reports the cheapest reachable operating
+    point as 0.0%, which invites the reader to infer a sub-1% operating point that does
+    not exist. Report both, in separate and clearly-headed columns.
+    """
+    firing = [r for r in rows if r["fires"]]
+    k_cap, n_cap = ceiling_atom(neg, budget)
+    atom_empty = bool(firing) and k_cap == 0
+
+    # THE FLOOR LOSES ITS INTERVAL EXACTLY WHEN THE ATOM EMPTIES (2026-08-19).
+    # While the atom carries mass the floor is a binomial proportion at ln N -- a
+    # threshold fixed before the data -- and Wilson prices it. Once the atom empties the
+    # threshold is the top score THIS pool happened to reach, which is not the top of the
+    # population's support: a bigger pool reaches a higher rung and reports a smaller
+    # floor, so the estimand moves with the pool instead of holding still to be estimated.
+    # `results/n40_floor_estimator_ruling.md` measured what that costs, against a
+    # population model validated out-of-sample on the N=20 and N=10 atoms: at nominal 95%,
+    # Wilson on the first-firing count covers the true floor 53.7% of the time and a
+    # question bootstrap 0.00%. So the cell prints the count and the rate and no interval.
+    # The interval that survives at such a budget is the at-cap column beside it.
+    if not firing:
+        floor_cell = "-"
+    elif atom_empty:
+        floor_cell = (f"{firing[0]['k_fp']}/{firing[0]['n_neg']} = "
+                      f"{firing[0]['fpr']:.1%}, no interval (see below)")
+    else:
+        floor_cell = fmt_prop(firing[0]["k_fp"], firing[0]["n_neg"])
+
+    return {
+        "floor": floor_cell,
+        "floor_k": firing[0]["k_fp"] if firing else None,
+        "floor_fpr": firing[0]["fpr"] if firing else None,
+        "at_cap": fmt_prop(k_cap, n_cap),
+        "at_cap_k": k_cap,
+        "next": f"{firing[1]['fpr']:.1%}" if len(firing) > 1 else "-",
+        "atom_is_empty_so_floor_differs": atom_empty,
+    }
+
+
 def n_needed_to_certify(p: float, target: float = 0.05, n_max: int = 5000) -> int | None:
     """Smallest n whose Wilson upper bound at a true rate p clears `target`.
 
@@ -1497,29 +1572,96 @@ def write_grid_report(args, records: list[dict], pool: Pool) -> int:
 
     log("## 1. Floor and grid, by budget")
     log("")
-    log("The floor is the ceiling-atom mass: every threshold above ln N flags nothing, so")
-    log("the first threshold that fires flags exactly the targets at the cap. That is the")
-    log("smallest false-alarm rate an operator can buy at this budget.")
+    log("**The floor is the first firing point, which is not always the ceiling atom.**")
+    log("Every threshold above ln N flags nothing, so while targets remain AT the cap the")
+    log("first threshold that fires flags exactly those targets and the floor equals the")
+    log("at-cap mass. Once the atom empties, that identity breaks: the floor is then set by")
+    log("the largest score strictly below the cap and is strictly LARGER than the at-cap")
+    log("mass, which is 0. The two are reported in separate columns for that reason -- read")
+    log("the floor column, not the at-cap column, for the smallest false-alarm rate an")
+    log("operator can actually buy at this budget.")
     log("")
-    log("| budget N | source | n negatives | floor = min non-zero FPR | next FPR | "
+    log("| budget N | source | n negatives | floor = min non-zero FPR (1st firing point) | "
+        "at-cap mass (targets at the ln N ceiling) | next FPR (2nd firing point) | "
         "firing points at or below 5% | at or below 10% | at or below 25% |")
-    log("| --- | --- | --- | --- | --- | --- | --- | --- |")
+    log("| --- | --- | --- | --- | --- | --- | --- | --- | --- |")
     rows_by_budget: dict[int, list[dict]] = {}
     scores_by_budget: dict[int, tuple[np.ndarray, np.ndarray]] = {}
+    src_by_budget: dict[int, str] = {}
+    atom_breaks: list[tuple[int, str, str]] = []
     for b in budgets:
         neg, pos, src = scores_at(b)
         if len(neg) == 0:
             continue
         scores_by_budget[b] = (neg, pos)
+        src_by_budget[b] = src
         rows = grid_for(neg, pos if len(pos) else np.array([0.0]))
         rows_by_budget[b] = rows
-        firing = [r for r in rows if r["fires"]]
-        k_cap, n_cap = ceiling_atom(neg, b)
-        nxt = f"{firing[1]['fpr']:.1%}" if len(firing) > 1 else "-"
-        log(f"| {b} | {src} | {len(neg)} | {fmt_prop(k_cap, n_cap)} | {nxt} | "
+        c = floor_cells(neg, rows, b)
+        if c["atom_is_empty_so_floor_differs"]:
+            atom_breaks.append((b, f"{c['floor_fpr']:.1%}", c["at_cap"]))
+        log(f"| {b} | {src} | {len(neg)} | {c['floor']} | {c['at_cap']} | "
+            f"{c['next']} | "
             f"{n_firing_below(rows, 0.05)} | {n_firing_below(rows, 0.10)} | "
             f"{n_firing_below(rows, 0.25)} |")
     log("")
+    for b, fl, cap in atom_breaks:
+        log(f"At N={b} the ceiling atom is empty ({cap}), so the floor and the at-cap mass")
+        log(f"come apart: the smallest purchasable false-alarm rate is {fl}, NOT 0. There is")
+        log(f"no sub-{fl} operating point at this budget.")
+        log("")
+        log(f"**And the floor at N={b} is printed WITHOUT an interval, which is a finding")
+        log("rather than an omission.** The same event that separates these two columns --")
+        log("the empty atom -- also breaks the floor as an estimand. Its threshold is no")
+        log("longer ln N, fixed in advance, but the top score this pool happened to reach,")
+        log("and that rung is not the top of the population's support: a larger pool")
+        log("reaches a higher one and reports a SMALLER floor, so the quantity moves with")
+        log("the pool rather than holding still to be estimated. Measured coverage at a")
+        log("nominal 95%, against a population model validated out-of-sample on the two")
+        log("smaller budgets in this table: Wilson on the first-firing count 53.7%, a")
+        log("question bootstrap over the questions 0.00%. Each also has an endpoint placed")
+        log("by construction -- the bootstrap cannot return less than 1 negative in n, and")
+        log("Wilson counts a rung the population may not have. Neither is quotable.")
+        log(f"`results/n40_floor_estimator_ruling.md` settles this; the at-cap column is")
+        log("the one that keeps an interval, because ln N really is fixed a priori.")
+        log("")
+
+    # The replayed rows are one subset draw. The paper quotes a different estimator, and the
+    # two are close enough to be mistaken for each other -- which is the whole reason for
+    # spelling it out at the table rather than in a footnote.
+    replayed = [b for b in scores_by_budget if src_by_budget[b].startswith("replay")]
+    if replayed:
+        log("**The replayed rows are ONE subset draw, and the paper quotes a different")
+        log("estimator.** Every row above marked `replicate 0` is a single uniformly random")
+        log("subset per question. Its Wilson interval is the correct interval FOR THAT")
+        log("estimator, and not a narrow one: by the variance identity in")
+        log(f"`{SUBSET_AVERAGED_FLOOR_FILE}` {SUBSET_AVERAGED_FLOOR_SEC}, a single "
+            f"replicate's binomial")
+        log("spread already contains the subset draw as well as the draw of questions, so")
+        log("nothing is missing from it and nothing may be added to it. But a single")
+        log("replicate is not what the paper reports. The paper reports the subset-AVERAGED")
+        log("floor -- the mean of the 200 per-question saturation probabilities -- whose")
+        log("interval is a bootstrap over questions ONLY, because the subset draw has been")
+        log("averaged out of the point estimate and putting it back would count it twice.")
+        log("")
+        for b in replayed:
+            pt, ci = SUBSET_AVERAGED_FLOOR.get(b, (None, None))
+            c = floor_cells(scores_by_budget[b][0], rows_by_budget[b], b)
+            if pt is None:
+                log(f"- N={b}: replicate 0 above reads {c['floor']}. The subset-averaged")
+                log(f"  floor for this budget is not tabulated in "
+                    f"`{SUBSET_AVERAGED_FLOOR_FILE}`,")
+                log("  so this row has no quotable counterpart -- do not lift it.")
+                continue
+            log(f"- N={b}: this report's replicate 0 reads {c['floor']}. The quotable")
+            log(f"  subset-averaged floor is **{pt} {ci}**, by question bootstrap, from")
+            log(f"  `{SUBSET_AVERAGED_FLOOR_FILE}` {SUBSET_AVERAGED_FLOOR_SEC} as of "
+                f"{SUBSET_AVERAGED_FLOOR_ASOF}.")
+            log("  Quote that one, from that file. The two point estimates are")
+            log("  near-identical and their intervals are not, so a row lifted from here")
+            log("  would carry the wrong width for the wrong estimator.")
+        log("")
+
     if not has_positives:
         log("(`--strata correct` was used, so there is no TPR column anywhere in this")
         log("report. The FPR grid and the floor are unaffected -- FPR is a within-negatives")
@@ -1550,21 +1692,72 @@ def write_grid_report(args, records: list[dict], pool: Pool) -> int:
         log("directly measured grid at the same budget. The Week-4 cache is exactly that at")
         log("N=10.")
         log("")
-        rep = [budget_scores(records, 10, "correct", replicate=r) for r in range(20)]
+        # The floor here is the FIRST FIRING POINT, the same quantity the section-1 column
+        # reports -- not `ceiling_atom`, which is what this block used to call. At N=10 the
+        # atom is non-empty on both arms so the two definitions coincide and the printed
+        # numbers do not move; the point is that this block may no longer print the at-cap
+        # mass under the word "floor", which is precisely the swap `floor_cells` exists to
+        # prevent and the one that put a 0.0% floor in the N=40 row.
+        def _floor_of(arr: np.ndarray) -> float | None:
+            return floor_cells(arr, grid_for(arr, np.array([0.0])), 10)["floor_fpr"]
+
         floors = []
-        for s in rep:
-            arr = np.array([round(v, DP) for v in s.values()])
-            if len(arr):
-                floors.append(ceiling_atom(arr, 10)[0] / len(arr))
-        kc, nc = ceiling_atom(neg10_cache, 10)
-        log(f"- Week-4 cache, direct N=10: floor = {fmt_prop(kc, nc)}")
+        for r in range(20):
+            arr = np.array([round(v, DP) for v in
+                            budget_scores(records, 10, "correct", replicate=r).values()])
+            f = _floor_of(arr) if len(arr) else None
+            if f is not None:
+                floors.append(f)
+        c10 = floor_cells(neg10_cache, grid_for(neg10_cache, np.array([0.0])), 10)
+        log(f"- Week-4 cache, direct N=10 (June generation run): floor = {c10['floor']}")
         if floors:
-            log(f"- replay of 10-subsets of the N={top} run, 20 replicates: floor median "
-                f"{np.median(floors):.1%}, range {min(floors):.1%}-{max(floors):.1%}")
+            log(f"- replay of 10-subsets of the N={top} run (August), 20 replicates: floor "
+                f"median {np.median(floors):.1%}, range "
+                f"{min(floors):.1%}-{max(floors):.1%}")
             log("")
-            log("If those disagree beyond the Wilson interval, the subsetting is unsound and")
-            log("**no replayed budget in this report may be quoted** -- the direct")
-            log("measurement at the top budget still stands on its own.")
+            log("**These two arms do not disagree -- and a gap between them would not have")
+            log("condemned the replay.** This block used to close with a decision rule: if the")
+            log("arms disagree beyond the Wilson interval the subsetting is unsound and no")
+            log("replayed budget in this report may be quoted. That rule is WITHDRAWN. It was")
+            log("applied, it read 20 replicates all landing above the direct value as a sign")
+            log("test at 2^-20, and the inference does not hold. `results/replay_control.md`")
+            log("sections 1 and 3 redo this control at 200 draws and give the account that")
+            log("replaces it:")
+            log("")
+            log("1. **The replay estimator is unbiased, and that is a theorem rather than a")
+            log("   hope.** A question's samples are i.i.d. and therefore exchangeable, so a")
+            log("   uniformly random 10-subset of the recorded 40 has exactly the distribution")
+            log("   of 10 i.i.d. draws; and the clusterer is union-find over PAIRWISE")
+            log("   verdicts, so a subset's clustering depends only on the verdicts inside it")
+            log("   and is exactly what a direct 10-sample run on those samples would have")
+            log("   produced. E[replayed score] = E[direct score], question by question.")
+            log("2. **Reusing one verdict matrix correlates the replicates; it does not bias")
+            log("   their mean.** Every replicate conditions on the same 40 samples and the")
+            log("   same 200 questions, so the spread across replicates is subset-draw noise")
+            log("   about a CONDITIONAL MEAN. The retired sign test's null was that each")
+            log("   replicate is an independent coin flip about the direct value. They are")
+            log("   neither independent nor centred there, and they do not have to be: the")
+            log("   direct value is itself one draw of a 10-sample run. It sits in the LOWER")
+            log("   TAIL of the replicate distribution and well inside it, so a unanimous run")
+            log("   of 20 is unremarkable: a probability of a few tenths, which")
+            log("   `results/replay_control.md` section 1 measures at 0.36 -- not 2^-20. And")
+            log("   the correlation between replicates pushes that number UP, not down.")
+            log("3. **The two arms estimate different parameters, so neither is the odd one")
+            log("   out.** The replay is unbiased for the generation run recorded in THIS")
+            log("   checkpoint (August); the direct cache is one unbiased realisation of the")
+            log("   run that produced it (June). Those two runs differ measurably in the text")
+            log("   they emitted under an identical config -- mean answer length +3.6 chars")
+            log("   paired, z = +4.0. Two unbiased estimators of two different parameters is")
+            log("   not one sound arm and one unsound arm, and which of them is \"sounder\"")
+            log("   stops being a statistical question at that point.")
+            log("")
+            log("So what this control licenses is a LABELLING rule, not a gate: report a")
+            log("budget trend entirely inside one family and say which family, and keep the")
+            log("direct N=10 row on its June provenance wherever the paper quotes it -- every")
+            log("other N=10 number in the paper is welded to that cache. Read")
+            log("`results/replay_control.md` before quoting any comparison ACROSS the two")
+            log("arms; the step between them, its interval and its two candidate causes are")
+            log("that file's subject and not this one's.")
         log("")
 
     # ------------------------------------------------------------ the decay of the atom
@@ -1590,9 +1783,12 @@ def write_grid_report(args, records: list[dict], pool: Pool) -> int:
                 cells.append(f"{v / len(rs):.3f}")
             log(f"| {stratum} (n={len(rs)}) | " + " | ".join(cells) + " |")
         log("")
-        log("The `correct` row IS the achievable-FPR floor as a function of the sample")
-        log("budget. Compare it against the pre-registered prediction in")
-        log("`results/n_scaling_plan.md` section 5 before writing any prose about it.")
+        log("The `correct` row is the AT-CAP MASS as a function of the sample budget, which")
+        log("is the achievable-FPR floor only while the atom is non-empty. Where the row")
+        log("reads 0.000 the atom has emptied and the floor is strictly larger -- take the")
+        log("floor from the floor column of section 1, never from this row. Compare it")
+        log("against the pre-registered prediction in `results/n_scaling_plan.md` section 5")
+        log("before writing any prose about it.")
         log("")
 
     log("## 3. The operator's menu at each budget")
@@ -1634,6 +1830,9 @@ def write_grid_report(args, records: list[dict], pool: Pool) -> int:
         f"seed={args.seed}")
     log("- plan, cost model and the derivations that need no data: "
         "`results/n_scaling_plan.md`")
+    log("- the replay control -- what the subsetting does, which interval belongs to which")
+    log("  estimator, and the subset-averaged floors the paper actually quotes: "
+        "`results/replay_control.md`")
     log("")
 
     # A fake-scorer report must never be able to be mistaken for the real one: it gets a
@@ -1641,7 +1840,11 @@ def write_grid_report(args, records: list[dict], pool: Pool) -> int:
     # is a tracked directory whose .md files are read as findings.
     out = (Path(args.checkpoint).with_name("n_scaling_grid_SMOKE.md") if smoke
            else RESULTS_DIR / "n_scaling_grid.md")
-    out.write_text("\n".join(report) + "\n", encoding="utf-8")
+    # newline="\n" explicitly: without it the default translation writes CRLF on Windows and
+    # LF under WSL, so the same checkpoint regenerated on the two boxes yields a file that
+    # differs on every line. `.gitattributes` normalises `*.md` to LF at commit, which hides
+    # that churn in `git diff` but not in a byte-level determinism check.
+    out.write_text("\n".join(report) + "\n", encoding="utf-8", newline="\n")
     print(f"\n[report] wrote {out}", file=sys.stderr)
     return 0
 

@@ -10,13 +10,25 @@ atom at the maximum, so a detector that flags when the score reaches a threshold
 only at a finite list of false-alarm rates. Scored clean on the fair pool's $200$ correct
 answers, the achievable rates below one in four are $0\%$, $9.5\%$ [$6.2$, $14.4$] and
 $21.5\%$, catching $0\%$, $27.5\%$ and $44.5\%$ of that pool's $200$ hallucinating answers;
-an operator who specifies a $5\%$ false-alarm budget cannot have one, because the only
-threshold that honours it never fires. That floor is an identity rather than a measurement,
-since every threshold above $\ln N$ flags nothing and the smallest rate a firing threshold
-can have is therefore the mass of the ceiling atom itself---the probability that a clean
+an operator who specifies a $5\%$ false-alarm budget cannot have one at that sample budget,
+because the only threshold that honours it never fires. That floor is an identity rather than
+a measurement for as long as the cap carries mass, since every threshold above $\ln N$ flags
+nothing and the smallest rate a firing threshold can have is therefore the mass of the
+ceiling atom itself---the probability that a clean
 correct answer yields $N$ mutually distinct meanings, which the $1424$-answer superset puts
-at $10.5\%$ [$9.0$, $12.2$]. A $5\%$ budget is excluded at $95\%$ confidence on both
-populations; a $10\%$ budget is on the boundary and we claim no more than that. The claim is
+at $10.5\%$ [$9.0$, $12.2$]. At $N{=}10$ a $5\%$ budget is excluded at $95\%$ confidence on
+both populations; a $10\%$ budget is on the boundary and we claim no more than that. The
+qualifier is load-bearing: measured out to $N{=}40$ over the same $200$ correct answers the
+cap carries no mass ($0.0\%$ [$0.0$, $1.9$]), the floor ceases to be an identity and becomes
+an ordinary order statistic at $2.0\%$, and the threshold that honours a
+$5\%$ budget achieves $5.0\%$ [$2.7$, $9.0$] on that same correct stratum of the fair pool.
+We report the second as a measured operating point and not as an existence claim, and we
+attach no interval to the first: its threshold is the top score \emph{these} $200$ answers
+happened to reach, so $2.0\%$ is the cheapest alarm a pool of this size can exhibit rather
+than an estimate of how cheap an alarm can be. What the pre-registered criterion asks for is
+a one-sided bound on the mass \emph{at the cap}, and that bound is the $1.9\%$ above---under
+the line, not over it
+(Section~\ref{sec:discussion}). The claim is
 about deterministic rules: a randomised rule reaches the chords between these points, but
 only by paying an indivisible block's average, and below the floor the reachable frontier is
 a single chord out of the origin. The $\log N$ ceiling behind all of this is shared with the

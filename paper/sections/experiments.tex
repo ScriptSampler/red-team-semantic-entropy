@@ -34,7 +34,10 @@ would otherwise be an unexplained tension with the next sentence: targets are dr
 stratified score-independent sampler, and on the resulting fair pool the clean detector
 scores AUROC $0.704$ [$0.653$, $0.753$], against the $1.0$ that score-dependent selection
 manufactures by construction---an interval that contains the operative replication figure
-but excludes the all-samples one.
+but excludes the all-samples one. That $0.704$ is one of the figures
+Section~\ref{sec:limitations} traces to a single June 2026 generation cache, whose
+sampling configuration is under-recorded and against which the later $N{=}40$ run shows a
+measured generation drift; neither has been bounded for this number.
 
 \paragraph{Reading the null control.}
 Table~\ref{tab:nullcontrol} places the optimised attack against two null bands---a
@@ -56,16 +59,22 @@ negatives---a proxy for the deployed clustering decision---is the \textbf{adjudi
 (for the false-alarm direction, under the disclosed re-scoped gate; Methods).
 
 \paragraph{The claim statistic, and why the obvious ones fail.}
-The attack reports the \emph{maximum} over $\sim$181 candidate paraphrases, so any
-comparison against individual benign draws is upward-biased by construction: under the null
-a max-of-181 sits at $\sim$$99\%$ of an individual-draw distribution, not $50\%$. We
+The attack reports the \emph{maximum} over the $\sim$181 objective evaluations it spends
+per target---the original question and the $\sim$180 candidate paraphrases it proposes
+(Section~\ref{sec:methods})---so any comparison against individual benign draws is
+upward-biased by construction: under the null a max-of-181 sits at $\sim$$99\%$ of an
+individual-draw distribution, not $50\%$. We
 therefore price the search budget into the null analytically. Under the hypothesis that the
-optimiser carries no signal, a target's $N$ attack candidates and its $m$ benign draws are
+optimiser carries no signal, a target's $A$ scored candidates and its $m$ benign draws are
 exchangeable, so $F(\text{attack-max}) \sim \mathrm{Beta}(A,1)$ and the number of benign
 draws above the attack's maximum is $K \sim \mathrm{BetaBinomial}(m; 1, A)$, with
-$\mathbb{E}[K] = m/(A{+}1)$, where $A$ denotes the attacker's candidate count
-($A \approx 181$) and is distinct from the per-question sample budget $N{=}10$ used
-everywhere else. Fewer exceedances than that is evidence for the attack; the
+$\mathbb{E}[K] = m/(A{+}1)$, where $A$ is the attacker's search budget---the number of
+scored evaluations the maximum ranges over, $A \approx 181$, one more than the
+$\sim$180 candidate paraphrases because the original's own score is among them---and is
+distinct from the per-question sample budget $N$, which is $10$ throughout this section.
+It is not $10$ throughout the paper: Sections~\ref{sec:discussion}
+and~\ref{sec:limitations} characterise the clean detector on the fair pool at $N{=}20$ and
+$N{=}40$ as well. Fewer exceedances than that is evidence for the attack; the
 one-sided $p$-value follows by exact convolution over targets, and the effect size is the
 \emph{effective benign budget} $n_{\mathrm{eff}} = m/\bar{K} - 1$, read as ``the search is
 worth $n_{\mathrm{eff}}$ random paraphrases''.

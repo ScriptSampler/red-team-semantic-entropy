@@ -1959,3 +1959,646 @@ The corresponding repair to (b) is in flight and owns `scripts/check_population_
 its probe suite.
 
 ---
+
+## 36. 2026-08-19 (overnight, round 2) — three corrections landed tonight and two of them were wrong; the gate produced one of them
+
+The night's arithmetic: one gate-certified refutation **itself refuted**, two previously
+BLOCKED claims **dead on their merits**, one "correction" to the paper's interval discipline
+**inverted** after it had already reached `paper/sections/discussion.tex` as the paper's stated
+rule, and a headline that survives all of it and comes out **tighter**. Nothing here needed new
+data; every number below is a recomputation of a file that was already on disk.
+
+**The through-line.** Entry 33's rule was "check every gate ruling against the committed
+artifact before applying it." Tonight that rule was followed and was not enough. The gate's §B
+did not take the interval claim on trust — it ran its own 500-replicate replay and measured the
+subset-draw dispersion at **sd 0.99 points** at N=20, and then concluded that the component was
+*missing* from the Wilson interval. The measurement is correct. The inference is false, by an
+identity that takes three lines. Re-deriving a number is not re-deriving the claim the number is
+being used for, and the check the gate did not run was the cheap one: compute what Wilson
+already contains.
+
+### 1. The `2^-20` sign test — a gate's decisive finding, refuted at R=200
+
+`results/n_scaling_grid.md` closed its subsetting-control block with a pre-registered decision
+rule: if the direct N=10 arm and the replayed arm "disagree beyond the Wilson interval, the
+subsetting is unsound and **no replayed budget in this report may be quoted**." It was applied.
+All 20 replicates landed above the direct 9.5%, that was read as a sign test at 2^-20, and the
+paper carried the sentence "systematic upward bias, not an interval touched at its edge."
+
+The null being rejected is *"the subset-replay distribution's median equals 9.5%"*. Nobody holds
+it. The direct value is one draw of a 10-sample run; the replicate distribution is centred on
+the conditional mean given the recorded 40-sample draw, and there is no reason for those to
+coincide. Measured at R=200 (`results/replay_control.md` §1), **10 of 200 draws — 5.0% — fall
+below the direct floor**, so a unanimous run of 20 has probability **0.358** treating the draws
+as independent. They are not independent: every replicate conditions on the same 40 samples and
+the same 200 questions, and that positive correlation pushes the probability of a unanimous run
+**up**. The 2026-08-19 gate reached the same place from 500 replays and its own bit-decode
+(direct 9.5% at the 3.6th percentile, 0.95^20 ≈ 0.36).
+
+What replaces it is stronger than what it killed, and it is a theorem rather than a measurement:
+a uniformly random 10-subset of an exchangeable 40-tuple has exactly the distribution of 10
+i.i.d. draws, and the clusterer is union-find over pairwise verdicts, so a subset's clustering is
+exactly what a direct 10-run on those samples would have produced. **E[replayed] = E[direct],
+question by question.** Reusing one verdict matrix correlates the replicates; it does not move
+their mean. And the two arms are therefore not one sound arm and one unsound arm — they are
+unbiased estimators of **different parameters**, the August N=40 generation run and the June
+Week-4 cache, which differ measurably in what they emitted (+3.6 characters paired, z = +4.0).
+Neither is the odd one out. The step between them is **+2.5 points [-0.7, +5.5]** and covers
+zero.
+
+**Three defects in one argument, worth separating.** (i) It dressed a constant in a significance
+test — the subset-averaged at-cap mass is a deterministic function of the recorded verdict
+matrix and needed no test at all. (ii) It computed a p-value under a null nobody was asserting.
+(iii) It read 20 replicates against a fixed constant instead of against their own dispersion, so
+the number was an artefact of having run 20 rather than 500.
+
+**And note where the certification came from.** The gate document that finally caught this
+(`results/gate_paper_edits_2026_08_19.md`) also **checkmarked the underlying observation** in its
+own verification pass at line 180-183 — "every one of the 20 replicates above the direct
+estimate" follows from the artifact's stated range, which is true — before Blocker 3.1 killed
+the inference drawn from it. The observation was verified and the claim was not. That is the
+same gap as §3 below, in a different file, the same night.
+
+*Provenance caveat, recorded because entry 34 exists.* That an earlier gate "called this its
+decisive finding" is the account in `results/morning_review_2026_08_19.md`; the certifying
+ruling is **not in any committed artifact** — I looked. The decision rule itself is committed
+(`n_scaling_grid.md`, generated 2026-08-14) and the paper sentence is in the diff. A ruling
+living only in a transcript is exactly what entry 34 logged as a defect, and it recurred.
+
+### 2. Both BLOCKED claims are dead on their merits — and so are their mirror images
+
+- **"A larger sample budget makes SE a better ranker, AUROC 0.704 -> 0.746."** Both ends must
+  come from one source. Like-for-like (replay N=10 -> measured N=40) the gain is **+0.024
+  [-0.013, +0.059]**, which covers zero on the most favourable design available — fully nested,
+  fully paired, same questions, same generations. **43% of the advertised +0.041 was the change
+  of cache**, not the change of budget. The only comparison that clears zero (+0.041) is the
+  confounded one, where the provenance step and the budget effect happen to add.
+- **"The entire gain sits above 20% FPR, low-FPR pAUC 0.145 -> 0.126."** The fall is not
+  like-for-like. Swap in the replayed N=10 row and it is **+0.0074 [-0.0677, +0.0768]** — and
+  that is a refusal to claim, not a null. **A blocked directional claim does not become
+  admissible by being restated with the sign flipped**, and these intervals cannot support the
+  negation either: outside the floor row they are the both-components bootstrap and are roughly
+  twice as wide as their own point estimates deserve. An interval that is too wide cannot
+  manufacture an effect, but it can manufacture a null — which is the inference this project has
+  been burned by three times.
+
+What survives needs no AUROC at all, and it is what the paper leans on.
+
+### 3. The interval "correction" was itself the error — and it reached the paper as the paper's rule
+
+`post_overnight_claim_review.md` §3.3 held that a Wilson interval on one replicate "carries
+target-sampling variance and not subset-choice variance," and prescribed a two-component
+replacement. The gate's §B **confirmed it independently**. It went into `replay_control.md` §2's
+bootstrap — which resamples targets *and* redraws the subset — and from there into
+`discussion.tex` as the paper's stated interval discipline.
+
+It is false, by an identity. Let `p_i` be question *i*'s probability that a random k-subset of
+its recorded 40 samples comes out all-singletons. One replicate's floor is a mean of independent
+indicators, so
+
+```
+    mean_i p_i(1-p_i)   +   var_i(p_i)   =   pbar(1-pbar)
+    \___ subset draw __/    \_ questions _/   \_ the binomial/Wilson SE _/
+```
+
+identically, for any set of `p_i`. **The subset draw is already inside Wilson.** Measured on the
+fair pool's 200 correct answers: at N=20 the components are 0.9826 and 0.7433 points,
+root-sum-square 1.2321 against a binomial 1.2321; at N=10, 1.6119 and 1.6346 against 2.2957 and
+2.2957. I re-derived the identity from the printed `pbar` alone (residual < 5e-5), which is
+enough — it is algebra, not a measurement.
+
+So the widened intervals were **about twice as wide as the estimator they were attached to
+deserved**, and the estimator the paper quotes is the subset-*averaged* floor, the one number
+from which that component has been averaged away.
+
+| | before | after |
+| --- | --- | --- |
+| replay N=10 floor | 11.9% [7.0, 17.5] | **12.0% [8.9, 15.3]** |
+| replay N=20 floor | 3.0% [0.5, 6.5] | **3.1% [1.8, 4.7]** |
+| measured N=40 floor | 2.0% [0.5, 4.0] | **2.0% [0.8, 5.0]** (Wilson on 4/200) |
+| headline fall, N=10 -> N=40 | 9.9 pts [5.0, 15.5] | **10.0 pts [7.2, 12.9]**, excludes zero |
+
+**Every number moved in the safe direction.** The headline is not at risk; it was being quoted
+with an interval twice as wide as it needed. The N=20 -> N=40 step still does **not** clear zero
+(-1.1 pts [-2.4, +0.2]), and the direct-vs-replay step still covers zero (+2.5 [-0.7, +5.5]), so
+the tightening manufactured no new step. One inference did change: the N=20 pre-registration
+paragraph rested on the interval covering the whole predicted 3.5-5.3% band; the matched
+interval stops at 4.7% and does not. The conclusion survives on the z-test (z about 0.5); the
+stated reason does not.
+
+**A defect found while fixing it, which is its own lesson.** At the 20,000 resamples the
+bootstrap was running, the N=10 lower endpoint moved **0.13 points across bootstrap seeds** —
+larger than the decimal place the paper prints. Both the number in circulation ([8.91, 15.31])
+and the first corrected pass ([8.87, 15.24]) were inside that noise. Raised to 400,000
+resamples; endpoints now stable to about 0.01 points. A percentile is itself a Monte-Carlo
+estimate, and this project has a standing rule against statistics that move while you type them;
+the rule was not being applied to interval endpoints.
+
+**Two independent agents agreed with the wrong version before a third recomputed it.** That is
+the part to remember, not the algebra.
+
+### 4. What the night actually demonstrates, and the rule that follows
+
+Three corrections were relayed tonight. **Two of them were wrong**: "replay overstates the floor,
+so the true N=20 floor is lower" (no mechanism exists, and under drift the sign is unknown), and
+"the published intervals are too narrow" (they were too wide). Only the third — the sign test's
+refutation — held. Each of the two wrong ones was accepted quickly, and the reason is not that
+anyone was careless. It is that **a claim arriving labelled "correction" arrives with its error
+checking apparently already done**, and the agent applying it is structurally not the agent who
+could check it. The label buys deference the content has not earned.
+
+The gate is not a defence against this. The gate produced one of the two. It is an
+adversarial-check *generator*, and its output is a claim like any other — "the critic approved
+it" and "the critic caught it" are the same kind of evidence, and neither is a safety property.
+
+Adopted, and it goes in `START_HERE`:
+
+> **A correction is a claim, and carries the same burden as the thing it corrects — plus one.
+> Before applying a correction, re-derive it from the primary artifact, and state the check that
+> would have caught it if it were WRONG.** Reproducing the correction's own number does not
+> count: the gate did that here and still shipped the error, because it measured the component's
+> *magnitude* and inferred its *absence*. Independence has to be about the inference, not the
+> arithmetic.
+
+Corollary, from §1's provenance caveat and entry 34: a correction that exists only in a
+transcript is not applicable. Write it into an artifact first, then apply it.
+
+### 5. What round 2 surfaced — six live defects, four of them in `paper/`
+
+Verified against the files, not against the reports.
+
+1. **BLOCKING. The Abstract and Conclusion assert an existence claim the Discussion concedes
+   four hours later.** `main.tex:46` — "a $5\%$ operating point then exists, at an achieved
+   $5.0\%$ [$2.7$, $9.0$]"; `conclusion.tex:23-24` the same; `introduction.tex:82-84` says N=40
+   "buys the missing operating point". `discussion.tex:167-183` now concedes the opposite:
+   asserting *existence* rather than quoting a floor whose interval happens to contain one
+   requires the Wilson upper bound to fall below 5%, which on 200 answers needs at most **3** at
+   the cheapest firing threshold. It flags **4**, and Wilson(4/200) = 2.00% **[0.780, 5.029]** —
+   5.03 before rounding, over the line. I recomputed all of these. The pre-registered criterion
+   is `n_scaling_plan.md` §6/§8; the 30-answer extension it pre-priced has **not** been run
+   (`n_scaling_ckpt.jsonl` is 400 records, all N=40). This is the
+   sample-statistic-as-population-parameter failure mode, in the paper's two most-quoted
+   paragraphs, added by round 1 at 02:20/02:21 and not opened again in round 2.
+2. **BLOCKING. The top-p contradiction was disclosed, not removed.** `discussion.tex:265-266`
+   asserts the June and August runs ran "under an identical configuration — same model and
+   quantisation, T=1.0, top-p=1.0, 48 new tokens, seed 0". `limitations.tex:63-69, 84-86`, added
+   the same night by a different agent, says the manifest pins none of six of those and that "the
+   two runs' artefacts record only the token budget and the seed in common". The artefacts settle
+   it: the Week-4 `manifest.json` and the 400 checkpoint records share exactly `max_new_tokens`
+   and `seed`. The upstream sentence, `replay_control.md` §7's "(Week-4 `manifest.json` and the
+   checkpoint records agree)", is **false against the artefacts** and is where the Discussion
+   sentence came from. Disclosing a contradiction in one file does not resolve it in another.
+3. **BLOCKING. A withdrawn mechanism survives in the section the replacement text points at.**
+   `introduction.tex:181-183` struck "because the clean baseline climbs along with the cap" and
+   replaced it with "a measurement we report without a mechanism for it
+   (Section~\ref{sec:discussion})" — pointing the reader at `discussion.tex:281-282`, which still
+   asserts that mechanism verbatim. It is entry 33 §3 defect 2: that mechanism *is* the
+   `mccabe2025alphabet` / `pan2026shade` account this paper cites as support, and it cannot be
+   both our mechanism and their result. The pilot arithmetic is fine (15 rows: 0.595 -> 0.899
+   mean headroom, +0.304 mean / +0.110 median against a nominal 0.693, 3/15 still saturated);
+   only the causal clause is withdrawn.
+4. **`introduction.tex:92` states an absolute the Discussion corrected in the same round.** "No
+   $N{=}20$ generation pass was run." I opened `results/pilot_n20_ckpt_def.jsonl`: 15 rows, every
+   `entropy_after_old` exactly ln 10, `entropy_after_new` up to ln 20 = 2.99573, 3 saturated at
+   the lifted cap. A pass exists; it is 15 targets and score-selected, which is the Discussion's
+   corrected wording ("the only answers this project has ever scored at $N{=}20$ are the $15$
+   just described, and they were selected on a score"). Two agents, same round, one file apart.
+5. **The retired trend is still current in the file the paper is lifted from.**
+   `replay_control.md` §2 and §6 print "11.9% -> 3.0% -> 2.0%" and "-9.9 points [-15.5, -5.0]"
+   while §2b and §4 of the same file give 12.0 / 3.1 / 2.0 and **-10.0 pts [-12.9, -7.2]**, and
+   the file's own header rule says to use "the matched intervals of section 2b and no others."
+   §6 is titled *"What is worth carrying instead"* — the section a reader lifts from. It is where
+   tonight's own briefing headline came from, and it propagated to six agents. Independently
+   reproduced at a different seed and resample count in `figures/fig_floor_budget_stats.json`:
+   **-9.98 [-12.93, -7.21]**. Root cause is pinned: `scripts/replay_control.py:1134-1139` and
+   `:1577-1582` build those two sentences from the single-replicate/both-components objects,
+   bypassing the `quote()` estimand guard added the same night at exactly the two sites the paper
+   reads. The paper is correct; the artifact is not.
+6. **`pytest` is off its stated baseline in a way that hides a fix.** 2 failed / 981 passed / 7
+   skipped, against a stated 3 failed / 821 passed / 1 skipped with all three on
+   `scripts/overnight_2026_08_14.sh` (do-not-edit). One failure was fixed; both survivors now
+   *additionally* name `results/derived_paper_quantities.md` ("ratchet-stale: 0 untagged figures
+   against a baseline of 3"). Tonight's rewrite cleaned that file without lowering `KNOWN_OPEN`
+   in the same commit, which the checker's own message requires "so the register cannot rot
+   upward." A ratchet that is not lowered when the debt is paid becomes indistinguishable from
+   one that is broken — entry 35's structure again.
+
+**Green:** `check_population_labels.py` OK (8 files, 16 rules, 78 number patterns);
+`check_latex_source.py` 0 ERROR / 4 pre-existing WARN (unescaped `%` in `related_work.bib`
+annote fields); quarantine clean — none of `replay_control.md`'s quarantined cross-budget
+literals appears in `paper/`, and the two occurrences of 14.5% are the within-N=10 randomised
+chord, which is independently derivable.
+
+**GPU run untouched throughout.** `ps` in Ubuntu-24.04: PIDs 457 (wrapper), 473
+(`null_control.py --tag _defb --only false_alarm --K 50 --n_seeds 3`), 5751 (stop watcher),
+25204 (supervisor), all alive. Every recomputation in this entry is CPU-only replay from
+recorded verdicts.
+
+---
+
+## 37. 2026-08-19 (overnight, round 3) — a fix applied where the defect was noticed rather than everywhere it lives; and a superseded number that survived because of the heading it sat under
+
+**Why 37 and not an append to 36.** Entry 36's rule polices whether a correction is *true*.
+Round 3's corrections were all true; three of them are still true this morning. What failed was
+their *extent*. That is a different axis, and a correction can pass 36 completely and fail 37, so
+it needs its own name rather than a paragraph inside someone else's lesson.
+
+### 1. Four instances of one shape, in one round
+
+Round 3 was five agents: three applying assigned fixes to `paper/`, one regenerating
+`results/replay_control.md` and closing the operational-provenance ratchet, one verifying. Every
+assigned fix landed. Four new defects came with them, and all four are the same shape.
+
+1. **The load-bearing one.** Round 2's repair of the interval error left the N=40 achievable
+   false-alarm floor priced by Wilson. The Discussion agent then argued — correctly, and at
+   length at `discussion.tex:168-175` — that Wilson is the wrong estimator for that row: its
+   threshold must be fixed before the data, and this floor's threshold is the top score *this*
+   sample attained, so both which answers are counted and how many of them there are move under
+   resampling. It switched the row to a question bootstrap, `2.0% [0.5, 4.0]` where Wilson gives
+   `[0.78, 5.03]`. **It switched it in `discussion.tex` and nowhere else.** The same row is
+   printed with Wilson at `main.tex:49`, `conclusion.tex:23`, `introduction.tex:97`,
+   `scripts/derived_paper_quantities.py:156/159`, `results/derived_paper_quantities.md:39/40/208`,
+   `results/n_scaling_grid.md:22`, `results/replay_control.md:349`, three
+   `figures/fig_floor_budget_*` files, `scripts/make_floor_budget_figure.py:122`,
+   `tests/test_derived_paper_quantities.py:54` and `docs/START_HERE_overnight.md:102`. The paper
+   now prints one point estimate with three different intervals — and the Abstract's central
+   concession, "whose interval does not exclude 5%", is TRUE under Wilson (upper 5.03) and FALSE
+   under the bootstrap (upper 4.0). A sentence's truth value now depends on which file you read.
+2. **The one round 3 was cleaning up, which had the same shape.** A concession written into the
+   Discussion in round 1 left the Abstract and the Conclusion asserting the sharp claim it
+   conceded — a 5% operating point *exists* — for four hours, because those two files were not in
+   the same agent's ownership as the section that walked it back. Round 3 closed it. It is in
+   entry 36 §5.1 as a paper defect; it belongs here as a process defect.
+3. **The top-p half-fix.** The Discussion's "identical configuration --- same model and
+   quantisation, T=1.0, top-$p$=1.0, 48 new tokens, seed 0" clause was deleted as unsupported.
+   `limitations.tex:68` still says a value for one of the unpinned settings "appears elsewhere in
+   this paper---top-$p{=}1.0$---that, and not the run record, is its provenance." A grep of
+   `paper/` for `top-p` now returns that sentence and nothing else. **It refers to an occurrence
+   the same round deleted.**
+4. **The quantifier disagreement.** `discussion.tex:303-305` now says the June manifest "pins
+   none of what decides the model's output"; `limitations.tex:61-66`, cited two lines later, says
+   it pins seven things and "of the settings that determine what the model emits it pins nothing
+   further". The item lists agree; the quantifiers do not. Created by fixing (3).
+
+### 2. The rule
+
+> **A correction has two coordinates: what is wrong, and where it is wrong. Entry 36 covers the
+> first. Before applying a correction, enumerate its second — grep the repo for the literal being
+> replaced, for the number, and for the claim — and put the hit list in the report. Then apply it
+> to the whole list or to none of it.**
+
+Three things follow, and they are the reason this is not just "grep harder".
+
+- **A partial fix is not a smaller fix; it is a different, worse defect.** Before the Discussion
+  edit, the paper was consistently wrong about the N=40 interval — one estimator, one number, one
+  thing to correct. After it, the paper is inconsistent, which is strictly harder to reason about
+  and which broke a guard that had been green. The night's arithmetic: the suite went from 2
+  failures to 3 by closing one debt and opening one regression.
+- **An ownership boundary is not a defect boundary.** Every one of the four instances tracks an
+  agent's file assignment exactly. When a fix's extent crosses what you own, the correct action is
+  to enumerate the out-of-scope sites in the handoff, so the next agent inherits the *hit set*
+  rather than the *intent*. Three of these four did not. The fourth did — the abstract agent
+  reported that `5.03` is unguarded by `check_population_labels.py` and named the owner who should
+  arm it. That is the behaviour to copy, and it cost it one paragraph.
+- **A new suite failure immediately after a correction is the correction's own residue until
+  proven otherwise.** The guard worked here: `test_the_repo_is_green_today` caught the mismatch
+  within the hour, because `scripts/derived_paper_quantities.py` pins the paper's literal strings.
+  Reading that failure as "the generator is stale, re-baseline it" would have converted a live
+  inconsistency into a silent one. The rule the project already has for ratchets applies to
+  literal pins too: **you lower a guard when the debt is paid, never to make it stop reporting.**
+
+### 3. The propagation finding — the most transferable thing tonight produced
+
+`results/replay_control.md` carried the superseded figure **`-9.9 points [-15.5, -5.0]`** (with
+the retired floor triple `11.9% -> 3.0% -> 2.0%`) in the section titled **"What is worth carrying
+instead"**. The live matched value is `-10.0 points [-12.9, -7.2]`, and it sat in section 2b of
+the *same file*, whose header rule says to use "the matched intervals of section 2b and no
+others."
+
+The figure went from that heading into **three separate agent briefings on the night of
+2026-08-19, including the top-level one**, and was repeated by agents downstream of those. Nobody
+checked it. The reason nobody checked it is the finding:
+
+> **It was printed under a heading that said it was the thing to carry.** A heading is a claim.
+> "What is worth carrying instead" asserts currency, and the assertion was believed instead of the
+> number being checked — the same substitution as entry 36's "a claim arriving labelled
+> *correction* arrives with its error-checking apparently already done". The label buys deference
+> the content has not earned. Here the label was four words in a section title.
+
+What to do about it, in descending order of what it buys:
+
+- **Guard the summary sections hardest.** The probability that a stale number gets quoted is
+  proportional to how quotable its location is, and inversely proportional to how much context
+  travels with it. A "what to carry" / "headline" / "TL;DR" section is the highest-risk location
+  in any artifact and is usually the least guarded, because guards get written next to
+  derivations.
+- **Summary sections must be built from the same objects as the derivation.** The root cause was
+  mechanical and round 3 fixed it: `scripts/replay_control.py:1134-1139` and `:1577-1582` built
+  those two sentences from the single-replicate / both-components objects while §2b went through
+  `matched` / `mboot` / `quote()`. The `quote()` estimand guard added the previous night was
+  bypassed **at exactly the two sites the paper is lifted from**. A guard that covers the
+  derivation but not the summary is aimed away from the exposure.
+- **A briefing is an artifact with the same provenance duties as a results file.** Three briefings
+  quoted this number with no source line. Had any of them written "from `replay_control.md` §6",
+  the next reader would have found §2b one screen away.
+- **Verified fixed.** I grepped the regenerated `results/replay_control.md` myself: `-9.9`,
+  `[-15.5, -5.0]`, `11.9%` and the retired triple appear nowhere. §6 at line 626-629 now carries
+  `12.0% -> 3.1% -> 2.0%` and `-10.0 points [-12.9, -7.2]`. The one surviving `15.5` at line 86 is
+  the `7.0%-15.5%` range column over 200 replicate draws — a different quantity, correctly
+  labelled.
+
+**A second-order effect worth logging as its own hazard.** `discussion.tex:145-146` prints the
+N=10 -> N=20 leg as "a fall of 8.9 points [6.8, 11.1]". Two artifacts say -8.8 [-11.0, -6.8]
+(`results/replay_control.md:195`) and -8.84 [-11.02, -6.78]
+(`figures/fig_floor_budget_stats.json`, 200,000 resamples, seed 20260819). The acting agent's own
+report gives the reason: printing 8.8 would let a reader add 8.8 + 1.1 and get **9.9**, a
+registered retired string. At full precision the legs do sum (-8.84 + -1.14 = -9.98); only the
+rounded ones don't, which is ordinary rounding non-additivity and not a defect. **So a quarantine
+built to stop a dead number being quoted caused a live number to be rounded away from its
+artifact.** A defence that distorts what it protects is a new class. The register should carry
+retired figures *in their published context*, not bare digit strings that any arithmetic can
+reconstruct.
+
+### 4. What I checked, and what I took on trust
+
+Checked myself, from the primary artifact or the closed form:
+
+- **Wilson, recomputed from the closed form for six counts**: 4/200 = 2.0000% [0.7804, 5.0287];
+  0/200 [0, 1.8845]; 10/200 [2.7383, 8.9578]; 19/200 [6.1663, 14.3602]; 3/200 [0.5114, 4.3166];
+  150/1424 = 10.5337% [9.0440, 12.2357]. Every one matches what the paper prints, so **5.03 is
+  genuinely over the line** and §1.1's inversion turns on a real digit.
+- **The suite**, run: **3 failed / 997 passed / 7 skipped**, and I read all three failures rather
+  than the summary line. The new one is three `PaperClaim` pins on the rewritten `discussion.tex`
+  literal. The two `test_operational_provenance.py` survivors now name **only**
+  `scripts/overnight_2026_08_14.sh` — the `results/derived_paper_quantities.md` ratchet site was
+  genuinely closed by round 3, which is entry 36 §5.6 paid off.
+- **The three checkers**: `check_population_labels.py` OK; `check_latex_source.py` 0 ERROR / 4
+  pre-existing WARN, and it resolves exactly one figure, `fig_achievable_roc`, so tonight's new
+  `fig_floor_budget` is included nowhere; `check_operational_provenance.py` exits 1 on the
+  do-not-edit script alone.
+- **The regex gap**, by reading the code rather than the report:
+  `scripts/check_population_labels.py:671` arms the fair-pool grid rule with `\b5\.0\\?%`, and
+  `PCT` at `:334` is `\\?%` — a *required* percent sign — so it cannot match `5.03`. The new
+  endpoints `0.78`, `0.5` and `4.0` are not in the rule at all.
+- **The four-way interval split and the top-p dangler**, by grepping all eight `.tex` files.
+- **The retired strings' absence** from the regenerated `replay_control.md`.
+- **The live run**, by read-only `ps` inside Ubuntu-24.04 and `Get-Process` on the Windows side.
+
+Taken on trust, and named so the next reader knows the boundary:
+
+- **The bootstrap intervals themselves** — `[0.5, 4.0]` at N=40, the replay floors 12.0 / 3.1, and
+  the paired legs. Two agents report them independently reproduced at 400k resamples across four
+  seeds; I compared paper to artifact and did not re-run a bootstrap. **This is the boundary that
+  matters here**, because §1.1's whole dispute is over which of two intervals is right and I
+  verified only one of them.
+- The entropies and pairwise verdicts inside `results/n_scaling_ckpt.jsonl`; the June Week-4 cache
+  figures; the drift diagnostics; every AUROC; the 15-row N=20 headroom pilot; the prevalence
+  reconstruction at `discussion.tex:73-75`.
+- **LaTeX compilation.** Nine `.tex` files have been edited across three rounds and no toolchain
+  has been run at any point. `check_latex_source.py` is a source linter, not a build.
+
+### 5. An open statistical question this entry does not settle
+
+The Discussion's argument *against* Wilson for the N=40 floor is sound. It does not follow that
+the question bootstrap is right, and two objections are unanswered. (i) The floor is the count of
+answers tying the *sample maximum*, and the n-out-of-n bootstrap is not consistent for functionals
+of a sample maximum; nobody has checked whether this one is an exception. **The settling check is
+CPU-only and cheap**: simulate from a model with a known true floor, draw 200 questions, measure
+coverage. (ii) The Discussion argues for the bootstrap partly because Wilson's lower end excludes
+0.5%, "the one value this floor can never fall below on 200 answers" — but 0.5% is the
+*statistic's* support boundary, not a constraint on the *parameter*, and an interval pinned at its
+own support floor is uninformative there. Recorded as open, not as a refutation; the morning
+review carries it as decision 8, with a recommendation that does not depend on resolving it.
+
+**[SETTLED 45 minutes after this section was written — see entry 38 §1.** Round 4 ran the
+coverage simulation this paragraph called for. Objection (ii) was upheld exactly as stated: the
+bootstrap's `0.5%` lower endpoint exceeds the true floor in 100.00% of 40,000 simulated pools,
+placed there by construction. Objection (i) bites too, and resizing the bootstrap does not fix
+it. The outcome was not "one of the two estimators wins" — **both intervals were withdrawn**,
+because the estimand dissolves once the ceiling atom empties (Wilson covers in 53.7% of pools,
+the bootstrap in 0.00%). The paper now prints no interval on that row.
+`results/n40_floor_estimator_ruling.md`.**]**
+
+**GPU run untouched throughout.** Verified live at 05:48 BST by read-only `ps` in Ubuntu-24.04:
+PIDs 457 (wrapper, 4h59m), 473 (`null_control.py --tag _defb --only false_alarm --K 50
+--n_seeds 3`, state R, 4h59m), 5751 (stop watcher, 4h28m), 25204 (supervisor, 3h47m); `vmmemWSL`
+10328 and `wsl.exe` 14808/29712 on the Windows side. 24/80 targets done, 0 torn lines. Nothing in
+this entry required the GPU; every recomputation is CPU arithmetic and file reads.
+
+---
+
+## 38. 2026-08-19 (overnight, round 4) — entry 37's rule was followed and the defect recurred; the boundary was never ownership, it was representation
+
+**Why 38 and not an append to 37.** Round 4 was designed as 37's remedy — one agent, the whole
+surface, one change — and it produced the same class of residue anyway, so this is a refutation
+of 37's *sufficiency*, and a refutation filed as a paragraph inside the rule it refutes will be
+read as a footnote to that rule rather than as a correction of it.
+
+**And the tidy version of this lesson is not true, so it is not the one recorded here.** The
+framing offered to me was "three rounds of disjoint file ownership each produced a new cross-file
+inconsistency, and the fix was to give one agent the whole surface." Two of those three clauses
+fail on the record. Round 1's defect was a *wrong value* (entry 36, the truth axis), not a scope
+failure; only round 3 produced the four-instance ownership pattern that entry 37 documents. And
+the fix did not work: round 4 gave one agent the whole surface and seven sites still came out
+carrying the retired value or the retired argument. Ownership was not the binding constraint, so
+consolidating ownership could not have been the fix.
+
+### 1. What round 4 was, and what it left
+
+Round 4 ran the coverage simulation entry 37 §5 recorded as open, and it settled the question in
+a direction nobody had proposed: **both** candidate intervals for the measured N=40 floor were
+withdrawn, because the estimand itself dissolves once the ceiling atom empties — Wilson covers
+the true floor in 53.7% of 40,000 simulated pools and the question bootstrap in 0.00%, with its
+lower endpoint placed at 1/200 by construction and exceeding the truth in 100% of them. Entry 37
+§5's objection (ii) was upheld verbatim: the Discussion had been reading a fact about the
+estimator's *range* as a fact about the *population*. The ruling is
+`results/n40_floor_estimator_ruling.md`; the paper now prints no interval on that row and rests
+its Abstract on the obstruction being gone rather than on an interval clearing 5%.
+
+The pass then applied the ruling across ten site groups. **`paper/` came out clean** — I grepped
+all eight `.tex` files and re-derived their numbers from `results/n_scaling_ckpt.jsonl` with my
+own code. Two independent verifiers agree, and one of them re-derived the whole paper from the
+primary checkpoint importing no project script and found no fabricated or tidied value.
+
+Seven findings survived, five in files the pass itself owned or edited. Two are load-bearing:
+`results/replay_control.md:344`, the one table in the repo whose entire job is to say which
+interval belongs to which estimator, still assigns "Wilson on the count" to the measured N=40
+floor — contradicting its own file's banner, its own corrected table thirteen lines below, its
+own §2c and the paper; and `docs/START_HERE_overnight.md`, the live handoff, still instructs the
+next agent to move the repo *toward* the estimator the ruling withdrew at 0.00% coverage.
+
+### 2. The finding: sort the misses by representation and they stop looking random
+
+The pass searched for the retired *renderings* — `[$0.8$, $5.03$]`, `[$0.8$, $5.0$]`,
+`[$0.5$, $4.0$]`, bare `5.03` — and it found every one of them. Everything it missed is the same
+claim in a form the search did not cover.
+
+| what survived | the form it was in | why the search could not see it |
+| --- | --- | --- |
+| `replay_control.md:344` (gen. `replay_control.py:1512`) | the position **in prose** — "Wilson on the count" | no digits to match; the guard's own quote-auditor only matches `X% [a, b]` renderings |
+| `START_HERE:123-131` | the position **as an instruction to a future agent** | not a value at all, an intent |
+| `START_HERE:102` | the literal, in a file **outside the paper-plus-generators model** | the one genuine scope miss, i.e. the only one entry 37 would have caught |
+| `tests/test_derived_paper_quantities.py:54` | the choice **as a numeric tuple**, `(4, 200, 2.0, 0.8, 5.0)` | not a string; and the linter's scope is eight `.tex` files, so it cannot reach `tests/` |
+| `discussion.tex:145-147`, the two new legs | a claim the correction **created**, pinned by nothing | the search enumerated the *old* value; new values were never enumerated |
+| `replay_control.md:203`, the `-11.0` endpoint | **an endpoint of a point that was disclosed** | the disclosure covered the point estimate and stopped there |
+| `fig_floor_budget_stats.json:11` (gen. `make_floor_budget_figure.py:297`) | **a statement about another file's state**, baked into a generator | describes the world rather than carrying a value, so it goes stale silently |
+
+Read down the last column: not one of these is a file-boundary problem. Six of the seven would
+have survived a single owner with unlimited scope, because the owner searched the repo in one
+representation and the claim was living in six others.
+
+### 3. The rule
+
+> **A correction is applied to exactly the representations you enumerated. Before applying one,
+> enumerate the FORMS the claim takes, not the files it sits in: the rendered value; the value at
+> other precisions; the claim stated in prose; the claim as a machine literal (tuple, CSV cell,
+> JSON field, test parameter, generator string); the claim as an instruction to whoever comes
+> next; and the values the correction itself INTRODUCES, which no guard yet knows about. Record
+> the search per form. A correction is finished when every form has been searched, not when the
+> files you own are green.**
+
+This subsumes entry 37 rather than replacing it: files remain a useful *checklist*, they are just
+not the *partition*. And it inherits 37's sharpest corollary unchanged — a partial fix is not a
+smaller fix, it is a different and worse defect, because a repo that disagrees with itself is
+harder to reason about than one that is uniformly wrong.
+
+Two additions specific to this round:
+
+- **The claim as an instruction is the highest-severity form, and it is the one nobody greps
+  for.** A stale number in an artifact misleads a reader once. `START_HERE:123-131` tells the
+  *next agent* to perform the retired change and describes it as an owed debt; an obedient agent
+  would have undone the night's work and reported progress. Handoff documents should be treated
+  as the first site of any correction, not a downstream one.
+- **Enumerate the new values, not only the old ones.** The correction introduced
+  `$8.9$ points [$6.8$, $11.1$]` and `$1.1$ points [$-0.2$, $2.4$]` into the paper and pinned
+  neither. One of them the pass had already computed wrongly once the same night, and its lower
+  endpoint is a documented coin flip at one decimal. The moment of maximum risk for a number is
+  the hour it is created, which is precisely when no guard covers it.
+
+### 4. The guard layer answered the miss in the form it had already found
+
+Told it had missed literals, the pass added **eight more literal patterns** (the `present=False`
+claims now at `results/derived_paper_quantities.md:81-88`) and four `SUPERSEDED` regexes. That
+work is correct and I verified it holds — see §6. But measure what it buys against the five open
+sites: **none of them is a literal in a `.tex` file**, so the new coverage is exactly zero
+against the failure that actually occurred. This is entry 35's defect class at one remove: not a
+check that cannot fail, but a check aimed by the last success rather than by the last failure.
+
+> **A guard added in response to a miss must be tested against the form that was missed, not
+> against the form you already caught.** The pass's mutation test reinstated
+> `[$0.8$, $5.03$]` in `main.tex` and confirmed two checkers went red. That is a real test of a
+> real guard — of the form that had already been found.
+
+The verification *method* had a matching blind spot. The pass checked its work by diff; the most
+structural miss, `tests/test_derived_paper_quantities.py:54`, is in an **untracked** file, so
+`git diff` on it is empty by construction. The method could not have surfaced it.
+
+### 5. What round 4 got right, and must not be lost in the accounting above
+
+Three behaviours to copy, all of them the opposite of the failure mode this project keeps
+logging.
+
+1. **It overruled its own brief and said so in plain language.** Its instructions asserted the
+   paper's `8.9 [6.8, 11.1]` had been tidied for presentation and should revert to the artifacts'
+   `-8.8`. It refused, computed the leg exactly — "all singletons" means the subset is an
+   independent set of the verdict graph, so the saturation probability is a ratio of
+   independent-set counts and needs no sampling — and got `-8.863028`, i.e. `8.9` at one decimal.
+   **I recomputed this independently with my own union-find and my own counting code: N=10 floor
+   11.992117%, N=20 floor 3.129089%, leg `-8.863028`.** The pass is right, the artifacts' `-8.8`
+   is Monte-Carlo error, and the accusation in the brief came from `results/morning_review`'s own
+   checklist item 9 — which is to say, from me. It has been withdrawn there. Had the agent
+   complied, the paper would be wrong this morning.
+2. **It caught itself mid-error and recorded the near-miss rather than the corrected result
+   alone.** It first computed the 20→40 leg as `[-0.2, 2.5]` and changed the paper, then found it
+   had resampled a fixed top-4 indicator instead of re-finding the top score inside each
+   resample, and reverted. A verifier reproduced both branches.
+3. **It wrote an instability into the generator instead of smoothing it.** The `11.05` lower
+   endpoint straddles the rounding boundary, so `11.1` is a coin flip at one decimal; rather than
+   pick a prettier seed it recorded that a rerun must not "correct" it.
+
+The ruling itself deserves the same note: asked to choose between two intervals, it withdrew
+both, and it made the *opposite* call on the adjacent row (keeping Wilson for the achieved
+5%-budget point, an interior quantile at 94.4% coverage, and retiring the bootstrap at 54.8%).
+Two rulings in opposite directions from one analysis is a sign the analysis was about the
+statistics and not about the convenience.
+
+### 6. I committed this entry's own error while writing this entry
+
+Probing round 4's four new `SUPERSEDED` regexes, I ran them against the raw LaTeX
+`[$0.8$, $5.0$]`. They missed — `$` is not whitespace, and `\b0\.8\s*,\s*5\.0(?!\d)` requires only
+a comma between the endpoints. I had the finding drafted: *a guard written for plain text,
+deployed against LaTeX, structurally unable to fire.*
+
+It was false. The checker matches against `strip_latex(raw)`, which deletes `$` at
+`scripts/check_population_labels.py:1262`, so the flattened text is `[0.8, 5.0]` and the pattern
+hits. Driven through the real code path, **all four retired renderings fire and both controls
+stay silent** — `0.787`, the replication AUROC, is protected by the lookahead, and the live
+at-cap `0.0% [0.0, 1.9]` is untouched. Round 4's guard work is sound.
+
+This is worth the paragraph because of what the error *is*. Entry 36 records a critic gate that
+measured a component's magnitude and inferred the component's absence. I tested a regex in
+isolation and inferred the checker's behaviour — the same move, one layer up, committed by the
+agent writing the entry about it, two hours after reading entry 36. The generalisation is not
+"be careful with regexes":
+
+> **Verify a mechanism through its consumption path, never through a component in isolation. A
+> component's behaviour is evidence about the component. The system's behaviour is the claim.**
+
+Had I not run it through `strip_latex`, this log would now contain a fabricated defect against
+working code — and by §3's own reasoning it would have propagated, because a critique-log entry
+is the highest-authority representation in this repo.
+
+### 7. What I checked, and what I took on trust
+
+Checked myself, from the primary artifact or the closed form, importing no project code:
+
+- **Wilson for six counts**: 0/200 `[0.0000, 1.8845]`, 3/200 `[0.5114, 4.3166]`, 4/200
+  `[0.7804, 5.0287]`, 10/200 `[2.7383, 8.9578]`, 19/200 `[6.1663, 14.3602]`, 150/1424
+  `[9.0440, 12.2357]`. All match.
+- **The at-cap fact the ruling turns on**, from `results/n_scaling_ckpt.jsonl` directly: 400
+  records, 200/200 split, `ln 40 = 3.6888794541139363`, maximum attained
+  `3.6195647360579453`, **0 of 200 at the cap**. Also the ULP tie: three answers tie on a raw
+  comparison, four after a 9-dp snap, gap `4.44e-16`. The ruling does not depend on 3 versus 4,
+  which is the strongest single argument for it — the previous framing made the Abstract's claim
+  turn on floating-point addition order.
+- **The headline legs, exactly** (§5.1): 11.992117%, 3.129089%, 0%; leg `-8.863028`; printed
+  `8.9 + 1.1 = 10.0` and exact `-8.863 + -1.129 = -9.992` both close. Nothing was rounded into
+  place.
+- **The suite**, run: **2 failed / 1014 passed / 15 skipped / 1 warning**, both failures in
+  `tests/test_operational_provenance.py` and both naming only the do-not-edit
+  `scripts/overnight_2026_08_14.sh`. The three checkers: `check_population_labels.py` exit 0,
+  `check_latex_source.py` exit 0 (0 ERROR / 4 pre-existing WARN, and it now resolves **two**
+  figures — `fig_floor_budget` is included at `discussion.tex:187`),
+  `check_operational_provenance.py` exit 1 on that same script.
+- **The seven open sites**, each by reading the line rather than the report.
+- **The guard probe** of §6, through `strip_latex`.
+- **`paper/` cleanliness**: no `5.03`, `[$0.78$, $5.03$]`, `[$0.8$, $5.03$]`, `[$0.8$, $5.0$]` or
+  `[$0.5$, $4.0$]` in any of the eight `.tex` files.
+
+Taken on trust, and named so the next reader knows the boundary:
+
+- **The coverage simulation itself** — the 40,000 pools, the three seeds, the 53.7% / 0.00% /
+  94.4% / 54.8% figures. I did not re-run it. Every number I have copied from it into a repo file
+  is attributed to it by name.
+- **The Ewens population model behind it.** A verifier reproduced it to the digit and reports it
+  **mildly misfit in the region that decides the answer** (predicting 0.55 and 1.59 questions at
+  K=40 and K=39 where 0 are observed). The ruling discloses this in its own §5. It does not move
+  the ruling, and the reason is its §8 sensitivity sweep, which is anchored on the two atoms I
+  re-derived exactly above: for the true floor to be Wilson's own lower end of 0.78%, the N=20
+  atom would have to be 5.03% against a measured 3.129% [1.79, 4.69]. **A conclusion that
+  survives its own model being somewhat wrong is the only kind worth having here**, and this one
+  does — but the misfit is recorded, not buried.
+- The recorded DeBERTa verdict bits; the fair pool's score-independent construction; the June
+  Week-4 cache; the AUROC figures; byte-identical regeneration of any generator.
+- **LaTeX compilation.** Nine `.tex` files across four rounds, still never compiled.
+
+**GPU run untouched throughout.** Verified by read-only `ps -eo pid,ppid,etime,stat,args` inside
+Ubuntu-24.04 at 07:45 BST, twice: PIDs 457 (wrapper, 7h08m), 473 (`null_control.py --tag _defb
+--only false_alarm --K 50 --n_seeds 3`, 7h08m, alternating `S`/`R`), 5751 (stop watcher, 6h38m),
+25204 (supervisor, 5h56m); load average 2.08, flat. 30/80 targets done, 0 torn lines, ETA
+2026-08-20 00:33 — nearly two hours later than the 05:45 projection, and a real slowdown this
+time rather than a basis artefact. Nothing in this entry required the GPU; every recomputation is
+CPU arithmetic and file reads. **No STOP file of any spelling was created in either watched
+location.**
+
+---

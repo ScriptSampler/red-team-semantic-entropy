@@ -17,14 +17,24 @@ a paragraph containing "the budget correction then moved ..." -- so the one dead
 reached the paper was silently laundered by a word in an adjacent clause. That regression is
 pinned below.
 
-WHY THERE IS NO test_the_repo_is_green. There isn't one, and there should not be. The repo is
-NOT green: 23 sites currently restate a superseded operational anchor, including one in the
-paper and two in a shell script that is running on the GPU right now and must not be edited.
-Asserting green would require either lying or editing files that are in flight. This project
-already has the rule -- "A green test suite next to a known-broken statistic reads as
-validation of it. Pin the failure or delete the test." So the failures are PINNED, in
-KNOWN_SITES, and the test fails when a NEW one appears or a pinned one is fixed without
-updating the register. That is a debt ledger, not a passing grade.
+WHY THERE IS NO test_the_repo_is_green. There isn't one, and there should not be. As of
+2026-08-19 the checker reports 24 open findings: 21 restatements of a superseded operational
+anchor, 2 stale countdowns, and 1 untagged-figure ratchet breach. Asserting green would
+require either lying or editing files that are in flight. This project already has the rule --
+"A green test suite next to a known-broken statistic reads as validation of it. Pin the
+failure or delete the test." So the failures are PINNED, in KNOWN_SITES, and the test fails
+when a NEW one appears or a pinned one is fixed without updating the register. That is a debt
+ledger, not a passing grade.
+
+Two of those 24 are worth naming because they are the ones a reader will want to act on and
+must not. `scripts/overnight_2026_08_13.sh` carries 2 dead anchors and `overnight_2026_08_14.sh`
+carries the untagged breach; the second is the wrapper of the GPU run that is live while this
+is being written, and both are under a no-edit rule. The untagged one is deliberately NOT
+pinned -- see the DELIBERATELY ABSENT note in `KNOWN_OPEN` -- so it fails two tests here on
+purpose. No site in `paper/` is open any more; the one that was is recorded as retired below.
+
+These counts are themselves numbers in a document, and this repo's own rule applies to them:
+they are true at the date above and nowhere else. Re-run the checker rather than trusting them.
 """
 from __future__ import annotations
 
@@ -353,16 +363,20 @@ def test_the_live_planning_documents_are_actually_in_scope():
 # ======================================================================================
 # The debt ledger. NOT a passing grade -- see the module docstring.
 # ======================================================================================
-# (file, rule, anchor-or-empty) -> count, as of 2026-08-14.
+# (file, rule, anchor-or-empty) -> count, as of 2026-08-19.
 #
-# Every entry is a real finding from results/operational_number_audit.md. None of them can
-# be fixed here: the .md files are script-generated, `overnight_2026_08_13.sh` is running on
-# the GPU and is under a no-edit rule, and `experiments.tex` is a paper claim whose fix is a
-# rewrite ("the measured figure is ~99 GPU-h; the decision was taken on a modelled 228"),
-# not a substitution.
+# Every entry is a real finding from results/operational_number_audit.md. None of them can be
+# fixed here: the .md files are script-generated, and `overnight_2026_08_13.sh` is under a
+# no-edit rule. The `experiments.tex` entry that used to sit here is retired -- the paper now
+# names the retired figure only in order to correct it -- and both START_HERE entries retired
+# on 2026-08-19 when that document was rewritten against live artifacts.
 KNOWN_SITES: dict[tuple[str, str, str], int] = {
-    ("docs/START_HERE_overnight.md", "dead-anchor", "~67 GPU-h null control"): 1,
-    ("docs/START_HERE_overnight.md", "stale-countdown", ""): 1,
+    # RETIRED 2026-08-19, both START_HERE entries. The handoff document was rewritten against
+    # live artifacts: the dead "~67 GPU-h" is now named and marked superseded instead of being
+    # spent, and the countdown is arithmetically true as of 2026-08-19. The countdown pin is
+    # NOT replaced by a fresh one -- see _live_sites() on why this ledger is now computed
+    # against the real date, and section 6 of the handoff on why that line is expected to go
+    # red again as the document ages. That red is the document reporting its own staleness.
     ("docs/definitive_run_plan.md", "dead-anchor", "~67 GPU-h null control"): 1,
     # RETIRED 2026-08-14. experiments.tex had disclosed a pre-registration deviation as
     # triggered by a 228 GPU-h price tag; the measured figure is ~99, so the recorded trigger
@@ -373,7 +387,14 @@ KNOWN_SITES: dict[tuple[str, str, str], int] = {
     # untagged figure behind (the measured ~99); that is carried in KNOWN_OPEN, because a
     # paper's prose cannot hold a literal MEASURED token without addressing the reader in the
     # wrong register.
-    ("results/derived_paper_quantities.md", "dead-anchor", "228 GPU-h"): 2,
+    #
+    # RETIRED 2026-08-19: the two derived_paper_quantities.md "228 GPU-h" sites are gone, and
+    # it is worth recording HOW, because "the dead anchor stopped being reported" has two very
+    # different causes and only one of them is progress. It was not deleted and it was not
+    # laundered by a stray "superseded" elsewhere in the table: the generator now emits a
+    # provenance column, and each of the four surviving 228 occurrences carries its own
+    # retirement marker in its own table row -- checked individually, not inferred from the
+    # file's finding count. The paper names the retired figure only in order to correct it.
     ("results/judge_owed_conditions.md", "dead-anchor", "55 s / clustering"): 1,
     ("results/judge_owed_conditions.md", "dead-anchor", "6.1 s cheap-arm eval"): 1,
     ("results/judge_owed_conditions.md", "dead-anchor", "~67 GPU-h null control"): 1,
@@ -394,9 +415,21 @@ KNOWN_SITES: dict[tuple[str, str, str], int] = {
 
 
 def _live_sites() -> dict[tuple[str, str, str], int]:
+    """The ledger, computed against the REAL date -- not the frozen TODAY.
+
+    This used to pass `today=TODAY` (2026-08-14) while scanning the live repo, which meant the
+    debt ledger described the repository as it stood five days earlier. The countdown rule is
+    the one rule that is a pure function of the real date, so freezing it made this ledger
+    report a countdown finding that a person running `check_operational_provenance.py` would
+    not see, and miss one they would. A guard whose whole subject is numbers that rot with the
+    calendar must not read the calendar from a literal.
+
+    The synthetic probes above keep the frozen TODAY, and should: a constructed sentence needs
+    a deterministic "today" to assert against. Only the scan of the real repo moves.
+    """
     out: dict[tuple[str, str, str], int] = {}
     for path in scoped_files():
-        for p in check_file(path, today=TODAY):
+        for p in check_file(path, today=dt.date.today()):
             head = p.split("\n", 1)[0]
             file_part = head.split(":", 1)[0]
             rule = re.search(r"(dead-anchor|untagged|anchorless-model|supersede-trigger|"
@@ -427,9 +460,28 @@ def test_the_open_sites_are_exactly_the_pinned_ones():
 def test_the_guard_is_currently_red_and_that_is_the_finding():
     """`main()` returns non-zero today, on purpose. If this ever starts passing, the debt in
     KNOWN_SITES has been paid and this test should be replaced by a plain green assertion --
-    deliberately, in a commit that says so, not by accident."""
-    assert main(today=TODAY) == 1
-    assert sum(KNOWN_SITES.values()) == sum(_live_sites().values())
+    deliberately, in a commit that says so, not by accident.
+
+    A SECOND ASSERTION WAS REMOVED HERE ON 2026-08-19, and the reason is the point:
+
+        assert sum(KNOWN_SITES.values()) == sum(_live_sites().values())
+
+    A sum cancels. On the morning of 2026-08-19 this line was GREEN while the ledger was wrong
+    in two places at once -- two pinned `228 GPU-h` sites had been fixed and were still pinned,
+    and two live findings (a ratchet-stale and an untagged) were not pinned at all. Two errors,
+    opposite signs, equal magnitudes, and the scalar matched. It was measuring a total and
+    being read as evidence about membership.
+
+    That is the same defect this repo named on the same night in a much more expensive place: a
+    critic gate measured a variance component's MAGNITUDE and inferred its ABSENCE. A scalar
+    agreeing is not the set agreeing.
+
+    Nothing is lost by the removal. `test_the_open_sites_are_exactly_the_pinned_ones` compares
+    the ledger key by key and `test_the_ratchet_baselines_match_the_repo_today` covers the
+    findings that are deliberately never pinned, so equal sums are implied by the pair when
+    both pass -- and when either fails, the sum was only ever able to hide it.
+    """
+    assert main(today=dt.date.today()) == 1
 
 
 def test_the_ratchet_baselines_match_the_repo_today():

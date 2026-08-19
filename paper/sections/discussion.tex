@@ -49,8 +49,10 @@ the estimator can emit is $\ln N$, so every threshold above it flags nothing and
 threshold that fires at all is $\tau{=}\ln N$, which flags exactly the answers at the
 ceiling. The minimum non-zero false-positive rate is therefore not a tuning choice: it
 \emph{is} $\Pr(\text{a clean correct answer yields } N \text{ mutually distinct meanings})$,
-the mass of the ceiling atom. An operator who specifies a $5\%$ false-alarm budget cannot
-have one: the only threshold that honours it is the one that never fires, catching nothing.
+the mass of the ceiling atom. At $N{=}10$ an operator who specifies a $5\%$ false-alarm
+budget cannot have one: the only threshold that honours it is the one that never fires,
+catching nothing. That qualifier is load-bearing, and the budget-scaling paragraph below
+measures what lifting it costs.
 Nor is the shortfall a property of our sample. The Wilson lower bound on the fair pool's
 correct stratum is $6.2\%$, and the $1424$-answer superset that stratum is a subset of
 estimates the same parameter with seven times the negatives, at $10.5\%$ [$9.0$, $12.2$].%
@@ -114,29 +116,255 @@ achievable true-positive rate is capped by the upper convex hull of those points
 the floor that hull is one straight line out of the origin.
 
 \paragraph{Does a larger sample budget fix it?}
-Half of this is settled without data and half is not, and the two halves are easy to
-conflate. Settled: the floor is non-increasing in $N$. Couple the budgets by taking the
+Half of this was settled without data and half needed the measurement, and the two halves
+are easy to conflate. Settled without data: the floor is non-increasing in $N$. Couple the budgets by taking the
 $N{=}10$ sample to be the first ten draws of the $N{=}20$ one; if all twenty answers are
 pairwise inequivalent then so are any ten of them, so $\{\text{saturate at }20\}$ is
 contained in $\{\text{saturate at }10\}$, and the first ten of an i.i.d.\ draw of twenty have
 the law of an i.i.d.\ draw of ten. Raising the budget can therefore only lower the
 false-alarm floor, and the floor itself is a fact about how often the model answers a
 question $N$ different ways---a property of the model and the question distribution, not of
-the estimator's arithmetic. Not settled: whether the grid becomes usably \emph{fine} near the
-operating region. Enumeration bounds the number of thresholds available in the top tenth of
+the estimator's arithmetic. Not settled that way: whether the grid becomes usably
+\emph{fine} near the operating region. Enumeration bounds the number of thresholds available in the top tenth of
 the range at seven ($455$ attainable values at $N{=}20$, against $39$ and two at $N{=}10$),
 but says nothing about the false-alarm rates those seven carry, and that depends on how the
 negatives distribute over them. Mass could spread evenly, giving a usable grid, or stay
-concentrated on the cap, giving the same pathology one budget along. We have no clean
-$N{=}20$ scores on the fair pool, and the one $N{=}20$ re-score in this work does not stand
-in for them. On $15$ saturated targets re-scored at $N{=}20$, lifting the cap by $0.693$ nats
+concentrated on the cap, giving the same pathology one budget along.
+
+We have now run the budget out to $N{=}40$ over the fair pool, recording the full pairwise
+equivalence verdicts so that any smaller budget is recoverable by replaying them on random
+subsets, and the grid does become fine. Read off that one source, so that no step in the
+sequence is also a change of cache, the achievable false-alarm floor on the fair pool's $200$
+correct answers falls from a replayed $12.0\%$ [$8.9$, $15.3$] at $N{=}10$ through a replayed
+$3.1\%$ [$1.8$, $4.7$] at $N{=}20$ to a measured $2.0\%$ at $N{=}40$, a fall of
+$10.0$ points [$7.2$, $12.9$] that excludes zero. That last interval is a paired bootstrap
+over the questions and not the two end intervals subtracted, because the two floors are read
+off the same $200$ questions and, at $N{=}40$, off a top score that can move to a different
+question when those questions are resampled. The ladder is monotone but it is not detectable
+at every rung, and we say so rather than let the sequence imply that it is. Taken
+leg by leg on the same paired bootstrap, the $N{=}10$ to $N{=}20$ leg is a fall of $8.9$
+points [$6.8$, $11.1$], which excludes zero; the $N{=}20$ to $N{=}40$ leg is a fall of $1.1$
+points [$-0.2$, $2.4$], which \emph{covers} it. The end-to-end fall is real and its final
+increment is not separately resolved at $200$ questions; both belong in the claim, and the
+second is the kind of thing this section elsewhere refuses to read a sign off.
+Figure~\ref{fig:floor_budget} plots the three budgets and the three paired differences
+together.
+The first two entries are replays of the
+$N{=}40$ run's recorded verdicts on random subsets, which is why they are quoted from that
+run rather than from the direct Week-4 cache the rest of this paper uses, where the same
+$N{=}10$ floor over the fair pool's $200$ correct answers is $9.5\%$ [$6.2$, $14.4$]; the two
+paragraphs below are about that difference. Which interval a row takes is decided by the
+estimator and not by whether the row was replayed: Wilson prices a count of independent
+indicators at a threshold fixed \emph{before} the data, so it belongs to the two rows that
+are exactly that---the direct $N{=}10$ floor, $19$ of $200$ at $\ln 10$, and the empty
+at-cap mass at $\ln 40$---while the replayed rows take a bootstrap over the $200$ questions,
+because their point estimate is an average over subset draws rather than a count. Those
+resample a draw of questions
+and nothing else; the paragraph below is about why
+the replayed rows may not also resample the subset. The measured $N{=}40$ floor takes
+neither, for the reason below. What changes qualitatively at the top budget is that the floor stops
+being the ceiling atom: no clean correct answer reaches $\ln 40$ at all, so the at-cap mass is
+$0.0\%$ [$0.0$, $1.9$] and the floor becomes an ordinary order statistic---the four
+highest-scoring clean answers, $2.0\%$ of the fair pool's correct stratum, at a threshold that
+catches $6.0\%$ [$3.5$, $10.2$] of that pool's $200$ hallucinating answers. That is also
+why we quote no interval for it. Its threshold is not $\ln 40$ or any
+other value fixed in advance but the top score \emph{this} sample attained, and once the atom
+is empty that score is no longer the top of the population's support: a larger pool reaches a
+higher rung and reports a smaller floor, so the quantity being estimated moves with the pool
+instead of holding still to be estimated. Both candidate intervals inherit that, and each
+also has an endpoint placed by construction rather than by the data---a question bootstrap
+over these questions cannot return less than $1/200$ however small the floor really is, and
+Wilson on a count of four cannot know that the rung it counts may not be the population's
+top one. Neither prices the floor, so we report $2.0\%$ as the cheapest alarm $200$ answers
+can exhibit and leave it without an interval; what carries one is the at-cap mass above,
+whose threshold really was fixed in advance. An empty atom is
+not a free operating point, and we separate the two because the arithmetic invites the
+confusion: $0.0\%$ is the never-fire policy, and the cheapest alarm that exists at $N{=}40$
+costs $2.0\%$.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_floor_budget}
+\caption{The achievable false-alarm floor on the fair pool's $200$ correct answers against
+the sample budget, every budget read off the one $N{=}40$ pairwise-verdict checkpoint so that
+no step in the sequence is also a change of cache; the direct $N{=}10$ point from the June
+cache is shown separately because it is a different generation run. Left: the floor, and in
+grey the ceiling-atom mass, which is the same quantity until the atom empties at $N{=}40$ and
+then is not---there the atom is $0/200$ with a Wilson upper bound of $1.9\%$, while the
+cheapest alarm the pool can exhibit costs $2.0\%$ and is drawn without an interval, its
+threshold being the top score this sample reached rather than a value fixed in advance.
+Right: the three matched paired differences over the same $200$ questions, which is why they
+are not the end intervals subtracted.}
+\label{fig:floor_budget}
+\end{figure}
+
+The grid also densifies where an
+operator would use it. At or below a $5\%$ false-alarm budget $N{=}10$ offers no firing
+threshold at all, on either source, against five at $N{=}40$; at or below $10\%$ the direct
+$N{=}10$ cache offers exactly one, the $9.5\%$ point, against fourteen. So the $5\%$ budget
+that $N{=}10$ cannot honour at all is honoured at $N{=}40$, at an achieved $5.0\%$
+[$2.7$, $9.0$] on the fair pool's $200$ correct answers. The unqualified form of the claim
+above is therefore false and we scope it rather than defend it: the absence of any false-alarm rate
+between zero and roughly one correct answer in ten holds \emph{at $N{=}10$}, and quadrupling
+the sample budget buys the missing operating point.
+
+We report the achieved rate as a measured point and not as a certificate, and we read the
+pre-registered criterion on the quantity it was pre-registered on, which is not the one this
+paragraph used to compare it against. The plan required a Wilson upper bound below $5\%$ on
+the count of correct answers \emph{at the cap}, and derived from that a budget of at most
+three such answers in $200$. It identified that count with the floor because at every budget
+it was written against, the two were the same number. At $N{=}40$ they came apart: the
+at-cap count is $0$, not $4$, its Wilson upper bound is $1.9\%$, and the criterion is met
+with three counts to spare. We disclose that reading rather than bury it, because the plan
+did not anticipate the atom emptying, and because comparing the four first-firing answers
+against a threshold derived for the at-cap count compares two different quantities---the
+same conflation this work has already had to correct once in the grid report. What the
+criterion licenses is narrow and we keep it narrow: the obstruction that closed off a $5\%$
+budget at $N{=}10$---an atom of mass at the ceiling, which no threshold can cut into---is
+gone at $N{=}40$. It does not license reading the $5.0\%$ achieved on the fair pool's $200$
+correct answers as a demonstration that a
+sub-$5\%$ operating point exists, and we do not read it that way. One assumption holds the
+certificate up and we state it rather than leave it to be found: that some question in the
+population yields $39$ or $40$ mutually inequivalent answers out of $40$ with positive
+probability. Were that probability exactly zero, the top of the support would be the rung
+this pool reached and the floor would indeed be $4$ of the fair pool's $200$ correct
+answers; but $3.1\%$ of them already yield $20$ mutually inequivalent answers out of $20$. The plan priced the remedy in
+advance too: thirty further correct answers along
+the same seed-$0$ ordering, taken from the larger correct stratum this one is a subset of,
+at the pessimistic end of its own predicted floor, with the instruction to trigger the
+extension on the measured floor rather than on a hunch. The measured floor triggers it and
+we have not run it. So the concession is made at the strength its sample supports---five
+firing thresholds at or below $5\%$ where $N{=}10$ offers none, and a floor of $2.0\%$ that
+we do not certify to sit below $5\%$---and
+the achieved rate carries the same caution from the other side, since the threshold that
+honours the budget is chosen on the same $200$ correct answers whose false-alarm rate it is
+then quoted at.
+
+We pre-registered where the claim would break. Before any of these samples were drawn we
+predicted, from the $N{=}10$ cache alone, that the ceiling-atom mass would fall to
+$3.5$--$5.3\%$ at $N{=}20$ and $1.2$--$2.4\%$ at $N{=}40$; we recorded in advance that the
+$N{=}20$ prediction sits on the very $5\%$ boundary this claim turns on, and committed to the
+reversal before the data existed---``if it comes in far below, the finding becomes `here is
+the budget that buys a $5\%$ false-alarm rate'\thinspace''---so that neither branch could be
+written after the fact. The branch that fired is the one that was written down---but only at
+$N{=}40$, and the prediction that led to it did badly. Both budgets came in \emph{below}
+their bands, a replayed $3.1\%$ at $N{=}20$ and an empty atom at $N{=}40$, and the plan had
+stated in advance, in bold, that its numbers were lower bounds on the atom and so erred if at
+all towards predicting too much relaxation. The pre-registered direction of the error is
+therefore itself falsified, which is worth more to a reader than two band misses are. At
+$N{=}20$ we claim nothing from the miss, and the reason is narrower than the row's interval
+covering the prediction. The row is a replay---of an estimator shown unbiased below, but a
+replay---and its interval does \emph{not} cover the whole predicted band: it reaches
+$4.7\%$, short of the band's top at $5.3\%$, while containing the band's lower edge of
+$3.5\%$. So the top of the prediction is excluded and its bottom is not, which is a partial
+miss and not the plan's ``far below'': a band whose lower edge survives has not been shown
+to be wrong, and a row we have just said may carry no load-bearing claim cannot be turned
+into a falsification either. At $N{=}40$ the atom emptied, a $5\%$ operating point appeared, and the reversal clause is the
+one that applies; even there the band is missed only on the quantity as it was predicted,
+since the plan identified the atom with the floor, and read as a floor the measured $2.0\%$
+on the fair pool's correct stratum lands inside the predicted $1.2$--$2.4\%$---the two parted
+company exactly when the atom emptied. We give the prediction not as decoration but because
+it is what separates a scoped claim from a retreat.
+
+Two limits on this, and neither of them is a bias in the replay. The first is provenance.
+Only $N{=}40$ is directly measured; the smaller budgets are \emph{replays} of that run's
+recorded verdicts on random subsets, so we route the concession itself through the measured
+$N{=}40$ row and let no load-bearing claim rest on a replayed one. That is a rule about where
+a number came from, not a doubt about the estimator, which is exactly unbiased for the
+smaller budget: the $40$ samples drawn for a question are i.i.d.\ and hence exchangeable, a
+uniformly random $k$-subset of an exchangeable $40$-tuple has the law of $k$ i.i.d.\ draws,
+and the clusterer is union-find over \emph{pairwise} verdicts, so a subset's clustering is
+exactly the clustering a direct $k$-sample run on those samples would have produced. What
+reusing one verdict matrix costs is the independence of the replicates and not the mean:
+every replicate conditions on the same $40$ samples and the same $200$ questions, so the
+spread across replicates is subset-draw noise around a conditional mean. That is a reason to
+distrust a sign test taken across replicates. It is not a reason to widen an interval, and
+the arithmetic of why is worth setting out, because the mistake is easy to make in the
+direction of apparent caution.
+
+The floor a single replicate reports is a mean of independent indicators, one per question,
+question $i$ saturating with probability $p_i$ under the subset draw; so its variance splits
+as
+$\overline{p(1-p)} + \operatorname{var}(p) = \bar p(1-\bar p)$, identically. The left term is
+the subset draw and the right term is the draw of questions, and their sum is exactly the
+binomial variance a Wilson interval on that one replicate already reports. On the fair pool's
+$200$ correct answers at $N{=}20$ the two terms, each written as the standard deviation it
+contributes to the floor and in that order, are $0.98$ and $0.74$
+points against a binomial $1.23$; at $N{=}10$ they are $1.61$ and $1.63$ against $2.30$.
+Square-rooted like that they combine as $\sqrt{0.98^{2}+0.74^{2}}$ rather than by addition,
+which is the identity above with every term square-rooted and not a sum that fails to
+balance. The subset draw is
+therefore not missing from a single-replicate interval, and cannot be added to one.
+
+Which interval belongs to which estimator follows. We quote the subset-averaged replay
+floor---$12.0\%$ at $N{=}10$, $3.1\%$ at $N{=}20$, each the mean of the $200$ per-question
+$p_i$ to a Monte-Carlo error under $0.01$ points---and never a single replicate. That
+estimator has the subset draw averaged out of it, so its interval must not put the subset
+draw back: what is left varying is which $200$ questions were drawn, each contributing an
+independent $p_i$, and a bootstrap over questions is the whole of it. The direct $N{=}10$
+row is a count of independent indicators at the fixed threshold $\ln 10$ and takes Wilson;
+the measured $N{=}40$ floor is a count at no fixed threshold at all and takes the question
+bootstrap for the reason given above. The tempting error, and the one this arithmetic rules out,
+is to interval the subset-averaged floor by a bootstrap that resamples targets \emph{and}
+redraws the subset: that counts the subset draw twice, once inside the target resample where
+it already sits and once again in the redraw, and on this data it returns intervals about
+twice the width the quoted estimator carries. Widening an interval is not the safe direction
+when the interval is the evidence---it converts a measurable difference into a null---and it
+is why we state, for every rate in this section, which estimator the interval belongs to.
+None of this bears on the unbiasedness argument above: it concerns the width of an interval
+and not the location of a point.
+
+The second limit is a provenance question we have not closed. At $N{=}10$ the floor on the
+fair pool's $200$ correct answers is $9.5\%$ [$6.2$, $14.4$] measured directly on the Week-4
+cache against $12.0\%$ [$8.9$, $15.3$] replayed from the $N{=}40$ run: a step of $+2.5$ points
+whose paired interval, $[-0.7, +5.5]$ over the questions,
+covers zero, with the direct value sitting near the fifth percentile of the replay
+distribution over $200$ subset draws---low in it, not outside it. Subsetting cannot produce
+the step, by the argument above, so two candidates remain. Sampling noise in the direct arm is
+one: that cache has $19$ of its $200$ correct answers at the $\ln 10$ cap, fewer than the
+replay predicts, at an exact one-sided Poisson-binomial $p{=}0.081$, with the rest of the
+cluster-count distribution a good fit ($\chi^{2}{=}7.39$ on $9$ degrees of freedom,
+$p{=}0.60$). A real difference between the two generation runs is the other, and
+one is measurable: the August checkpoint's answers run about $3.6$
+characters longer than the June cache's ($z{=}+4.0$) and end in terminal punctuation $1.6$
+points less often. What we cannot do is read that drift against a configuration held fixed,
+because the two runs' artefacts record only the token budget and the seed in common: past
+the model id, its $4$-bit loading, temperature and that budget, the June manifest pins little
+of what decides the model's
+output---not the nucleus, not the quantisation type, not the model revision---and the
+August checkpoint records nothing of its generation settings at all beyond the sample
+count, the token budget and the seed (Section~\ref{sec:limitations}). The drift may be run-to-run variation under configurations
+that did match, or a configuration difference we cannot see, and nothing in either artefact
+separates the two. Longer and more often truncated answers entail each other less often,
+which pushes the ceiling atom up, so the sign is the one the gap would need; the effect is
+much too small to disturb the cluster-count distribution, which matches. We therefore cannot
+separate subsetting error from generation drift, and we claim no direction for the gap. One
+clean direct $N{=}10$ pass on the current machine separates them by subtraction. It is one of
+two measurements this section is short of, both of them cells the budget plan pre-registered
+in advance and neither of them run: this one, a fresh $N{=}10$ pass over $40$ answers of
+the correct stratum, and a direct $N{=}20$ pass over $60$ answers of the same stratum, whose
+stated question is the other half of this one---does a replayed grid match a directly
+measured one at the same budget?
+
+The one $N{=}20$ re-score elsewhere in this work stands in for none of the above. On $15$
+saturated targets re-scored at $N{=}20$, lifting the cap by $0.693$ nats
 left $20\%$ of them still pinned and returned a mean of $+0.304$ nats of usable headroom
-rather than the full $+0.693$, because the clean baseline climbs along with the cap. That is
-a measurement of \emph{headroom}, not of the grid, and it is not evidence about the grid
-either way: its $15$ targets were chosen because their \emph{attacked} $N{=}10$ score hit the
-cap, which is selection on a score and on the attacked side, and at that size the interval
-around the ceiling rate spans almost everything of interest. Settling it needs one clean pass
-at $N{=}20$ over the same correct stratum, which we have not run.
+rather than the full $+0.693$. We report that shortfall without a mechanism for it. The
+obvious candidate---that the clean baseline climbs along with the cap---is not ours to
+offer: a plug-in entropy that rises towards its estimand as the sample grows is that
+estimator's negative bias decaying, which is the coverage-adjustment account this paper
+cites in \emph{support}~\citep{mccabe2025alphabet, pan2026shade}, and one finding cannot be
+both our explanation and their result. The pilot is
+a measurement of \emph{headroom}, not of the grid: its $15$ targets were chosen because their
+\emph{attacked} $N{=}10$ score hit the cap, which is selection on a score and on the attacked
+side, and at that size the interval around the ceiling rate spans almost everything of
+interest. It is not evidence about the grid in either direction, and nothing else in this
+work is either: no direct measurement of the grid at $N{=}20$ exists. On the fair pool's
+$200$ correct answers the trend above reports $3.1\%$ at that budget, and that entry is a
+replay of the $N{=}40$ run's recorded verdicts on random $20$-subsets; the only answers this
+project has ever scored at $N{=}20$ are the $15$ just described, and they were selected on a
+score. The cell that would settle it is the direct $N{=}20$ pass named in the paragraph
+above, pre-registered for exactly this purpose and not run.
 
 Under the attack's own success criterion the same coarseness bites from the other side. A
 target whose clean score already sits at one of the top two attainable values cannot register
@@ -146,9 +374,9 @@ to go, which disqualifies $21$ of the $80$ correct-answer targets of the attack 
 before any paraphrase is generated (Methods).
 
 The sharpest way to put the finding is therefore not ``we constructed an attack that defeats
-semantic entropy'' but ``discrete semantic entropy offers an operator no false-alarm rate
-between zero and roughly one correct answer in ten, and the false-alarm direction is
-correspondingly unmeasurable in the detector's own units.'' The two halves are the same fact
+semantic entropy'' but ``at the standard $N{=}10$, discrete semantic entropy offers an
+operator no false-alarm rate between zero and roughly one correct answer in ten, and the
+false-alarm direction is correspondingly unmeasurable in the detector's own units.'' The two halves are the same fact
 seen from the two ends of the deployment, and the first is the stronger form because it is a
 statement about what does not exist rather than a frequency we observed. The qualifier is
 load-bearing and we do not drop it: the ceiling behind this reading

@@ -1,0 +1,134 @@
+{
+  "population": "200 correct answers of the score-independent fair pool (_stratum_ids('right', seed=0)[:200]). NOT the 80-target attacked pool, NOT the 1424-answer superset, NOT the 2000-question replication pass.",
+  "subset_draws_per_question": "none -- computed exactly, see p_at_cap()",
+  "bootstrap_resamples": 200000,
+  "seed": 20260819,
+  "source_of_record": [
+    "results/n_scaling_ckpt.jsonl (primary; every point re-derived here)",
+    "results/n40_floor_estimator_ruling.md (why the N=40 floor has no interval)"
+  ],
+  "not_the_source_of_record": [
+    "results/replay_control.md sec. 2b -- its floors are a 40,000-draw Monte Carlo and differ from the exact values in the 2nd decimal; its N=40 floor still carries the withdrawn Wilson interval",
+    "paper/sections/discussion.tex -- the paper is checked AGAINST this figure, not the other way round"
+  ],
+  "checks": [
+    {
+      "what": "replay N=10 floor (= at-cap mass), subset-averaged",
+      "rederived": [
+        11.992,
+        8.906,
+        15.324
+      ],
+      "plotted": [
+        12.0,
+        8.9,
+        15.3
+      ],
+      "variance_identity_residual": -1.0842021724855044e-19
+    },
+    {
+      "what": "replay N=20 floor (= at-cap mass), subset-averaged",
+      "rederived": [
+        3.129,
+        1.784,
+        4.676
+      ],
+      "plotted": [
+        3.1,
+        1.8,
+        4.7
+      ],
+      "variance_identity_residual": 0.0
+    },
+    {
+      "what": "measured N=40",
+      "at_cap_count": 0,
+      "floor_count": 4,
+      "max_entropy_nats": 3.6195647360579453,
+      "ln40": 3.6888794541139363,
+      "ascending_achievable_fprs_pct": [
+        2.0,
+        2.5,
+        4.0,
+        4.5,
+        5.0,
+        6.0
+      ],
+      "tpr_at_the_floor_threshold_pct": 6.0,
+      "plotted_floor": [
+        2.0,
+        null,
+        null
+      ],
+      "plotted_floor_interval": "none -- withdrawn by results/n40_floor_estimator_ruling.md",
+      "withdrawn_wilson_on_the_floor_count": [
+        0.7804,
+        5.0287
+      ],
+      "withdrawn_question_bootstrap_on_the_floor": [
+        0.5,
+        4.0
+      ],
+      "plotted_at_cap": [
+        0.0,
+        0.0,
+        1.9
+      ]
+    },
+    {
+      "what": "matched paired difference N=10 -> N=20",
+      "rederived": [
+        -8.86,
+        -11.06,
+        -6.78
+      ],
+      "plotted": [
+        -8.9,
+        -11.1,
+        -6.8
+      ]
+    },
+    {
+      "what": "matched paired difference N=20 -> N=40",
+      "rederived": [
+        -1.13,
+        -2.42,
+        0.22
+      ],
+      "plotted": [
+        -1.1,
+        -2.4,
+        0.2
+      ]
+    },
+    {
+      "what": "matched paired difference N=10 -> N=40",
+      "rederived": [
+        -9.99,
+        -12.92,
+        -7.21
+      ],
+      "plotted": [
+        -10.0,
+        -12.9,
+        -7.2
+      ]
+    },
+    {
+      "what": "direct N=10 (Week-4 June cache) -- a DIFFERENT generation run",
+      "at_cap_count": 19,
+      "floor_count": 19,
+      "ascending_achievable_fprs_pct": [
+        9.5,
+        21.5,
+        26.5,
+        29.0
+      ],
+      "plotted": [
+        9.5,
+        6.2,
+        14.4
+      ]
+    }
+  ]
+}

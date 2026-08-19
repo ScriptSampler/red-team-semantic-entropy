@@ -35,17 +35,66 @@ likelihoods---so we report the curve and decline to claim that its crossover fal
 plausible range. Settling it needed the real weights, so we re-scored our stored samples under
 the generating model's own sequence likelihoods, on the same questions and the same
 clusterings, and computed all three estimators side by side. The simulation's prediction
-holds and sharpens: with length-normalised likelihoods the at-cap atom is \emph{gone}
-($0.0\%$ [$0.0$, $0.2$] against the discrete estimator's $14.8\%$), while near-cap crowding
-partially survives ($20.0\%$ [$18.3$, $21.8$] of clean answers in the top tenth, against
-$27.8\%$). The atom, and therefore the false-alarm floor it induces, is a property of
-sample-proportion weighting; the crowding is not. Length normalisation is the choice doing
-that work: on raw sequence likelihoods the cluster softmax is nearly one-hot and rank
+holds and sharpens. Over all $2000$ questions of the replication pass at natural prevalence
+(the $1424$-answer clean-correct superset above together with its complement, not the fair
+pool), with length-normalised likelihoods the at-cap
+atom is \emph{gone}---$0$ of those $2000$, $0.0\%$ [$0.0$, $0.2$], against $295$ of $2000$,
+$14.8\%$ [$13.3$, $16.4$], under the discrete estimator---while near-cap crowding partially
+survives, at $399$ of $2000$, $20.0\%$ [$18.3$, $21.8$], in the top tenth of the range
+against $556$ of $2000$, $27.8\%$ [$25.9$, $29.8$]. The atom, and therefore the false-alarm
+floor it induces, is a property of sample-proportion weighting; the crowding is not. Length
+normalisation is the choice doing that work: on raw sequence likelihoods the cluster softmax
+is nearly one-hot and rank
 agreement with the discrete estimator collapses to $\rho{=}0.38$, whereas length-normalised it
 is $\rho{=}0.99$, and on the score-independent fair pool ($200$ correct, $200$ hallucinating)
 it scores AUROC $0.703$ against the discrete estimator's $0.704$. Every AUROC in this paper
 therefore stands under Eq.~(5) as we compute it, and only the saturation arithmetic is
 estimator-specific.
+
+\paragraph{One cached generation run underlies every $N{=}10$ number here.}
+The re-scoring above, the achievable false-alarm floor and its grid, the clean AUROC on the
+fair pool, and the corresponding floor on the $1424$-answer superset are all computed from a
+single cached pass of $N{=}10$ samples over $2000$ TriviaQA validation questions, generated
+in June 2026. Two properties of that cache bound what any of them establishes, and neither
+is visible in the numbers themselves.
+
+First, the run is under-recorded. Its manifest pins the model id, $4$-bit loading, the
+sample count, temperature $1.0$, a $48$-token generation budget, the seed and the split, and
+of the settings that determine what the model emits it pins nothing further: not
+\texttt{top\_p}, not the $4$-bit quantisation type, not whether
+double quantisation was applied, not the compute dtype, not a model revision, and not the
+\texttt{transformers} version. Those six values are recovered from the defaults of the
+sampling script's own source rather than read off the artefact. This paper quotes none of
+them as a property of the June run, and a later draft should not start: the one place a
+value for any of them is on record in this project---\texttt{top\_p}${=}1.0$, in the
+$N{=}40$ run's own provenance block---describes the August generation pass and says nothing
+about this cache. The absent revision hash is the one we would most like back: without it we
+cannot certify that a re-run today would load the same weights. A further gap is structural.
+The cache stores decoded answer strings and never the token ids the sampler emitted, so the
+likelihood re-scoring teacher-forces each answer under its \emph{canonical} tokenisation;
+$17$ of the $20{,}000$ cached samples ($0.085\%$) retokenise past the $48$-token budget,
+which proves the two id sequences differ for at least those, and the detokenise--retokenise
+string round trip itself is exact for only $19{,}996$ of the $20{,}000$, its four failures
+all trailing whitespace. Both figures are lower bounds, since a resegmentation that
+preserves the token count leaves no trace in either check, so
+what Eq.~(5) recovers above is the likelihood of each answer \emph{string} under its
+canonical tokenisation rather than of the sequence the model emitted.
+
+Second, generation runs of this pipeline are not interchangeable, and we have measured that
+they are not. The August $N{=}40$ run, drawing fresh samples for the same fair-pool
+questions, produces answers about $3.6$ characters longer ($z{=}+4.0$) that end in terminal
+punctuation about $1.6$ points less often; the two runs' artefacts record only the token
+budget and the seed in common, so we cannot certify that the rest of their configurations
+matched either. We disclose that drift in Section~\ref{sec:discussion}, where it bears on a
+comparison between the two runs---but it bears on every June-cache number in this paper, and
+we have not bounded it for any of them. The statistic that would carry it into them is the
+distribution of the cluster count at $N{=}10$, which is the whole of what the discrete score
+is a function of, and on the fair pool's $200$ correct answers that distribution is not
+distinguishable from what the August run's recorded verdicts predict for it. We decline to
+read that as a bound: a comparison on $200$ questions that fails to separate two runs is not
+a measurement of how close they are, and treating it as one is the move this paper has had
+to retract elsewhere. One fresh direct $N{=}10$ pass on the current machine separates drift
+from sampling noise by subtraction, and we regard it as owed.
 
 \paragraph{Selection on a noisy estimator---measured, not merely acknowledged.}
 Semantic entropy is a finite-sample quantity: for each candidate we cluster
@@ -58,16 +107,18 @@ estimate is \emph{reproducible}. Reproducibility is not the same as noise-freene
 We quantify the resulting inflation directly, by re-scoring each \emph{selected}
 paraphrase on an independent sample---same $N$, a different sampling seed---which is the
 classical diagnostic for selection on noise and requires neither an oracle nor a benign
-floor. Across the $60$ false-alarm targets on which the optimiser found a paraphrase, the
-mean intended move falls from $+0.698$ nats at selection to $+0.315$ nats on fresh samples.
+floor. The re-scored set is the $69$ of the $80$ false-alarm targets on which the optimiser
+found a paraphrase at all; on the other $11$ the search returned the original question, so
+there was no selection to re-test. Across those, the mean intended move falls from $+0.609$
+nats at selection to $+0.268$ nats on fresh samples.
 Two statements follow, with very different strengths, and we separate them. \emph{That} the
-selection-time figure is inflated is demonstrated: the shrinkage is $-0.383$ nats with a
-bootstrap interval of $[-0.529, -0.234]$ that excludes zero. \emph{How much} it is inflated
+selection-time figure is inflated is demonstrated: the shrinkage is $-0.341$ nats with a
+bootstrap interval of $[-0.469, -0.212]$ that excludes zero. \emph{How much} it is inflated
 is not tightly determined: retention is a ratio of means, and its interval is wide at
-$45\%$ $[25\%, 65\%]$. So roughly half of the effect a naive report would claim is
+$44\%$ $[23\%, 64\%]$. So roughly half of the effect a naive report would claim is
 selection on sampling noise rather than a property of the paraphrase, but the honest range
-runs from a quarter to two-thirds surviving. Signal remains either way---$36$ of $60$
-targets keep a positive move and the two measurements correlate at $r{=}0.46$.
+runs from under a quarter to two-thirds surviving. Signal remains either way---$37$ of the
+$69$ keep a positive move and the two measurements correlate at $r{=}0.48$.
 
 We therefore do not report raw effect sizes as the headline. The claim statistic prices the
 attacker's search budget into the null (Section~\ref{sec:experiments}), so an effect that
@@ -119,6 +170,35 @@ datasets (e.g.\ SQuAD) are in progress. The attack budget (beam and iteration co
 is modest by necessity, and the reported cells use small per-stratum $n$, so the
 confidence intervals are wide and the numbers are best read as preliminary effect
 sizes rather than tight estimates.
+
+\paragraph{One measured sample budget, and how coarse the ladder is.}
+The budget in the paragraph above is the \emph{attacker's} search budget; this one is the
+detector's sample budget $N$, and the scope limit we draw from it needs stating in its own
+right. That the achievable false-alarm floor falls as $N$ rises---so that the absence of any
+low false-alarm operating point is a fact about $N{=}10$ and not about semantic
+entropy---rests on a single directly measured budget. We ran $N{=}40$ once, over the fair pool's $400$
+targets, $200$ per stratum. The $N{=}10$ and $N{=}20$ rows of the falling sequence are not
+further experiments: they are replays of that one run's recorded pairwise equivalence
+verdicts on random subsets of its $40$ samples, unbiased for the smaller budget by the
+exchangeability argument of Section~\ref{sec:discussion}, but read off one generation run
+rather than three. Only the top of the ladder is a measurement and nothing above it was run,
+so what we can say is that the floor is non-increasing in $N$, which we prove rather than
+measure, and that on the fair pool's $200$ correct answers it had reached a measured $2.0\%$
+by $N{=}40$; how it behaves further out, and whether the decay between two coupled points is
+the shape it keeps, we cannot say. Three narrower scopes ride along. The ladder exists only
+on the fair pool---the $1424$-answer superset that estimates the same $N{=}10$ floor as the
+fair pool's $9.5\%$ over seven times as many negatives has no $N{=}40$ counterpart---so
+every row here is estimated on $200$ negatives,
+a resolution that cannot separate false-alarm rates less than half a point apart. It is one
+model family in one quantisation on one dataset, and the floor is a fact about how often
+that model answers a question $N$ different ways, a property of the model and the question
+distribution rather than of the estimator's arithmetic, which is exactly the kind of
+quantity that need not transfer to another model or another corpus. And what the extra
+operating points are \emph{worth} we do not report in either direction: at a matched
+false-alarm rate the cross-budget change in true positives has a magnitude that depends on
+which decision rule is paired and a sign that depends on which $N{=}10$ cache is paired, and
+no pairing separates the budgets on $200$ questions, so we claim no discrimination benefit
+from a larger budget and, equally, none against one.
 
 \paragraph{SRE fidelity and threat model.}
 We reproduce SRE with exact-match-then-NLI-union-find clustering rather than the

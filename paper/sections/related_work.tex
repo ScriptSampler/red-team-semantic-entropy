@@ -139,13 +139,20 @@ so we claim agreement with their finding and not a diagnosis of it.
 Separately, \citet{sun2026granularity} name the \emph{score granularity
 gap} for black-box LLM classification: a confidence score may rank well and still take so
 few distinct values that an operator has only a handful of usable thresholds. \emph{Discrete}
-semantic entropy inherits exactly this pathology, with the twist that the granularity limit is
-set by the sampling budget rather than by a verbalisation format; our contribution here is the
-instantiation and its consequence for attack evaluation, not the argument itself. The
+semantic entropy inherits this pathology at the budget it is deployed at---$39$ attainable
+values at the standard $N{=}10$, two of them in the top tenth of the range---with the twist
+that the granularity limit is set by the sampling budget rather than by a verbalisation
+format, and is therefore relaxable by spending in a way a verbalisation format is not:
+$N{=}20$ affords $455$ values, seven of them in that top tenth. We accordingly assert the
+claim at $N{=}10$ and nowhere else, and what carries to larger $N$ is only that the lattice
+stays sparsest at the top of the scale, which is where a false alarm and an operator's
+threshold both have to land. Our contribution here is the instantiation and its consequence
+for attack evaluation, not the argument itself. The
 likelihood-weighted estimator does not inherit it: real-valued cluster weights are not
 confined to the entropies of integer partitions of $N$, so the lattice dissolves even though
 the $\log N$ ceiling remains (Section~\ref{sec:methods}). The granularity claim is thus the
-sharper and the narrower of our two, and we keep the two apart wherever we make them. Read
+sharper and the narrower of our two---narrower in the estimator it holds for and in the
+sample budget it is asserted at---and we keep the two apart wherever we make them. Read
 together with the originating papers---which report that clusters are few and grow slowly
 with $N$, and treat that as a computational
 saving~\citep{kuhn2023semantic, farquhar2024detecting}---the picture is of a well-known

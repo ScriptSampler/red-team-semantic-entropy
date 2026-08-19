@@ -509,6 +509,46 @@ def test_stale_saturation_rate_from_the_superseded_run_is_flagged(tmp_path):
     assert any("39" in p and "STALE" in p for p in problems), _say(problems)
 
 
+# --- the withdrawn N=40 floor intervals (2026-08-19) ---------------------------------
+@pytest.mark.parametrize("text,want", [
+    (r"the floor is an ordinary order statistic, $2.0\%$ [$0.8$, $5.03$]", "5.03"),
+    (r"Wilson on a count of four would give [$0.78$, $5.03$]", "0.78"),
+    (r"the question bootstrap gives [$0.5$, $4.0$] instead", "0.5"),
+    (r"a measured $2.0\%$ [$0.8$, $5.0$] at $N{=}40$", "0.8"),
+])
+def test_a_withdrawn_n40_floor_interval_is_flagged(tmp_path, text, want):
+    r"""PROBE. Both candidate intervals for the N=40 floor were withdrawn on measured
+    coverage (Wilson 53.7%, question bootstrap 0.00%, at nominal 95%). Each of the four
+    renderings the paper carried before the ruling must come back red.
+
+    `5.03` is the one that matters most: it was live at three sites, the whole concession
+    turned on it, and no rule in this file could match it, because the fair-pool rule's
+    `\b5\.0\\?%` requires a percent sign immediately after the `5.0`."""
+    problems = _check(tmp_path, text)
+    stale = [p for p in problems if "STALE" in p]
+    assert stale, _say(problems)
+    assert any("N=40 floor" in p for p in stale), _say(stale)
+
+
+def test_the_surviving_n40_numbers_are_not_flagged_as_withdrawn(tmp_path):
+    r"""CONTROL, and the four things this arming must not break.
+
+    `0.787` is the score-coupled replication AUROC and merely starts with `0.78`; `0.5`
+    and `4.0` are live numbers that are only retired when ADJACENT, which is why the pair
+    is armed and not the endpoints; `5.0\\%` is the live achieved operating point; and the
+    at-cap interval `[0.0, 1.9]` is the one interval that SURVIVES at N=40."""
+    problems = _check(tmp_path, r"""
+        On the score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) the
+        cap carries no mass ($0.0\%$ [$0.0$, $1.9$]) and the cheapest alarm costs
+        $2.0\%$, while the threshold honouring a $5\%$ budget achieves $5.0\%$
+        [$2.7$, $9.0$]. The nearer-looking $0.787$ is the same run scored under an
+        all-samples-correct label. Elsewhere the judge separates $0.93$ from $0.5$, and
+        the arm moves $4.0$ points.
+    """)
+    stale = [p for p in problems if "STALE" in p]
+    assert not stale, _say(stale)
+
+
 def test_stale_ceiling_count_and_stale_correlations_are_flagged(tmp_path):
     """Methods carried a stale 39/80; the correlations are +0.71/+0.68 under `_defb`."""
     problems = _check(tmp_path, r"""
