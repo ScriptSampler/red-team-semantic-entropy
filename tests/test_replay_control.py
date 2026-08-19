@@ -760,3 +760,109 @@ def test_the_floor_trend_never_starts_at_the_direct_cache():
         assert not c.group(0).startswith(direct + " "), (
             f"a budget trend starts at the direct cache value {direct}: "
             f"{flat[c.start():c.start() + 60]!r}")
+
+
+# ------------------------ 7d. the two tables that state the same mapping must agree
+# THE DEFECT (2026-08-19, fourth round). The "Which interval goes with which estimator"
+# table said the measured N=40 floor takes "Wilson on the count" for a whole round after
+# `results/n40_floor_estimator_ruling.md` withdrew both candidates and after the floor
+# table THIRTEEN LINES BELOW IT had been changed to "none -- withdrawn". It contradicted
+# its own banner, its own section 2c, and the paper, and no check saw it: 7b's rules match
+# `X% [a, b]` renderings and trend chains, and that row is prose in a table cell. It was
+# hard-coded in the generator, so regeneration reprinted it every time.
+#
+# The rule is `RC.audit_estimator_table_agrees_with_the_floor_table`, and what it compares
+# is STANCE, not text -- see its docstring for why pinning the corrected sentence would
+# have been the wrong fix. These tests do what section 7 does everywhere: assert the
+# committed artifact is clean, then re-inject the exact defect and the exact wording that
+# was there, and require the check to go red on both.
+def test_the_estimator_table_and_the_floor_table_agree_today():
+    """The committed artifact. If this fails, `results/replay_control.md` states two
+    different positions on whether the measured N=40 floor carries an interval -- fix
+    `scripts/replay_control.py` and regenerate; editing the `.md` is reverted."""
+    assert RC.audit_estimator_table_agrees_with_the_floor_table(_report()) == []
+
+
+def test_the_check_catches_the_row_verbatim_as_it_actually_stood():
+    """The probe, in the wording that survived the consolidating pass."""
+    text = _report()
+    row = [ln for ln in text.splitlines()
+           if ln.startswith("| the measured N=40 floor |")]
+    assert len(row) == 1, row
+    relapse = text.replace(
+        row[0],
+        "| the measured N=40 floor | the questions only | Wilson on the count; "
+        "the question bootstrap only for PAIRED differences |")
+    assert relapse != text, "the corrected row is absent, so nothing was re-injected"
+    bad = RC.audit_estimator_table_agrees_with_the_floor_table(relapse)
+    assert any("disagrees with itself" in b for b in bad), bad
+
+
+def test_the_check_is_not_a_string_match_on_the_row_that_was_wrong():
+    """The point of the design. A row that names an interval-bearing estimator in words
+    that have never appeared in this repo is caught just the same, because what is checked
+    is agreement with the floor table and not the presence of a known-bad sentence."""
+    text = _report()
+    row = [ln for ln in text.splitlines()
+           if ln.startswith("| the measured N=40 floor |")][0]
+    relapse = text.replace(
+        row, "| the measured N=40 floor | the questions only | a Jeffreys interval on "
+             "the count, which is the obvious thing to reach for |")
+    bad = RC.audit_estimator_table_agrees_with_the_floor_table(relapse)
+    assert any("disagrees with itself" in b for b in bad), bad
+
+
+def test_the_check_follows_the_floor_table_rather_than_pinning_todays_ruling():
+    """THE control, and the reason this is not written as a grep for "Wilson".
+
+    If the ruling is ever overturned, the floor table starts carrying an interval again --
+    and the rule must then demand that the ESTIMATOR table carry one too, not sit there
+    insisting on the withdrawal. So: overturn it in the floor table alone, and the check
+    goes red pointing at the estimator table. A checker that could only ever demand one
+    answer would have to be argued with instead of read."""
+    text = _report()
+    overturned = re.sub(r"\| (\d+(?:\.\d+)?%) \(no interval[^)]*\)\s*\|",
+                        r"| \1 [0.8%, 5.0%] |", text)
+    overturned = overturned.replace("**none -- withdrawn, see 2c**",
+                                    "Wilson on 4/200")
+    assert overturned != text, "nothing was overturned, so this control proves nothing"
+    bad = RC.audit_estimator_table_agrees_with_the_floor_table(overturned)
+    assert any("disagrees with itself" in b for b in bad), bad
+    assert any("estimator table's measured row says no interval" in b for b in bad), bad
+
+
+def test_the_check_notices_if_either_row_it_compares_disappears():
+    """A guard that silently passes when one of its two reference points vanishes is worse
+    than no guard: deleting the awkward row would have become the cheapest way to green."""
+    text = _report()
+    gutted = re.sub(r"^\| the measured N=40 floor \|.*\|$", "", text, flags=re.M)
+    bad = RC.audit_estimator_table_agrees_with_the_floor_table(gutted)
+    assert any("missing or reshaped" in b and "estimator" in b for b in bad), bad
+
+
+def test_the_committed_report_marks_its_monte_carlo_leg_as_monte_carlo():
+    """Site 4's other half. The 10 -> 20 leg prints -8.8 here and -8.9 in the paper; the
+    exact independent-set count says -8.8630, so the PAPER is right and this row is
+    Monte-Carlo error. An unmarked -8.8 in a table is the evidence someone uses to
+    "correct" the paper down, which has been attempted once and refused."""
+    text = _report()
+    row = [ln for ln in text.splitlines()
+           if ln.startswith("| replay10 -> replay20 | floor")]
+    assert len(row) == 1, row
+    assert "-8.8630" in row[0] and "MC" in row[0], (
+        "the Monte-Carlo 10 -> 20 floor leg is printed without saying it is Monte Carlo:\n"
+        + row[0])
+
+
+def test_a_measured_row_that_states_no_position_is_also_caught():
+    """The third stance, and the one the rule needs a name for. Answering "see section 2c"
+    in the column headed "the interval it takes" is not agreement, it is silence, and
+    silence in that cell is how the withdrawn position survived a pass with unlimited
+    scope: nothing contradicted anything, so nothing looked wrong."""
+    text = _report()
+    row = [ln for ln in text.splitlines()
+           if ln.startswith("| the measured N=40 floor |")][0]
+    mute = text.replace(
+        row, "| the measured N=40 floor | the questions only | see section 2c |")
+    bad = RC.audit_estimator_table_agrees_with_the_floor_table(mute)
+    assert any("states no position" in b for b in bad), bad

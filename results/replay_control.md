@@ -200,7 +200,7 @@ direction, and the adjacent-column hazard is real -- see the banner at the top.
 
 | comparison | statistic | difference | 95% | verdict |
 | --- | --- | --- | --- | --- |
-| replay10 -> replay20 | floor (min non-zero achievable FPR) -- MATCHED | -8.8 pts | [-11.0 pts, -6.8 pts] | excludes zero |
+| replay10 -> replay20 | floor (min non-zero achievable FPR) -- MATCHED | -8.8 pts | [-11.0 pts, -6.8 pts] | excludes zero -- the point and the endpoints are MC; exact: -8.8630 [-11.06, -6.78], i.e. -8.9 at one decimal, which is what the paper quotes |
 | replay10 -> replay20 | AUROC | +0.0160 | [-0.0255, +0.0559] | covers zero |
 | replay10 -> replay20 | pAUC, FPR <= 10% (mean TPR in band) | +0.0048 | [-0.0780, +0.0880] | covers zero |
 | replay10 -> replay20 | TPR at a matched 9.5% FPR | +2.1 pts | [-7.8 pts, +12.2 pts] | covers zero |
@@ -341,11 +341,15 @@ different intervals, and they are not interchangeable:
 | --- | --- | --- |
 | one replicate's replayed floor | the questions AND that one subset draw | Wilson on the count -- which is already both components |
 | the subset-averaged replayed floor (**what this report and the paper quote**) | the questions only | a bootstrap over questions only |
-| the measured N=40 floor | the questions only | Wilson on the count; the question bootstrap only for PAIRED differences |
+| the measured N=40 floor | the questions only, but the ESTIMAND moves with them | **none -- both candidates withdrawn, see 2c.** The question bootstrap is still the interval for PAIRED differences, which are a different estimand |
 
 The middle row is the one that was got wrong. Note also that the two replayed
 intervals are honest about different things and are NOT nested claims: a
-single-replicate Wilson interval is correct for a number nobody quotes.
+single-replicate Wilson interval is correct for a number nobody quotes. The last
+row said "Wilson on the count" until 2026-08-19 and was the last statement of the
+withdrawn position left in this file. `audit_estimator_table_agrees_with_the_floor_table`
+now requires this cell, the floor table below, and the section 2 floor row to
+state the same position, so the three cannot drift apart again.
 
 **The floor, quoted correctly.**
 
@@ -379,11 +383,38 @@ population model fitted at N=40 and validated OUT OF SAMPLE on the two ceiling
 atoms this report measures (it predicts the N=10 atom at 11.86% against a
 measured 12.00%, having been tuned only on N=20).
 
-| budget | true floor | Wilson coverage | question-bootstrap coverage |
+EVERY NUMBER IN THE TABLE BELOW IS MODEL-DEPENDENT, including the column headed
+"true floor": there is no measurement of a population floor anywhere in this
+project. The model is the one named in the paragraph above -- fitted at N=40,
+tuned on N=20, validated out of sample on the N=10 atom -- and it is specified
+in `results/n40_floor_estimator_ruling.md` and nowhere else. The coverages are
+frequencies over 40,000 pools simulated FROM that model, three seeds. Read them
+as properties of the model, not as measurements of this pool.
+
+| budget | true floor (MODEL) | Wilson coverage (MODEL) | question-bootstrap coverage (MODEL) |
 | --- | --- | --- | --- |
 | N=10 (atom full) | 11.86% | 95.1% | 94.9% |
 | N=20 (atom full) | 3.13% | 96.2% | 98.4% |
 | **N=40 (atom EMPTY)** | **0.27%** | **53.7%** | **0.00%** |
+
+**The three significant figures are the model's, not a measurement's, and the
+N=40 row is the one to distrust the precision of.** A verifier reduced the 53.7%
+to an identity: under this model Wilson on a count of 2 has a lower endpoint
+0.0012 points ABOVE the asserted true floor of 0.2735% (0.2747 against 0.2735),
+and the floor count is at least 1 by construction -- the floor IS the smallest
+non-zero achievable rate -- so a pool covers the floor exactly when its floor
+count is 1, and 53.7% is P(floor count = 1) and nothing else. Move the model's
+floor by a thousandth of a point and that figure steps to a different value; it
+does not degrade gracefully. The bootstrap's 0.00%
+is robust for the opposite reason -- its lower endpoint is 1/200 = 0.5% by
+construction, which exceeds any plausible true floor at this budget, so it misses
+for a structural reason and not a numerical one.
+
+WHAT THE PRECISION DOES NOT TOUCH IS THE RULING. Both candidates fail and the
+estimand dissolves when the ceiling atom empties: that follows from the estimator
+being an extreme order statistic whose target moves with the pool, and it is
+argued below without reference to any coverage figure. A reader who rejects the
+model should reject the 53.7%, keep the withdrawal, and quote the point alone.
 
 Neither estimator is broken. THE ESTIMAND BREAKS, and it breaks exactly when the
 ceiling atom empties. While the atom carries mass the floor is a fixed population

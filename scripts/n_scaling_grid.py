@@ -659,6 +659,13 @@ def run_measurement(targets: list[tuple[str, str, str]], n_samples: int, seed: i
             # know a checkpoint came from the fake scorer, and a fake-data report landing
             # in results/ under the real filename is exactly the failure to prevent.
             "scorer": scorer,
+            # THIS CLOCK CALL STAYS, unlike the three report stamps above. A checkpoint
+            # line is an append-only record of when a target was actually scored, not a
+            # derived artifact anyone regenerates, so there is no byte-comparison to
+            # protect -- and `scripts/progress_monitor.py` reads `ts` as one of its
+            # timestamp keys. Pinning it would turn real provenance into a constant and
+            # cost the monitor its only in-record clock (it already falls back to file
+            # mtimes on checkpoints that lack one).
             "ts": _dt.datetime.now().isoformat(timespec="seconds"),
         }
         if store_samples:
@@ -900,7 +907,8 @@ def write_plan(args) -> int:
     log("# Budget scaling of the achievable-FPR grid: the plan, the cost, and everything")
     log("# that needs no new data")
     log("")
-    log(f"Generated {_dt.date.today().isoformat()} by `scripts/n_scaling_grid.py "
+    log(f"Generated {generated_date('n_scaling_plan.md', args)} by "
+        "`scripts/n_scaling_grid.py "
         "--derive-only` (CPU only; no GPU, no model, no attack data).")
     log("")
     log("`results/achievable_fpr_grid.md` measures the operator's menu at ONE sample")
@@ -1544,7 +1552,8 @@ def write_grid_report(args, records: list[dict], pool: Pool) -> int:
         log("> checkpoint, the replay and the report all work. Do not cite it, do not")
         log("> copy a number out of it.")
         log("")
-    log(f"Generated {_dt.date.today().isoformat()} by `scripts/n_scaling_grid.py`.")
+    log(f"Generated {generated_date('n_scaling_grid.md', args)} by "
+        "`scripts/n_scaling_grid.py`.")
     log(f"Budgets measured directly: {measured_budgets}. Budgets derived by replaying the")
     log("recorded pairwise verdicts on random subsets: everything else below.")
     log("")
@@ -1866,6 +1875,30 @@ def build_targets(pool: Pool, strata: str, limit: int | None) -> list[tuple[str,
     return out
 
 
+# ----------------------------------------------------- the report date stamps, pinned
+# NOT date.today(). A wall-clock stamp means a regenerated report always byte-differs from
+# the committed one, which destroys "the file is unchanged" as a check -- the cheapest
+# check there is, and the one you want most after editing a 1900-line generator. The date
+# is an INPUT: it records the run the report describes, not the moment someone reran the
+# script. Bump it when the DATA changes. This is the fix `scripts/replay_control.py`
+# already carries; it was scoped to that one file.
+#
+# PER REPORT, not one constant. These two reports describe runs on different days -- the
+# plan was derived on 2026-08-13 and the measured grid on 2026-08-19 -- and a single stamp
+# would silently re-date one of them, which is worse than the defect being fixed.
+GENERATED_DATES = {
+    "n_scaling_plan.md": "2026-08-13",       # --derive-only: design and cost, no new data
+    "n_scaling_grid.md": "2026-08-19",       # the measured grid
+    "cost-estimate": "2026-08-19",           # --estimate-only: stdout, not an artifact
+}
+
+
+def generated_date(key: str, args=None) -> str:
+    """The pinned stamp for one report, or the `--generated` override if one was passed."""
+    override = getattr(args, "generated", None)
+    return override or GENERATED_DATES[key]
+
+
 def estimate_only(args) -> int:
     """Cost from measured throughput. No model load, no cache, no torch import."""
     lines: list[str] = []
@@ -1877,7 +1910,7 @@ def estimate_only(args) -> int:
     budgets = tuple(args.budgets)
     ck = _read_jsonl(args.checkpoint)
     measured = measured_throughput(ck) if ck else None
-    log(f"# n_scaling_grid cost estimate  ({_dt.date.today().isoformat()})")
+    log(f"# n_scaling_grid cost estimate  ({generated_date('cost-estimate', args)})")
     log("")
     log("Source of the per-eval numbers: "
         + ("the LIVE CHECKPOINT plus the repo's measured anchors for budgets not yet run"
@@ -1914,6 +1947,11 @@ def main(argv=None) -> int:
     ap.add_argument("--no-samples", action="store_true",
                     help="do not store sample text in the checkpoint (scores and verdict "
                          "bits are always stored)")
+    ap.add_argument("--generated", default=None,
+                    help="date stamped in the report header. Defaults to the "
+                         "pinned date for whichever report is being written "
+                         "(see GENERATED_DATES); regenerating without changing "
+                         "the data must reproduce the file byte for byte.")
     ap.add_argument("--estimate-only", action="store_true")
     ap.add_argument("--derive-only", action="store_true")
     ap.add_argument("--smoke", action="store_true",

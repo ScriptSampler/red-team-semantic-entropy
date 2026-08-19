@@ -49,18 +49,77 @@ def run() -> int:
 # ======================================================================================
 # The arithmetic itself.
 # ======================================================================================
+def _paper_text() -> str:
+    """paper/ as one whitespace-normalised string, so a LaTeX reflow is not a revision.
+
+    Read here rather than through `D` because the point of the tests below is to check the
+    registry AGAINST the .tex, and a helper borrowed from the thing under test would let it
+    agree with itself."""
+    files = (sorted((ROOT / "paper").glob("*.tex"))
+             + sorted((ROOT / "paper" / "sections").glob("*.tex")))
+    assert files, "no .tex found under paper/"
+    return " ".join(" ".join(f.read_text(encoding="utf-8").split()) for f in files)
+
+
 @pytest.mark.parametrize("k,n,pt,lo,hi", [
     (0, 200, 0.0, 0.0, 1.9),      # at-cap mass at N=40: the structural zero
-    (4, 200, 2.0, 0.8, 5.0),      # the cheapest firing threshold at N=40
-    (12, 200, 6.0, 3.5, 10.2),    # what that threshold catches, hallucinating stratum
+    (12, 200, 6.0, 3.5, 10.2),    # what the cheapest threshold catches, hallucinating
     (10, 200, 5.0, 2.7, 9.0),     # the achieved 5% operating point
     (19, 200, 9.5, 6.2, 14.4),    # the direct N=10 floor the paper keeps
     (55, 200, 27.5, 21.8, 34.1),  # hallucinating at the ln 10 cap
 ])
 def test_wilson_reproduces_every_interval_the_paper_prints(k, n, pt, lo, hi):
+    r"""The arithmetic AND the premise.
+
+    THE DEFECT THIS SECOND HALF EXISTS FOR (2026-08-19). This list used to carry
+    `(4, 200, 2.0, 0.8, 5.0)` with the comment "the cheapest firing threshold at N=40",
+    and it went on asserting that Wilson [0.8, 5.0] is "an interval the paper prints" for a
+    full round after `results/n40_floor_estimator_ruling.md` withdrew it and the paper
+    stopped printing it. It could not have noticed: every assertion was arithmetic on
+    `D.wilson()`, which is a property of the binomial and not of the paper, so the case was
+    permanently green -- the withdrawn choice encoded as a numeric tuple rather than as a
+    string, where none of the .tex-scanning guards could see it.
+
+    So each case now has to be FOUND in paper/. A tuple that names a rendering the paper
+    does not carry is the same defect whichever direction it points."""
     a, b = D.wilson(k, n)
     assert round(100 * k / n, 1) == pt
     assert (round(a, 1), round(b, 1)) == (lo, hi)
+    lit = " ".join(("$%.1f\\%%$ [$%.1f$, $%.1f$]" % (pt, lo, hi)).split())
+    assert lit in _paper_text(), (
+        f"this case claims the paper prints {lit!r} for {k}/{n}, and it does not. Either "
+        f"the paper was reworded -- update the literal -- or the number was withdrawn, in "
+        f"which case the case belongs in the withdrawal test below and not in a list "
+        f"headed 'every interval the paper prints'.")
+
+
+def test_the_n40_floor_count_carries_no_interval_in_the_paper():
+    r"""4/200: the case that was demoted out of the list above, and the reason it was.
+
+    Both candidate intervals were withdrawn on measured coverage -- Wilson on 4/200 covers
+    the true floor 53.7% of the time and the question bootstrap 0.00%, at nominal 95% --
+    because the estimand stops existing once the ceiling atom empties. The paper prints the
+    point and nothing else.
+
+    The arithmetic is still pinned, at both precisions, for two reasons: a number withdrawn
+    on evidence must stay re-examinable, and `scripts/check_population_labels.py` arms
+    patterns against these exact digit strings, so if Wilson's endpoints on this count ever
+    moved, those patterns would be guarding the wrong renderings."""
+    lo, hi = D.wilson(4, 200)
+    assert (round(lo, 1), round(hi, 1)) == (0.8, 5.0)
+    assert (round(lo, 4), round(hi, 4)) == (0.7804, 5.0287)
+
+    paper = _paper_text()
+    assert " ".join(r"a measured $2.0\%$ at $N{=}40$".split()) in paper, (
+        "the paper no longer prints the N=40 floor as a bare point; if the ruling changed, "
+        "it changed in results/n40_floor_estimator_ruling.md first")
+    for banned in (r"$2.0\%$ [$0.8$, $5.0$]", r"[$0.78$, $5.03$]", r"[$0.5$, $4.0$]",
+                   "0.7804", "5.0287", "0.78037", "5.02866"):
+        assert " ".join(banned.split()) not in paper, (
+            f"paper/ has started printing {banned!r} again. That is a WITHDRAWN interval "
+            f"for the N=40 floor -- see results/n40_floor_estimator_ruling.md. Both "
+            f"candidates failed on coverage; the interval that survives at that budget is "
+            f"the at-cap mass, 0/200 = 0.0% [0.0, 1.9].")
 
 
 def test_wilson_is_not_the_normal_approximation():

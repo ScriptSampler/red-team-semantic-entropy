@@ -882,6 +882,28 @@ SUPERSEDED: list[dict] = [
     {"pattern": r"\b0\.8\s*,\s*5\.0(?!\d)",
      "quantity": "Wilson interval on 4/200 for the N=40 floor, rounded to 1 dp",
      "run": "pre-ruling", "replacement": _FLOOR_WITHDRAWN},
+    # THE FULL-PRECISION PAIR, armed 2026-08-19 after an audit found that NONE of the four
+    # rules above matches it. Wilson on 4/200 is [0.78037%, 5.02866%], and the four rules
+    # were written against the ROUNDED renderings the paper happened to carry:
+    # `\b0\.78(?!\d)` is blocked by the very next digit of `0.7804`, and `\b5\.03` cannot
+    # match `5.0287`, which reads `5.02`. The unrounded pair is not hypothetical -- it is
+    # sitting in figures/fig_floor_budget_stats.json under
+    # `withdrawn_wilson_on_the_floor_count`, correctly labelled there, one copy-paste from
+    # the paper. That sidecar is the right place for it; paper/ is not, and paper/ is what
+    # this checker reads.
+    #
+    # ARMED ALONE, not as a pair, on the same reasoning the note above gives for `5.03`
+    # and `0.78`: at four and five significant figures these digit strings are unique to
+    # this interval. `0\.780` cannot be the replication AUROC `0.787`, which is the one
+    # collision the 2 dp rule had to dodge with a lookahead.
+    {"pattern": r"\b0\.780\d*",
+     "quantity": "Wilson LOWER end on 4/200 for the N=40 floor, at full precision "
+                 "(0.78037; renders as 0.780 / 0.7804 / 0.78037)",
+     "run": "pre-ruling", "replacement": _FLOOR_WITHDRAWN},
+    {"pattern": r"\b5\.02[89]\d*",
+     "quantity": "Wilson UPPER end on 4/200 for the N=40 floor, at full precision "
+                 "(5.02866; renders as 5.028 / 5.0287 / 5.029)",
+     "run": "pre-ruling", "replacement": _FLOOR_WITHDRAWN},
     {"pattern": r"\b39/80", "current": "42/80",
      "quantity": "targets at the log N ceiling after attack"},
     {"pattern": r"\b39 of (?:the )?80", "current": "42 of the 80",

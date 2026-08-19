@@ -549,6 +549,48 @@ def test_the_surviving_n40_numbers_are_not_flagged_as_withdrawn(tmp_path):
     assert not stale, _say(stale)
 
 
+@pytest.mark.parametrize("text,want", [
+    (r"Wilson on the floor count gives [$0.7804$, $5.0287$]", "0.7804"),
+    (r"the interval was [$0.780$, $5.029$] before the ruling", "0.780"),
+    (r"an upper end of $5.02866\%$ on a count of four", "5.02866"),
+    (r"a lower end of $0.78037\%$ on a count of four", "0.78037"),
+])
+def test_the_full_precision_withdrawn_interval_is_flagged(tmp_path, text, want):
+    r"""PROBE, added 2026-08-19. The four rules armed earlier that day matched only the
+    ROUNDED renderings the paper happened to be carrying. Wilson on 4/200 is
+    [$0.78037$, $5.02866$], and at full precision every one of those rules misses:
+    `\b0\.78(?!\d)` is blocked by the next digit, and `\b5\.03` never sees a `5.03` at all
+    because the digits read `5.02`.
+
+    This is not a hypothetical rendering. `figures/fig_floor_budget_stats.json` records the
+    withdrawn interval as `[0.7804, 5.0287]` -- correctly, that is a sidecar's job -- and
+    the paper is one copy-paste away from it."""
+    problems = _check(tmp_path, text)
+    stale = [p for p in problems if "STALE" in p]
+    assert stale, _say(problems)
+    assert any("N=40 floor" in p for p in stale), _say(stale)
+
+
+def test_the_full_precision_arming_does_not_catch_its_neighbours(tmp_path):
+    r"""CONTROL for the two new rules, and the reason they are written at three decimals
+    rather than two.
+
+    `0.787` is the score-coupled replication AUROC: it starts `0.78` and must stay live,
+    which is why the new lower-end rule demands `0.780`. `0.78` unrounded is the OLD rule's
+    business and is already covered; `5.0` and `5.03` likewise. What must not happen is the
+    new upper-end rule reaching a live `5.0\%`, a `0.5`, or the surviving at-cap interval
+    at N=40."""
+    problems = _check(tmp_path, r"""
+        On the score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating) the
+        cap carries no mass ($0.0\%$ [$0.0$, $1.9$]) and the threshold honouring a $5\%$
+        budget achieves $5.0\%$ [$2.7$, $9.0$]. Our replication reaches $0.787$ under the
+        all-samples-correct label, against a clean fair-pool $0.704$ [$0.653$, $0.753$],
+        and the judge agrees at $0.93$.
+    """)
+    stale = [p for p in problems if "STALE" in p]
+    assert not stale, _say(stale)
+
+
 def test_stale_ceiling_count_and_stale_correlations_are_flagged(tmp_path):
     """Methods carried a stale 39/80; the correlations are +0.71/+0.68 under `_defb`."""
     problems = _check(tmp_path, r"""

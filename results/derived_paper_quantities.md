@@ -46,6 +46,9 @@ are taken at check time so a miss can be re-checked against the same bytes.
 | count behind that achieved 5.0% | 10 | `results/gate_paper_edits_2026_08_19.md` | `It is 10/200 on the fair pool's correct stratum; Wilson` | - |
 | subset-averaged replay floor at N=10 (percent) | 11.974 | `results/replay_control.md` | `| N=10 | 11.974% | 1.6346 | 1.6119 | 2.2957 | 2.2957 |` | - |
 | subset-averaged replay floor at N=20 (percent) | 3.134 | `results/replay_control.md` | `| N=20 | 3.134% | 0.7433 | 0.9826 | 1.2321 | 1.2321 |` | - |
+| exact replay floor at N=10 (percent) | 11.9921 | `results/replay_control.md` | `Exact: N=10 floor 11.9921%, N=20 floor 3.1291%` | EXACT, by independent-set counting; not the 40k-draw MC row above |
+| exact replay floor at N=20 (percent) | 3.1291 | `results/replay_control.md` | `Exact: N=10 floor 11.9921%, N=20 floor 3.1291%` | EXACT, by independent-set counting; not the 40k-draw MC row above |
+| exact 10 -> 20 paired floor leg (points) | -8.863 | `results/replay_control.md` | `a 10 -> 20 paired leg of -8.8630` | EXACT; the report's own MC rendering of this leg is -8.8 and is marked as MC in its differences table |
 | N=10 question component, sd in rate points | 1.6346 | `results/replay_control.md` | `| N=10 | 11.974% | 1.6346 | 1.6119 | 2.2957 | 2.2957 |` | - |
 | N=10 subset-draw component, sd in rate points | 1.6119 | `results/replay_control.md` | `| N=10 | 11.974% | 1.6346 | 1.6119 | 2.2957 | 2.2957 |` | - |
 | N=20 question component, sd in rate points | 0.7433 | `results/replay_control.md` | `| N=20 | 3.134% | 0.7433 | 0.9826 | 1.2321 | 1.2321 |` | - |
@@ -97,6 +100,10 @@ are taken at check time so a miss can be re-checked against the same bytes.
 | n40_achieved_hi | 9.0 | `paper/sections/discussion.tex` | `an achieved $5.0\%$ [$2.7$, $9.0$]` | present | - |
 | replay10_floor | 12.0 | `paper/sections/discussion.tex` | `falls from a replayed $12.0\%$ [$8.9$, $15.3$] at $N{=}10$` | present | - |
 | fall_points | 10.0 | `paper/sections/discussion.tex` | `$10.0$ points [$7.2$, $12.9$]` | present | - |
+| leg_10_20_points | 8.9 | `paper/sections/discussion.tex` | `$8.9$ points [$6.8$, $11.1$]` | present | - |
+| leg_20_40_points | 1.1 | `paper/sections/discussion.tex` | `$1.1$ points [$-0.2$, $2.4$]` | present | - |
+| leg_10_20_mc_retired | 8.8 | `paper/sections/discussion.tex` | `8.8` | **absent** | - |
+| leg_10_20_mc_ci_retired | 11.0 | `paper/sections/discussion.tex` | `[$6.8$, $11.0$]` | **absent** | - |
 | fall_points_retired | 9.9 | `paper/sections/discussion.tex` | `9.9` | **absent** | - |
 | replay10_floor_retired | 11.9 | `paper/sections/discussion.tex` | `11.9` | **absent** | - |
 | replay20_floor_retired | 3.0 | `paper/sections/discussion.tex` | `3.0` | **absent** | - |
@@ -253,6 +260,20 @@ one.
 |---|---|---|---|---|
 | the replayed N=10 floor, as the paper rounds it | 11.974 to 1 dp | 11.97 | 12.0 | MATCHES |
 | fall from the replayed N=10 floor to the measured N=40 floor | 11.974 - 2.0 (4/200) | 9.97 | 10.0 | MATCHES |
+| the N=10 -> N=20 leg, from the EXACT floors | 11.9921 - 3.1291 (exact, not the 40k-draw MC pair) | 8.86 | 8.9 | MATCHES |
+| the N=20 -> N=40 leg | 3.1291 - 2.0 (4/200) | 1.13 | 1.1 | MATCHES |
+
+**Why the leg above is derived from the exact floors and not from the two floor
+inputs this script already had.** Those inputs are the report's 40,000-draw Monte
+Carlo, 11.974 and 3.134. Their difference is 8.840, which rounds to **8.8**. The
+exact floors differ by 8.8630, which rounds to **8.9**, and 8.9 is what the paper
+prints. The end-to-end fall lands on 10.0 under either pair, which is why the
+distinction never came up before; this leg straddles the decimal place the paper
+quotes. THE PAPER IS RIGHT. `results/replay_control.md` prints -8.8 in its
+differences table and marks it as Monte Carlo; correcting the paper down to match
+it has been attempted once and was correctly refused. The exact leg is independently
+recorded in that same file as -8.863, and
+in `figures/fig_floor_budget_stats.json` as -8.86.
 
 The interval on that fall, [7.2, 12.9], is a PAIRED bootstrap over the 200 questions
 and is not arithmetic on anything here — it is read from `results/replay_control.md`
@@ -363,7 +384,7 @@ silent edit but proves nothing about the number. Anything in the second table is
 number this script cannot check — usually a bootstrap endpoint — and it is listed
 here rather than left to look guarded.
 
-Derived and compared: **31** claims. Pinned only: **19**.
+Derived and compared: **33** claims. Pinned only: **21**.
 
 | derived claim | value | compared to (decimal places) |
 |---|---|---|
@@ -380,6 +401,8 @@ Derived and compared: **31** claims. Pinned only: **19**.
 | gpu_trigger_ratio | 2.3 | 1 |
 | headroom_correct | 0.923 | 3 |
 | headroom_next_lattice | 0.277 | 3 |
+| leg_10_20_points | 8.9 | 1 |
+| leg_20_40_points | 1.1 | 1 |
 | n40_achieved | 5.0 | 1 |
 | n40_achieved_hi | 9.0 | 1 |
 | n40_achieved_lo | 2.7 | 1 |
@@ -420,6 +443,8 @@ comparison that cannot fail.
 | n40_atcap_hi_main | 1.9 | not derivable from the inputs here |
 | n40_atcap_intro | 0.0 | not derivable from the inputs here |
 | n40_atcap_concl | 0.0 | not derivable from the inputs here |
+| leg_10_20_mc_retired | 8.8 | not derivable from the inputs here |
+| leg_10_20_mc_ci_retired | 11.0 | not derivable from the inputs here |
 | fall_points_retired | 9.9 | absence check on the superseded -9.9 |
 | replay10_floor_retired | 11.9 | not derivable from the inputs here |
 | replay20_floor_retired | 3.0 | not derivable from the inputs here |

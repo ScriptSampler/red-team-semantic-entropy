@@ -82,6 +82,31 @@ SEED = NSG.SEED
 # The date the report header carries. Pinned, not read from the clock -- see --generated
 # in main(). Bump this when the underlying data changes, not when the script is rerun.
 GENERATED_DATE = "2026-08-19"
+
+# --------------------------------------------- the exact-p values, and why they live here
+# `scripts/make_floor_budget_figure.py` computes the saturation quantities EXACTLY: "all
+# singletons" is "the subset is an independent set of the verdict graph", so the probability
+# is a ratio of independent-set counts and needs no sampling at all. THIS file computes them
+# by Monte Carlo (40,000 subset draws per question), and on the 10 -> 20 paired leg the two
+# disagree in the first decimal: MC says -8.8, exact says -8.8630, which is -8.9. The exact
+# value is the right one, the paper prints 8.9, and an unmarked -8.8 in a table here is the
+# evidence a reader uses to "correct" the paper downward -- which has been attempted once and
+# was correctly refused.
+#
+# ONE DEFINITION, TWO RENDERINGS. Section 2c's prose and the mark on the differences table
+# used to be independent literals; they are now the same constants, because two hand-typed
+# copies of one number in one file is the defect this whole report exists to document.
+EXACT_FLOOR_PCT = {10: 11.9921, 20: 3.1291}
+EXACT_LEG_10_20_PTS = -8.8630
+# The exact-p bootstrap endpoints for that leg, from figures/fig_floor_budget_stats.json
+# ("matched paired difference N=10 -> N=20": rederived [-8.86, -11.06, -6.78]).
+EXACT_LEG_10_20_CI = (-11.06, -6.78)
+EXACT_FLOOR_LEG = {
+    ("replay10", "replay20"):
+        f" -- the point and the endpoints are MC; exact: {EXACT_LEG_10_20_PTS:.4f} "
+        f"[{EXACT_LEG_10_20_CI[0]:.2f}, {EXACT_LEG_10_20_CI[1]:.2f}], i.e. "
+        f"{EXACT_LEG_10_20_PTS:.1f} at one decimal, which is what the paper quotes",
+}
 NPS = NSG.N_PER_STRATUM
 BUDGETS = (10, 20, 40)
 TOL = 1e-12
@@ -758,6 +783,106 @@ _FLOOR_ROW_CELL_RE = re.compile(_FLOOR_CELL)
 # The measured budget is the LAST cell of that row, and it must carry no interval.
 _MEASURED_FLOOR_CELL_RE = re.compile(r"\|\s*(\d+(?:\.\d+)?%) \(no interval[^)]*\)\s*\|$")
 
+# ------------------------------------------- rule 3: the two tables must tell one story
+# THE DEFECT THIS IS WRITTEN FOR (2026-08-19, fourth round). The "Which interval goes with
+# which estimator" table -- the one table in this repo whose entire job is to state that
+# mapping -- went on saying the measured N=40 floor takes "Wilson on the count" for a whole
+# round after the floor table thirteen lines below it had been changed to "none --
+# withdrawn". Nothing caught it. It is prose in a table cell and not an `X% [a, b]`
+# rendering, so every check above looks straight past it; it is hard-coded in this
+# generator, so regenerating reprinted it; and it contradicted the banner 340 lines above
+# it, section 2c, and the paper, all at once.
+#
+# WHY THIS IS NOT A STRING MATCH. Pinning the corrected sentence would pin TODAY'S ruling
+# into the checker, and the next time the ruling moves the checker becomes the thing that
+# has to be argued with rather than the thing that catches the drift. What is actually
+# wrong is DISAGREEMENT: three cells in this file answer the single question "does the
+# measured floor carry an interval?", and they may differ only if someone stopped reading.
+# So the rule reads a stance off each cell with one shared predicate and requires the
+# stances to match, whatever they are. Overturn the ruling in the floor table and this rule
+# demands the estimator table follow; it never demands a particular answer.
+_STANCE_NONE_RE = re.compile(r"\bnone\b|\bno interval\b|\bwithdrawn\b", re.I)
+# `\binterval\b` is safe here ONLY because the no-interval predicate is consulted
+# first: "no interval" and "none -- withdrawn" both contain it. The column is headed
+# "the interval it takes", so a cell that gets this far and still names an interval is
+# assigning one -- including one this repo has never used, which is the case that
+# exposed the gap.
+_STANCE_ESTIMATOR_RE = re.compile(
+    r"\bWilson\b|\bbootstrap\b|\binterval\b|\[[^\]]*\]", re.I)
+
+# The measured-budget row of the estimator table: "| the measured N=40 floor | ... | ... |"
+_ESTIMATOR_TABLE_ROW_RE = re.compile(
+    r"^\| the measured N=\d+ floor \|[^|]*\|([^|]*)\|$", re.M)
+# The measured-budget row of the "floor, quoted correctly" table. Its SECOND value column
+# -- the third cell -- is "95%, questions only", which is where that table states a stance.
+_FLOOR_QUOTED_ROW_RE = re.compile(
+    r"^\| measured N=\d+ \|[^|]*\|([^|]*)\|", re.M)
+
+
+def _interval_stance(cell: str) -> str:
+    """Does this cell say the measured floor HAS an interval, or that it has none?
+
+    Order matters and is deliberate: a cell that declares a withdrawal is declaring one
+    even while it names the candidates it withdrew ("none -- both candidates withdrawn ...
+    Wilson would give ..."). Only a cell that names an estimator, or prints a bracket, with
+    no withdrawal language anywhere in it, is assigning an interval."""
+    if _STANCE_NONE_RE.search(cell):
+        return "no interval"
+    if _STANCE_ESTIMATOR_RE.search(cell):
+        return "an interval"
+    return "unreadable"
+
+
+def audit_estimator_table_agrees_with_the_floor_table(text: str) -> list[str]:
+    """Three cells, one question, one answer. Empty list means clean.
+
+    Kept separate from `audit_report_floor_quotes` only so that a failure names itself.
+    Both run in the generator before it writes, and both run in the test suite against the
+    committed `.md`."""
+    bad: list[str] = []
+    sites: dict[str, str] = {}
+
+    row = _MATCHED_FLOOR_ROW_RE.search(text)
+    if row is None:
+        bad.append("the section 2 MATCHED floor row is missing or reshaped, so the "
+                   "estimator table has nothing to be checked against")
+    else:
+        sites["the section 2 MATCHED floor row's measured cell"] = _interval_stance(
+            row.group(0).rsplit("|", 2)[1])
+
+    m = _ESTIMATOR_TABLE_ROW_RE.search(text)
+    if m is None:
+        bad.append("the measured-budget row of the 'which interval goes with which "
+                   "estimator' table is missing or reshaped. That table's whole job is to "
+                   "state the estimator/interval mapping, so it may not quietly drop the "
+                   "one row the mapping was got wrong on")
+    else:
+        sites["the estimator table's measured row"] = _interval_stance(m.group(1))
+
+    m = _FLOOR_QUOTED_ROW_RE.search(text)
+    if m is None:
+        bad.append("the measured-budget row of the 'floor, quoted correctly' table is "
+                   "missing or reshaped")
+    else:
+        sites["the 'floor, quoted correctly' table's measured row"] = _interval_stance(
+            m.group(1))
+
+    for where, stance in sites.items():
+        if stance == "unreadable":
+            bad.append(f"{where} states no position on whether the measured floor carries "
+                       f"an interval. It must say one or the other: silence in that cell "
+                       f"is how the withdrawn position survived a consolidating pass")
+    stances = {v for v in sites.values() if v != "unreadable"}
+    if len(stances) > 1:
+        detail = "; ".join(f"{w} says {v}" for w, v in sorted(sites.items()))
+        bad.append(
+            f"this file disagrees with itself about whether the measured N=40 floor "
+            f"carries an interval -- {detail}. One of them is a leftover from before "
+            f"results/n40_floor_estimator_ruling.md withdrew both candidates. Fix the one "
+            f"that is wrong; if the RULING has changed, change it there first, then all "
+            f"three of these together.")
+    return bad
+
 
 def audit_report_floor_quotes(text: str) -> list[str]:
     """Read the generated report back and return every place it quotes a floor that its
@@ -1039,7 +1164,9 @@ def main(argv=None) -> int:
     # site that formats its own floats never touches it, which is how sections 2 and 6
     # kept printing a superseded floor. This reads the finished text back and refuses to
     # write a report whose prose disagrees with its own checked tables.
-    violations = audit_report_floor_quotes("\n".join(report))
+    _report_text = "\n".join(report)
+    violations = (audit_report_floor_quotes(_report_text)
+                  + audit_estimator_table_agrees_with_the_floor_table(_report_text))
     if violations:
         raise SystemExit(
             "[audit] refusing to write " + str(out_path) + ": the report quotes a floor "
@@ -1353,6 +1480,15 @@ def write_report(log, args, recs, top, cache, SRC, NAMES, packs, point, boot, me
             fmt = (lambda v: f"{v * 100:+.1f} pts") if pct else (lambda v: f"{v:+.4f}")
             verdict = "excludes zero" if (lo > 0 or hi < 0) else "covers zero"
             label = LABEL[k] + (" -- MATCHED" if k == "floor" else "")
+            # MC-ERROR MARK (2026-08-19). The floor legs here are a 40,000-draw Monte Carlo
+            # over subsets; `scripts/make_floor_budget_figure.py` computes the same legs
+            # EXACTLY, by counting independent sets of the verdict graph. On the 10 -> 20 leg
+            # the two disagree in the first decimal -- this file prints -8.8, the exact value
+            # is -8.8630, i.e. -8.9 -- and the paper quotes the exact one. An unmarked -8.8
+            # sitting in a table is how a reader "corrects" the paper's 8.9 downward, which
+            # has been attempted once. So the rows the exact computation covers say which
+            # number is theirs and which is the artifact of sampling.
+            verdict += EXACT_FLOOR_LEG.get((a, b), "") if k == "floor" else ""
             log(f"| {a} -> {b} | {label} | {fmt(d)} | [{fmt(lo)}, {fmt(hi)}] | {verdict} |")
     log("")
     log("**Read the non-floor rows as no-claims, not as nulls.** Their intervals are the")
@@ -1509,11 +1645,16 @@ def write_report(log, args, recs, top, cache, SRC, NAMES, packs, point, boot, me
     log("| --- | --- | --- |")
     log("| one replicate's replayed floor | the questions AND that one subset draw | Wilson on the count -- which is already both components |")
     log("| the subset-averaged replayed floor (**what this report and the paper quote**) | the questions only | a bootstrap over questions only |")
-    log(f"| the measured N={top} floor | the questions only | Wilson on the count; the question bootstrap only for PAIRED differences |")
+    log(f"| the measured N={top} floor | the questions only, but the ESTIMAND moves with them | **none -- both candidates withdrawn, see 2c.** The question bootstrap is still the interval for PAIRED differences, which are a different estimand |")
     log("")
     log("The middle row is the one that was got wrong. Note also that the two replayed")
     log("intervals are honest about different things and are NOT nested claims: a")
-    log("single-replicate Wilson interval is correct for a number nobody quotes.")
+    log("single-replicate Wilson interval is correct for a number nobody quotes. The last")
+    log("row said \"Wilson on the count\" until 2026-08-19 and was the last statement of the")
+    log("withdrawn position left in this file. "
+        "`audit_estimator_table_agrees_with_the_floor_table`")
+    log("now requires this cell, the floor table below, and the section 2 floor row to")
+    log("state the same position, so the three cannot drift apart again.")
     log("")
     log("**The floor, quoted correctly.**")
     log("")
@@ -1562,11 +1703,38 @@ def write_report(log, args, recs, top, cache, SRC, NAMES, packs, point, boot, me
     log("atoms this report measures (it predicts the N=10 atom at 11.86% against a")
     log("measured 12.00%, having been tuned only on N=20).")
     log("")
-    log("| budget | true floor | Wilson coverage | question-bootstrap coverage |")
+    log("EVERY NUMBER IN THE TABLE BELOW IS MODEL-DEPENDENT, including the column headed")
+    log("\"true floor\": there is no measurement of a population floor anywhere in this")
+    log("project. The model is the one named in the paragraph above -- fitted at N=40,")
+    log("tuned on N=20, validated out of sample on the N=10 atom -- and it is specified")
+    log("in `results/n40_floor_estimator_ruling.md` and nowhere else. The coverages are")
+    log("frequencies over 40,000 pools simulated FROM that model, three seeds. Read them")
+    log("as properties of the model, not as measurements of this pool.")
+    log("")
+    log("| budget | true floor (MODEL) | Wilson coverage (MODEL) | question-bootstrap coverage (MODEL) |")
     log("| --- | --- | --- | --- |")
     log("| N=10 (atom full) | 11.86% | 95.1% | 94.9% |")
     log("| N=20 (atom full) | 3.13% | 96.2% | 98.4% |")
     log("| **N=40 (atom EMPTY)** | **0.27%** | **53.7%** | **0.00%** |")
+    log("")
+    log("**The three significant figures are the model's, not a measurement's, and the")
+    log("N=40 row is the one to distrust the precision of.** A verifier reduced the 53.7%")
+    log("to an identity: under this model Wilson on a count of 2 has a lower endpoint")
+    log("0.0012 points ABOVE the asserted true floor of 0.2735% (0.2747 against 0.2735),")
+    log("and the floor count is at least 1 by construction -- the floor IS the smallest")
+    log("non-zero achievable rate -- so a pool covers the floor exactly when its floor")
+    log("count is 1, and 53.7% is P(floor count = 1) and nothing else. Move the model's")
+    log("floor by a thousandth of a point and that figure steps to a different value; it")
+    log("does not degrade gracefully. The bootstrap's 0.00%")
+    log("is robust for the opposite reason -- its lower endpoint is 1/200 = 0.5% by")
+    log("construction, which exceeds any plausible true floor at this budget, so it misses")
+    log("for a structural reason and not a numerical one.")
+    log("")
+    log("WHAT THE PRECISION DOES NOT TOUCH IS THE RULING. Both candidates fail and the")
+    log("estimand dissolves when the ceiling atom empties: that follows from the estimator")
+    log("being an extreme order statistic whose target moves with the pool, and it is")
+    log("argued below without reference to any coverage figure. A reader who rejects the")
+    log("model should reject the 53.7%, keep the withdrawal, and quote the point alone.")
     log("")
     log("Neither estimator is broken. THE ESTIMAND BREAKS, and it breaks exactly when the")
     log("ceiling atom empties. While the atom carries mass the floor is a fixed population")
@@ -1601,8 +1769,10 @@ def write_report(log, args, recs, top, cache, SRC, NAMES, packs, point, boot, me
     log(f"subsets ({args.sat_mc} draws per question). `scripts/make_floor_budget_figure.py`")
     log("computes the same quantities EXACTLY -- 'all singletons' is 'the subset is an")
     log("independent set of the verdict graph', so the probability is a ratio of")
-    log("independent-set counts and needs no sampling. Exact: N=10 floor 11.9921%, N=20")
-    log("floor 3.1291%, and a 10 -> 20 paired leg of -8.8630, which is -8.9 at one decimal.")
+    log(f"independent-set counts and needs no sampling. Exact: N=10 floor "
+        f"{EXACT_FLOOR_PCT[10]:.4f}%, N=20")
+    log(f"floor {EXACT_FLOOR_PCT[20]:.4f}%, and a 10 -> 20 paired leg of "
+        f"{EXACT_LEG_10_20_PTS:.4f}, which is {EXACT_LEG_10_20_PTS:.1f} at one decimal.")
     log("This report's Monte Carlo gives -8.8. THE EXACT VALUE IS THE RIGHT ONE and the")
     log("paper's 8.9 is correct; the figure and its sidecars now carry the exact numbers.")
     log("Do not 'correct' the paper down to 8.8 to match this file -- that has been")

@@ -184,6 +184,34 @@ INPUTS = [
     Input("subset-averaged replay floor at N=20 (percent)", 3.134,
           "| N=20 | 3.134% | 0.7433 | 0.9826 | 1.2321 | 1.2321 |",
           "results/replay_control.md"),
+
+    # THE EXACT FLOORS, and why both these and the Monte-Carlo pair above are registered.
+    # The two rows above are a 40,000-draw Monte Carlo over subsets. `p_at_cap()` in
+    # `scripts/make_floor_budget_figure.py` computes the same quantities EXACTLY -- "all
+    # singletons" is "the subset is an independent set of the verdict graph", so it is a
+    # ratio of independent-set counts and there is nothing to sample -- and section 2c of
+    # `results/replay_control.md` prints the exact values beside its own MC ones.
+    #
+    # THEY DISAGREE IN A PLACE THAT MATTERS. 11.974 - 3.134 = 8.840, which rounds to 8.8.
+    # 11.9921 - 3.1291 = 8.8630, which rounds to 8.9, and 8.9 is what the paper prints.
+    # The MC pair is fine for every other quantity here (the N=10 -> N=40 fall lands on
+    # 10.0 either way), but on the 10 -> 20 leg it straddles the decimal the paper quotes.
+    # Deriving that leg from the MC floors would make this script report the paper as
+    # wrong -- which has already been attempted once, on the strength of two artifacts
+    # agreeing while both were reading the same Monte-Carlo error.
+    Input("exact replay floor at N=10 (percent)", 11.9921,
+          "Exact: N=10 floor 11.9921%, N=20 floor 3.1291%",
+          "results/replay_control.md",
+          note="EXACT, by independent-set counting; not the 40k-draw MC row above"),
+    Input("exact replay floor at N=20 (percent)", 3.1291,
+          "Exact: N=10 floor 11.9921%, N=20 floor 3.1291%",
+          "results/replay_control.md",
+          note="EXACT, by independent-set counting; not the 40k-draw MC row above"),
+    Input("exact 10 -> 20 paired floor leg (points)", -8.8630,
+          "a 10 -> 20 paired leg of -8.8630",
+          "results/replay_control.md",
+          note="EXACT; the report's own MC rendering of this leg is -8.8 and is marked "
+               "as MC in its differences table"),
     Input("N=10 question component, sd in rate points", 1.6346,
           "| N=10 | 11.974% | 1.6346 | 1.6119 | 2.2957 | 2.2957 |",
           "results/replay_control.md"),
@@ -308,6 +336,20 @@ CLAIMS = {c.name: c for c in [
     PaperClaim("replay10_floor", 12.0,
                r"falls from a replayed $12.0\%$ [$8.9$, $15.3$] at $N{=}10$", DISC),
     PaperClaim("fall_points", 10.0, r"$10.0$ points [$7.2$, $12.9$]", DISC),
+
+    # THE TWO LEGS, registered 2026-08-19. Until now the end-to-end fall was pinned here
+    # and the two legs it decomposes into were not, so their only hold anywhere in the repo
+    # was `figures/fig_floor_budget_stats.json` -- a file the paper is checked AGAINST but
+    # which no test compares to the .tex. The 8.9 is the one to be careful with: it is
+    # CORRECT, the exact leg is -8.8630, and the -8.8 that appears in
+    # `results/replay_control.md` is Monte-Carlo error, now marked as such in that file's
+    # own differences table. Do not "correct" the paper down to match it.
+    PaperClaim("leg_10_20_points", 8.9, r"$8.9$ points [$6.8$, $11.1$]", DISC),
+    PaperClaim("leg_20_40_points", 1.1, r"$1.1$ points [$-0.2$, $2.4$]", DISC),
+    # ...and the MC renderings of that same leg, held down by ABSENCE, because "correct the
+    # paper to match the artifact" is the specific move that has to be prevented here.
+    PaperClaim("leg_10_20_mc_retired", 8.8, "8.8", DISC, present=False),
+    PaperClaim("leg_10_20_mc_ci_retired", 11.0, r"[$6.8$, $11.0$]", DISC, present=False),
     # The retired replay family, held down as bare digits rather than as LaTeX. The whole
     # trio 11.9 / 3.0 / 2.0 and its fall of 9.9 [15.5, 5.0] came off an average over 200 whole
     # replicates and was replaced by the per-question mean; none of these five strings occurs
@@ -408,6 +450,18 @@ def chisq_sf(x: float, df: int) -> float:
 
 
 def main(write: bool = True, quiet: bool = False) -> int:
+    # A registered literal carries a U+2264 (`P(X <= 19)` is printed with the real glyph in
+    # results/replay_control.md), and a Windows console defaults to cp1252, so the
+    # documented regeneration command used to die with UnicodeEncodeError halfway down the
+    # INPUTS table -- after the checks had run and before anything was written. The report
+    # itself has always been written UTF-8 and the tests run quiet, so only the human path
+    # was broken. Failing to PRINT a table is not a reason to fail to WRITE one.
+    if not quiet:
+        for stream in (sys.stdout, sys.stderr):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except (AttributeError, ValueError):      # not a reconfigurable text stream
+                pass
     PROBLEMS.clear()          # main() is called repeatedly by the tests; state must not carry
     EXERCISED.clear()
     for i in INPUTS:
@@ -707,6 +761,25 @@ def main(write: bool = True, quiet: bool = False) -> int:
     fall = f10 - 100.0 * 4 / N_STRATUM
     row("fall from the replayed N=10 floor to the measured N=40 floor",
         f"{f10} - 2.0 (4/200)", fall, "fall_points", dp=1)
+    e10 = src["exact replay floor at N=10 (percent)"]
+    e20 = src["exact replay floor at N=20 (percent)"]
+    row("the N=10 -> N=20 leg, from the EXACT floors",
+        f"{e10} - {e20} (exact, not the 40k-draw MC pair)", e10 - e20,
+        "leg_10_20_points", dp=1)
+    row("the N=20 -> N=40 leg", f"{e20} - 2.0 (4/200)", e20 - 2.0,
+        "leg_20_40_points", dp=1)
+    log("")
+    log("**Why the leg above is derived from the exact floors and not from the two floor")
+    log("inputs this script already had.** Those inputs are the report's 40,000-draw Monte")
+    log("Carlo, 11.974 and 3.134. Their difference is 8.840, which rounds to **8.8**. The")
+    log("exact floors differ by 8.8630, which rounds to **8.9**, and 8.9 is what the paper")
+    log("prints. The end-to-end fall lands on 10.0 under either pair, which is why the")
+    log("distinction never came up before; this leg straddles the decimal place the paper")
+    log("quotes. THE PAPER IS RIGHT. `results/replay_control.md` prints -8.8 in its")
+    log("differences table and marks it as Monte Carlo; correcting the paper down to match")
+    log("it has been attempted once and was correctly refused. The exact leg is independently")
+    log(f"recorded in that same file as {src['exact 10 -> 20 paired floor leg (points)']}, and")
+    log("in `figures/fig_floor_budget_stats.json` as -8.86.")
     log("")
     log("The interval on that fall, [7.2, 12.9], is a PAIRED bootstrap over the 200 questions")
     log("and is not arithmetic on anything here — it is read from `results/replay_control.md`")

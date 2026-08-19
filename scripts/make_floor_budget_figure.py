@@ -292,9 +292,13 @@ def rederive(boot: int, seed: int) -> dict:
                      "results/n40_floor_estimator_ruling.md (why the N=40 floor has no "
                      "interval)"],
                  "not_the_source_of_record": [
-                     "results/replay_control.md sec. 2b -- its floors are a 40,000-draw "
-                     "Monte Carlo and differ from the exact values in the 2nd decimal; "
-                     "its N=40 floor still carries the withdrawn Wilson interval",
+                     "results/replay_control.md sec. 2b -- its floors and paired legs are "
+                     "a 40,000-draw Monte Carlo where this file counts independent sets "
+                     "exactly, so they differ: the floors in the 2nd decimal, and the "
+                     "N=10 -> N=20 leg in the FIRST (-8.8 there against -8.86 here, i.e. "
+                     "-8.9 at one decimal, which is what the paper quotes). On the N=40 "
+                     "floor the two files AGREE -- point only, no interval, both citing "
+                     "results/n40_floor_estimator_ruling.md",
                      "paper/sections/discussion.tex -- the paper is checked AGAINST this "
                      "figure, not the other way round"],
                  "checks": []}
@@ -558,7 +562,13 @@ def draw(stem: Path) -> None:
             a_.spines[s].set_visible(False)
 
     for ext in ("pdf", "png"):
-        fig.savefig(f"{stem}.{ext}", dpi=400)
+        # NO WALL-CLOCK STAMP. Matplotlib writes /CreationDate into the PDF, so rebuilding
+        # this figure without changing a single number still produced a modified file --
+        # which destroys "the artifact is unchanged" as a check, the cheapest check there
+        # is and the one you want most after editing a generator. `CreationDate: None`
+        # omits the field; the PNG backend takes different keys and never carried one.
+        meta = {"CreationDate": None} if ext == "pdf" else None
+        fig.savefig(f"{stem}.{ext}", dpi=400, metadata=meta)
     plt.close(fig)
 
 
