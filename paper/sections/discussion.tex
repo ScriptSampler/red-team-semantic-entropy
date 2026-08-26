@@ -44,10 +44,12 @@ lattice---while the low end is not. This is the argument of
 only a handful of usable thresholds---counted out for a sampling-based detector, where the
 thresholds available are fixed by the sample budget rather than by a model's verbal habits.
 
-The lower end of that list is an \emph{identity} rather than a measurement. The largest value
-the estimator can emit is $\ln N$, so every threshold above it flags nothing and the first
+The lower end of that list is an \emph{identity} rather than a measurement, for as long as the
+ceiling carries mass. The largest value
+the estimator can emit is $\ln N$, so every threshold above it flags nothing and, while some
+clean answer reaches it, the first
 threshold that fires at all is $\tau{=}\ln N$, which flags exactly the answers at the
-ceiling. The minimum non-zero false-positive rate is therefore not a tuning choice: it
+ceiling. The minimum non-zero false-positive rate is then not a tuning choice: it
 \emph{is} $\Pr(\text{a clean correct answer yields } N \text{ mutually distinct meanings})$,
 the mass of the ceiling atom. At $N{=}10$ an operator who specifies a $5\%$ false-alarm
 budget cannot have one: the only threshold that honours it is the one that never fires,
@@ -169,9 +171,12 @@ highest-scoring clean answers, $2.0\%$ of the fair pool's correct stratum, at a 
 catches $6.0\%$ [$3.5$, $10.2$] of that pool's $200$ hallucinating answers. That is also
 why we quote no interval for it. Its threshold is not $\ln 40$ or any
 other value fixed in advance but the top score \emph{this} sample attained, and once the atom
-is empty that score is no longer the top of the population's support: a larger pool reaches a
-higher rung and reports a smaller floor, so the quantity being estimated moves with the pool
-instead of holding still to be estimated. Both candidate intervals inherit that, and each
+is empty nothing in the sample settles whether that score is the top of the population's
+support. If it is not, a larger pool reaches a higher rung and reports a smaller floor, so the
+quantity being estimated moves with the pool instead of holding still to be estimated; if it
+is, the floor is an ordinary population proportion and the count in front of us estimates it.
+Nothing here decides which, and the two readings are far apart. Both candidate intervals
+inherit that indeterminacy, and each
 also has an endpoint placed by construction rather than by the data---a question bootstrap
 over these questions cannot return less than $1/200$ however small the floor really is, and
 Wilson on a count of four cannot know that the rung it counts may not be the population's
@@ -303,8 +308,8 @@ estimator has the subset draw averaged out of it, so its interval must not put t
 draw back: what is left varying is which $200$ questions were drawn, each contributing an
 independent $p_i$, and a bootstrap over questions is the whole of it. The direct $N{=}10$
 row is a count of independent indicators at the fixed threshold $\ln 10$ and takes Wilson;
-the measured $N{=}40$ floor is a count at no fixed threshold at all and takes the question
-bootstrap for the reason given above. The tempting error, and the one this arithmetic rules out,
+the measured $N{=}40$ floor is a count at no fixed threshold at all and takes neither, for the
+reason given above. The tempting error, and the one this arithmetic rules out,
 is to interval the subset-averaged floor by a bootstrap that resamples targets \emph{and}
 redraws the subset: that counts the subset draw twice, once inside the target resample where
 it already sits and once again in the redraw, and on this data it returns intervals about
@@ -336,8 +341,9 @@ August checkpoint records nothing of its generation settings at all beyond the s
 count, the token budget and the seed (Section~\ref{sec:limitations}). The drift may be run-to-run variation under configurations
 that did match, or a configuration difference we cannot see, and nothing in either artefact
 separates the two. Longer and more often truncated answers entail each other less often,
-which pushes the ceiling atom up, so the sign is the one the gap would need; the effect is
-much too small to disturb the cluster-count distribution, which matches. We therefore cannot
+which pushes the ceiling atom up, so the sign is the one the gap would need; how large that
+effect is we have not measured, and the cluster-count distribution's failure to separate the
+two runs does not bound it (Section~\ref{sec:limitations}). We therefore cannot
 separate subsetting error from generation drift, and we claim no direction for the gap. One
 clean direct $N{=}10$ pass on the current machine separates them by subtraction. It is one of
 two measurements this section is short of, both of them cells the budget plan pre-registered
