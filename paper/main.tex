@@ -27,44 +27,69 @@ Sampling-Based Hallucination Detectors}
 \maketitle
 
 \begin{abstract}
-% 321 words / ~2020 characters as counted on 2026-08-19 (215 words at the last commit;
-% ~200 at the critic gate of 2026-08-13). It grew twice on 2026-08-19: first when the N=40
-% sentences were rewritten from an existence claim into a measured operating point, then
-% when the floor's interval was withdrawn and replaced by the empty-atom bound, which costs
-% words because it has to say what 2.0% is instead of quoting a range. arXiv's abstract
-% field takes 1920 characters, so this is OVER by about 100 and must be trimmed before
-% posting -- but not by dropping an interval or a qualifier, and not by reinstating an
-% interval on the N=40 floor, which is withdrawn on purpose (results/n40_floor_estimator_
-% ruling.md). Count it with the same rule before believing any number in this comment.
-% Everything
-% cut from here is still stated where it belongs: the three-estimator scoping and the
-% Eq.(4)/Eq.(5) transfer argument in Methods, the N=20 pilot in Discussion, the judge
-% validation in Methods, the interval on every rate in Discussion and Conclusion.
-Sampling-based hallucination detectors such as semantic entropy are deployed on the claim
-that the uncertainty they report is invariant to phrasing. We set out to
-break it with meaning-preserving paraphrases and found the binding constraint falls on the
-operator, not the attacker. The \emph{discrete} estimator we study weights meaning clusters
-by sample counts, making it the entropy of a partition of $N$: at the standard $N{=}10$ it
-takes only $39$ values, with an atom at the maximum. Every threshold above that maximum flags
-nothing, so while the atom carries mass the lowest false-alarm rate a firing threshold can
-have \emph{is} the chance that a clean correct answer yields $N$ mutually
-distinct meanings---$10.5\%$ [$9.0$, $12.2$] over $1424$ clean correct answers. At that
-standard $N{=}10$ an operator who specifies a $5\%$ false-alarm budget cannot have one,
+% ABSTRACT LENGTH BUDGET. arXiv's abstract field takes 1920 characters.
+% NOW: 297 words / 1893 characters, counted 2026-08-26 by the rule below -- 27 to spare.
+% Was 321 words / 2020 characters (over by 100) until the 2026-08-26 prose-economy trim;
+% ~215 words on 2026-08-19, ~200 at the critic gate of 2026-08-13. Not one clause, number,
+% interval, qualifier or concession was dropped to get those 127 characters; they came out
+% of wording alone (19 rewordings, the largest worth 26 characters). If more is ever owed,
+% the two biggest remaining candidates are the self-referential "; the qualifier is
+% load-bearing" (31) and the gloss "so about half of an uncorrected result is selection on
+% sampling noise" (69) -- both are content, so cost them out loud before spending them.
+%
+% THE RULE, written out because this comment twice said "the same rule" and never named it.
+% Count what sits between this environment's begin and end lines -- those two lines are
+% markup and do NOT count -- with: these comment lines dropped; every macro replaced by
+% what it RENDERS (\emph{x} -> x, $N{=}10$ -> N=10, \% -> %, \ln -> ln, --- -> ONE em dash,
+% $ deleted); runs of whitespace collapsed to a single space. A newline in this file becomes
+% one space in the arXiv field, so the line wrapping here costs nothing -- but PASTE THE
+% RENDERED TEXT, not this source: pasted verbatim, with --- as three characters and {=}
+% intact, the same abstract is 1905, which still fits but eats most of the margin.
+% Recount before believing any number above.
+%
+% WHAT MAY NOT BE TRIMMED. Each of these was bought with a withdrawn claim:
+%  - EVERY INTERVAL. Quoting a rate without one is this project's named failure mode.
+%  - EVERY SCOPE QUALIFIER. "At that standard N=10" is the difference between a correct
+%    claim and a retracted one -- the 5%-budget claim is true at N=10 and false at N=40,
+%    and the paper concedes that. "discrete" scopes the estimator: the result does not
+%    transfer to the likelihood-weighted Eq.(5) variant its authors call their main method.
+%  - THE N=40 CONCESSION. The claim is that the OBSTRUCTION is gone, never that some
+%    interval clears 5%. Do NOT reinstate an interval on the 2.0% floor: both candidates
+%    were withdrawn on measured coverage (results/n40_floor_estimator_ruling.md), and the
+%    estimand itself dissolves once the ceiling atom empties.
+%  - "we claim no attack effect here": the confirmatory evaluation is still running.
+%  - The literal "($0/200$, at most $1.9\%$)" is pinned by
+%    scripts/derived_paper_quantities.py, and the population labels "1424 clean correct"
+%    and "the fair pool's 200 correct answers" by scripts/check_population_labels.py.
+%    Reword either and a green suite goes red; that is the guard working, not a stale pin.
+%
+% Everything cut from here over the rounds is still stated where it belongs: the
+% three-estimator scoping and the Eq.(4)/Eq.(5) transfer argument in Methods, the N=20
+% pilot in Discussion, the judge validation in Methods, the interval on every rate in
+% Discussion and Conclusion.
+Sampling-based hallucination detectors such as semantic entropy are deployed on a claim of
+phrasing-invariant uncertainty. We tried to break it with meaning-preserving paraphrases and
+found the binding constraint falls on the operator, not the attacker. The \emph{discrete}
+estimator we study weights meaning clusters by sample counts, so it is the entropy of a
+partition of $N$: at the standard $N{=}10$ it takes $39$ values, with an atom at the maximum.
+Every threshold above the maximum flags nothing, so while the atom carries mass the lowest
+false-alarm rate a firing threshold can have \emph{is} the chance a clean correct answer
+yields $N$ mutually distinct meanings---$10.5\%$ [$9.0$, $12.2$] on $1424$ clean correct
+answers. At that standard $N{=}10$ an operator cannot have a $5\%$ false-alarm budget,
 however well the score ranks; the qualifier is load-bearing. Running the fair pool's $200$
-correct answers out to $N{=}40$ empties the atom---none reaches $\ln 40$ ($0/200$, at most
-$1.9\%$)---and the obstruction goes with it. What $200$ answers cannot then do is locate the
-floor: the cheapest alarm they can exhibit costs $2.0\%$, the resolution of the pool rather
-than a property of the detector, and we give it no interval.
-The threshold that honours a $5\%$ budget achieves $5.0\%$ [$2.7$, $9.0$] on those same $200$
-answers, which we report as a measured operating point and not as a demonstration that one at
-or below $5\%$ exists. Measuring an attack here
-needs stronger controls than this literature's random-perturbation baseline: re-scoring each
+correct answers to $N{=}40$ empties the atom---none reaches $\ln 40$ ($0/200$, at most
+$1.9\%$)---and the obstruction goes with it. What $200$ answers cannot do is locate the
+floor: their cheapest alarm costs $2.0\%$, the pool's resolution, not a property of the
+detector, and we give it no interval. The threshold honouring a $5\%$ budget achieves
+$5.0\%$ [$2.7$, $9.0$] on the same $200$ answers, which we report as a measured operating
+point, not a demonstration that one at or below $5\%$ exists. Measuring an attack here needs
+stronger controls than the literature's random-perturbation baseline: re-scoring each
 selected paraphrase on an independent sample retains only $44\%$ [$23\%$, $64\%$] of the
-apparent effect, so roughly half of an uncorrected result is selection on sampling noise.
-Our protocol makes the question answerable: score-independent target selection, an
-answer-invariance success criterion, a null priced against the attacker's search budget, and
-an independent LLM-judge equivalence oracle. The confirmatory attack evaluation is under
-way; we claim no attack effect here.
+apparent effect, so about half of an uncorrected result is selection on sampling noise. Our
+protocol makes it answerable: score-independent target selection, an answer-invariance
+success criterion, a null priced against the attacker's search budget, and an independent
+LLM-judge equivalence oracle. The confirmatory evaluation is under way; we claim no attack
+effect here.
 \end{abstract}
 
 \section{Introduction}

@@ -49,11 +49,29 @@ alarm that exists still costs 2.0%. Conflating the two is the defect diagnosed i
 `results/replay_control.md` sec. 5 and it is why both series are drawn.
 
 INTERVALS. Each estimator gets the interval that belongs to it and no other
-(`results/replay_control.md` sec. 2b): Wilson on the count for the two directly measured
-rows, a bootstrap over the 200 QUESTIONS ONLY for the subset-averaged replayed rows --
-which may not also resample the subset draw, because the subset-draw component has been
-averaged out of the point estimate. Panel (b)'s differences are matched paired
-bootstraps over the questions, not end intervals subtracted.
+(`results/replay_control.md` sec. 2b, `results/n40_floor_estimator_ruling.md`):
+
+  * Wilson on the count for the rows that really are a count at a threshold fixed
+    BEFORE the data -- the direct N=10 floor (19/200 at ln 10) and the N=40 at-cap
+    mass (0/200 at ln 40).
+  * a bootstrap over the 200 QUESTIONS ONLY for the subset-averaged replayed rows --
+    which may not also resample the subset draw, because the subset-draw component has
+    been averaged out of the point estimate.
+  * NEITHER for the measured N=40 floor. It is a count at no threshold fixed in
+    advance, and once the atom is empty the estimand itself moves with the pool, so
+    both candidates were withdrawn on measured coverage (Wilson 53.7%, question
+    bootstrap 0.00%, at nominal 95%). It is plotted as a point -- see FLOOR[40] below,
+    whose interval entries are None, and the refusal check that enforces it.
+
+This paragraph said "Wilson on the count for the two directly measured rows" until
+2026-08-26, which named the measured N=40 floor as taking Wilson. The CODE below never
+did -- it has plotted that row as a bare point since the ruling -- so this was a
+generator's prose disagreeing with the generator's own behaviour, which is the harder
+kind to notice: nothing it produces is wrong, and a reader reaches for the docstring
+precisely when they want to know what the figure means.
+
+Panel (b)'s differences are matched paired bootstraps over the questions, not end
+intervals subtracted.
 
 GREYSCALE. No colour carries meaning: series are separated by marker shape, fill, and
 line style alone.
