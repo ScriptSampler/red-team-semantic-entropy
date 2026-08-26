@@ -29,13 +29,24 @@ had to pass before it would draw.
 ### `fig_floor_budget`, two things that changed on 2026-08-19
 
 **The N=40 floor is drawn as a point with no error bar, on purpose.**
-`results/n40_floor_estimator_ruling.md` withdrew both candidate intervals after measuring
-their coverage against a population model validated out-of-sample on the N=20 and N=10
-ceiling atoms: Wilson on 4/200 covers the true floor 53.7% of the time and the question
-bootstrap 0.00%, at a nominal 95%. Neither estimator is broken — the estimand is, once the
-ceiling atom empties. The generator now *refuses to plot* if either endpoint is filled back
-in. The interval that survives at N=40 is the at-cap mass, 0/200 = 0.0% [0.0, 1.9], whose
-threshold (ln 40) is fixed a priori.
+`results/n40_floor_estimator_ruling.md` withdrew both candidate intervals because the
+estimand is **not identified** at n=200: once the ceiling atom empties, whether the top
+score this pool reached is the top of the population's support cannot be decided from the
+sample, and the two readings are more than two orders of magnitude apart. That argument
+uses no population model. The coverage figures do, and are **branch-conditional** — quote
+neither pair without its population (ruling sec. 8.4, nominal 95%):
+
+| population | Wilson on 4/200 | question bootstrap |
+|---|---|---|
+| calibrated Ewens (tau_top = 0.2726%) | 53.67% | 0.00% |
+| zero branch (tau* = 2.0%) | 95.06% | 100% |
+
+This section said "Wilson … 53.7% … bootstrap 0.00% … Neither estimator is broken — the
+estimand is" until 2026-08-26; ruling sec. 13 retracts that, because it holds in the first
+branch only and the data does not exclude the second. The generator now *refuses to plot*
+if either endpoint is filled back in. The interval that survives at N=40 is the at-cap
+mass, 0/200 = 0.0% [0.0, 1.9], whose threshold (ln 40) is fixed a priori and which is
+valid in both branches.
 
 **The per-question saturation probabilities are now exact, not Monte Carlo.** "All
 singletons" is "the subset is an independent set of the recorded verdict graph", so the

@@ -316,7 +316,124 @@ WHAT IT STILL CANNOT CATCH (deliberate; false positives gate the suite)
     granularity counts (results/fair_pool_granularity.md) are already listed below,
     before they appear in the text.
 
-Run: python scripts/check_population_labels.py    (exit 1 on any problem)
+  * NEW WITH TIER 2 (2026-08-26), and the last three are the ones to watch:
+  * OUTSIDE paper/, A MISLABELLED POPULATION IS INVISIBLE. `results/` and `scripts/` are
+    checked ONLY for the retired positions. `0.704` attributed to the attacked pool in a
+    generated report passes, and so does a growing hide count. That is not an oversight; it
+    is the (a)/(b) argument above. It does mean a defect can be authored in a generator,
+    survive there, and be caught only when it reaches the paper -- one step later than a
+    reader of this file might assume.
+  * `_` IS NOT FLATTENED (see `strip_plain`), so markdown underscore emphasis inside a
+    guarded phrase -- `the _estimand_ dissolves` -- breaks `\\b` and is not seen. `*` is
+    flattened, which is the marker the sixteen sites actually used. Cheap to add `_` and
+    expensive to be wrong about it: it is the word separator in every path and identifier
+    this repo cites.
+  * SENTENCE GEOMETRY IS LOOSER IN A TABLE THAN IN PROSE, and it cuts the other way from
+    everything else here. `_TERM_RE` finds no boundary in `| N=40 | 0.27% | 53.7% |`, so
+    the `absent` window is bounded only by ABSENT_CHAR_CAP -- 600 characters each side
+    instead of one sentence. A stray "calibrated" 500 characters up the page therefore
+    EXCULPATES a bare coverage figure in a table that has nothing to do with it. A false
+    negative, not a false positive, and it is why the tier-2 tests plant their probes in
+    tables as well as in prose.
+  * THE RATCHET COUNTS, IT DOES NOT IDENTIFY. A file at its baseline that fixes one site
+    and introduces another stays green. `check_operational_provenance.py` has the same
+    hole and it is inherent to a count; `--dry-run` beside `git diff` is the only answer,
+    and it is worth the two minutes on any commit that touches a pinned file.
+
+--------------------------------------------------------------------------------------
+SCOPE (2026-08-26). WHY IT IS NOT THE SAME RULES EVERYWHERE.
+
+Until today this file read eight `paper/*.tex` files and nothing else. Every one of the
+SIXTEEN sites found by the 2026-08-26 sweep -- the ones that carry no digit -- was in
+`results/`, `scripts/`, `tests/` or `figures/` (commit 852e0f7). So the ledger could not
+see the places the defect actually lives -- the same gap `docs/critique_log.md` line 2441
+and `results/morning_review_2026_08_19.md` line 316 both name in the same words: "the
+linter's scope is eight `.tex` files, so it cannot reach `tests/`". Checked, not recalled. Scope is now two tiers, and the split is
+MEASURED, not asserted. Every count below comes from `scope_census()` over the 201 tier-2
+files (207 reached by WIDE_GLOBS, 6 excluded by name) and is REPRODUCIBLE: run the script
+with `--dry-run` and it prints the same table. Numbers that cannot be re-derived are how
+this project got here; a figure quoted from a session nobody can replay is a figure on
+trust, and this file has spent two rounds paying for that.
+
+  TIER 1, `paper/*.tex` and `paper/sections/*.tex`: EVERY rule. Unchanged, byte for byte.
+
+  TIER 2, `results/ scripts/ tests/ figures/ docs/` (.md .py .sh .json): the RETIRED
+  POSITIONS ONLY -- the eight rules armed on the 2026-08-26 ruling, the ones whose
+  `replacement` is a position (`_NOT_IDENTIFIED`, `_COVERAGE_PAIR`) rather than a
+  recomputed value. Selected by the `wide` flag on a SUPERSEDED entry, pinned to the
+  position/recomputation distinction by test_the_wide_set_is_exactly_the_position_rules.
+
+WHAT STAYS SCOPED TO .tex, AND WHY. Three families, three separate reasons, all three
+measured before they were decided:
+
+  (a) THE POOL / ATTACHMENT RULES (`_check_pools`, 16 rules, 78 number patterns) --
+      736 findings in 52 files. NOT a backlog: a category error. These rules arbitrate
+      between a number's OWN label and a FOREIGN one by counting SENTENCE BOUNDARIES and
+      characters. A markdown table row has no sentences (`_TERM_RE` needs `[.:;!?]` before
+      whitespace, and `| 1e-05 | 1.380 | 9.50% |` has none), so a whole generated table is
+      one sentence; Python source has no sentences at all.
+      `results/likelihood_weight_sensitivity.md` alone yields 65 findings off one table --
+      12 copies of `9.5%`, 11 of `21.5%`, 4 of `1.380` -- whose population is declared in
+      the prose above it and nowhere a proximity rule can reach.
+      `scripts/replay_control.py` yields 30, mostly inside `log(...)` calls whose
+      population is named hundreds of characters away in a DIFFERENT `log(...)`.
+      They are also barely locatable: `_line_hint` returns the FIRST source line carrying
+      the token, and a generated table repeats its values on every row, so 30 of that
+      file's 65 findings point at line 59 and 27 more at line 30. Running these outside
+      .tex is the permissive-direction failure -- a guard nobody can keep green.
+
+  (b) THE GROWING-DENOMINATOR RULE (`_check_growing`) -- 73 findings in 36 files.
+      Table-hostile for the same reason, plus a second: outside the paper the repo
+      legitimately RECORDS open cells. `results/attack_matrix.md` (4) is a week-6 snapshot
+      whose "15 hide" was true when written; `results/schedule_2026_08_19.md` (7) yields
+      "12-target" and "40-target", which are BUDGETS (N=40) and not campaign cells at all,
+      matched by the `-target` noun. A dated snapshot of a filling cell is history; the
+      rule exists to stop a filling cell being quoted FORWARD, and forward is `paper/`.
+
+  (c) THE RETIRED-VALUE HALF OF SUPERSEDED (29 of the 37 entries) -- 273 findings across
+      38 files, and this is the one worth reading twice, because the temptation is to
+      widen it. A retired VALUE is a fact about a run, and outside `paper/` this repo
+      legitimately restates one in three distinct ways, which are the top offenders in the
+      census:
+        - it STORES the superseded run's own output. `results/winners_curse_partial.md`
+          (18 findings) is the `_def` checkpoint's report. Its numbers are correct FOR
+          THAT RUN. Flagging it is flagging a measurement for having been measured.
+        - it PINS the value in order to assert its ABSENCE. `tests/
+          test_derived_paper_quantities.py` (11) carries the banned-literal list
+          `(r"2.0\\% [0.8, 5.0]", r"[0.78, 5.03]", ...)` -- the check that keeps those
+          numbers out of the paper. Widening here means the guard flags the guard.
+        - it RECORDS the correction. `results/morning_review_2026_08_19.md` (35),
+          `results/ceiling_saturation_finding.md` (20),
+          `results/post_overnight_claim_review.md` (19).
+      A retired POSITION has no such legitimate use: no file has any reason to ASSERT that
+      the estimand dissolves. The only innocent restatements are quoting-to-disown (which
+      the `denial` gate already handles) and the ledger / ruling / history files, which are
+      named in OUT_OF_SCOPE below. That asymmetry -- values are stored, positions are only
+      ever claimed -- is the whole of the tier-2 line, and it is exactly the distinction
+      today's defect demonstrated.
+
+--------------------------------------------------------------------------------------
+THE RATCHET (2026-08-26), and why widening could not simply go green.
+
+Widening scope surfaces a BACKLOG that has nothing to do with whoever widened it. This
+repo has already decided how to hold one: `scripts/check_operational_provenance.py`
+records a per-file count of known-open findings in `KNOWN_OPEN`, and fails when a file
+GAINS one -- so the arriving backlog is PINNED rather than SILENCED, and any new defect
+still fails the build. That device is followed here rather than reinvented, down to the
+failure in the other direction: a file that drops BELOW its baseline also fails, because a
+register that can only be raised rots upward. The counts, and what each one is, are in
+KNOWN_OPEN below; there are 32 across 7 files -- 736 + 73 + 273 findings avoided by the
+scoping above, and 32 held.
+
+WHAT A BASELINE IS NOT. It is not an opinion that the site is fine. Two of the seven files
+carry a LIVE, uncorrected assertion of a position section 13 retracts, and the ratchet
+records exactly that rather than hiding it. The honest way to lower an entry is to fix the
+site and lower the number in the same commit. The dishonest way is to raise the number,
+and the failure message says so in those words, because the pressure to do it arrives at
+exactly the moment the suite goes red.
+
+Run: python scripts/check_population_labels.py             (exit 1 on any problem)
+     python scripts/check_population_labels.py --dry-run   (per-file counts, exit 0)
 """
 from __future__ import annotations
 
@@ -327,6 +444,97 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 PAPER = REPO / "paper"
+
+# --------------------------------------------------------------------------------------
+# TIER 2 SCOPE. Globs relative to the repo root; order is display order. Only the RETIRED
+# POSITIONS run here -- see the SCOPE section of the module docstring for the measurement
+# behind every one of these choices.
+#
+# NOT RECURSIVE, deliberately. `results/**/*.md` would pull in whatever a future run drops
+# in a subdirectory, and a guard whose scope grows on its own cannot have a ratchet: the
+# baseline would move without anyone editing anything. A new subdirectory is a decision and
+# gets a line here.
+#
+# THE SUFFIXES ARE THE PROSE-BEARING ONES. .md, .py, .sh and .json are where all sixteen of
+# the 852e0f7 sites lived -- reports, generators, wrappers and figure sidecars. Deliberately
+# absent: .jsonl and .csv (run checkpoints and audit tables; machine records that no one
+# reads a claim out of), .log, and .txt (`results/env_check.txt` is captured tool output).
+# Add one when a claim is found in it, not in advance.
+#
+# THE SUFFIXES ARE THE PROSE-BEARING ONES. .md, .py, .sh and .json are where all sixteen of
+# the 852e0f7 sites lived -- reports, generators, wrappers and figure sidecars. Deliberately
+# absent: .jsonl and .csv (run checkpoints and audit tables; machine records that no one
+# reads a claim out of), .log, and .txt (`results/env_check.txt` is captured tool output).
+# Add one when a claim is found in it, not in advance.
+# --------------------------------------------------------------------------------------
+WIDE_GLOBS = (
+    "docs/*.md",
+    "figures/*.md", "figures/*.json",
+    "results/*.md", "results/*.json",
+    "scripts/*.py", "scripts/*.sh",
+    "tests/*.py",
+)
+
+# Out of scope BY NAME, each for a stated reason. Every one of these files contains the
+# retired positions on purpose; none of them asserts one.
+#
+# The first two are the SELF-REFERENCE pair. This file holds every retracted sentence as a
+# regex AND as prose in `quantity` ("...described as 'the resolution of the pool'"), so
+# scanning it reports findings manufactured entirely out of its own rules; its test file
+# plants each defect deliberately, once per probe. Neither is left unguarded by the
+# exclusion: the ledger's advice strings -- the part other files are told to quote -- are
+# re-run through the rules by test_the_ledgers_own_advice_passes_the_rules_it_gives, and
+# blinded to prove that green is not luck; the exclusion itself is proved load-bearing by
+# test_the_checker_does_not_flag_its_own_rule_patterns, and shown to conceal nothing
+# executable by test_the_checkers_own_findings_never_land_on_executable_code.
+#
+# The other three follow `check_operational_provenance.py`'s precedent verbatim, including
+# its wording: rewriting history to satisfy a linter is worse than the disease, and the
+# danger from a log was never that it CONTAINS a dead claim but that the claim gets quoted
+# FORWARD. Forward is where the scope is.
+#
+# The counts below are the TIER-2 counts -- what these files would report under the eight
+# position rules, measured, not what they report under all 37. (Under all 37 they are 85,
+# 145, 91 and 31; quoting those here would be quoting a number from a different guard,
+# which is the failure this whole ledger is about.)
+OUT_OF_SCOPE: dict[str, str] = {
+    "scripts/check_population_labels.py":
+        "this ledger. It holds every retired sentence as a pattern AND restates each one "
+        "in prose in its own `quantity` field -- \"...described as 'the resolution of the "
+        "pool'\" -- so it matches itself by construction: 39 tier-2 findings, every one of "
+        "them manufactured out of its own rules. Its prose is guarded instead by "
+        "test_the_ledgers_own_advice_passes_the_rules_it_gives, which re-runs the advice "
+        "strings through the rules and then re-runs them BLINDED to prove the green is not "
+        "luck. A targeted check on the part that is prose; not a whole-file scan of a file "
+        "whose subject matter is the patterns.",
+    "tests/test_population_labels.py":
+        "this ledger's probes: 53 tier-2 findings, every defect planted on purpose, once "
+        "per rule. A probe that stopped matching would be a dead test, not a clean file.",
+    "docs/critique_log.md":
+        "append-only history -- the same call, and the same reason, as "
+        "check_operational_provenance.py's. 9 tier-2 findings, all in dated entries. "
+        "Commit 852e0f7, which fixed the sixteen live sites, left these alone in those "
+        "words: rewriting a timestamped record to match today's understanding destroys the "
+        "audit trail. The danger from a log was never that it CONTAINS a retracted claim "
+        "but that the claim gets quoted FORWARD, and forward is paper/ and the live "
+        "generators, both of which are in scope.",
+    "results/n40_floor_estimator_ruling.md":
+        "the adjudication that DID the retracting. 7 tier-2 findings, all of them the "
+        "withdrawn positions being quoted in order to withdraw them, plus the branch table "
+        "the rest of the repo is told to cite. Scoping it in would mean the guard's own "
+        "evidence file may not cite its own evidence -- the call "
+        "check_operational_provenance.py makes for results/operational_number_audit.md.",
+    "results/OVERNIGHT_2026-07-02.md":
+        "append-only run log -- a timestamped record of what a night produced, the same "
+        "class as the critique log and excluded by name in check_operational_provenance.py "
+        "too. It reports 0 tier-2 findings today, so this entry buys nothing NOW and is "
+        "here on the principle rather than on the count: a log that later quotes a "
+        "retracted position is recording history, and rewriting it to satisfy a linter "
+        "destroys the audit trail.",
+    "results/OVERNIGHT_2026-07-05.md":
+        "append-only run log; identical reasoning to the 07-02 entry above, and likewise "
+        "0 tier-2 findings today.",
+}
 
 # strip_latex preserves the backslash of an ESCAPED percent (`42\%` stays `42\%`), because
 # eating it is how the checker went blind to Table 1's saturation row. Every percent pattern
@@ -843,12 +1051,18 @@ _DISTINCT_COUNT_ADVICE = (
 # THE WITHDRAWN N=40 FLOOR INTERVALS (2026-08-19).
 #
 # `results/n40_floor_estimator_ruling.md` withdrew BOTH candidate intervals for the
-# measured N=40 achievable false-alarm floor, on measured coverage: against a population
-# model validated out-of-sample on the N=20 and N=10 ceiling atoms, Wilson on 4/200 covers
-# the true floor 53.7% of the time and the question bootstrap 0.00%, at a nominal 95%.
-# Neither estimator is broken; the estimand is, once the ceiling atom empties. The paper
-# now prints the point, 2.0%, with no interval, and carries the at-cap mass
-# 0/200 = 0.0% [0.0, 1.9] as the quantity that does have one.
+# measured N=40 achievable false-alarm floor. The reason is NON-IDENTIFICATION and it uses
+# no population model: once the ceiling atom empties, whether the pool's top rung is the
+# population's top rung is undecidable at n=200, and the two readings differ by more than
+# two orders of magnitude.
+#
+# The coverage pair often quoted here is branch-conditional and was corrected on
+# 2026-08-26 (ruling sec. 8.4, nominal 95%): under the calibrated Ewens fit Wilson covers
+# 53.67% and the question bootstrap 0.00%; under the zero branch, 95.06% and 100%. This
+# comment previously gave the first pair alone and said "the estimand is [broken], once
+# the ceiling atom empties" -- sec. 13 retracts that, since it holds in one branch only.
+# The paper now prints the point, 2.0%, with no interval, and carries the at-cap mass
+# 0/200 = 0.0% [0.0, 1.9] as the quantity that does have one -- valid in BOTH branches.
 #
 # WHY HERE AND NOT ONLY IN `derived_paper_quantities.py`. That script pins the literals it
 # knows about, site by site, and it is the right guard for "this exact string came back".
@@ -862,6 +1076,98 @@ _DISTINCT_COUNT_ADVICE = (
 # the paper; only their ADJACENCY is the retired interval. `5.03` and `0.78` are unique to
 # this interval and are armed alone -- `0.78` with a lookahead, because `0.787` is the
 # score-coupled replication AUROC and is a different number entirely.
+# --------------------------------------------------------------------------------------
+# THE REPLACEMENT POSITION, shared by every word rule below so that the six renderings of
+# one claim cannot drift apart in what they say about it -- the same reason
+# `_DISTINCT_COUNT_ADVICE` is shared by its two generative patterns.
+_NOT_IDENTIFIED = (
+    "tau_top is NOT IDENTIFIED at n=200, and that is the finding rather than a weaker "
+    "version of it. 2.0% is the cheapest alarm 200 correct answers can EXHIBIT; whether "
+    "it is also the population's floor turns on whether the population can ever produce "
+    "39 mutually inequivalent answers out of 40, and 0/200 is the modal outcome under "
+    "both branches, so the sample cannot choose. The two readings differ by more than two "
+    "orders of magnitude. State the dichotomy or state neither branch -- and note that "
+    "the retraction does NOT license the opposite claim either: the deep-tail misfit "
+    "widens the estimand's range in both directions at once. "
+    "See results/n40_floor_estimator_ruling.md sections 1 (M5), 2, 8.4 and 13"
+)
+
+# The coverage numbers are TRUE. What is retracted is quoting them bare. This string is
+# written so that it PASSES the two rules it advises on -- it names the branch in the same
+# sentence as each figure -- and a test pins that, because a ledger whose own advice would
+# fail its own rule is a ledger nobody can quote from.
+_COVERAGE_PAIR = (
+    "coverage for the two withdrawn candidates is BRANCH-CONDITIONAL and must never "
+    "travel without the population it was measured under (ruling sec. 8.4, nominal 95%): "
+    "under the calibrated Ewens fit Wilson covers 53.67% and the question bootstrap "
+    "0.00%, while under the zero branch the same two cover 95.06% and 100%. Name the "
+    "branch in the same sentence, or give the model-free reason instead -- tau_top is not "
+    "identified at n=200. See results/n40_floor_estimator_ruling.md sections 8.4 and 13"
+)
+
+# WHAT COUNTS AS STATING THE OTHER BRANCH. This list is the whole of the conditional
+# awareness, so its two failure directions are worth naming rather than discovering.
+#
+# TOO NARROW and the guard reddens a correct passage, which is the failure mode that gets
+# a guard switched off. TOO BROAD and it becomes a magic word: write "if" anywhere in the
+# sentence and the retracted claim goes green. The compromise drawn here is that a bare
+# `\bif\b` is NOT enough -- the conditional has to be about the thing in dispute, so the
+# `if` entries name their subject. Checked rather than asserted: all FIVE passages in
+# this repo that state the dichotomy correctly -- discussion.tex, n_scaling_grid.md,
+# make_floor_budget_figure.py, n_scaling_grid.py and test_n_scaling_grid.py -- are
+# exculpated, and every one of them by the FIRST entry. discussion.tex is additionally
+# pinned green by name in tests/test_population_labels.py.
+_BOTH_BRANCHES = [
+    r"\bif (?:it|that|this|they|so|not|the population|the pool|the top|the sample"
+    r"|the atom|the rung)\b",
+    r"\bonly if\b", r"\bunless\b", r"\bwhether\b",
+    r"\bnot identified\b", r"\bnon-?identif", r"\bunidentified\b",
+    r"\bnot determinable\b", r"\bcannot be (?:decided|settled|determined)\b",
+    r"\bcannot (?:decide|settle|tell|distinguish|choose)\b",
+    r"\bzero branch\b", r"\bboth branches\b", r"\beither branch\b",
+    r"\bboth readings\b", r"\btwo readings\b", r"\beither reading\b",
+    r"\bordinary (?:population|binomial) proportion\b",
+    r"\bno larger pool\b",
+]
+
+# NAMING THE POPULATION A COVERAGE FIGURE WAS MEASURED UNDER. The brief for this rule named
+# four; `calibrated`/`branch-conditional` are added because the corrected sites all use one
+# of them and a guard that reddened the corrected text would be worse than useless.
+#
+# WHAT IS DELIBERATELY NOT HERE: "population model", "validated out-of-sample", "the fitted
+# model". Every one of the sixteen defective sites named a model in exactly those words --
+# "against a population model validated out-of-sample on the N=20 and N=10 atoms" -- and
+# none of them named WHICH BRANCH, which is the entire defect. Admitting those phrases
+# would turn all sixteen green.
+#
+# KNOWN GAP, specific to the current .tex scope: `strip_latex` deletes `\tau` along
+# with every other command, so `$\tau^*$` arrives here as a bare `^*` and
+# `$\tau_{\mathrm{top}}$` as ` top `, and neither symbol entry below can match it.
+# In a .tex file only the WORDS "Ewens" and "zero branch" can exculpate. The symbol
+# entries earn their place the moment the scope widens to results/ and scripts/, where
+# the corrected tables are plain text and do carry a literal `tau_top`. Verified rather
+# than assumed -- test_strip_latex_is_not_safe_for_the_files_this_ledger_is_aimed_at.
+_BRANCH_NAMED = [
+    r"\bEwens\b", r"\bzero branch\b", r"\btau[_ ]?top\b", r"\btau\s*\*",
+    r"\bcalibrated\b", r"\bbranch[- ]conditional\b",
+]
+
+# Topical gates. `_FLOOR_CTX` keeps "reports a smaller one" pinned to this floor;
+# `_COVERAGE_CTX` keeps `0.00%` pinned to a coverage claim; `_FLOOR_RESOLUTION_CTX`
+# separates this floor's "property of the detector" from the class-separation one.
+_FLOOR_CTX = [r"\bfloor\b", r"\brung\b", r"\bpool\b", r"\batom\b"]
+# `_COVERAGE_CTX` was `[cover*, nominal, bootstrap, Wilson]` when first drafted and it
+# was too loose, which a dry run over results/ found before this shipped: `0.00% of
+# bootstrap replicates have a denominator at or through zero`
+# (results/winners_curse_se_false_alarm.md) matched on the word `bootstrap` alone, and
+# a `0.00%` column in results/likelihood_weight_sensitivity.md matched 13 times on a
+# neighbouring `Wilson`. The discriminating sense is COVERAGE, not the estimator's name,
+# so the estimator names are gone. Re-measured against the sixteen sites afterwards:
+# no loss.
+_COVERAGE_CTX = [r"\bcover(?:s|ed|age|ing)?\b", r"\bnominal\b"]
+_FLOOR_RESOLUTION_CTX = [r"\bresolution\b", r"\b4/200\b", rf"\b2\.0{PCT}",
+                         r"\bfloor\b", r"N\s*\{?=\}?\s*40\b"]
+
 _FLOOR_WITHDRAWN = (
     "the N=40 floor is printed as a POINT with no interval; the interval that survives "
     "at that budget is the at-cap mass, 0/200 = 0.0% [0.0, 1.9] (threshold ln 40, fixed "
@@ -1004,10 +1310,324 @@ SUPERSEDED: list[dict] = [
      "quantity": "re-scored targets keeping a positive move"},
     {"pattern": r"\+0\.456(?!\d)|r\s*=\s*0\.46(?!\d)", "current": "r = 0.48 (+0.482)",
      "quantity": "corr(selection move, fresh move)", "near": _WC_CTX},
+    #
+    # ---- THE RETIRED POSITIONS THAT CONTAIN NO DIGIT, 2026-08-26 ------------------------
+    # Armed after a defect survived FOUR rounds of adversarial review in
+    # `paper/sections/discussion.tex`: one line said the measured N=40 floor "takes the
+    # question bootstrap" -- a position withdrawn on 2026-08-19 -- while another line of the
+    # same file said it "takes neither". It survived because IT CONTAINS NO DIGIT. Every
+    # guard watching that quantity, including the six rules directly above, matches a
+    # RENDERED NUMERAL, and every sweep grepped for numbers. A follow-up sweep then found
+    # the same class at sixteen more sites across results/, scripts/, tests/ and figures/:
+    # generator string literals, code comments, docstrings, a provenance banner, test
+    # docstrings, an assertion message, and one refusal message (commit 852e0f7, whose
+    # subject line is "sixteen more sites, none of them containing a digit").
+    #
+    # WHY THIS FILE AND NOT `derived_paper_quantities.py`. That script has eight
+    # `PaperClaim(..., present=False)` entries pinning the retired N=40 intervals, and it
+    # was the obvious home. It is the wrong one on three counts, all structural: a
+    # PaperClaim is a PER-SITE pin (`name`, `value`, `literal`, one source file), it is
+    # scoped to five named .tex constants, and every entry needs a LITERAL RENDERING to
+    # match against. A defect with no rendering has nothing for it to pin. This file
+    # already is the retired-position ledger -- SUPERSEDED is a list of `{pattern,
+    # quantity, replacement}` with six entries already armed on this exact ruling -- and it
+    # already matches against `strip_latex(raw)`, so markup cannot split a phrase the way
+    # `\emph{}` split the phrases the manual sweeps were grepping for.
+    #
+    # THE SETTLED POSITION, so a future reader does not have to reconstruct it. At N=10 and
+    # N=20 the ceiling atom is full, the floor threshold is the a-priori ln N, and Wilson is
+    # correct. At N=40 the atom is empty (0/200) and the floor becomes an order statistic.
+    # TWO BRANCHES EXIST AND n=200 CANNOT SEPARATE THEM: if the population can never yield
+    # 39 mutually inequivalent answers out of 40 then 4/200 = 2.0% estimates a real
+    # population quantity; if it can, 2.0% is the pool's resolution and may be arbitrarily
+    # far above the truth. 0/200 is the modal outcome under BOTH. So the retraction is not
+    # "the floor is smaller than we said" -- it is that tau_top is NOT IDENTIFIED, which is
+    # model-free and stronger. Ruling sections 1 (M5), 2, 8.4 and 13.
+    # `denial` IS ARMED ON THE FIVE FLAT RULES BELOW and on neither coverage rule. A flat
+    # rule has to survive being quoted in the sentence that disowns it, because that is how
+    # every corrected file in this repo records what it used to say. A coverage rule must
+    # not: "not 53.7%" is still 53.7% quoted with no branch named, which is the defect.
+    # This is `_is_non_binding` doing the same job it does for pool labels, not a new
+    # mechanism -- the lookback and the sentence clipping come with it, and the clipping is
+    # what keeps the pre-fix wording of START_HERE red while the post-fix wording is green.
+    {"pattern": r"estimand\b(?:(?!\b(?:not|never|nor|n't)\b)[^.;:!?]){0,28}?"
+                r"\b(?:dissolv\w*|stops? existing|stopped existing|ceas\w+ to exist"
+                r"|breaks?\b|broken\b|no longer exists?\b)",
+     "denial": True, "wide": True, "run": "pre-sec-13",
+     "quantity": "the N=40 floor's estimand described as DISSOLVING, breaking or ceasing "
+                 "to exist once the ceiling atom empties",
+     "replacement": _NOT_IDENTIFIED},
+    # THE SAME CLAIM WITH THE WORDS THE OTHER WAY ROUND, which the rule above cannot see
+    # because it anchors on the noun and scans forward. `results/n_scaling_grid.md` and its
+    # generator both carried "the empty atom -- also breaks the floor as an estimand", and
+    # a ledger that only knew `estimand <verb>` would have called that file clean. This is
+    # the `97`-numerator lesson in a sentence: enumerate the SHAPE, not one spelling of it.
+    {"pattern": r"break\w*\b[^.;:!?]{0,32}?\bas an estimand\b",
+     "denial": True, "wide": True, "run": "pre-sec-13",
+     "quantity": "the N=40 floor's estimand described as BROKEN by the empty atom "
+                 "(verb-first rendering)",
+     "replacement": _NOT_IDENTIFIED},
+    # ...AND WITH THE VERB ELIDED ALTOGETHER. "Neither estimator is broken -- the estimand
+    # is" was live in `figures/README.md` and in the comment at the top of THIS FILE, and
+    # neither of the two rules above matches it: the only verb in the clause belongs to the
+    # estimator. Armed as the ADJACENCY of the two clauses rather than as either one alone,
+    # because "both estimators fail" is a phrase SIX correct passages now use --
+    # n40_floor_estimator_ruling.md, n_scaling_grid.md, replay_control.md,
+    # n_scaling_grid.py (twice) and replay_control.py -- always under attribution
+    # ("is a statement about the first row only"), and a flat match on the estimator
+    # half would flag every one of them.
+    {"pattern": r"neither estimator is broken\W{0,6}(?:the\W{0,6})?estimand\b",
+     "denial": True, "wide": True, "run": "pre-sec-13",
+     "quantity": "'neither estimator is broken -- the estimand is', the retracted framing "
+                 "with its verb elided",
+     "replacement": _NOT_IDENTIFIED},
+    # THE CONDITIONAL-AWARE ONE, and it is the one that matters most. See the ABSENT_SPAN
+    # note above for why the gate looks both ways and counts sentences rather than
+    # characters. `near` is doing a second, smaller job here: it is what keeps the
+    # "...reports a smaller one" rendering (which `docs/START_HERE_overnight.md` carried)
+    # from matching a smaller anything in a passage that is not about this floor at all.
+    {"pattern": r"report(?:s|ed|ing)? a (?:strictly |much |far )?smaller (?:floor|one)\b",
+     "near": _FLOOR_CTX, "absent": _BOTH_BRANCHES, "span": 1,
+     "wide": True, "run": "pre-sec-13",
+     "quantity": "'a larger pool reaches a higher rung and reports a smaller floor' "
+                 "stated UNCONDITIONALLY -- one branch of a dichotomy the sample cannot "
+                 "settle, presented as the finding",
+     "replacement": _NOT_IDENTIFIED},
+    # THE COVERAGE PAIR, ARMED AS AN ADJACENCY RULE RATHER THAN A PHRASE RULE, on this
+    # file's standing paired-endpoint precedent (`\b9\.0\s*,\s*12\.2`, where 9.0 is live
+    # elsewhere and only the adjacency is the retired interval). The retired thing here is
+    # not the digits: 53.67% and 0.00% are the TRUE coverages under the calibrated Ewens
+    # fit. What is retracted is quoting them with no branch named, because under the zero
+    # branch the same two estimators cover 95.06% and 100%, and the data excludes neither
+    # branch (p = 0.1175 for the fitted model against 0/200; the model-free bound
+    # [0%, 1.88%] contains both zero and the model's 1.065%). So the gate is `absent`.
+    #
+    # SPAN 1, NOT 0, AND THE REASON IS MEASURED RATHER THAN CHOSEN. "The branch must
+    # be named in the same sentence" is the right SPECIFICATION and span 0 is the
+    # wrong IMPLEMENTATION of it, because `_TERM_RE` counts a colon as a sentence
+    # boundary and every corrected site in this repo puts the branch label in front
+    # of one:
+    #     calibrated Ewens (tau_top = 0.2726%): Wilson 53.67%, question bootstrap 0.00%
+    # -- scripts/make_floor_budget_figure.py:71, scripts/n_scaling_grid.py:799 and
+    # scripts/derived_paper_quantities.py:306, all three of them the CORRECTED text.
+    # At span 0 the label sits on the far side of that colon and all three go red,
+    # which is the guard reddening the fix. Widening to 1 costs nothing measurable:
+    # re-run against the sixteen prose sites of 852e0f7, span 1 catches exactly what
+    # span 0 catches, because not one of the defective sites had a branch name
+    # anywhere near it -- that was the defect.
+    #
+    # 53.7 IS UNIQUE IN THIS REPO AND IS ARMED ALONE; 53.4, 53.5, 53.8 and 53.9 are live
+    # numbers in `achievable_fpr_grid.md`, `cluster_count_bound.md` and
+    # `null_control_cost_options.md`, which is why the pattern pins the digit rather than
+    # the two-decimal prefix.
+    {"pattern": r"\b53\.(?:7(?!\d)|67\d*)",
+     "absent": _BRANCH_NAMED, "span": 1,
+     "wide": True, "run": "pre-sec-8.4",
+     "quantity": "Wilson's coverage for the N=40 floor count, quoted WITHOUT the "
+                 "population it was measured under",
+     "replacement": _COVERAGE_PAIR},
+    # 0.00% CANNOT BE ARMED ALONE and gets both gates. `\b0\.00` with no required percent
+    # sign would reach the exact subset-saturation curve of ruling section 1 (M3), where
+    # `U_39 = 0.000000%` is a MEASURED, model-free, exhaustively enumerated value and the
+    # single most quotable number in that section -- flagging it would be flagging the
+    # replacement. PCT blocks that (`0.000000%` continues with a digit, not a `%`) and
+    # `near` blocks a zero rate that has nothing to do with coverage. The cost of the
+    # required percent sign is stated rather than hidden: a rendering as bare `0.00` in a
+    # bracketed pair goes unseen, which is the same blind spot the `5.03` note above
+    # records for the fair-pool rule, accepted here for the same reason -- `0.00`
+    # unadorned is not unique to this quantity.
+    {"pattern": rf"\b0\.00{PCT}",
+     "near": _COVERAGE_CTX, "absent": _BRANCH_NAMED, "span": 1,
+     "wide": True, "run": "pre-sec-8.4",
+     "quantity": "the question bootstrap's coverage for the N=40 floor, quoted WITHOUT "
+                 "the population it was measured under",
+     "replacement": _COVERAGE_PAIR},
+    # THE SENTENCE THE RULING FORBIDS BY NAME. Section 2: "The first version proposed the
+    # Abstract say that the 2.0% 'is the resolution of the pool and not a property of the
+    # detector'. Do not print that sentence." It reached the Abstract and was committed
+    # there. NO `absent` GATE ON THESE TWO, deliberately: the ruling withdraws the sentence
+    # outright rather than conditioning it, and the both-branches-safe wording it supplies
+    # instead ("whether that is a property of the detector OR of the pool's size turns on
+    # ...") contains neither pattern -- there is no "resolution ... of the pool" in it, and
+    # no "not a property of the detector".
+    {"pattern": r"resolution (?:limit )?of (?:the|a|an|this|our|its)\b"
+                r"[^.;:!?]{0,26}?\bpool\b",
+     "denial": True, "wide": True, "run": "pre-sec-2",
+     "quantity": "the N=40 floor's 2.0% described as 'the resolution of the pool'",
+     "replacement": _NOT_IDENTIFIED},
+    # ...and its other half, which needs `near` because the phrase is LIVE AND CORRECT
+    # about a different quantity. `results/dynamic_range_finding.md` and
+    # `results/CORRECTIONS_2026-08-02.md` both call the +0.184-nat class separation "not a
+    # fixed property of the detector", correctly, and neither passage mentions the floor,
+    # 4/200, 2.0% or N=40. The gate is what tells the two apart, and both of those sites
+    # are pinned green by name in tests/test_population_labels.py.
+    {"pattern": r"not a (?:fixed |mere |simple )?property of the detector\b",
+     "near": _FLOOR_RESOLUTION_CTX,
+     "denial": True, "wide": True, "run": "pre-sec-2",
+     "quantity": "the N=40 floor's 2.0% described as 'not a property of the detector'",
+     "replacement": _NOT_IDENTIFIED},
 ]
 SUPERSEDED_RUN = "wk9_def"
 CURRENT_RUN = "wk9_defb"
 NEAR_WINDOW = 300
+
+# THE TIER-2 LEDGER: the entries that run outside paper/. Derived from the `wide` flag
+# rather than from a second hand-maintained list, so the two cannot drift -- the shape that
+# failed for `labels` (defect 5), for `numbers` (defect 6) and for FROZEN_COUNTS (defect 7)
+# was always two lists that had to be edited together and were not.
+#
+# THE MEMBERSHIP TEST IS A PROPERTY, NOT A TASTE: an entry is `wide` iff its `replacement`
+# is a POSITION -- what to say instead -- rather than a recomputed `current` value. A value
+# is stored, pinned and corrected all over this repo; a position is only ever asserted.
+# test_the_wide_set_is_exactly_the_position_rules holds the two definitions together, so a
+# future entry cannot get the wider scope by carrying the flag alone.
+WIDE_SUPERSEDED: list[dict] = [item for item in SUPERSEDED if item.get("wide")]
+
+# --------------------------------------------------------------------------------------
+# THE RATCHET. Retired-position findings per TIER-2 file, as of 2026-08-26.
+#
+# A file that GAINS one fails. A file that DROPS below its baseline also fails, so the
+# register cannot rot upward while the docs are cleaned. Files absent from this map must be
+# clean (baseline 0), and an entry naming a file that is no longer in scope is itself
+# reported -- an allow-list of facts about the world expires exactly the way `labels` and
+# `numbers` did (defects 5, 6 and 7 above), and this one is a third copy of that shape.
+#
+# WHAT EACH ENTRY IS. Every one of the 32 was read and classified; the three classes are
+# stated rather than averaged into a number, because "9 open findings" tells the next
+# reader nothing about whether anyone should care. 6 + 21 + 5 = 32.
+#
+#   QUOTED-TO-DISOWN (6). A file CORRECTED on 2026-08-26 that records what it used to say:
+#   `This banner said "because the estimand stops existing when the ceiling atom empties"
+#   until 2026-08-26; section 13 of the ruling retracts that`. The `denial` gate is a
+#   30-character lookback clipped at the previous sentence boundary, and it cannot reach a
+#   construction that puts the disavowal AFTER the quotation. Widening it until these go
+#   green is the one change this commit deliberately does not make: the note above the flat
+#   rules records that the same narrowness is what keeps the PRE-fix wording of
+#   docs/START_HERE_overnight.md red, and a gate that read "said X ... retracts that" would
+#   also read "said X" alone. Cheaper, and far more honest, to pin six sites.
+#
+#   A COVERAGE FIGURE WITH NO BRANCH NAMED (21). The largest class and the intended one:
+#   `| N=40 (atom empty) | 0.27% | 53.7% | 0.00% |` in three copies of one table, the prose
+#   that reduces the 53.7% to an identity, a refusal message, a risk-register row, and five
+#   post-mortem sentences that cite "withdrawn at 0.00% coverage" while discussing a
+#   scheduling error. All 21 figures are TRUE under the calibrated Ewens fit; what is
+#   retracted is quoting them bare, because under the zero branch the same two estimators
+#   cover 95.06% and 100% and the data excludes neither branch. Most are one word from
+#   green.
+#
+#   A LIVE, UNCONDITIONAL ASSERTION OF A RETRACTED POSITION (5), in two files, and these
+#   are findings rather than debt. They are named per file below. Nobody may lower one of
+#   them by editing this map.
+#
+# WHAT THIS REGISTER WAS STRUCK AGAINST, because a baseline with no provenance is the same
+# object as an untagged operational figure. It is the WORKING TREE of 2026-08-26 22:28,
+# which at that moment carried four uncommitted corrections on top of 852e0f7 --
+# figures/README.md, results/derived_paper_quantities.md,
+# tests/test_derived_paper_quantities.py and tests/test_replay_control.py, edited 21:17-21:18
+# and not in that commit. Measured both ways rather than reasoned about: at HEAD the tier-2
+# backlog is 41 findings in 10 files; with those four edits applied it is 32 in 7. So the guard, pointed at HEAD,
+# independently reports every file that afternoon's corrections touched -- which is the
+# closest thing to an out-of-sample check this device is going to get. If those four edits
+# are ever reverted the ratchet breaches on four files, and that is the correct behaviour,
+# not a false alarm.
+KNOWN_OPEN: dict[str, int] = {
+    # 3, all `0.00%` with no branch named, all three in the post-mortem prose that
+    # describes the scheduling defect ("...toward the estimator that had been retired at
+    # 0.00% measured coverage"). The figure is true under the calibrated Ewens fit and the
+    # sentences are about the handoff rather than about coverage -- but they are exactly
+    # the shape the rule exists to catch, and the fix is one clause each. Note what is NOT
+    # in this count: the file's corrected line at :190 ("The reason is not data selection.
+    # It is that...") is GREEN, because the `denial` gate exculpates it -- and the PRE-fix
+    # wording of that same line is one of the 12 findings this file yields at 852e0f7^.
+    "docs/START_HERE_overnight.md": 3,
+    # 1: the correction note, verbatim -- `This section said "Wilson ... 53.7% ... Neither
+    # estimator is broken ... the estimand is" until 2026-08-26; ruling sec. 13 retracts
+    # that`. The retracted sentence is inside quotation marks and the retraction follows it.
+    "figures/README.md": 1,
+    # 5, and TWO OF THEM ARE LIVE. The coverage table's N=40 row reads
+    # `| N=40 (atom empty) | 0.27% | 53.7% | 0.00% |` and is followed by "Neither estimator
+    # is broken. The estimand dissolves at the moment the atom empties" -- an unconditional
+    # assertion of the position section 13 retracts. It is not a quotation and nothing near
+    # it disowns it. This is the single most valuable finding the widening produced and it
+    # must not be pinned away: the entry stays at 5 until someone edits that paragraph.
+    #
+    # WHY THIS FILE IS IN SCOPE AT ALL, given that critique_log.md is not. It is dated
+    # 2026-08-19, a week before the ruling that retracts the sentence, so the append-only
+    # argument reaches for it. It is also the file the project's own memory index cites as
+    # where the current decisions live -- so it is READ FORWARD, and forward is the whole
+    # of the scope test. A document cannot be both the record of what was believed and the
+    # place a reader is sent for what is true. In scope until it stops being the latter.
+    "results/morning_review_2026_08_19.md": 5,
+    # 7: 2 correction notes (quoted-to-disown) + 2 on the coverage table at :401-405 + 3 in
+    # the prose that reduces the 53.7% to an identity. The table's branch is named nowhere
+    # near it: the paragraph above says "a population model ... fitted at N=40, tuned on
+    # N=20, validated out of sample on the N=10 atom", which is precisely the wording
+    # `_BRANCH_NAMED` deliberately refuses -- every one of the sixteen defective sites named
+    # a model in those words and not one named WHICH BRANCH, which was the entire defect. So
+    # these are true findings of the intended class; the table's fix is one word in a header.
+    "results/replay_control.md": 7,
+    # 6, and THREE ARE LIVE -- all three in one sentence: "Wilson covers in 53.7% ... the
+    # question bootstrap in 0.00% -- because the estimand dissolves once the ceiling atom
+    # empties" gives the retracted position as the REASON for the withdrawal and quotes
+    # both coverages with no branch named. The other three: the risk-register row
+    # `| Wilson 53.7% / bootstrap 0.00% coverage, 40,000 pools | MEASURED |`, and one
+    # post-mortem sentence. A schedule is read FORWARD by whoever works next, which makes
+    # this the entry to clear first even though it is not the largest.
+    "results/schedule_2026_08_26.md": 6,
+    # 1: the corrected comment in the generator, which quotes its own retracted phrasing --
+    # `This comment used to give the first pair alone and conclude "the ESTIMAND breaks";
+    # sec. 13 retracts that phrasing`. Quoted-to-disown.
+    "scripts/derived_paper_quantities.py": 1,
+    # 9: the largest, and it is the .md above with its generator's `log(...)` calls wrapped
+    # round it -- 2 correction banners + 2 on the coverage table + 3 on the identity
+    # paragraphs + 2 in the refusal message that fires when the floor row grows an interval
+    # again. Fixing results/replay_control.md WITHOUT fixing this file would regenerate the
+    # finding on the next run, which is the ratchet earning its keep: the pair must move
+    # together, and a drop on one side alone is reported as ratchet-stale on the other.
+    "scripts/replay_control.py": 9,
+}
+
+RATCHET_ADVICE = (
+    "HOW TO LOWER A BASELINE HONESTLY: fix the site -- name the branch in the same "
+    "sentence as the coverage figure, or state the dichotomy instead of one arm of it -- "
+    "then lower this file's number in KNOWN_OPEN in the SAME commit, and say in the "
+    "message which site you fixed.\n"
+    "      HOW IT IS LOWERED DISHONESTLY, so that it is recognisable when the suite is red "
+    "and the deadline is close: raising the pin to whatever the run just printed, "
+    "deleting the file's entry, adding the file to OUT_OF_SCOPE, or widening a gate "
+    "(`denial`, `absent`, `_BRANCH_NAMED`) until the finding disappears. The last is the "
+    "hardest to spot and the worst, because it disarms the rule everywhere at once while "
+    "looking like a fix -- results/n40_floor_estimator_ruling.md sec. 13 is the ruling a "
+    "widened `_BRANCH_NAMED` would quietly repeal. Do none of them without saying so.")
+
+# --------------------------------------------------------------------------------------
+# CONDITIONAL AWARENESS, for the retired positions that are stated in WORDS.
+#
+# `near` is a gate that says "fire only if this cue is nearby", and it is how a bare
+# decimal is kept from meaning something it does not. The word rules below need the
+# OPPOSITE gate, for a reason specific to this class of defect: the retracted claims are
+# not false sentences. They are TRUE BRANCHES of a dichotomy, asserted as though the
+# dichotomy had been settled. `paper/sections/discussion.tex` says "a larger pool reaches
+# a higher rung and reports a smaller floor" and is CORRECT, because the clauses on either
+# side of it state the other branch. A flat phrase match would go red on the one site in
+# the repo that gets this right, and a guard that fires on correct usage teaches its user
+# to silence it -- "a check that cannot fail is not a check" wearing its other face.
+#
+# So `absent` lists patterns that EXCULPATE, and `span` says how far the search for them
+# may run -- measured in SENTENCE BOUNDARIES, not characters.
+#
+# WHY NOT THE OBVIOUS SPELLING. The natural way to write this is a negative lookahead
+# bounded by `[^.]*`, and it is wrong twice over. `[^.]*` stops dead at the decimal point
+# of `2.0`, so a correct conditional sentence with a number in it fires anyway; and a
+# lookahead cannot look BACKWARD, which is where the correct sites in this repo put their
+# conditional ("If it is not, a larger pool reaches a higher rung and ..."). `_TERM_RE`
+# already solves the decimal problem -- `[.:;!?](?=\s)` only ends a sentence when
+# whitespace follows -- and it is already exercised by the label geometry above. Note that
+# a semicolon IS a terminator here, which matters: the if/else at discussion.tex is joined
+# by one, so `span` must be at least 1 for the forward half of that site to be visible.
+# The backward half ("If it is not,") is visible at span 0, and both are checked below.
+ABSENT_SPAN = 1        # sentence boundaries the exculpation search may cross, each side
+ABSENT_CHAR_CAP = 600  # ...and a hard stop, so unpunctuated prose is not a blanket licence
 
 
 # --------------------------------------------------------------------------------------
@@ -1285,6 +1905,70 @@ def strip_latex(text: str) -> str:
     return re.sub(r"\s+", " ", text)
 
 
+def strip_plain(text: str) -> str:
+    r"""Flatten Markdown / Python / shell / JSON. The TIER-2 flattener.
+
+    THIS EXISTS BECAUSE `strip_latex` IS A LATEX FLATTENER AND SAYS SO. Applied to a `.md`
+    or `.py` file it deletes from an unescaped `%` to end of line -- correct for a LaTeX
+    comment, catastrophic here, since `53.7% of the time and the` becomes `53.7` and
+    `0.00%` becomes `0.00`, which `PCT` (a REQUIRED percent sign) then refuses. That single
+    behaviour is the whole of the 16 -> 14 gap the previous phase measured and pinned in
+    test_strip_latex_is_not_safe_for_the_files_this_ledger_is_aimed_at. The blocker was
+    named before the scope moved; this is the fix, and the pin now asserts BOTH halves --
+    that `strip_latex` still behaves that way (Table 1's saturation row depends on it) and
+    that this function does not.
+
+    WHAT IT DOES, and every line of it is one of the sixteen sites' markup:
+
+      backticks     `results/n40_floor_estimator_ruling.md`, `4/200`, and the ``` fences
+                    around every generated block. A backtick inside a phrase splits it the
+                    way `\emph{}` split "fair pool" for the manual sweeps.
+      `*` emphasis  docs/START_HERE_overnight.md carried "a resolution limit of the *pool*
+                    and not a property of the detector" -- the retired sentence with one
+                    asterisk pair in the middle of it, which is a phrase rule's blind spot
+                    exactly.
+
+    WHAT IT DELIBERATELY DOES NOT DO, each with its reason:
+
+      `_` IS NOT AN EMPHASIS MARKER HERE. It is the word separator in every path,
+      identifier and constant this repo cites -- `n40_floor_estimator_ruling.md`,
+      `_BRANCH_NAMED`, `at_cap` -- and blanking it turns the ruling's filename into four
+      words. `check_operational_provenance.py`'s `strip_markup` makes the same call for the
+      same reason and states it in the same place. The cost is a real blind spot: a
+      markdown `_estimand_` written with underscore emphasis breaks `\b` and is not seen.
+      Accepted, and it is in the residual list below rather than hidden.
+
+      `$`, `{`, `}` ARE LEFT ALONE. They are math delimiters in .tex and nothing of the
+      kind here: `$HOME` in a shell script, an f-string's braces in Python, a JSON object.
+      Blanking them buys no phrase repair and mangles source.
+
+      NO `\command` STRIPPING. Python string literals carry `\"` and `\n`; there are no
+      LaTeX commands to remove.
+
+    Same-length-out is NOT preserved (nor is it in `strip_latex`), which is why `_line_hint`
+    re-searches the RAW text for a source line rather than trusting an offset.
+    """
+    text = re.sub(r"`{1,3}", " ", text)                          # fences and code spans
+    text = re.sub(r"(?<![*\w])\*{1,3}(?=\S)", " ", text)         # opening * emphasis
+    text = re.sub(r"(?<=\S)\*{1,3}(?![*\w])", " ", text)         # closing * emphasis
+    return re.sub(r"\s+", " ", text)
+
+
+def flatten(text: str, suffix: str) -> str:
+    """Per-suffix flattener. `.tex` keeps the LaTeX one; everything else gets `strip_plain`.
+
+    Dispatching on SUFFIX rather than on directory is deliberate and load-bearing for the
+    tests: every one of the hundred-odd probes in tests/test_population_labels.py writes a
+    `probe.tex` into a tmp_path that is nowhere near `paper/`, and they must go on getting
+    the LaTeX flattener and the full ruleset. It is also the honest rule -- the pool and
+    growing families are written for LaTeX prose, not for the directory they happen to sit
+    in -- so a `.tex` file that ever appears outside `paper/` is FLATTENED as one. Note the
+    limit of that: WIDE_GLOBS names no `.tex` pattern, so such a file is not REACHED at all
+    until someone adds one. Suffix decides the ruleset; the globs decide the reach.
+    """
+    return strip_latex(text) if suffix == ".tex" else strip_plain(text)
+
+
 # --------------------------------------------------------------------------------------
 # Label geometry
 # --------------------------------------------------------------------------------------
@@ -1297,6 +1981,21 @@ def _crossings(terms: list[int], lo: int, hi: int) -> int:
     if hi <= lo:
         return 0
     return bisect_left(terms, hi) - bisect_left(terms, lo)
+
+
+def _absent_window(flat: str, terms: list[int], start: int, end: int,
+                   span: int) -> tuple[int, int]:
+    """The stretch of text a provenance hit may look at for an EXCULPATING phrase.
+
+    `span=0` is the hit's own sentence; each further unit adds one sentence on each side.
+    Clipped to ABSENT_CHAR_CAP in both directions so that a passage with no terminators in
+    it cannot license a hit from arbitrarily far away.
+    """
+    i = bisect_left(terms, start) - 1 - span
+    lo = terms[i] + 1 if i >= 0 else 0
+    j = bisect_left(terms, end) + span
+    hi = terms[j] if j < len(terms) else len(flat)
+    return max(lo, start - ABSENT_CHAR_CAP), min(hi, end + ABSENT_CHAR_CAP)
 
 
 def _is_non_binding(flat: str, start: int, terms: list[int]) -> bool:
@@ -1353,8 +2052,16 @@ def _closest(num: tuple[int, int], labels: list[tuple], terms: list[int],
 
 
 def _rel(path: Path) -> str:
+    """Repo-relative, POSIX separators, on every platform.
+
+    `str(Path)` gives `results\\replay_control.md` on Windows, and the ratchet's keys are
+    written `results/replay_control.md` -- so a native-separator name silently misses every
+    KNOWN_OPEN entry and reports a 32-finding backlog as 32 NEW findings. Found by the
+    first dry run rather than by reasoning, which is the argument for running one.
+    `check_operational_provenance.py` uses `.as_posix()` here for the same reason.
+    """
     try:
-        return str(path.relative_to(REPO))
+        return path.relative_to(REPO).as_posix()
     except ValueError:
         return path.name
 
@@ -1480,10 +2187,27 @@ def _check_pools(raw: str, flat: str, terms: list[int], shown: str) -> list[str]
     return problems
 
 
-def _check_provenance(raw: str, flat: str, shown: str) -> list[str]:
-    """Catch a number that outlived the run it was computed on."""
+def _check_provenance(raw: str, flat: str, terms: list[int], shown: str,
+                      items: list[dict] | None = None) -> list[str]:
+    """Catch a number -- or a POSITION -- that outlived the ruling it was computed under.
+
+    Three gates. `near` requires a cue to be PRESENT before firing (a bare decimal that
+    means nothing on its own). `absent` requires one to be ABSENT within `span` sentences
+    (a phrase that is correct when it names the branch it belongs to, and retracted when
+    it does not). `denial` reuses the label geometry's `_is_non_binding`, so a retired
+    position that is being DISOWNED -- "it is NOT that the estimand dissolves: ruling
+    sec. 13 retracts that sentence", `docs/START_HERE_overnight.md` -- stays green. That
+    third gate is the narrowest of the three on purpose: the lookback is 30 characters and
+    is clipped at the previous sentence boundary, so "The reason is not data selection. It
+    is that the estimand dissolves" still fires, which is the pre-fix wording of the very
+    same file.
+
+    `items` selects the ledger. It defaults to all of SUPERSEDED (tier 1, `paper/*.tex`);
+    tier 2 passes WIDE_SUPERSEDED, the eight retired POSITIONS. See the SCOPE section of
+    the module docstring for the 302-finding measurement behind that split.
+    """
     problems: list[str] = []
-    for item in SUPERSEDED:
+    for item in (SUPERSEDED if items is None else items):
         for hit in re.finditer(item["pattern"], flat, re.IGNORECASE):
             if "near" in item:
                 lo = max(0, hit.start() - NEAR_WINDOW)
@@ -1491,6 +2215,13 @@ def _check_provenance(raw: str, flat: str, shown: str) -> list[str]:
                 ctx = flat[lo:hi]
                 if not any(re.search(p, ctx, re.IGNORECASE) for p in item["near"]):
                     continue
+            if "absent" in item:
+                lo, hi = _absent_window(flat, terms, hit.start(), hit.end(),
+                                        item.get("span", ABSENT_SPAN))
+                if any(re.search(p, flat[lo:hi], re.IGNORECASE) for p in item["absent"]):
+                    continue
+            if item.get("denial") and _is_non_binding(flat, hit.start(), terms):
+                continue
             where = f"{shown}{_line_hint(raw, hit.group(0))}"
             snippet = flat[max(0, hit.start() - 110):hit.end() + 110].strip()
             problems.append(
@@ -1542,23 +2273,162 @@ def _check_growing(raw: str, flat: str, shown: str) -> list[str]:
 
 
 def check_file(path: Path) -> list[str]:
+    """Every problem in one file. The RULESET depends on the suffix -- see `flatten`.
+
+    `.tex`        tier 1: pools + provenance (all 37 entries) + growing denominators.
+    anything else tier 2: the retired POSITIONS only, on the plain flattener.
+
+    The tier-2 findings are what the ratchet counts, so this returns them and does not
+    apply the baseline; `main` does that, because a baseline is a property of a file's
+    place in the register and not of the file.
+    """
     raw = path.read_text(encoding="utf-8", errors="replace")
-    flat = strip_latex(raw)
+    flat = flatten(raw, path.suffix)
     terms = _terminators(flat)
     shown = _rel(path)
-    return (_check_pools(raw, flat, terms, shown)
-            + _check_provenance(raw, flat, shown)
-            + _check_growing(raw, flat, shown))
+    if path.suffix == ".tex":
+        return (_check_pools(raw, flat, terms, shown)
+                + _check_provenance(raw, flat, terms, shown)
+                + _check_growing(raw, flat, shown))
+    return _check_provenance(raw, flat, terms, shown, items=WIDE_SUPERSEDED)
 
 
-def main() -> int:
-    targets = sorted(PAPER.glob("*.tex")) + sorted((PAPER / "sections").glob("*.tex"))
+def paper_files(repo: Path | None = None) -> list[Path]:
+    root = (repo or REPO) / "paper"
+    return sorted(root.glob("*.tex")) + sorted((root / "sections").glob("*.tex"))
+
+
+def wide_files(repo: Path | None = None) -> list[Path]:
+    """Tier-2 targets: WIDE_GLOBS minus OUT_OF_SCOPE, de-duplicated, in display order."""
+    repo = repo or REPO
+    seen: dict[str, Path] = {}
+    for g in WIDE_GLOBS:
+        for f in sorted(repo.glob(g)):
+            if f.is_file():
+                rel = f.relative_to(repo).as_posix()
+                if rel not in OUT_OF_SCOPE:
+                    seen.setdefault(rel, f)
+    return [seen[k] for k in sorted(seen)]
+
+
+def _ratchet(counts: dict[str, int]) -> list[str]:
+    """Compare tier-2 findings against KNOWN_OPEN. BOTH directions are failures.
+
+    A file that GAINS a finding fails, which is the point. A file that LOSES one also
+    fails, so the register cannot be raised and then left -- that is defect 7's shape (a
+    registry that expired while the guard went on trusting it), and this is the third list
+    in this file to carry that failure mode.
+    """
+    problems: list[str] = []
+    for shown in sorted(set(counts) | set(KNOWN_OPEN)):
+        found = counts.get(shown)
+        baseline = KNOWN_OPEN.get(shown, 0)
+        if found is None:
+            problems.append(
+                f"{shown}: ratchet-orphan: KNOWN_OPEN pins {baseline} finding(s) in a file "
+                f"that is no longer in tier-2 scope.\n"
+                f"      Either the file moved and WIDE_GLOBS has to follow it, or it was "
+                f"deleted and the entry goes with it. A register that outlives its subject "
+                f"is how the hide arm stayed 'open' for six days after it closed.")
+            continue
+        if found > baseline:
+            problems.append(
+                f"{shown}: ratchet: {found} retired-position finding(s) against a baseline "
+                f"of {baseline}. {found - baseline} NEW one(s).\n"
+                f"      {RATCHET_ADVICE}")
+        elif found < baseline:
+            problems.append(
+                f"{shown}: ratchet-stale: {found} finding(s) against a baseline of "
+                f"{baseline}. Progress -- lower KNOWN_OPEN['{shown}'] to {found} in the "
+                f"same commit, so the register cannot rot upward.")
+    return problems
+
+
+def scope_census(repo: Path | None = None) -> dict[str, tuple[int, int]]:
+    """What each rule FAMILY would report over the tier-2 files. (findings, files) each.
+
+    THE SCOPE ARGUMENT IS A MEASUREMENT, so it has to be re-runnable rather than quoted
+    from a session nobody can reproduce. Every number in the module docstring's SCOPE
+    section comes from here and is printed by `--dry-run`. If a family's count collapses,
+    the argument for keeping it out of tier 2 has weakened and the line should be moved
+    deliberately, in a commit that says the new number -- not by noticing a comment aged.
+    """
+    narrow = [s for s in SUPERSEDED if not s.get("wide")]
+    tally = {k: [0, 0] for k in ("pools", "growing", "retired-value", "retired-position")}
+    for f in wide_files(repo):
+        raw = f.read_text(encoding="utf-8", errors="replace")
+        flat = flatten(raw, f.suffix)
+        terms = _terminators(flat)
+        shown = _rel(f)
+        for key, found in (
+                ("pools", _check_pools(raw, flat, terms, shown)),
+                ("growing", _check_growing(raw, flat, shown)),
+                ("retired-value",
+                 _check_provenance(raw, flat, terms, shown, items=narrow)),
+                ("retired-position",
+                 _check_provenance(raw, flat, terms, shown, items=WIDE_SUPERSEDED))):
+            if found:
+                tally[key][0] += len(found)
+                tally[key][1] += 1
+    return {k: (v[0], v[1]) for k, v in tally.items()}
+
+
+def _dry_run(repo: Path | None = None) -> int:
+    """Per-file tier-2 counts beside the pin, plus the family census. Always exits 0.
+
+    This is how the register is re-struck honestly: it prints what IS next to what is
+    PINNED, so the two can be compared without the pressure of a red suite.
+    """
+    files = wide_files(repo)
+    for f in files:
+        shown = _rel(f)
+        n = len(check_file(f))
+        pin = KNOWN_OPEN.get(shown, 0)
+        if n or pin:
+            mark = "  " if n == pin else ("<-" if n < pin else "->")
+            print(f"{mark} {shown:46s} found {n:3d}   pinned {pin:3d}")
+    print("   (-> a file has GAINED findings; <- it has lost some and the pin is now "
+          "stale -- lower it)")
+    print(f"\n{len(files)} tier-2 files, {len(OUT_OF_SCOPE)} excluded by name, "
+          f"{len(WIDE_SUPERSEDED)} retired-position rules, "
+          f"{sum(KNOWN_OPEN.values())} finding(s) pinned in {len(KNOWN_OPEN)} file(s).")
+    print("\nWhat each family WOULD report over those files -- the measurement the tier-2 "
+          "line rests on\n(module docstring, SCOPE). Only the last row runs:")
+    for name, (found, in_files) in scope_census(repo).items():
+        runs = "RUNS" if name == "retired-position" else "scoped to .tex"
+        print(f"  {name:18s} {found:5d} finding(s) in {in_files:3d} file(s)   [{runs}]")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    if "--dry-run" in argv:
+        return _dry_run()
+
+    targets = paper_files()
     if not targets:
         print("no .tex files found under paper/", file=sys.stderr)
         return 1
     problems: list[str] = []
     for t in targets:
         problems.extend(check_file(t))
+
+    wide = wide_files()
+    counts: dict[str, int] = {}
+    wide_problems: list[str] = []
+    for f in wide:
+        found = check_file(f)
+        counts[_rel(f)] = len(found)
+        wide_problems.extend(found)
+    ratchet = _ratchet(counts)
+    # The findings themselves are printed only for files that BREACH the ratchet. Printing
+    # all 32 pinned ones on every red run buries the new one among them, and this file's
+    # own docstring says a guard whose user learns to skip its output has the same end
+    # state as a guard that cannot fail. `--dry-run` prints the register on demand.
+    breached = {p.split(":")[0] for p in ratchet}
+    problems.extend(p for p in wide_problems if p.split(":")[0] in breached)
+    problems.extend(ratchet)
+
     if problems:
         print(f"POPULATION-LABEL CHECK FAILED - {len(problems)} problem(s):\n")
         for p in problems:
@@ -1575,13 +2445,20 @@ def main() -> int:
               "AUROC; 0.787 is the score-coupled all-samples one and is not the paper's "
               "figure.\n"
               "The first two are nested, not disjoint, so say which one you mean in the "
-              "clause that carries the number. The third is disjoint from both.")
+              "clause that carries the number. The third is disjoint from both.\n"
+              "\nOUTSIDE paper/ only the RETIRED POSITIONS are checked -- the claims that "
+              "sec. 13 of results/n40_floor_estimator_ruling.md withdraws, which carry no "
+              "digit and which four rounds of review missed for exactly that reason. "
+              "tau_top is NOT IDENTIFIED at n=200: state the dichotomy, or name the branch "
+              "a coverage figure was measured under, but never one arm of it alone.")
         return 1
+
     n_numbers = sum(len(r["numbers"]) for r in RULES)
-    n_growing = len(GROWING_CELLS)
-    print(f"population-label check: OK ({len(targets)} files, {len(RULES)} rules, "
+    print(f"population-label check: OK ({len(targets)} paper files, {len(RULES)} rules, "
           f"{n_numbers} number patterns, {len(SUPERSEDED)} superseded-run patterns, "
-          f"{n_growing} growing-cell patterns over {len(FROZEN_COUNTS)} frozen counts)")
+          f"{len(GROWING_CELLS)} growing-cell patterns over {len(FROZEN_COUNTS)} frozen "
+          f"counts; {len(wide)} wider files on {len(WIDE_SUPERSEDED)} retired-position "
+          f"rules, {sum(KNOWN_OPEN.values())} finding(s) pinned in {len(KNOWN_OPEN)})")
     return 0
 
 

@@ -96,10 +96,14 @@ def test_wilson_reproduces_every_interval_the_paper_prints(k, n, pt, lo, hi):
 def test_the_n40_floor_count_carries_no_interval_in_the_paper():
     r"""4/200: the case that was demoted out of the list above, and the reason it was.
 
-    Both candidate intervals were withdrawn on measured coverage -- Wilson on 4/200 covers
-    the true floor 53.7% of the time and the question bootstrap 0.00%, at nominal 95% --
-    because the estimand stops existing once the ceiling atom empties. The paper prints the
-    point and nothing else.
+    Both candidate intervals were withdrawn because the estimand is NOT IDENTIFIED at
+    n=200: once the ceiling atom empties, whether the pool's top rung is the population's
+    top rung cannot be decided from the sample, and the two readings are two orders of
+    magnitude apart. That argument uses no population model. The coverage figures do --
+    under the calibrated Ewens fit Wilson covers 53.67% and the question bootstrap 0.00%
+    at nominal 95%; under the zero branch, 95.06% and 100% (ruling sec. 8.4) -- so neither
+    pair may be quoted without naming its population. The paper prints the point and
+    nothing else.
 
     The arithmetic is still pinned, at both precisions, for two reasons: a number withdrawn
     on evidence must stay re-examinable, and `scripts/check_population_labels.py` arms

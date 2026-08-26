@@ -14,9 +14,9 @@ are taken at check time so a miss can be re-checked against the same bytes.
 
 | paper file | bytes | sha256[:12] |
 |---|---|---|
-| `paper/main.tex` | 4756 | `91e1d6d6835e` |
-| `paper/sections/conclusion.tex` | 6448 | `59210887f06f` |
-| `paper/sections/discussion.tex` | 36391 | `5687f7984baf` |
+| `paper/main.tex` | 8847 | `10c62b67a739` |
+| `paper/sections/conclusion.tex` | 6460 | `18f2b605def4` |
+| `paper/sections/discussion.tex` | 36751 | `72590da8d0c5` |
 | `paper/sections/experiments.tex` | 14520 | `64b7af8cc65b` |
 | `paper/sections/introduction.tex` | 16185 | `53b492992568` |
 | `paper/sections/limitations.tex` | 17982 | `76884f6f3306` |
@@ -220,10 +220,15 @@ interval, and the paper says so. None of them was checkable outside the .tex. Th
 counts are artifact-sourced; the intervals are arithmetic and are recomputed here.
 
 ONE ROW PRINTS NO INTERVAL. The N=40 floor is a point, `2.0%`, and that is the
-ruling of `results/n40_floor_estimator_ruling.md`, not an omission: measured
-coverage of the two candidates at nominal 95% is 53.7% (Wilson on 4/200) and
-0.00% (question bootstrap), because once the ceiling atom empties the floor stops
-naming a population quantity a pool of 200 can see. The row below still prints
+ruling of `results/n40_floor_estimator_ruling.md`, not an omission: once the
+ceiling atom empties, whether the top score this pool reached is the top of the
+population's support is not determinable at n=200, so the estimand is NOT
+IDENTIFIED -- it is 2.0% if the population can never produce 39 mutually
+inequivalent answers out of 40, and can be arbitrarily smaller if it can. That
+argument uses no population model. Coverage figures for the two candidates DO
+use one and must be quoted with it: under the calibrated Ewens fit, 53.7%
+(Wilson on 4/200) and 0.00% (question bootstrap) at nominal 95%; under the zero
+branch, 95.06% and 100% (ruling sec. 8.4). The row below still prints
 what Wilson WOULD give, so the withdrawal stays auditable, but nothing is
 compared against the paper there -- the paper has no interval on that row to
 compare to, and both candidates are pinned as retired literals above.

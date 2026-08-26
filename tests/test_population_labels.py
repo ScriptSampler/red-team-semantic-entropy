@@ -32,6 +32,7 @@ is what would have caught round two.
 """
 from __future__ import annotations
 
+import pathlib
 import re
 import sys
 import textwrap
@@ -517,9 +518,12 @@ def test_stale_saturation_rate_from_the_superseded_run_is_flagged(tmp_path):
     (r"a measured $2.0\%$ [$0.8$, $5.0$] at $N{=}40$", "0.8"),
 ])
 def test_a_withdrawn_n40_floor_interval_is_flagged(tmp_path, text, want):
-    r"""PROBE. Both candidate intervals for the N=40 floor were withdrawn on measured
-    coverage (Wilson 53.7%, question bootstrap 0.00%, at nominal 95%). Each of the four
-    renderings the paper carried before the ruling must come back red.
+    r"""PROBE. Both candidate intervals for the N=40 floor were withdrawn because the
+    estimand is not identified at n=200 (`results/n40_floor_estimator_ruling.md` sec. 13);
+    the coverage pairs often quoted alongside are branch-conditional -- 53.67%/0.00% under
+    the calibrated Ewens fit, 95.06%/100% under the zero branch -- and neither pair is the
+    reason on its own. Each of the four renderings the paper carried before the ruling
+    must come back red.
 
     `5.03` is the one that matters most: it was live at three sites, the whole concession
     turned on it, and no rule in this file could match it, because the fair-pool rule's
@@ -1171,7 +1175,10 @@ def test_no_guarded_number_is_also_a_superseded_one():
               "31 distinct values", "31 of the 39", "28 of the 39", "26 of the 39",
               "35 distinct values", "47 distinct values",
               # ...and the fourth population's floor, which must be guarded and NOT retired.
-              "10.5%", "150/1424", "12.2"]
+              "10.5%", "150/1424", "12.2",
+              # round five: the coverage pair is RETIRED bare and must not also be a
+              # guarded number, and its four live neighbours must be neither.
+              "53.7%", "0.00%", "53.4%", "53.5%", "53.8%", "53.9%", "0.0%"]
     clashes = []
     for probe in probes:
         guarded = [r["name"] for r in RULES
@@ -1769,6 +1776,736 @@ def test_the_retired_distinct_patterns_are_gone_from_the_guarded_set():
 
 
 # ======================================================================================
+# ROUND FIVE (2026-08-26): THE RETIRED POSITIONS THAT ARE STATED IN WORDS.
+#
+# The defect that opened this round had survived FOUR rounds of adversarial review.
+# `paper/sections/discussion.tex` said in one place that the measured N=40 floor "takes the
+# question bootstrap" -- a position withdrawn on 2026-08-19 -- and in another place, in the
+# same file, that it "takes neither". Nothing caught it because IT CONTAINS NO DIGIT: every
+# rule above this point in the ledger matches a rendered numeral, and every sweep that went
+# looking grepped for numbers. The follow-up sweep then found sixteen more of the same class
+# outside paper/ (commit 852e0f7, "sixteen more sites, none of them containing a digit").
+#
+# WHAT WAS MEASURED BEFORE THESE RULES WERE ACCEPTED. The sixteen prose sites of 852e0f7
+# were reconstructed from `852e0f7^` and each was scanned in isolation, so a rule could not
+# be credited for firing on a neighbouring paragraph:
+#
+#     all eight rules together        16 of 16
+#     the coverage-pair rules alone   15 of 16
+#     the word rules alone            10 of 16
+#
+# ...on a whitespace-only flattener, each site scanned with NO surrounding context, so a
+# rule could not be credited for firing on a neighbouring paragraph. Widening the context
+# to six lines either side moves only the word-rule figure, to 11. Through `strip_latex`,
+# which is what `check_file` runs today, the same three numbers are 14, 11 and 8. That gap
+# is not a rounding difference and it is not tolerable in the next phase; it is pinned as
+# a test at the end of this section.
+# The 11 is worth noting on its own: it is exactly the figure the sweeping agent predicted
+# for the coverage rule, so that estimate was right about the guard AS BUILT and low about
+# the rule in the abstract.
+#
+# THE SHAPE OF EACH RULE, and why it is that shape rather than a phrase match:
+#   * `estimand dissolves` and friends are armed FLAT. The ruling withdraws that claim
+#     outright (sec. 13), so there is no correct usage for a gate to protect.
+#   * `reports a smaller floor` is armed with a CONDITIONAL gate, because there IS a
+#     correct usage and it is in the paper right now.
+#   * the coverage pair is armed as an ADJACENCY -- the digits are true, and what is
+#     retracted is quoting them with no branch named.
+#
+# WHAT A WIDENED SCOPE WOULD COST TODAY, measured the same way and reported here because
+# the next phase has to budget for it rather than discover it: pointed at results/,
+# scripts/, tests/, docs/ and figures/ (189 files), these eight rules return 120 hits in
+# 11 files. Seventy-two of those are THIS FILE and the ledger itself, which contain the
+# retired sentences as data; seven are the ruling, which quotes what it retracts; about
+# eighteen are correction notes in already-corrected files ("This banner said ... until
+# 2026-08-26"). The genuinely live remainder is small and sits in docs/critique_log.md,
+# results/schedule_2026_08_26.md and results/morning_review_2026_08_19.md. None of that
+# is fixed here -- widening `main()` is a separate change -- but a phase that widens the
+# scope without first deciding what to do about self-reference and correction notes will
+# ship a guard that is red on arrival, and a guard that is red on arrival gets switched
+# off. Two of the false-positive shapes the dry run found WERE fixed here, because they
+# were defects in the rules rather than in the scope: see `_COVERAGE_CTX` and `denial`.
+#
+# THAT SEPARATE CHANGE LANDED THE SAME DAY. See ROUND SIX at the end of this file: the
+# scope IS widened, per-suffix, with a ratchet -- and the paragraph above turned out to be
+# right about the shape and wrong about the size. Re-measured through the flattener that
+# actually ships (`strip_plain`, not "whitespace-only") and with self-reference, the
+# critique log and the ruling excluded BY NAME rather than by hoping, the live remainder is
+# 32 findings in 7 files, not "120 hits in 11". The difference is not a better rule; it is
+# that four of those eleven files are the ledger, its probes, the log and the ruling, and
+# the right answer for all four was a named exclusion with a stated reason.
+# ======================================================================================
+def _word_rule_hits(problems: list[str]) -> list[str]:
+    """Only the problems raised by the retired-position rules armed on 2026-08-26.
+
+    Keyed off the rules' own `quantity` strings rather than a hand-written list, so a rule
+    renamed in the ledger cannot quietly drop out of every control in this section.
+    """
+    from check_population_labels import SUPERSEDED
+
+    quantities = [s["quantity"] for s in SUPERSEDED
+                  if str(s.get("run", "")).startswith("pre-sec")]
+    assert quantities, "the word rules have vanished from the ledger"
+    return [p for p in problems if any(q in p for q in quantities)]
+
+
+def _word_rule(fragment: str) -> dict:
+    """The one word rule whose pattern contains `fragment`. Used by the mutation tests."""
+    from check_population_labels import SUPERSEDED
+
+    hits = [s for s in SUPERSEDED if fragment in s["pattern"]]
+    assert len(hits) == 1, f"{fragment!r} matched {len(hits)} rules"
+    return hits[0]
+
+
+# --- 1. "the estimand dissolves", in every rendering the repo has actually carried -----
+@pytest.mark.parametrize("why,text", [
+    ("the plain form, from results/replay_control.md before the fix",
+     r"Both candidates fail and the estimand dissolves when the ceiling atom empties."),
+    ("with an intensifier, from docs/critique_log.md",
+     r"withdrawn, because the estimand itself dissolves once the ceiling atom empties"),
+    ("under markup, which is what defeated the manual sweeps",
+     r"Neither estimator is broken. The \textbf{estimand} dissolves at the moment the "
+     r"atom empties."),
+    ("the `stops existing` rendering, from the replay_control provenance banner",
+     r"respectively at nominal 95\%, because the estimand stops existing when the "
+     r"ceiling atom empties."),
+    ("shouted, from scripts/replay_control.py's write_report",
+     r"Neither estimator is broken. THE ESTIMAND BREAKS, and it breaks exactly when the "
+     r"ceiling atom empties."),
+    ("VERB FIRST, which an `estimand <verb>` pattern cannot see at all",
+     r"The same event that separates these two columns---the empty atom---also breaks "
+     r"the floor as an estimand."),
+    ("VERB ELIDED, which neither of the two patterns above can see",
+     r"Neither estimator is broken -- the estimand is, once the ceiling atom empties."),
+])
+def test_the_retracted_estimand_claim_is_flagged_in_every_rendering(tmp_path, why, text):
+    r"""PROBE. Ruling sec. 13 retracts "the estimand dissolves when the atom empties" by
+    name: it is a statement about ONE BRANCH, and under the other branch (which the data
+    does not exclude) Wilson has 95.06% coverage and the estimand is an ordinary binomial
+    proportion. Every rendering above was live in this repo on 2026-08-25.
+
+    The last two are the reason this is three rules and not one. The brief that specified
+    this ledger proposed `estimand\s+(?:dissolves|stops existing|breaks)`, which is correct
+    for the first five and blind to the last two -- and the last two are not hypothetical
+    renderings, they are `results/n_scaling_grid.md` and `figures/README.md` as committed.
+    """
+    problems = _check(tmp_path, text)
+    hits = _word_rule_hits(problems)
+    assert hits, f"{why}: not flagged\n" + _say(problems)
+    assert any("estimand" in h for h in hits), _say(hits)
+
+
+def test_the_replacement_wording_for_that_claim_is_green(tmp_path):
+    """CONTROL, and it carries the whole burden of the rule above being usable.
+
+    Three live, correct sentences. The first is the ruling's own replacement (sec. 13); the
+    second is `results/n_scaling_grid.md` as corrected; the third is
+    `paper/sections/discussion.tex` line 360, which is about the plug-in entropy estimator
+    and has nothing to do with the floor. A rule that reached any of them would be red on
+    the text that does the retracting -- the defect-7 failure mode this file already logged
+    once, when a generative rule went red on the passage arguing the retirement.
+    """
+    problems = _check(tmp_path, r"""
+        Once the ceiling atom empties the estimand is NOT IDENTIFIED at $n{=}200$: it is
+        $2.0\%$ if the population can never produce $39$ mutually inequivalent answers
+        out of $40$, and can be arbitrarily smaller if it can. An estimand whose value
+        moves by two orders of magnitude across a hypothesis the sample cannot test does
+        not have a confidence interval, and that argument needs no population model at
+        all. Neither the estimator nor the estimand does what we said it did. Elsewhere,
+        a plug-in entropy that rises towards its estimand as the sample grows is that
+        estimator's own bias and not a property of any pool.
+    """)
+    assert not _word_rule_hits(problems), \
+        "the guard is red on the wording that REPLACES the retracted claim:\n" \
+        + _say(_word_rule_hits(problems))
+
+
+def test_a_negated_estimand_verb_is_not_the_retracted_claim(tmp_path):
+    """CONTROL for the tempered gap. `estimand ... breaks` within a few words is the
+    retracted claim; `the estimand does not break` is its denial, and the gap refuses to
+    span a negation for exactly that reason. Without the tempering this sentence is red and
+    the ledger becomes unusable in any passage that argues against the retracted view."""
+    problems = _check(tmp_path, r"""
+        The estimand does not break when the atom empties; it stops being identified,
+        which is a different and stronger statement.
+    """)
+    assert not _word_rule_hits(problems), _say(_word_rule_hits(problems))
+
+
+# --- 2. "reports a smaller floor" -- the conditional-aware rule ------------------------
+@pytest.mark.parametrize("why,text", [
+    ("the rendering in results/n_scaling_grid.md before the fix",
+     r"and that rung is not the top of the population's support: a larger pool reaches a "
+     r"higher one and reports a SMALLER floor, so the quantity moves with the pool rather "
+     r"than holding still to be estimated."),
+    ("the rendering in docs/START_HERE_overnight.md, which says `one` not `floor`",
+     r"$4/200$ is the resolution limit of a $200$-answer pool, not an estimate of a "
+     r"population floor, and a larger pool reaches a higher rung and reports a smaller "
+     r"one."),
+    ("the bare assertion, with the dichotomy nowhere in sight",
+     r"A larger pool reaches a higher rung and reports a smaller floor. That is why the "
+     r"$N{=}40$ row prints no interval."),
+])
+def test_the_unconditional_smaller_floor_claim_is_flagged(tmp_path, why, text):
+    """PROBE. This is the sentence that is TRUE IN ONE BRANCH. Ruling sec. 13: the deep-tail
+    misfit "widens the estimand's range in both directions at once", so a directional claim
+    -- larger pool, smaller floor -- is precisely what the evidence does not support. The
+    third probe is the shape that matters: the claim on its own, with a full stop after it,
+    and the next sentence about something else."""
+    problems = _check(tmp_path, text)
+    hits = _word_rule_hits(problems)
+    assert hits, f"{why}: not flagged\n" + _say(problems)
+    assert any("UNCONDITIONALLY" in h for h in hits), _say(hits)
+
+
+def test_the_discussion_conditional_site_is_pinned_green_by_name(tmp_path):
+    r"""THE CONTROL THAT MATTERS MOST IN THIS ROUND.
+
+    `paper/sections/discussion.tex`, the sentence beginning "If it is not," is the ONE SITE
+    IN THE REPO that states this correctly, and it is verbatim below. It is correct because
+    it is an if/else: the clause before the phrase gives the branch in which a larger pool
+    reports a smaller floor, and the clause after it gives the branch in which the floor is
+    an ordinary population proportion.
+
+    A flat phrase match would fail this site. That is not a cosmetic problem. A guard that
+    fires on the one passage that gets the statistics right teaches its user to silence the
+    guard, which is this project's "a check that cannot fail is not a check" inverted -- and
+    paper/ is verified consistent and not to be edited, so a red here could only be cleared
+    by weakening the rule under time pressure.
+
+    Pinned as its own test, named for the file, so that a regression says WHICH site went
+    red rather than reporting a count.
+    """
+    problems = _check(tmp_path, r"""
+        Its threshold is not $\ln 40$ or any
+        other value fixed in advance but the top score \emph{this} sample attained, and
+        once the atom is empty nothing in the sample settles whether that score is the top
+        of the population's support. If it is not, a larger pool reaches a higher rung and
+        reports a smaller floor, so the quantity being estimated moves with the pool
+        instead of holding still to be estimated; if it is, the floor is an ordinary
+        population proportion and the count in front of us estimates it. Nothing here
+        decides which, and the two readings are far apart.
+    """)
+    assert not _word_rule_hits(problems), (
+        "discussion.tex's if/else -- the one site in the repo that states this correctly "
+        "-- is red:\n" + _say(_word_rule_hits(problems)))
+
+
+@pytest.mark.parametrize("why,text", [
+    ("conditional BEHIND the claim, which no lookahead can see",
+     r"If the population's support stops where this pool stopped, nothing moves; if it "
+     r"does not, a larger pool reports a smaller floor."),
+    ("conditional AHEAD of the claim, across a semicolon, as in the figure generator",
+     r"A larger pool reaches a higher rung and reports a smaller floor; if it is the top "
+     r"of the support, $2.0\%$ is an ordinary population proportion and the count "
+     r"estimates it."),
+    ("conditional in the NEXT SENTENCE, which a sentence-bounded gate would miss",
+     r"A larger pool reaches a higher rung and reports a smaller floor. Whether the "
+     r"population's support ends at the rung this pool reached is a question $200$ "
+     r"answers cannot settle, and the two readings are far apart."),
+    ("the negated form results/n_scaling_grid.md now uses",
+     r"If the population can never produce $39$ mutually inequivalent answers out of "
+     r"$40$, then $2.0\%$ IS the population quantity and no larger pool reports a "
+     r"smaller floor."),
+])
+def test_the_conditional_gate_reaches_in_both_directions_and_across_a_boundary(
+        tmp_path, why, text):
+    """CONTROL for the geometry of the gate, one case per thing that could go wrong.
+
+    Cases 1 and 2 are why the gate is not a lookahead: three of the four correct sites in
+    this repo put their conditional BEFORE the phrase. Case 3 is why `span` is 1 and not 0
+    -- an if/else split across a full stop is still an if/else. Case 4 is the rendering in
+    `results/n_scaling_grid.md` today, where the conditional is a `never` clause and the
+    claim itself is negated."""
+    problems = _check(tmp_path, text)
+    assert not _word_rule_hits(problems), f"{why}:\n" + _say(_word_rule_hits(problems))
+
+
+def test_a_decimal_between_the_claim_and_its_conditional_does_not_break_the_gate(tmp_path):
+    r"""CONTROL for the one thing the obvious implementation gets wrong.
+
+    The natural spelling of conditional-awareness is a negative lookahead bounded by
+    `[^.]*`. It stops dead at the decimal point of `$2.0\%$`, so this sentence -- correct,
+    and the exact wording the figure generator carries -- would fire. `_TERM_RE` ends a
+    sentence on `[.:;!?]` only when whitespace follows, which is the machinery the label
+    geometry has used since the guard was written, and it is reused here rather than
+    reinvented."""
+    problems = _check(tmp_path, r"""
+        A larger pool reaches a higher rung and reports a smaller floor than $2.0\%$; if
+        it is the top of the support, the count in front of us estimates the floor.
+    """)
+    assert not _word_rule_hits(problems), _say(_word_rule_hits(problems))
+
+
+# --- 3. the coverage pair, armed as an adjacency --------------------------------------
+@pytest.mark.parametrize("why,text", [
+    ("Wilson's figure alone, as scripts/n_scaling_grid.py logged it",
+     r"Wilson on the first-firing count covers the true floor $53.7\%$ of the time."),
+    ("both halves, as the replay_control provenance banner carried them",
+     r"Wilson on $4/200$ and the question bootstrap cover the true floor $53.7\%$ and "
+     r"$0.00\%$ of the time respectively, at nominal $95\%$."),
+    ("at full precision, as the corrected tables render it",
+     r"measured coverage at nominal $95\%$ is $53.67\%$ for Wilson and $0.00\%$ for a "
+     r"question bootstrap"),
+    ("NAMING A MODEL IS NOT NAMING A BRANCH",
+     r"Measured coverage at a nominal $95\%$, against a population model validated "
+     r"out-of-sample on the two smaller budgets in this table: Wilson on the "
+     r"first-firing count $53.7\%$, a question bootstrap over the questions $0.00\%$."),
+])
+def test_the_coverage_pair_is_flagged_when_no_branch_is_named(tmp_path, why, text):
+    """PROBE. `53.67%` and `0.00%` are TRUE -- they are the coverages under the calibrated
+    Ewens fit. What ruling sec. 8.4 retracts is quoting them with no population attached,
+    because under the zero branch the same two estimators cover 95.06% and 100%, and the
+    data excludes neither branch.
+
+    The fourth probe is the discriminating one and it was the actual wording at six of the
+    sixteen sites: "against a population model validated out-of-sample" names a model but
+    not a branch, and the defect is precisely that. If that phrase were allowed to
+    exculpate, all sixteen sites would have been green."""
+    problems = _check(tmp_path, text)
+    hits = _word_rule_hits(problems)
+    assert hits, f"{why}: not flagged\n" + _say(problems)
+    assert any("measured under" in h for h in hits), _say(hits)
+
+
+@pytest.mark.parametrize("why,text", [
+    ("the corrected markdown table row, from figures/README.md and n_scaling_grid.md",
+     r"| calibrated Ewens (tau\_top = $0.2726\%$) | $53.67\%$ | $0.00\%$ | "
+     r"| zero branch (tau$^*$ = $2.0\%$) | $95.06\%$ | $100\%$ |"),
+    ("the corrected COLON layout, which is the whole reason the span is 1 and not 0 -- "
+     "make_floor_budget_figure.py:71, n_scaling_grid.py:799, "
+     "derived_paper_quantities.py:306",
+     r"calibrated Ewens (tau\_top = $0.2726\%$): Wilson $53.67\%$, question bootstrap "
+     r"$0.00\%$"),
+    ("the corrected prose, from results/derived_paper_quantities.md",
+     r"Coverage figures for the two candidates use a population model and must be quoted "
+     r"with it: under the calibrated Ewens fit, $53.7\%$ (Wilson on $4/200$) and "
+     r"$0.00\%$ (question bootstrap) at nominal $95\%$."),
+    ("the corrected banner, from results/replay_control.md",
+     r"The coverage figures are BRANCH-CONDITIONAL and must never be quoted without "
+     r"their population -- under the calibrated Ewens fit Wilson covers $53.67\%$ and "
+     r"the question bootstrap $0.00\%$ at nominal $95\%$."),
+])
+def test_the_coverage_pair_passes_when_its_branch_is_named(tmp_path, why, text):
+    """CONTROL. All three are live text in the repo as corrected on 2026-08-26. A rule that
+    reddened them would be demanding that the corrected files be un-corrected."""
+    problems = _check(tmp_path, text)
+    assert not _word_rule_hits(problems), f"{why}:\n" + _say(_word_rule_hits(problems))
+
+
+def test_the_coverage_rule_does_not_reach_its_neighbours(tmp_path):
+    r"""CONTROL, and the reason `53.7` is armed as a digit string rather than as `53.` and
+    `0.00` is armed only with a required percent sign.
+
+    `53.4`, `53.5`, `53.8` and `53.9` are live numbers in `achievable_fpr_grid.md`,
+    `cluster_count_bound.md` and `null_control_cost_options.md`. `0.000000\%` is the exact
+    subset-saturation value $U_{39}$ from ruling section 1 (M3) -- measured, model-free,
+    exhaustively enumerated over all $8{,}000$ 39-subsets, and one of the numbers the
+    ruling tells the paper to ADD. Flagging it would be flagging the replacement, which is
+    the failure mode a generative rule in this file already planted once."""
+    problems = _check(tmp_path, r"""
+        At $k{=}13$ the full labelled pool's correct stratum gives $766/1424 = 53.8\%$
+        and the fair pool $107/200 = 53.5\%$, against $53.4\%$ one rung below and
+        $53.9\%$ feasibility checks per target. The exact subset curve reaches
+        $0.000000\%$ at $k{=}39$ and $k{=}40$, and the at-cap mass is $0.0\%$
+        [$0.0$, $1.9$].
+    """)
+    assert not _word_rule_hits(problems), _say(_word_rule_hits(problems))
+
+
+def test_a_zero_rate_with_no_coverage_context_is_not_the_bootstraps_coverage(tmp_path):
+    r"""CONTROL for the `near` gate on `0.00\%`. A zero rate is not rare in this repo and
+    most of them are nothing to do with the question bootstrap's coverage."""
+    problems = _check(tmp_path, r"""
+        Of the $80$ false-alarm targets, $0.00\%$ were rejected by the feasibility filter
+        before scoring began.
+    """)
+    assert not _word_rule_hits(problems), _say(_word_rule_hits(problems))
+
+
+# --- 4. the sentence ruling section 2 forbids by name ----------------------------------
+@pytest.mark.parametrize("why,text", [
+    ("the Abstract sentence the ruling names and forbids",
+     r"The $2.0\%$ is the resolution of the pool and not a property of the detector."),
+    ("the docs/START_HERE_overnight.md rendering, with a qualifier in the noun phrase",
+     r"the lattice at $N{=}40$ is dense, which is precisely why $4/200$ is a resolution "
+     r"limit of the \emph{pool} and not a property of the detector"),
+    ("the other START_HERE rendering, where the pool is named by its size",
+     r"$4/200$ is the resolution limit of a $200$-answer pool, not an estimate of a "
+     r"population floor."),
+])
+def test_the_resolution_of_the_pool_sentence_is_flagged(tmp_path, why, text):
+    """PROBE. Ruling sec. 2 quotes this sentence and says "Do not print that sentence",
+    because it is true only in the branch where the population CAN produce 39 mutually
+    inequivalent answers out of 40. In the other branch $2.0\\%$ is a genuine estimate of a
+    genuine population quantity and Wilson covers it at 95.06%.
+
+    It reached the paper's Abstract and was committed there on 2026-08-26. These two rules
+    carry NO `absent` gate, unlike the smaller-floor rule, because the ruling withdraws the
+    sentence outright rather than conditioning it -- and the both-branches wording it
+    supplies instead contains neither pattern."""
+    problems = _check(tmp_path, text)
+    hits = _word_rule_hits(problems)
+    assert hits, f"{why}: not flagged\n" + _say(problems)
+    assert any("2.0%" in h for h in hits), _say(hits)
+
+
+def test_the_both_branches_wording_the_ruling_supplies_is_green(tmp_path):
+    """CONTROL. Ruling sec. 2's replacement sentence, verbatim in substance. It mentions
+    both "a property of the detector" and "the pool's size" and is the sentence the paper is
+    told to print -- so a rule that matched the phrase rather than the ASSERTION would be
+    red on the replacement."""
+    problems = _check(tmp_path, r"""
+        The cheapest alarm $200$ correct answers can exhibit costs $2.0\%$, but whether
+        that is a property of the detector or of the pool's size turns on whether the
+        population can ever produce $39$ mutually inequivalent answers out of $40$; $200$
+        answers cannot tell, and the two answers differ by more than two orders of
+        magnitude. We therefore quote no interval for it.
+    """)
+    assert not _word_rule_hits(problems), _say(_word_rule_hits(problems))
+
+
+def test_the_class_separation_may_still_be_not_a_property_of_the_detector(tmp_path):
+    """CONTROL, and the reason the detector half carries a `near` gate.
+
+    `results/dynamic_range_finding.md` and `results/CORRECTIONS_2026-08-02.md` both call the
+    $+0.184$-nat class separation "not a fixed property of the detector", and both are
+    CORRECT: it is a sample statistic from a small stratum, and on the fair pool the same
+    quantity is $+0.463$ nats. Neither passage mentions the floor, $4/200$, $2.0\\%$ or
+    $N{=}40$, which is what the gate keys on. Named here so a regression says which
+    unrelated finding the ledger started flagging."""
+    problems = _check(tmp_path, r"""
+        The separation is not statistically significant. $+0.184$ nats has a $95\%$ CI of
+        [$-0.136$, $+0.488$] and a permutation $p$ of $0.296$, on the attack campaign's
+        hide stratum. It is a sample statistic from a small stratum, not a fixed property
+        of the detector. On the score-independent \emph{fair} pool ($200$ correct, $200$
+        hallucinating) the same quantity is $+0.463$ nats.
+    """)
+    assert not _word_rule_hits(problems), _say(_word_rule_hits(problems))
+
+
+def test_a_disowned_retired_claim_stays_green(tmp_path):
+    r"""CONTROL for the `denial` gate, and it was found by a dry run rather than by
+    imagination: with the first six rules armed and the file scope still at paper/, the
+    ledger was pointed at results/, scripts/, docs/ and figures/ to see what a widened
+    scope would cost. It flagged `docs/START_HERE_overnight.md` line 190 -- which is the
+    CORRECTED text, and which says the retracted thing only in order to disown it.
+
+    Every corrected file in this repo records what it used to say. A ledger that reddens
+    the sentence doing the retracting is the defect-7 failure mode, and this file has
+    already logged one instance of it.
+    Both halves below are live repo text: `docs/START_HERE_overnight.md` line 190
+    and `scripts/n_scaling_grid.py` line 793. The smaller-floor rule deliberately
+    does NOT get this gate -- see
+    test_the_denial_gate_is_armed_on_the_flat_rules_and_on_no_coverage_rule.
+
+
+    `denial` is `_is_non_binding`, unchanged, the same 30-character lookback clipped at the
+    previous sentence boundary that the pool labels have used since the guard was written.
+    """
+    problems = _check(tmp_path, r"""
+        The reason is not data selection, and it is NOT that the estimand dissolves:
+        ruling section 13 retracts that sentence as branch-conditional dressed as
+        unconditional. Do not restate the old sentence, and do not restate its cousin
+        "the estimand dissolves"; both are branch-conditional claims worn as
+        unconditional ones.
+    """)
+    assert not _word_rule_hits(problems), _say(_word_rule_hits(problems))
+
+
+def test_a_denial_in_the_previous_sentence_does_not_disown_anything(tmp_path):
+    r"""PROBE, and the pair to the control above. This is `docs/START_HERE_overnight.md`
+    BEFORE the fix: the negation is there, but it is denying something else and a full stop
+    stands between it and the claim. `_is_non_binding` clips its lookback at the previous
+    sentence boundary precisely so that this stays red -- the same reasoning the Conclusion
+    needed when "This is not a claim that the detector fails: on the ... fair pool" had to
+    keep its label."""
+    problems = _check(tmp_path, r"""
+        The reason is not data selection. It is that the estimand dissolves --- $4/200$ is
+        the resolution limit of a $200$-answer pool, not an estimate of a population floor.
+    """)
+    hits = _word_rule_hits(problems)
+    assert hits, _say(problems)
+    assert any("estimand" in h for h in hits), _say(hits)
+
+
+def test_mutation_removing_the_denial_gate_reddens_the_corrected_handoff(
+        tmp_path, monkeypatch):
+    """Remove `denial` and the sentence that disowns the retracted claim goes red."""
+    text = r"""
+        The reason is not data selection, and it is NOT that the estimand dissolves:
+        ruling section 13 retracts that sentence as branch-conditional.
+    """
+    assert not _word_rule_hits(_check(tmp_path, text)), "control is not green to begin with"
+
+    rule = _word_rule(r"estimand\b(?:(?!")
+    monkeypatch.delitem(rule, "denial")
+    assert _word_rule_hits(_check(tmp_path, text)), \
+        "without `denial` the disowning sentence is still green -- the gate does nothing"
+
+
+def test_the_denial_gate_is_armed_on_the_flat_rules_and_on_no_coverage_rule():
+    """A flat rule has to survive being quoted in the sentence that disowns it. A coverage
+    rule must not: "not 53.7%" is still `53.7%` printed with no branch named, and the whole
+    point of that rule is that the digits are TRUE and the attribution is what is missing.
+
+    THE SMALLER-FLOOR RULE IS ON THE SECOND SIDE OF THAT LINE, WHICH IS THE ONE JUDGEMENT
+    CALL IN THIS SECTION, so it is recorded rather than left implicit. It has `absent`, so
+    by the invariant below it does not get `denial`, and that is deliberate: a "not" thirty
+    characters back is not evidence that the DICHOTOMY was stated, and stating the
+    dichotomy is the entire requirement. The negations that actually occur in the repo are
+    already in `_BOTH_BRANCHES` -- "no larger pool reports a smaller floor" and "not
+    identified" are both there and both exculpate on their own merits. If a future correct
+    passage disowns the claim in some other negative form, the right fix is to add that
+    form to `_BOTH_BRANCHES`, where it can be read, not to hand the rule a general
+    lookback.
+
+    Pinned, because `denial` is the one gate here that could be added to a rule by reflex."""
+    from check_population_labels import SUPERSEDED
+
+    for s in SUPERSEDED:
+        if not str(s.get("run", "")).startswith("pre-sec"):
+            continue
+        flat = "absent" not in s
+        assert bool(s.get("denial")) is flat, (
+            f"{s['quantity']}: `denial` must be armed on exactly the rules with no "
+            "`absent` gate")
+
+
+# --- 5. MUTATION TESTS. Disable each mechanism; a test must break. ---------------------
+#
+# The guard went from catching 0 of 32 planted probes to 32 of 32 by probe-and-control
+# alone, and it was mutation testing that then proved none of the 32 mechanisms was
+# vacuous. Each test below removes exactly one gate and asserts that the control it
+# protects goes RED -- which is the only evidence that the gate is doing work rather than
+# decorating a pattern that never fires anyway.
+def test_mutation_removing_the_absent_gate_reddens_the_site_that_gets_it_right(
+        tmp_path, monkeypatch):
+    """Without `absent`, discussion.tex's if/else is red. That is the proof that the
+    conditional gate -- not a lucky non-match in the pattern -- is what keeps the paper
+    green, and the proof that the pattern really does reach the correct site."""
+    text = r"""
+        If it is not, a larger pool reaches a higher rung and reports a smaller floor, so
+        the quantity being estimated moves with the pool instead of holding still to be
+        estimated; if it is, the floor is an ordinary population proportion.
+    """
+    assert not _word_rule_hits(_check(tmp_path, text)), "control is not green to begin with"
+
+    rule = _word_rule("smaller (?:floor|one)")
+    monkeypatch.delitem(rule, "absent")
+    assert _word_rule_hits(_check(tmp_path, text)), (
+        "with the `absent` gate removed the conditional site is STILL green -- the gate "
+        "is not what is protecting it, so the rule may not be reaching the site at all")
+
+
+def test_mutation_narrowing_the_span_reddens_a_cross_sentence_conditional(
+        tmp_path, monkeypatch):
+    """`span=1` is not a free parameter. Set it to 0 and an if/else split across a full
+    stop goes red, which is what fixes the width at 1 rather than 0."""
+    text = r"""
+        A larger pool reaches a higher rung and reports a smaller floor. Whether the
+        population's support ends at the rung this pool reached is a question $200$
+        answers cannot settle.
+    """
+    assert not _word_rule_hits(_check(tmp_path, text)), "control is not green to begin with"
+
+    rule = _word_rule("smaller (?:floor|one)")
+    monkeypatch.setitem(rule, "span", 0)
+    assert _word_rule_hits(_check(tmp_path, text)), \
+        "span=0 accepts a conditional a whole sentence away -- the span does nothing"
+
+
+def test_mutation_removing_the_near_gate_reddens_an_unrelated_zero_rate(
+        tmp_path, monkeypatch):
+    r"""The `near` gate on `0.00\%` is what stops the rule reaching every zero rate in the
+    repo. Remove it and an unrelated one fires."""
+    text = r"Of the $80$ false-alarm targets, $0.00\%$ were rejected before scoring."
+    assert not _word_rule_hits(_check(tmp_path, text)), "control is not green to begin with"
+
+    rule = _word_rule(r"0\.00")
+    monkeypatch.delitem(rule, "near")
+    assert _word_rule_hits(_check(tmp_path, text)), \
+        "without `near` a bare zero rate is still green -- the gate is doing nothing"
+
+
+def test_mutation_removing_the_branch_gate_reddens_the_corrected_tables(
+        tmp_path, monkeypatch):
+    """Remove `absent` from the Wilson-coverage rule and the CORRECTED table row goes red.
+    That is the evidence that the adjacency rule is discriminating on the branch name and
+    not merely failing to match the digits."""
+    text = r"| calibrated Ewens (tau\_top = $0.2726\%$) | $53.67\%$ | $0.00\%$ |"
+    assert not _word_rule_hits(_check(tmp_path, text)), "control is not green to begin with"
+
+    rule = _word_rule(r"53\.")
+    monkeypatch.delitem(rule, "absent")
+    assert _word_rule_hits(_check(tmp_path, text)), \
+        "without `absent` the corrected row is still green -- the rule never matched"
+
+
+def test_mutation_removing_the_negation_tempering_reddens_a_denial(tmp_path, monkeypatch):
+    r"""The estimand rule's gap is a TEMPERED one -- `(?:(?!\b(?:not|never|nor|n't)\b)
+    [^.;:!?]){0,28}?` -- so `estimand ... breaks` cannot span a negation. Swap in the
+    untempered gap and "the estimand does not break" fires, which is the evidence that the
+    tempering is load-bearing and not ornament.
+
+    This gate is inside the pattern rather than beside it, so the mutation replaces the
+    pattern. Everything else about the rule is left alone."""
+    text = r"""
+        The estimand does not break when the atom empties; it stops being identified,
+        which is a different and stronger statement.
+    """
+    assert not _word_rule_hits(_check(tmp_path, text)), "control is not green to begin with"
+
+    rule = _word_rule(r"estimand\b(?:(?!")
+    monkeypatch.setitem(
+        rule, "pattern",
+        r"estimand\b[^.;:!?]{0,28}?\b(?:dissolv\w*|breaks?\b|broken\b)")
+    assert _word_rule_hits(_check(tmp_path, text)), \
+        "the untempered gap still misses the denial -- the tempering is doing nothing"
+
+
+def test_mutation_removing_the_floor_gate_reddens_an_unrelated_finding(
+        tmp_path, monkeypatch):
+    """Remove `near` from the detector half and the class-separation finding goes red.
+    That is what shows the two claims are being told apart by their subject matter rather
+    than by the pattern happening not to reach one of them."""
+    text = r"""
+        It is a sample statistic from a small stratum, not a fixed property of the
+        detector. On the score-independent \emph{fair} pool ($200$ correct, $200$
+        hallucinating) the same quantity is $+0.463$ nats.
+    """
+    assert not _word_rule_hits(_check(tmp_path, text)), "control is not green to begin with"
+
+    rule = _word_rule("property of the detector")
+    monkeypatch.delitem(rule, "near")
+    assert _word_rule_hits(_check(tmp_path, text)), \
+        "without `near` the unrelated finding is still green -- the gate does nothing"
+
+
+def test_mutation_every_word_rule_fires_on_something(tmp_path):
+    """VACUITY. A rule that cannot fire is not a rule, and this file has shipped one before
+    (`\\b5\\.0\\\\?%` could never match `5.03`, and the concession turned on that digit).
+    One canonical probe per rule, keyed to the rule's own pattern so a rule added later
+    without a probe fails here rather than passing silently."""
+    from check_population_labels import SUPERSEDED
+
+    probes = {
+        r"estimand\b(?:(?!": r"the estimand dissolves once the ceiling atom empties",
+        r"break\w*\b[^.;:!?]{0,32}?\bas an estimand\b":
+            r"the empty atom also breaks the floor as an estimand",
+        r"neither estimator is broken":
+            r"Neither estimator is broken -- the estimand is, once the atom empties.",
+        r"smaller (?:floor|one)":
+            r"A larger pool reaches a higher rung and reports a smaller floor.",
+        r"53\.": r"Wilson covers the true floor $53.7\%$ of the time, at nominal $95\%$.",
+        r"0\.00": r"the question bootstrap covers it $0.00\%$ of the time, nominal $95\%$",
+        r"resolution (?:limit )?of": r"$4/200$ is the resolution of the pool.",
+        r"property of the detector":
+            r"the $N{=}40$ floor $2.0\%$ is not a property of the detector",
+    }
+    word_rules = [s for s in SUPERSEDED if str(s.get("run", "")).startswith("pre-sec")]
+    assert len(word_rules) == len(probes), (
+        f"{len(word_rules)} word rules but {len(probes)} probes -- every rule armed on "
+        "this ruling needs one, or it can ship dead")
+    for rule in word_rules:
+        key = next((k for k in probes if k in rule["pattern"]), None)
+        assert key, f"no probe keyed to {rule['pattern']!r}"
+        hits = [p for p in _check(tmp_path, probes[key]) if rule["quantity"] in p]
+        assert hits, f"VACUOUS: {rule['quantity']} never fires\n  probe: {probes[key]}"
+
+
+# --- 6. structural pins ----------------------------------------------------------------
+def test_every_word_rule_is_a_position_not_a_recomputation(tmp_path):
+    """A word rule retires a POSITION, so it must carry a `replacement` telling the author
+    what to say instead. `current` -- "the definitive run gives X" -- is the wrong shape:
+    there is no rerun that makes "the estimand dissolves" true."""
+    from check_population_labels import ABSENT_SPAN, SUPERSEDED
+
+    for s in SUPERSEDED:
+        if not str(s.get("run", "")).startswith("pre-sec"):
+            continue
+        assert "replacement" in s and "current" not in s, s["quantity"]
+        assert "results/n40_floor_estimator_ruling.md" in s["replacement"], s["quantity"]
+        for pat in s.get("absent", []) + s.get("near", []):
+            re.compile(pat)
+        span = s.get("span", ABSENT_SPAN)
+        assert isinstance(span, int) and 0 <= span <= 2, s["quantity"]
+
+
+def test_the_ledgers_own_advice_passes_the_rules_it_gives(tmp_path):
+    r"""A ledger whose advice string would fail its own rule is a ledger nobody can quote
+    from -- and this one has to quote `53.67%` and `0.00%` to be useful at all. Both are
+    written with their branch named in the same sentence, which is exactly what the rule
+    asks of everyone else.
+
+    THE SECOND HALF IS THE POINT. Asserting only that the advice is green proves nothing:
+    a string that never matched the pattern at all would also be green, and the first
+    draft of this test was exactly that vacuous. So the advice is re-run with every
+    `_BRANCH_NAMED` marker blinded, and it must then go RED on both coverage rules --
+    which is what shows the advice is protected by NAMING ITS BRANCH rather than by luck.
+    Pinned, because the natural way to shorten that string is to drop the branch name.
+    """
+    from check_population_labels import SUPERSEDED, _BRANCH_NAMED
+
+    advice = " ".join(sorted({s["replacement"] for s in SUPERSEDED
+                              if str(s.get("run", "")).startswith("pre-sec")}))
+    problems = _check(tmp_path, advice.replace("%", r"\%"))
+    assert not _word_rule_hits(problems), \
+        "the ledger's own advice trips the ledger:\n" + _say(_word_rule_hits(problems))
+
+    blinded = advice
+    for pat in _BRANCH_NAMED:
+        blinded = re.sub(pat, "XXX", blinded, flags=re.IGNORECASE)
+    hits = _word_rule_hits(_check(tmp_path, blinded.replace("%", r"\%"), name="blind.tex"))
+    assert len(hits) >= 2 and all("measured under" in h for h in hits), (
+        "with every branch marker blinded the advice is STILL green -- so the green above "
+        "is not evidence of anything:\n" + _say(hits))
+
+
+def test_strip_latex_is_not_safe_for_the_files_this_ledger_is_aimed_at():
+    r"""THE KNOWN GAP, AND ITS FIX, PINNED AS ONE TEST because they are one fact.
+
+    `strip_latex` deletes from an unescaped `%` to end of line. That is RIGHT for LaTeX --
+    a `%` really does open a comment, and the negative lookbehind that spares `\%` is what
+    keeps Table 1's saturation row visible (defect 4) -- and it is catastrophic for
+    Markdown and Python, where `53.7% of the time and the` becomes `53.7` and `0.00%`
+    becomes `0.00`, which `PCT` (a required percent sign) then refuses to match. That one
+    behaviour was the whole of the 16 -> 14 gap measured against the sixteen prose sites of
+    852e0f7: eight rules catch 16/16 through a whitespace-only flattener and 14/16 through
+    `strip_latex`; the coverage pair alone catches 15/16 and 11/16.
+
+    THE FIRST HALF still asserts the LaTeX behaviour, because paper/ depends on it. THE
+    SECOND HALF asserts that `flatten` no longer applies it to the files this ledger is
+    aimed at. Neither half is safe to delete: drop the first and a `.tex` comment stops
+    being a comment; drop the second and the scope silently un-widens.
+
+    The other consequence stands and is why `_BRANCH_NAMED` carries both spellings:
+    `$\tau^*$` reaches the rules as a bare `^*` and `$\tau_{\mathrm{top}}$` as ` top `, so
+    in a .tex file only the WORDS "Ewens", "calibrated", "branch-conditional" and "zero
+    branch" can exculpate. Outside .tex the symbol entries are live -- that is asserted
+    below in test_the_symbol_branch_names_come_alive_outside_tex.
+    """
+    from check_population_labels import flatten, strip_latex
+
+    md = "Wilson covers the true floor 53.7% of the time and the\nbootstrap 0.00%, at 95%."
+    flat = strip_latex(md)
+    assert "0.00%" not in flat and "0.00" in flat, flat
+    assert "of the time" not in flat, flat
+    assert strip_latex(r"under $\tau^*$ the floor is").strip() == "under ^* the floor is"
+    assert "tau" not in strip_latex(r"$\tau_{\mathrm{top}}$ is not identified")
+
+    # ...and the phase-2 fix: the same text through the flattener a .md file now gets.
+    for suffix in (".md", ".py", ".sh", ".json"):
+        plain = flatten(md, suffix)
+        assert "0.00%" in plain, (suffix, plain)
+        assert "53.7% of the time and the" in plain, (suffix, plain)
+    # A LaTeX comment is still a comment in a .tex file, and only there.
+    assert "secret" not in flatten("visible % secret\nnext", ".tex")
+    assert "secret" in flatten("visible % secret\nnext", ".md")
+
+
+# ======================================================================================
 # Regression: the two original constructions
 # ======================================================================================
 def test_catches_an_unlabelled_fair_pool_auroc(tmp_path):
@@ -1827,7 +2564,7 @@ def test_every_rule_names_a_known_pool_and_compiles():
             re.compile(pat)
     for item in SUPERSEDED:
         re.compile(item["pattern"])
-        for pat in item.get("near", []):
+        for pat in item.get("near", []) + item.get("absent", []):
             re.compile(pat)
 
 
@@ -1898,3 +2635,755 @@ def test_the_guard_is_cheap_enough_to_run_in_the_suite():
     t0 = time.perf_counter()
     main()
     assert time.perf_counter() - t0 < 5.0
+
+
+# ======================================================================================
+# ROUND SIX (2026-08-26): THE SCOPE.
+#
+# Round five armed eight rules for a defect class whose sixteen known instances all live in
+# `results/`, `scripts/`, `tests/` and `figures/` -- and then pointed them at eight files in
+# `paper/`. The rules could not reach a single site they were written for. This round moves
+# the scope, and almost all of the work is deciding what NOT to move.
+#
+# THE MEASUREMENT THAT DECIDED IT, over the 201 tier-2 files, one family at a time. It is
+# `scope_census()` in the checker, printed by `--dry-run`, and pinned below by
+# test_the_scope_census_matches_the_numbers_the_docstring_argues_from -- so the argument
+# cannot age quietly, which is the failure mode every earlier round of this file records:
+#
+#     the pool / attachment rules          736 findings in 52 files
+#     the growing-denominator rule          73 findings in 36 files
+#     the retired-VALUE half of SUPERSEDED  273 findings in 38 files
+#     the retired-POSITION rules (these)     32 findings in  7 files  <- the only one that ports
+#
+# The first three are not backlogs, they are category errors, and each has its own reason
+# (the module docstring's SCOPE section states all three). The short version: the pool and
+# growing rules arbitrate by SENTENCE DISTANCE and neither a markdown table row nor a line
+# of Python has sentences; and a retired VALUE is legitimately stored, pinned and corrected
+# all over this repo, while a retired POSITION is only ever asserted. Those are the two
+# controls this section spends most of its length on, because getting either wrong in the
+# permissive direction ships a guard nobody can keep green.
+#
+# THE RATCHET holds the 32 that do port. `check_operational_provenance.py` already had this
+# device and it is followed rather than reinvented, in both directions: a file that gains a
+# finding fails, and a file that drops below its baseline fails too, so the register cannot
+# rot upward. 6 of the 32 are correction notes quoting what they used to say, 21 are a
+# coverage figure with no branch named, and 5 are a live unconditional assertion of a
+# position section 13 retracts -- pinned, in a register that says which is which, rather
+# than silenced.
+# ======================================================================================
+def _wide(tmp_path, text: str, name: str) -> list[str]:
+    """Check `text` as a file of the given name -- i.e. through the tier-2 ruleset."""
+    assert not name.endswith(".tex"), "use _check for the LaTeX tier"
+    f = tmp_path / name
+    f.write_text(textwrap.dedent(text).strip() + "\n", encoding="utf-8")
+    return check_file(f)
+
+
+# --- 1. the flattener, per suffix ------------------------------------------------------
+def test_markdown_emphasis_cannot_split_a_guarded_phrase(tmp_path):
+    r"""The `\emph{fair} pool` lesson, one markup language over. The pre-fix wording of
+    docs/START_HERE_overnight.md is the probe, verbatim: it carries the retired sentence
+    with an asterisk pair sitting in the middle of it, which is exactly a phrase rule's
+    blind spot."""
+    real = ("makes the granularity point without any statistics: the lattice at N=40 is "
+            "dense, which is precisely why `4/200` is a resolution limit of the *pool* "
+            "and not a property of the detector.")
+    hits = _word_rule_hits(_wide(tmp_path, real, "START_HERE_overnight.md"))
+    assert len(hits) >= 2, (
+        "asterisk emphasis hid the retired sentence from the rules written for it:\n"
+        + _say(hits))
+    # ...and the backtick around `4/200` did not stop `_FLOOR_RESOLUTION_CTX` gating it.
+    assert any("property of the detector" in h for h in hits), _say(hits)
+
+
+def test_the_plain_flattener_leaves_identifier_underscores_alone(tmp_path):
+    """`_` is the word separator in every path and constant this repo cites, so it is NOT
+    treated as emphasis -- the same call `check_operational_provenance.py` makes.
+
+    The cost is a REAL blind spot and it is asserted here rather than described: markdown
+    underscore emphasis inside a guarded phrase breaks `\\b` and is not seen. Pinned as the
+    current behaviour so that anyone who fixes it has to come here and say so.
+    """
+    from check_population_labels import strip_plain
+
+    flat = strip_plain("see `results/n40_floor_estimator_ruling.md` and `_BRANCH_NAMED`")
+    assert "n40_floor_estimator_ruling.md" in flat, flat
+    assert "_BRANCH_NAMED" in flat, flat
+
+    seen = _word_rule_hits(_wide(tmp_path, "the _estimand_ dissolves once the atom empties",
+                                 "probe.md"))
+    assert not seen, (
+        "underscore emphasis is now flattened -- good, but the note in `strip_plain` and "
+        "the residual list in the module docstring both say it is not. Update them.")
+    # the same sentence without the underscores is caught, so the miss is the markup.
+    assert _word_rule_hits(_wide(tmp_path, "the estimand dissolves once the atom empties",
+                                 "probe.md"))
+
+
+def test_backticks_cannot_split_a_guarded_phrase(tmp_path):
+    """Generated markdown wraps identifiers in backticks constantly, and three of the
+    sixteen sites had one inside the phrase."""
+    hits = _word_rule_hits(_wide(
+        tmp_path,
+        "a larger pool reaches a higher rung and `reports a smaller floor`, so the "
+        "quantity moves with the pool",
+        "n_scaling_grid.md"))
+    assert hits, "a backtick split the phrase"
+
+
+def test_the_symbol_branch_names_come_alive_outside_tex(tmp_path):
+    """`_BRANCH_NAMED` carries `tau_top` and `tau *` entries that are DEAD in .tex, because
+    `strip_latex` eats `\\tau` with every other command. Outside .tex the corrected tables
+    carry a literal `tau_top`, and the entries earn their place -- which the round-five
+    note predicted and could not test, because the scope did not reach a .md file yet."""
+    from check_population_labels import flatten
+
+    assert "tau" not in flatten(r"$\tau_{\mathrm{top}}$ is not identified", ".tex")
+    assert "tau_top" in flatten("tau_top is not identified", ".md")
+
+    bare = "Wilson covers the true floor 53.7% of the time, at nominal 95%."
+    assert _word_rule_hits(_wide(tmp_path, bare, "probe.md")), "the bare figure must fire"
+    named = ("At tau_top = 0.2726% Wilson covers the true floor 53.7% of the time, "
+             "at nominal 95%.")
+    assert not _word_rule_hits(_wide(tmp_path, named, "probe.md")), \
+        "naming the branch with the symbol must exculpate outside .tex"
+
+
+# --- 2. a planted defect fires in every newly-scoped file type -------------------------
+@pytest.mark.parametrize("name,text", [
+    ("a generated report",
+     "notes.md::> **WITHDRAWN.** Both candidates fail and the estimand dissolves when "
+     "the ceiling atom empties, so the row prints a point."),
+    ("a generator's string literal",
+     'gen.py::    log("the empty atom -- also breaks the floor as an estimand. Its")'),
+    ("a code comment",
+     "gen.py::# 4/200 is the resolution of the pool rather than a measurement of anything."),
+    ("a docstring",
+     'fig.py::"""A larger pool reaches a higher rung and reports a smaller floor."""'),
+    ("a test docstring",
+     'test_x.py::def t():\n    """Neither estimator is broken -- the estimand is."""'),
+    ("an assertion message",
+     'test_x.py::assert ok, "the N=40 floor 2.0% is not a property of the detector"'),
+    ("a shell wrapper's banner",
+     'run.sh::echo "withdrawn: Wilson covers it 53.7% of the time at nominal 95%"'),
+    ("a figure sidecar",
+     'stats.json::{"note": "question bootstrap coverage 0.00%, nominal 95%"}'),
+])
+def test_a_planted_position_defect_fires_in_every_newly_scoped_file_type(
+        tmp_path, name, text):
+    """Every representation the 852e0f7 sweep found, one per file type now in scope.
+
+    The commit message enumerates them: generator string literals, code comments,
+    docstrings, a provenance banner, test docstrings, an assertion message, a refusal
+    message, doc prose. Not one contained a digit of the quantity in dispute, and not one
+    was reachable by a checker that read `paper/*.tex`.
+    """
+    fname, body = text.split("::", 1)
+    hits = _word_rule_hits(_wide(tmp_path, body, fname))
+    assert hits, f"{name}: a planted defect in {fname} was not reported"
+
+
+def test_the_corrected_form_of_each_is_green_in_the_same_file_type(tmp_path):
+    """The other half, and the half that decides whether anyone keeps the guard on. Each
+    probe above, rewritten the way the ruling says to write it, in the same file type."""
+    ok = [
+        ("notes.md",
+         "> **WITHDRAWN.** tau_top is not identified at n=200: whether 4/200 estimates a "
+         "population floor turns on whether the population can yield 39 mutually "
+         "inequivalent answers out of 40, and n=200 cannot decide."),
+        ("gen.py",
+         'log("if the population can never reach the top rung, 4/200 estimates a real")'),
+        ("fig.py",
+         '"""Under the calibrated Ewens fit Wilson covers 53.7% and the question '
+         'bootstrap 0.00%; under the zero branch, 95.06% and 100%."""'),
+        ("stats.json",
+         '{"note": "zero branch: question bootstrap coverage 100%, nominal 95%"}'),
+    ]
+    for fname, body in ok:
+        hits = _word_rule_hits(_wide(tmp_path, body, fname))
+        assert not hits, f"{fname}: the CORRECTED wording was flagged\n" + _say(hits)
+
+
+# --- 3. what does NOT run outside .tex, and the measurement behind each -----------------
+def test_the_pool_rules_do_not_run_outside_tex(tmp_path):
+    """1031 findings, and they are a category error rather than a backlog.
+
+    THE SAME TEXT is used twice: as `.tex` it must be reported (the pool rules work, and
+    are not being quietly disarmed), and as `.md` and `.py` it must not. The probe is the
+    real shape from `scripts/replay_control.py` -- an AUROC inside a `log(...)` whose
+    population is named four hundred characters away in a different `log(...)`.
+    """
+    probe = 'log("Claim 1 -- AUROC 0.704 -> 0.746 (+0.042): DOES NOT SURVIVE.")'
+    assert _check(tmp_path, probe), "the pool rules must still fire on .tex"
+    for name in ("replay_control.py", "replay_control.md"):
+        assert not _wide(tmp_path, probe, name), (
+            f"a pool rule reached {name}; a guard that demands a fair-pool label beside "
+            "every 0.704 in generated output is one nobody can keep green")
+
+
+def test_the_generated_table_shape_is_the_reason_and_not_an_excuse(tmp_path):
+    """The single worst case, verbatim from results/likelihood_weight_sensitivity.md: one
+    table, 64 rows, the same `1.380` on every one of them, the population declared in the
+    prose above. `_TERM_RE` needs `[.:;!?]` before whitespace and a table row has none, so
+    the whole table is one sentence and every row is unlabelled."""
+    row = "| 1e-05 | 1.380 | 9.50% | 21.5% | 9.50% | 9.5% | 9.5% | 21.5% | 170 |"
+    table = "\n".join([row] * 6)
+    assert not _wide(tmp_path, table, "likelihood_weight_sensitivity.md")
+    # ...and in a .tex file the same number is still guarded, which is the point of the
+    # scoping rather than of the flattener.
+    assert _check(tmp_path, "the clean correct mean is $1.380$ nats")
+
+
+def test_the_growing_rule_does_not_run_outside_tex(tmp_path):
+    """174 findings. A dated snapshot of a filling cell is HISTORY -- results/
+    attack_matrix.md's "15 hide" was true the week it was written. The rule exists to stop
+    a filling cell being quoted FORWARD, and forward is paper/."""
+    probe = "the hide stratum stands at 52 hide targets as of tonight"
+    assert _check(tmp_path, probe), "the growing rule must still fire on .tex"
+    assert not _wide(tmp_path, probe, "attack_matrix.md")
+
+
+def test_a_retired_value_is_reported_in_the_paper_and_not_in_a_run_artifact(tmp_path):
+    """302 findings, and this is the decision the brief warned could go wrong in either
+    direction. The probe is a `_def`-era figure. In `paper/` it is a staleness bug. In
+    `results/winners_curse_partial.md` -- the `_def` checkpoint's own report -- it is a
+    measurement, correct for the run that produced it."""
+    tex = (r"re-scoring retains $45\%$ of the selection-time effect on the "
+           r"winner's-curse subset")
+    md = "re-scoring retains 45% of the selection-time effect on the winner's-curse subset"
+    assert _check(tmp_path, tex), "a retired value must still be caught in .tex"
+    assert not _wide(tmp_path, md, "winners_curse_partial.md")
+    # ...and the escaping is not what does the work: the .tex rendering is silent there too,
+    # so the exemption is the SCOPE and not an accident of `\%`.
+    assert not _wide(tmp_path, tex, "winners_curse_partial.md")
+
+
+def test_a_test_fixture_asserting_a_retired_value_is_correct_usage(tmp_path):
+    """The brief's own example, and the shape that decided the value/position line.
+
+    tests/test_derived_paper_quantities.py carries the banned-literal list that keeps the
+    withdrawn intervals OUT of the paper. It has to contain them to check for them. A guard
+    that flagged it would be flagging the guard -- and it would be doing so at 17 findings
+    in that one file.
+    """
+    fixture = (
+        'for banned in (r"2.0\\% [0.8, 5.0]", r"[0.78, 5.03]", r"[0.5, 4.0]",\n'
+        '               "0.7804", "5.0287", "0.78037", "5.02866"):\n'
+        '    assert " ".join(banned.split()) not in paper, "paper/ has stale intervals"\n')
+    assert not _wide(tmp_path, fixture, "test_derived_paper_quantities.py")
+    # A POSITION planted in the same fixture file IS reported -- the exemption is the
+    # value/position line, not the directory.
+    assert _word_rule_hits(_wide(
+        tmp_path, fixture + '\n# the estimand dissolves once the atom empties\n',
+        "test_derived_paper_quantities.py"))
+
+
+# --- 4. the control the brief asked for by name: the checker's own patterns -------------
+def test_the_checker_does_not_flag_its_own_rule_patterns():
+    """A ledger of retired sentences contains every retired sentence. Twice, in fact: once
+    as a regex and once in the `quantity` prose that explains it ("...described as 'the
+    resolution of the pool'").
+
+    BOTH HALVES MATTER. That the ledger and its probes are out of scope is the first half;
+    the second is that the exclusion is LOAD-BEARING rather than decorative, which is shown
+    by scanning them anyway and finding that they would report. An exclusion nobody has
+    checked is indistinguishable from a rule that never fired.
+    """
+    from check_population_labels import OUT_OF_SCOPE, check_file as cf, wide_files
+
+    scoped = {p.relative_to(REPO).as_posix() for p in wide_files()}
+    for name in ("scripts/check_population_labels.py", "tests/test_population_labels.py"):
+        assert name in OUT_OF_SCOPE, f"{name} must be excluded BY NAME, with a reason"
+        assert name not in scoped, f"{name} is being scanned"
+        n = len(cf(REPO / name))
+        assert n > 0, (
+            f"{name} reports nothing, so its exclusion protects nothing -- either the "
+            "rules stopped matching their own patterns (check them) or the exclusion is "
+            "dead weight and should go")
+
+
+def test_every_out_of_scope_entry_is_real_and_says_why():
+    """An exclusion list is an assertion about the world and expires like `labels` did
+    (defect 5). Three failure modes, all cheap to catch: an entry naming a file that no
+    longer exists, an entry with no stated reason, and an entry that would be picked up by
+    no glob anyway -- which means it is decoration rather than an exclusion."""
+    from check_population_labels import OUT_OF_SCOPE, WIDE_GLOBS
+
+    reachable = {p.relative_to(REPO).as_posix()
+                 for g in WIDE_GLOBS for p in REPO.glob(g) if p.is_file()}
+    for name, reason in OUT_OF_SCOPE.items():
+        assert (REPO / name).exists(), f"{name} is excluded but does not exist"
+        assert len(reason) > 40, f"{name} is excluded without a stated reason"
+        assert name in reachable, (
+            f"{name} is in OUT_OF_SCOPE but no glob reaches it -- the entry is decoration, "
+            "and a reader will believe it is doing work")
+
+
+def test_the_ledgers_own_prose_is_still_guarded_despite_the_exclusion():
+    """Excluding the ledger from the scan does not leave its prose unguarded: the advice
+    strings are re-run through the rules by
+    test_the_ledgers_own_advice_passes_the_rules_it_gives, and blinded to prove it. This
+    test only pins that the two arrangements are connected, so removing one is visible."""
+    from check_population_labels import OUT_OF_SCOPE, SUPERSEDED
+
+    assert "scripts/check_population_labels.py" in OUT_OF_SCOPE
+    advice = {s["replacement"] for s in SUPERSEDED if s.get("wide")}
+    assert advice, "no wide rule carries a replacement, so there is no prose to guard"
+    assert all("n40_floor_estimator_ruling.md" in a for a in advice)
+
+
+# --- 5. the tier-2 ledger is exactly the position rules --------------------------------
+def test_the_wide_set_is_exactly_the_position_rules():
+    """The `wide` flag decides scope, so it must not be settable by taste.
+
+    THREE DEFINITIONS OF THE SAME SET, held together here: the flag, the `pre-sec` run
+    marker round five used, and the PROPERTY -- a wide rule retires a POSITION, so it
+    carries a `replacement` and never a `current`. That is the whole argument for the
+    tier-2 line (a value is stored all over this repo; a position is only ever asserted),
+    and if a future entry can get the wider scope while carrying a `current`, the argument
+    is gone and 302 findings come with it.
+    """
+    from check_population_labels import (SUPERSEDED, WIDE_SUPERSEDED,
+                                         _COVERAGE_PAIR, _NOT_IDENTIFIED)
+
+    by_flag = {s["quantity"] for s in SUPERSEDED if s.get("wide")}
+    by_marker = {s["quantity"] for s in SUPERSEDED
+                 if str(s.get("run", "")).startswith("pre-sec")}
+    by_property = {s["quantity"] for s in SUPERSEDED
+                   if s.get("replacement") in (_NOT_IDENTIFIED, _COVERAGE_PAIR)}
+    assert by_flag == by_marker == by_property, (
+        "the three definitions of the tier-2 set disagree:\n"
+        f"  flag only     : {sorted(by_flag - by_property)}\n"
+        f"  property only : {sorted(by_property - by_flag)}")
+    assert len(WIDE_SUPERSEDED) == len(by_flag) == 8
+    for s in WIDE_SUPERSEDED:
+        assert "current" not in s, (
+            f"{s['quantity']}: a wide rule may not carry a recomputed value -- there is no "
+            "rerun that makes a retracted position true")
+
+
+def test_no_retired_value_rule_leaks_into_the_wider_scope(tmp_path):
+    """The complement, stated as behaviour rather than as data. Every SUPERSEDED entry that
+    is NOT wide must be silent on a .md file, or the 302-finding backlog is back."""
+    from check_population_labels import SUPERSEDED
+
+    narrow = [s for s in SUPERSEDED if not s.get("wide")]
+    assert len(narrow) == 29
+    quantities = [s["quantity"] for s in narrow]
+    body = "\n".join([
+        "39/80 targets finish at the ln N ceiling; 31/80 of that is attack-induced.",
+        "corr(headroom, move) is +0.70 within the uncensored subset after re-scoring.",
+        "Wilson on 4/200 gives [0.78, 5.03]; the question bootstrap [0.5, 4.0].",
+        "the estimator offers 22 distinct values, 22 of the 39 attainable, and 27/97.",
+        "re-scoring retains 45% of the effect, bootstrap [25%, 65%], 36 of the 69.",
+    ])
+    found = [p for p in _wide(tmp_path, body, "old_run.md")
+             if any(q in p for q in quantities)]
+    assert not found, "a retired-VALUE rule ran outside .tex:\n" + _say(found)
+    # ...and every one of them still fires in the paper.
+    assert len([p for p in _check(tmp_path, body) if any(q in p for q in quantities)]) >= 8
+
+
+# --- 6. THE RATCHET --------------------------------------------------------------------
+def test_the_register_matches_the_repo_today():
+    """The ratchet is only worth anything if its numbers are true when it is struck. This
+    is the test that would have failed on the day someone raised a pin to clear a red."""
+    from check_population_labels import KNOWN_OPEN, check_file as cf, wide_files
+
+    live = {p.relative_to(REPO).as_posix(): len(cf(p)) for p in wide_files()}
+    open_now = {k: v for k, v in live.items() if v}
+    assert open_now == KNOWN_OPEN, (
+        "KNOWN_OPEN and the repo disagree.\n"
+        f"  found but not pinned : { {k: v for k, v in open_now.items() if KNOWN_OPEN.get(k) != v} }\n"
+        f"  pinned but not found : { {k: v for k, v in KNOWN_OPEN.items() if open_now.get(k) != v} }")
+    assert sum(KNOWN_OPEN.values()) == 32 and len(KNOWN_OPEN) == 7
+
+
+def test_a_new_defect_in_a_pinned_file_still_fails(tmp_path):
+    """PINNED, NOT SILENCED -- the property the whole device exists for. Take the most
+    heavily pinned file in the register, add one sentence, and the ratchet must notice."""
+    from check_population_labels import KNOWN_OPEN, _ratchet, check_file as cf, wide_files
+
+    worst = max(KNOWN_OPEN, key=KNOWN_OPEN.get)
+    baseline = KNOWN_OPEN[worst]
+    assert not _ratchet({p.relative_to(REPO).as_posix(): len(cf(p)) for p in wide_files()})
+
+    copy = tmp_path / worst.rsplit("/", 1)[-1]
+    copy.write_text((REPO / worst).read_text(encoding="utf-8")
+                    + "\n\nThe estimand dissolves once the ceiling atom empties.\n",
+                    encoding="utf-8")
+    assert len(cf(copy)) == baseline + 1, "the planted sentence was not reported"
+    live = {f.relative_to(REPO).as_posix(): len(cf(f)) for f in wide_files()}
+    problems = _ratchet({**live, worst: baseline + 1})
+    assert len(problems) == 1, _say(problems)
+    assert problems[0].startswith(f"{worst}: ratchet:")
+    assert "1 NEW one(s)" in problems[0], problems[0]
+
+
+def test_the_ratchet_fails_in_both_directions_and_on_an_orphan():
+    """A file that GAINS one fails; a file that LOSES one fails too, so the register cannot
+    be raised and left to rot (defect 7's shape, third copy); and an entry naming a file
+    that has left the scope is itself reported, so the map cannot outlive its subject."""
+    from check_population_labels import KNOWN_OPEN, _ratchet
+
+    name = "results/replay_control.md"
+    base = KNOWN_OPEN[name]
+
+    gained = _ratchet({**{k: v for k, v in KNOWN_OPEN.items()}, name: base + 2})
+    assert len(gained) == 1 and "ratchet:" in gained[0] and "2 NEW" in gained[0]
+
+    dropped = _ratchet({**{k: v for k, v in KNOWN_OPEN.items()}, name: base - 1})
+    assert len(dropped) == 1 and "ratchet-stale" in dropped[0]
+    assert f"lower KNOWN_OPEN['{name}'] to {base - 1}" in dropped[0]
+
+    orphan = _ratchet({k: v for k, v in KNOWN_OPEN.items() if k != name})
+    assert len(orphan) == 1 and "ratchet-orphan" in orphan[0]
+
+    # a file with no entry has an implied baseline of 0, so its first finding fails
+    fresh = _ratchet({**KNOWN_OPEN, "results/brand_new.md": 1})
+    assert len(fresh) == 1 and "baseline of 0" in fresh[0]
+
+
+def test_the_failure_message_says_how_to_lower_a_baseline_honestly_and_dishonestly():
+    """Required of this change explicitly, and it is not decoration: the pressure to raise
+    a pin arrives at the exact moment the suite is red and someone is in a hurry. The
+    message has to name the dishonest moves, including the one that does not look like a
+    baseline edit at all -- widening a gate until the finding disappears."""
+    from check_population_labels import KNOWN_OPEN, RATCHET_ADVICE, _ratchet
+
+    msg = _ratchet({**KNOWN_OPEN, "figures/README.md": 99})[0]
+    assert RATCHET_ADVICE in msg
+    low = msg.lower()
+    for honest in ("fix the site", "same commit"):
+        assert honest in low, f"the message never says to {honest!r}"
+    for dishonest in ("raising the pin", "out_of_scope", "widening a gate",
+                      "deleting the file's entry"):
+        assert dishonest in low, f"the message never names {dishonest!r} as dishonest"
+    assert "n40_floor_estimator_ruling.md" in msg, (
+        "the message should name the ruling a widened gate would quietly repeal")
+
+
+def test_the_pinned_findings_are_not_printed_on_an_unrelated_failure(capsys):
+    """A red run must show the NEW finding, not thirty-two pinned ones with it buried
+    inside. This file's own docstring says a guard whose output stops being read has the
+    same end state as a guard that cannot fail."""
+    import check_population_labels as C
+
+    C.main()
+    out = capsys.readouterr().out
+    assert "OK (" in out and "32 finding(s) pinned in 7" in out
+    assert "STALE VALUE" not in out, "a green run printed the pinned backlog"
+
+
+def test_dry_run_prints_the_register_and_never_fails(capsys):
+    """The honest way to re-strike the register: what IS, printed beside what is PINNED,
+    with no red suite applying pressure to the comparison."""
+    import check_population_labels as C
+
+    assert C.main(["--dry-run"]) == 0
+    out = capsys.readouterr().out
+    for name in C.KNOWN_OPEN:
+        assert name in out, f"{name} missing from --dry-run"
+    assert "found" in out and "pinned" in out
+
+
+# --- 7. scope plumbing -----------------------------------------------------------------
+def test_the_scope_reaches_the_four_directories_the_sweep_found(tmp_path):
+    """`results/`, `scripts/`, `tests/` and `figures/` carried all sixteen sites, and
+    `tests/` is the one a previous post-mortem named as unreachable by name."""
+    from check_population_labels import wide_files
+
+    scoped = {p.relative_to(REPO).as_posix() for p in wide_files()}
+    for d in ("results/", "scripts/", "tests/", "figures/", "docs/"):
+        assert any(s.startswith(d) for s in scoped), f"{d} is not in scope"
+    for f in ("tests/test_replay_control.py", "scripts/n_scaling_grid.py",
+              "results/n_scaling_grid.md", "figures/README.md"):
+        assert f in scoped, f"{f} carried one of the sixteen sites and is not scanned"
+    assert len(scoped) > 150
+
+
+def test_the_scope_is_not_recursive_by_accident():
+    """A glob that grows on its own cannot have a ratchet: the baseline would move without
+    anyone editing anything. Every WIDE_GLOB is one directory deep, on purpose."""
+    from check_population_labels import WIDE_GLOBS
+
+    for g in WIDE_GLOBS:
+        assert "**" not in g, f"{g} is recursive; a new subdirectory would move the register"
+        assert g.count("/") == 1, g
+
+
+def test_the_paper_tier_is_untouched_by_the_widening():
+    """paper/ still gets every rule. The widening is additive or it is a regression."""
+    from check_population_labels import GROWING_CELLS, RULES, SUPERSEDED, paper_files
+
+    assert len(paper_files()) == 8
+    assert (len(RULES), len(SUPERSEDED), len(GROWING_CELLS)) == (16, 37, 18)
+    assert main() == 0
+
+
+def test_the_flattener_dispatches_on_suffix_and_not_on_directory(tmp_path):
+    """Load-bearing for this whole file: the hundred-odd probes above write `probe.tex`
+    into a tmp_path nowhere near paper/, and they must keep getting the LaTeX flattener and
+    the full ruleset."""
+    from check_population_labels import flatten, strip_latex, strip_plain
+
+    for suffix in (".tex",):
+        assert flatten("a % b", suffix) == strip_latex("a % b")
+    for suffix in (".md", ".py", ".sh", ".json", ".txt", ""):
+        assert flatten("a % b", suffix) == strip_plain("a % b")
+    # the probe convention itself
+    assert _check(tmp_path, "The detector separates at AUROC $0.704$.")
+
+
+def test_the_widened_guard_is_still_cheap_enough_for_the_suite():
+    """201 more files, read on every run of the suite. Measured at ~0.6 s."""
+    import time
+
+    t0 = time.perf_counter()
+    assert main() == 0
+    assert time.perf_counter() - t0 < 5.0
+
+
+# --- 8. the sixteen sites themselves, verbatim -----------------------------------------
+# Not paraphrases. These are lines DELETED by commit 852e0f7 ("sixteen more sites, none of
+# them containing a digit"), one per file it touched, each replayed into a file of the same
+# name and suffix. A rule that fires on a rewording of a defect and not on the defect is a
+# rule that was written after the fact; this is the section that says otherwise.
+@pytest.mark.parametrize("fname,removed", [
+    ("START_HERE_overnight.md",
+     "bootstrap **0.00%**, at nominal 95%. The reason is not data selection. It is that "
+     "the estimand\ndissolves -- `4/200` is the **resolution limit of a 200-answer "
+     "pool**, not an estimate of a\npopulation floor, and a larger pool reaches a higher "
+     "rung and reports a smaller one."),
+    ("n_scaling_grid.md",
+     "the empty atom -- also breaks the floor as an estimand. Its threshold is no\n"
+     "and that rung is not the top of the population's support: a larger pool\n"
+     "reaches a higher one and reports a SMALLER floor, so the quantity moves with\n"
+     "the pool rather than holding still to be estimated. Measured coverage at a\n"
+     "nominal 95%, against a population model validated out-of-sample on the two\n"
+     "smaller budgets in this table: Wilson on the first-firing count 53.7%, a\n"
+     "question bootstrap over the questions 0.00%."),
+    ("replay_control.md",
+     "> **WITHDRAWN, 2026-08-19.** The N=40 floor's interval -- BOTH candidates. Wilson "
+     "on\n> 4/200 and the question bootstrap cover the true floor 53.7% and 0.00% of the "
+     "time\n> respectively at nominal 95%, because the estimand stops existing when the "
+     "ceiling atom\n> empties."),
+    ("derived_paper_quantities.py",
+     "    # atoms: Wilson [0.78, 5.03] covers the true floor 53.7% of the time at "
+     "nominal 95%,\n    # the question bootstrap [0.50, 4.00] covers it 0.00% of the "
+     "time, and neither is\n    # broken -- the ESTIMAND breaks, because once the ceiling "
+     "atom empties \"the floor\" is\n    # the multiplicity of whichever rung this pool "
+     "happened to reach and moves with the\n    # pool size."),
+    ("make_floor_budget_figure.py",
+     "                 \"results/n40_floor_estimator_ruling.md withdrew both candidates "
+     "-- \"\n                 \"Wilson on 4/200 covers the true floor 53.7% of the time "
+     "and the \"\n                 \"question bootstrap 0.00%, at nominal 95%.\")"),
+    ("n_scaling_grid.py",
+     "    # floor, so the estimand moves with the pool instead of holding still to be "
+     "estimated.\n    # `results/n40_floor_estimator_ruling.md` measured what that costs, "
+     "against a\n    # population model validated out-of-sample on the N=20 and N=10 "
+     "atoms: at nominal 95%,\n    # Wilson on the first-firing count covers the true "
+     "floor 53.7% of the time and a\n    # question bootstrap 0.00%."),
+    ("replay_control.py",
+     "        log(\"the empty atom -- also breaks the floor as an estimand. Its threshold "
+     "is no\")\n        log(\"reaches a higher one and reports a SMALLER floor, so the "
+     "quantity moves with\")"),
+    ("test_n_scaling_grid.py",
+     "    \"\"\"Once the ceiling atom empties the estimand dissolves, so the floor cell "
+     "at N=40\n    prints a point and no interval.\"\"\""),
+])
+def test_the_removed_lines_of_852e0f7_all_go_red(tmp_path, fname, removed):
+    """Every file the sixteen-site sweep touched, in the representation it used."""
+    hits = _word_rule_hits(_wide(tmp_path, removed, fname))
+    assert hits, f"{fname}: the text 852e0f7 DELETED is not reported"
+
+
+def test_the_replacements_852e0f7_wrote_are_all_green(tmp_path):
+    """The other half, taken from the same commit's ADDED lines. If the corrected wording
+    were flagged, the guard would be reddening the fix -- which is the failure the round-
+    five note records for `span: 0`, one mechanism over."""
+    for fname, added in [
+        ("replay_control.md",
+         "> **WITHDRAWN, 2026-08-19.** Under the calibrated Ewens fit Wilson covers "
+         "53.67% and the question bootstrap 0.00% at nominal 95%; under the zero branch, "
+         "95.06% and 100%."),
+        ("n_scaling_grid.md",
+         "Whether that rung is the population's top rung is not decidable at n=200: if "
+         "the population can never yield 39 mutually inequivalent answers out of 40, "
+         "4/200 estimates a real quantity."),
+        ("derived_paper_quantities.py",
+         "    # calibrated Ewens (tau_top = 0.2726%): Wilson 53.67%, question bootstrap "
+         "0.00%\n    # zero branch (tau_top = 2.0%): Wilson 95.06%, bootstrap 100%"),
+    ]:
+        hits = _word_rule_hits(_wide(tmp_path, added, fname))
+        assert not hits, f"{fname}: the CORRECTED wording is flagged\n" + _say(hits)
+
+
+# --- 9. mutation tests for the scope itself --------------------------------------------
+def test_mutation_running_the_latex_flattener_on_markdown_loses_sites(tmp_path,
+                                                                      monkeypatch):
+    """THE PHASE-2 BLOCKER, as a mutation rather than as a description.
+
+    Point `flatten` at `strip_latex` for every suffix -- the state this file was in before
+    today -- and the damage is ASYMMETRIC, which is more interesting than "it breaks" and
+    is the shape the round-five measurement actually recorded (16 -> 14 for all eight
+    rules, 15 -> 11 for the coverage pair alone). `strip_latex` eats from an unescaped `%`
+    to end of line, so `0.00%, at nominal 95%.` collapses to `0.00`, and the `0.00%` rule
+    requires a percent sign (PCT) because a bare `0.00` would reach the exhaustively
+    enumerated `U_39 = 0.000000%` of ruling section 1. That rule goes silent. The `53.7`
+    rule has no PCT -- 53.7 is unique in this repo and is armed on the digits -- so it
+    survives, and a reader who tested only that one would conclude the flattener was fine.
+    """
+    import check_population_labels as C
+
+    probe = ("Wilson covers the true floor 53.7% of the time and the question bootstrap "
+             "0.00%, at nominal 95%.")
+    before = _word_rule_hits(_wide(tmp_path, probe, "probe.md"))
+    assert {"53.7", "0.00%"} <= {h.split("'")[1] for h in before}, _say(before)
+
+    monkeypatch.setattr(C, "flatten", lambda text, suffix: C.strip_latex(text))
+    after = {h.split("'")[1] for h in _word_rule_hits(_wide(tmp_path, probe, "probe2.md"))}
+    assert "0.00%" not in after, (
+        "the LaTeX flattener no longer loses the bootstrap coverage, so the per-suffix "
+        "split has stopped being load-bearing -- delete it, or find out what changed")
+    assert "53.7" in after, (
+        "53.7 was lost too, which the round-five measurement says it should not be. If "
+        "that rule has grown a PCT requirement, the 16 -> 14 figure in this file is stale")
+
+
+def test_mutation_widening_tier_two_to_every_superseded_entry_reddens_the_repo():
+    """The 302-finding measurement, as a live assertion instead of a comment. Run the FULL
+    ledger over the tier-2 files and the backlog explodes across the run artifacts, the
+    absence-pins and the correction records -- which is the whole argument for the
+    value/position line, and it stops being an argument the day it stops being true."""
+    import check_population_labels as C
+
+    wide_now = sum(len(C.check_file(f)) for f in C.wide_files())
+    assert wide_now == 32
+
+    census = C.scope_census()
+    value_findings, value_files = census["retired-value"]
+    assert value_findings > 200 and value_files > 25, (
+        f"the full ledger now returns only {value_findings} findings in {value_files} "
+        "files outside paper/. If the retired VALUES have genuinely stopped appearing in "
+        "run artifacts and absence-pins, the tier-2 line can move -- but move it "
+        "deliberately, with the new count in the commit message, not by noticing that "
+        "this test went quiet")
+
+
+def test_mutation_a_pinned_file_that_is_excluded_instead_is_visible():
+    """The dishonest fix the failure message names third: silence a red by adding the file
+    to OUT_OF_SCOPE. It works -- and it leaves a KNOWN_OPEN entry pointing at a file no
+    longer scanned, which `_ratchet` reports as an orphan. That is the trap closing."""
+    import check_population_labels as C
+
+    name = "results/schedule_2026_08_26.md"
+    live = {f.relative_to(REPO).as_posix(): len(C.check_file(f)) for f in C.wide_files()}
+    assert not C._ratchet(live)
+
+    silenced = {k: v for k, v in live.items() if k != name}     # as if OUT_OF_SCOPE'd
+    problems = C._ratchet(silenced)
+    assert len(problems) == 1 and "ratchet-orphan" in problems[0] and name in problems[0]
+
+
+# --- 10. the self-reference control, in detail -----------------------------------------
+def test_the_checkers_own_findings_never_land_on_executable_code():
+    """`test_the_checker_does_not_flag_its_own_rule_patterns` shows the exclusion is
+    load-bearing. This shows what it is hiding, mechanically rather than by assurance:
+    every self-finding sits on a COMMENT or a STRING CONSTANT -- a rule pattern, a
+    `quantity`, an advice string, a ratchet note, a paragraph of the docstring -- and never
+    on a line that decides anything. So the exclusion cannot be concealing a change in
+    behaviour; at worst it conceals prose, and the prose that matters (the advice strings
+    the rest of the repo is told to quote) is re-checked by
+    test_the_ledgers_own_advice_passes_the_rules_it_gives.
+
+    `tokenize` is the arbiter rather than a regex, because "is this line a comment" is
+    exactly the question a regex gets wrong on a file that is mostly regexes.
+    """
+    import tokenize
+    from check_population_labels import check_file as cf
+
+    src = REPO / "scripts/check_population_labels.py"
+    prose_lines: set[int] = set()
+    with tokenize.open(src) as fh:
+        for tok in tokenize.generate_tokens(fh.readline):
+            if tok.type in (tokenize.COMMENT, tokenize.STRING):
+                prose_lines.update(range(tok.start[0], tok.end[0] + 1))
+
+    own = cf(src)
+    assert own, "the ledger no longer matches itself; check the rules still compile"
+    located = 0
+    for problem in own:
+        head = problem.split(":")[0:2]
+        if len(head) < 2 or not head[1].isdigit():
+            continue                       # `_line_hint` found no single source line
+        located += 1
+        line = int(head[1])
+        assert line in prose_lines, (
+            f"a self-finding lands on EXECUTABLE line {line} of the ledger, which is not "
+            "self-reference and may be real:\n" + problem)
+    assert located >= 30, f"only {located} of {len(own)} findings could be located"
+
+
+def test_a_third_party_file_quoting_a_rule_pattern_is_reported():
+    """The exclusion is BY NAME, not by content, and that is on purpose: it protects the
+    two files that are the ledger, not any file that mentions it. A doc explaining the
+    guard by quoting a retracted sentence WILL be reported, and will need a pin with a
+    reason like everything else. Stated as a test so nobody expands the exclusion by
+    analogy when that day comes."""
+    import tempfile
+    from check_population_labels import check_file as cf
+
+    with tempfile.TemporaryDirectory() as d:
+        f = pathlib.Path(d) / "guard_explainer.md"
+        f.write_text("The ledger retires the sentence: the estimand dissolves once the "
+                     "ceiling atom empties.\n", encoding="utf-8")
+        assert _word_rule_hits(cf(f)), (
+            "a third-party file quoting the retracted sentence went unreported")
+
+
+# --- 11. a red run shows the NEW finding, not the pinned backlog ------------------------
+def test_a_breach_prints_its_own_file_and_not_the_other_pinned_ones(capsys,
+                                                                    monkeypatch):
+    """Thirty-two pinned findings printed alongside one new one is a report nobody reads,
+    and this file's docstring is explicit that a guard whose output is skipped has the same
+    end state as one that cannot fail. So `main` prints findings only for files that BREACH
+    the ratchet."""
+    import check_population_labels as C
+
+    monkeypatch.setitem(C.KNOWN_OPEN, "figures/README.md", 0)
+    assert C.main([]) == 1
+    out = capsys.readouterr().out
+    assert "figures/README.md" in out
+    assert "STALE VALUE" in out, "the breaching file's finding itself must be shown"
+    for quiet in ("results/replay_control.md", "scripts/replay_control.py",
+                  "results/schedule_2026_08_26.md"):
+        assert f"{quiet}: [run provenance]" not in out, (
+            f"{quiet} is at its baseline and its findings were printed anyway")
+
+
+def test_the_scope_census_matches_the_numbers_the_docstring_argues_from():
+    """THE SCOPE ARGUMENT IS A MEASUREMENT, so it expires like every other list in this
+    ledger -- `labels` (defect 5), `numbers` (defect 6), FROZEN_COUNTS (defect 7). The
+    docstring says the pool rules would return 736 findings outside paper/ and that this
+    is why they stay scoped. If that becomes 40, the argument is gone and nobody would
+    know. Bands rather than exact equality, because these move when the repo does; a band
+    breach is a prompt to re-read the SCOPE section, not necessarily a defect.
+    """
+    from check_population_labels import scope_census
+
+    census = scope_census()
+    bands = {                       # (low, high) for findings; the docstring's figure
+        "pools": (600, 900),                    # 736
+        "growing": (50, 120),                   # 73
+        "retired-value": (200, 380),            # 273
+        "retired-position": (32, 32),           # 32 -- pinned exactly; it is the ratchet
+    }
+    for name, (low, high) in bands.items():
+        found, _ = census[name]
+        assert low <= found <= high, (
+            f"{name}: {found} findings, outside the band [{low}, {high}] the SCOPE section "
+            "of scripts/check_population_labels.py argues from. Re-read that section and "
+            "restate the number, or move the tier line -- but do not leave the docstring "
+            "quoting a figure the code no longer produces")
+    assert census["retired-position"][1] == 7

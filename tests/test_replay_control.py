@@ -703,9 +703,11 @@ def _matched_floor_row_cells(text: str) -> list[str]:
             if len(cells) == 4:
                 assert re.search(r"\|\s*\d+(?:\.\d+)?% \(no interval[^)]*\)\s*\|$", line), (
                     "the measured-budget cell of the MATCHED floor row carries an "
-                    "interval again; both candidates were withdrawn on measured coverage "
-                    "(Wilson 53.7%, question bootstrap 0.00%, nominal 95%). See "
-                    "results/n40_floor_estimator_ruling.md.")
+                    "interval again; both candidates were withdrawn because the estimand "
+                    "is not identified at n=200 (coverage figures are branch-conditional "
+                    "-- calibrated Ewens 53.67%/0.00%, zero branch 95.06%/100% -- and "
+                    "neither pair is the reason on its own). See "
+                    "results/n40_floor_estimator_ruling.md sec. 13.")
                 return cells
     raise AssertionError("the section 2 MATCHED floor row is missing from the report")
 
