@@ -341,7 +341,7 @@ WHAT IT STILL CANNOT CATCH (deliberate; false positives gate the suite)
     and it is worth the two minutes on any commit that touches a pinned file.
 
 --------------------------------------------------------------------------------------
-SCOPE (2026-08-26). WHY IT IS NOT THE SAME RULES EVERYWHERE.
+SCOPE (2026-08-26, widened 2026-08-27). WHY IT IS NOT THE SAME RULES EVERYWHERE.
 
 Until today this file read eight `paper/*.tex` files and nothing else. Every one of the
 SIXTEEN sites found by the 2026-08-26 sweep -- the ones that carry no digit -- was in
@@ -349,19 +349,23 @@ SIXTEEN sites found by the 2026-08-26 sweep -- the ones that carry no digit -- w
 see the places the defect actually lives -- the same gap `docs/critique_log.md` line 2441
 and `results/morning_review_2026_08_19.md` line 316 both name in the same words: "the
 linter's scope is eight `.tex` files, so it cannot reach `tests/`". Checked, not recalled. Scope is now two tiers, and the split is
-MEASURED, not asserted. Every count below comes from `scope_census()` over the 201 tier-2
-files (207 reached by WIDE_GLOBS, 6 excluded by name) and is REPRODUCIBLE: run the script
+MEASURED, not asserted. Every count below comes from `scope_census()` over the 228 tier-2
+files (234 reached by WIDE_GLOBS, 6 excluded by name) and is REPRODUCIBLE: run the script
 with `--dry-run` and it prints the same table. Numbers that cannot be re-derived are how
 this project got here; a figure quoted from a session nobody can replay is a figure on
 trust, and this file has spent two rounds paying for that.
 
   TIER 1, `paper/*.tex` and `paper/sections/*.tex`: EVERY rule. Unchanged, byte for byte.
 
-  TIER 2, `results/ scripts/ tests/ figures/ docs/` (.md .py .sh .json): the RETIRED
-  POSITIONS ONLY -- the eight rules armed on the 2026-08-26 ruling, the ones whose
-  `replacement` is a position (`_NOT_IDENTIFIED`, `_COVERAGE_PAIR`) rather than a
-  recomputed value. Selected by the `wide` flag on a SUPERSEDED entry, pinned to the
-  position/recomputation distinction by test_the_wide_set_is_exactly_the_position_rules.
+  TIER 2, `README.md` and `results/ scripts/ tests/ figures/ docs/ src/` (.md .py .sh
+  .json): the RETIRED POSITIONS ONLY -- the twelve rules armed on the 2026-08-26 ruling,
+  whose `replacement` is a position (`_NOT_IDENTIFIED`, `_COVERAGE_PAIR`) rather than a
+  recomputed value, PLUS the estimator-ownership table. Selected by the `wide` flag on a
+  SUPERSEDED entry, pinned to the position/recomputation distinction by
+  test_the_wide_set_is_exactly_the_position_rules. Ownership qualifies by the same
+  property -- its finding is "this row takes neither", never "the definitive run gives X"
+  -- and is counted inside the `retired-position` census row so the census and the ratchet
+  cannot disagree.
 
 WHAT STAYS SCOPED TO .tex, AND WHY. Three families, three separate reasons, all three
 measured before they were decided:
@@ -390,8 +394,8 @@ measured before they were decided:
       matched by the `-target` noun. A dated snapshot of a filling cell is history; the
       rule exists to stop a filling cell being quoted FORWARD, and forward is `paper/`.
 
-  (c) THE RETIRED-VALUE HALF OF SUPERSEDED (29 of the 37 entries) -- 273 findings across
-      38 files, and this is the one worth reading twice, because the temptation is to
+  (c) THE RETIRED-VALUE HALF OF SUPERSEDED (29 of the 41 entries) -- 274 findings across
+      39 files, and this is the one worth reading twice, because the temptation is to
       widen it. A retired VALUE is a fact about a run, and outside `paper/` this repo
       legitimately restates one in three distinct ways, which are the top offenders in the
       census:
@@ -406,11 +410,20 @@ measured before they were decided:
           `results/ceiling_saturation_finding.md` (20),
           `results/post_overnight_claim_review.md` (19).
       A retired POSITION has no such legitimate use: no file has any reason to ASSERT that
-      the estimand dissolves. The only innocent restatements are quoting-to-disown (which
-      the `denial` gate already handles) and the ledger / ruling / history files, which are
-      named in OUT_OF_SCOPE below. That asymmetry -- values are stored, positions are only
-      ever claimed -- is the whole of the tier-2 line, and it is exactly the distinction
-      today's defect demonstrated.
+      the estimand dissolves. The innocent restatements are quoting-to-disown and the
+      ledger / ruling / history files, which are named in OUT_OF_SCOPE below. That
+      asymmetry -- values are stored, positions are only ever claimed -- is the whole of
+      the tier-2 line, and it is exactly the distinction today's defect demonstrated.
+
+      THIS PARAGRAPH USED TO SAY quoting-to-disown was handled by "the `denial` gate
+      already", and it was not: the register this file shipped with pinned SIX findings
+      and classified all six as quoting-to-disown that the gate could not reach. A
+      docstring asserting a capability its own register records as absent is the same
+      object as an untagged operational number -- a claim with no evidence behind it,
+      standing where a reader will trust it. The gate was rebuilt on 2026-08-27 to make
+      the sentence true rather than the sentence softened to make the gate excusable, and
+      all six went green with no file but this one changing. See the block above
+      `_is_disowned` for the three constructions and their costs.
 
 --------------------------------------------------------------------------------------
 THE RATCHET (2026-08-26), and why widening could not simply go green.
@@ -422,10 +435,12 @@ GAINS one -- so the arriving backlog is PINNED rather than SILENCED, and any new
 still fails the build. That device is followed here rather than reinvented, down to the
 failure in the other direction: a file that drops BELOW its baseline also fails, because a
 register that can only be raised rots upward. The counts, and what each one is, are in
-KNOWN_OPEN below; there are 32 across 7 files -- 736 + 73 + 273 findings avoided by the
-scoping above, and 32 held.
+KNOWN_OPEN below; there are 26 across 5 files -- 736 + 73 + 274 findings avoided by the
+scoping above, and 26 held. It was 32 across 7 on 2026-08-26; the six that left were false
+positives on correct writing, cleared by rebuilding the disowning gate rather than by
+lowering a pin, and KNOWN_OPEN says so per file.
 
-WHAT A BASELINE IS NOT. It is not an opinion that the site is fine. Two of the seven files
+WHAT A BASELINE IS NOT. It is not an opinion that the site is fine. Two of the five files
 carry a LIVE, uncorrected assertion of a position section 13 retracts, and the ratchet
 records exactly that rather than hiding it. The honest way to lower an entry is to fix the
 site and lower the number in the same commit. The dishonest way is to raise the number,
@@ -460,18 +475,35 @@ PAPER = REPO / "paper"
 # absent: .jsonl and .csv (run checkpoints and audit tables; machine records that no one
 # reads a claim out of), .log, and .txt (`results/env_check.txt` is captured tool output).
 # Add one when a claim is found in it, not in advance.
+# (This paragraph appeared TWICE here, verbatim, until 2026-08-27. Nothing turned on it and
+# nothing caught it, which is a small argument for reading a comment block through once
+# before adding to it.)
 #
-# THE SUFFIXES ARE THE PROSE-BEARING ONES. .md, .py, .sh and .json are where all sixteen of
-# the 852e0f7 sites lived -- reports, generators, wrappers and figure sidecars. Deliberately
-# absent: .jsonl and .csv (run checkpoints and audit tables; machine records that no one
-# reads a claim out of), .log, and .txt (`results/env_check.txt` is captured tool output).
-# Add one when a claim is found in it, not in advance.
-# --------------------------------------------------------------------------------------
+# THE GAPS CLOSED ON 2026-08-27, each decided by measurement rather than by symmetry:
+#   `README.md`             the repo's front door. Nothing in it today, but it is the most
+#                           read-FORWARD file here, and forward is the whole of the scope
+#                           test. In scope on the principle, at zero cost.
+#   `results/figures/*.json` `figures/*.json` was in scope and this sibling directory was
+#                           not, for no reason anyone recorded. Sidecars are exactly where
+#                           a withdrawn interval gets stored next to a plot.
+#   `src/*.py`, `src/se/*.py`, `src/se/attacks/*.py`
+#                           the library, 25 files, listed one directory at a time because
+#                           `src/**/*.py` is the recursive form this comment refuses. It
+#                           reports 0 findings today; it is in scope because a claim
+#                           authored in the library reaches the paper the same way a claim
+#                           authored in a generator does, and `scripts/` is already here on
+#                           that argument. Measured before adding, so this is a decision
+#                           and not an enthusiasm.
+# Still deliberately absent: `notebooks/` (scratch, not read forward), `configs/*.json`
+# (settings, no prose), `dashboard/` and `vendor/` (not ours).
 WIDE_GLOBS = (
+    "README.md",
     "docs/*.md",
     "figures/*.md", "figures/*.json",
     "results/*.md", "results/*.json",
+    "results/figures/*.json",
     "scripts/*.py", "scripts/*.sh",
+    "src/*.py", "src/se/*.py", "src/se/attacks/*.py",
     "tests/*.py",
 )
 
@@ -493,47 +525,55 @@ WIDE_GLOBS = (
 # danger from a log was never that it CONTAINS a dead claim but that the claim gets quoted
 # FORWARD. Forward is where the scope is.
 #
-# The counts below are the TIER-2 counts -- what these files would report under the eight
-# position rules, measured, not what they report under all 37. (Under all 37 they are 85,
-# 145, 91 and 31; quoting those here would be quoting a number from a different guard,
-# which is the failure this whole ledger is about.)
+# NO COUNTS IN THESE REASONS, AND THAT IS THE 2026-08-27 FIX. Every one of them carried a
+# figure -- "39 tier-2 findings", "53", "9", "under all 37 they are 85, 145, 91 and 31" --
+# and four of the eight had gone stale within a day of being written: measured on the same
+# files, the true numbers were 41 and 101 and 86. They went stale for the reason every
+# hand-maintained number in this file goes stale, which the module docstring calls defect 5,
+# 6 and 7 and then committed a fourth time here. A count of findings is a function of the
+# RULES, and the rules change more often than the prose does.
+# So the reasons state the ARGUMENT, which does not expire, and `--dry-run` prints the live
+# count beside each excluded file, which cannot.
 OUT_OF_SCOPE: dict[str, str] = {
     "scripts/check_population_labels.py":
         "this ledger. It holds every retired sentence as a pattern AND restates each one "
         "in prose in its own `quantity` field -- \"...described as 'the resolution of the "
-        "pool'\" -- so it matches itself by construction: 39 tier-2 findings, every one of "
-        "them manufactured out of its own rules. Its prose is guarded instead by "
-        "test_the_ledgers_own_advice_passes_the_rules_it_gives, which re-runs the advice "
-        "strings through the rules and then re-runs them BLINDED to prove the green is not "
-        "luck. A targeted check on the part that is prose; not a whole-file scan of a file "
-        "whose subject matter is the patterns.",
+        "pool'\" -- so it matches itself by construction, and every finding it yields is "
+        "manufactured out of its own rules. TWO COMPENSATING CONTROLS, because the "
+        "exclusion is real and so is the hole in it: "
+        "test_the_ledgers_own_advice_passes_the_rules_it_gives re-runs the advice strings "
+        "through the rules and then re-runs them BLINDED to prove the green is not luck; "
+        "and test_the_self_excluded_files_have_not_gained_a_retired_position pins the "
+        "whole-file count, so a NEW assertion added to this file's prose fails the suite "
+        "the way it would in any other file. A count does not identify -- the same "
+        "limitation the main ratchet records -- and it is what an exclusion can afford.",
     "tests/test_population_labels.py":
-        "this ledger's probes: 53 tier-2 findings, every defect planted on purpose, once "
-        "per rule. A probe that stopped matching would be a dead test, not a clean file.",
+        "this ledger's probes: every defect planted on purpose, once per rule. A probe that "
+        "stopped matching would be a dead test, not a clean file. Same count pin as above, "
+        "and for the same reason: the exclusion must not also excuse a new claim.",
     "docs/critique_log.md":
         "append-only history -- the same call, and the same reason, as "
-        "check_operational_provenance.py's. 9 tier-2 findings, all in dated entries. "
+        "check_operational_provenance.py's. Its findings are all in dated entries. "
         "Commit 852e0f7, which fixed the sixteen live sites, left these alone in those "
         "words: rewriting a timestamped record to match today's understanding destroys the "
         "audit trail. The danger from a log was never that it CONTAINS a retracted claim "
         "but that the claim gets quoted FORWARD, and forward is paper/ and the live "
         "generators, both of which are in scope.",
     "results/n40_floor_estimator_ruling.md":
-        "the adjudication that DID the retracting. 7 tier-2 findings, all of them the "
-        "withdrawn positions being quoted in order to withdraw them, plus the branch table "
+        "the adjudication that DID the retracting. Its findings are the withdrawn "
+        "positions being quoted in order to withdraw them, plus the branch table "
         "the rest of the repo is told to cite. Scoping it in would mean the guard's own "
         "evidence file may not cite its own evidence -- the call "
         "check_operational_provenance.py makes for results/operational_number_audit.md.",
     "results/OVERNIGHT_2026-07-02.md":
         "append-only run log -- a timestamped record of what a night produced, the same "
         "class as the critique log and excluded by name in check_operational_provenance.py "
-        "too. It reports 0 tier-2 findings today, so this entry buys nothing NOW and is "
+        "too. It reports nothing today, so this entry buys nothing NOW and is "
         "here on the principle rather than on the count: a log that later quotes a "
         "retracted position is recording history, and rewriting it to satisfy a linter "
         "destroys the audit trail.",
     "results/OVERNIGHT_2026-07-05.md":
-        "append-only run log; identical reasoning to the 07-02 entry above, and likewise "
-        "0 tier-2 findings today.",
+        "append-only run log; identical reasoning to the 07-02 entry above.",
 }
 
 # strip_latex preserves the backslash of an ESCAPED percent (`42\%` stays `42\%`), because
@@ -701,6 +741,152 @@ _NON_BINDING_RE = re.compile("|".join(NON_BINDING_CUES), re.IGNORECASE)
 # Sentence-ish boundaries. `(?=\s)` is load-bearing: it keeps the decimal point of `1.380`
 # from being read as the end of a sentence.
 _TERM_RE = re.compile(r"[.:;!?](?=\s)")
+
+
+# --------------------------------------------------------------------------------------
+# IS THIS SENTENCE DISOWNING THE CLAIM?  (2026-08-27, replacing a proximity test)
+#
+# WHAT WAS THERE AND WHY IT WAS THE WRONG QUESTION. `denial` used to be `_is_non_binding`
+# unchanged: "does any of not / never / nor / than / rather than / drawn from sit in the
+# 30 characters before this?" That is the right question for a POOL LABEL, where the cue
+# genuinely modifies the label ("unlike the fair pool's 0.704"). It is the wrong question
+# for a retired POSITION, because a position is disowned by a CONSTRUCTION and not by the
+# presence of a negative word, and the two come apart in both directions. Measured on the
+# guard as it shipped:
+#
+#   FALSE NEGATIVE  "The reason is not obvious, but the estimand dissolves once the
+#                   ceiling atom empties."            -> GREEN. The `not` denies the
+#                   obviousness of the reason; the clause after `but` asserts the
+#                   retracted position flatly, and the gate cannot tell.
+#   FALSE NEGATIVE  "It is worse than that -- the estimand dissolves..."  -> GREEN, on the
+#                   `than` of a comparison that has nothing to do with the claim.
+#   FALSE POSITIVE  "The estimand doesn't dissolve."  -> RED, while "does not dissolve" is
+#                   green. NON_BINDING_CUES carries no contraction at all, and the
+#                   `\bn't\b` written into the estimand rule's tempered gap was DEAD: the
+#                   `n` of `doesn't` is preceded by a word character, so `\b` cannot match
+#                   there. A guard that reddens a denial because of an apostrophe is the
+#                   false positive this file's own threat model ranks above every miss.
+#
+# SO ASK THE QUESTION DIRECTLY. Three constructions disown a proposition in the prose this
+# repo actually contains, and the gate tests for those three rather than for a word:
+#
+#   D1  THE CLAIM'S OWN VERB IS NEGATED. The negator sits INSIDE the matched span:
+#       "the estimand does not dissolve", "doesn't dissolve", "never dissolves". This is
+#       the case the tempered gap was reaching for, done where it can see a contraction.
+#
+#   D2  THE MATRIX IS NEGATED, IN THE SAME CLAUSE. "It is not that the estimand
+#       dissolves", "It does not follow that a larger pool reports a smaller floor",
+#       "nothing here says the estimand dissolves". The scope runs back to the nearest
+#       CLAUSE break rather than a fixed 30 characters -- and clause is the whole of the
+#       fix, because `, but`, ` -- ` and a bare coordinating conjunction all START a new
+#       clause, which is exactly where the two false negatives above put the assertion.
+#
+#   D3  THE CLAIM IS ATTRIBUTED TO A PAST STATE OF THE TEXT, IN ORDER TO BE WITHDRAWN.
+#       `This banner said "the estimand stops existing when the ceiling atom empties"
+#       until 2026-08-26; sec. 13 retracts that`. Every corrected file in this repo
+#       records what it used to say in that shape, and the previous gate could not reach
+#       ANY of them -- its lookback ran backwards and the disavowal follows the
+#       quotation. Six of the 32 findings the ratchet pinned on 2026-08-26 were exactly
+#       this, pinned because the gate could not see them; the module docstring meanwhile
+#       asserted the gate "already handles" quoting-to-disown. It does now.
+#
+# D3 REQUIRES TWO KEYS, and that is deliberate. The note the previous round left says a
+# gate that read "said X ... retracts that" would also read "said X" alone, and it would:
+# a bare attribution is how a claim gets repeated, not how it gets withdrawn. So D3 needs
+#   (i)  the claim to sit inside a QUOTATION, or to follow a PAST-TENSE attribution in the
+#        same sentence ("said", "carried", "used to give", "went on saying") -- and past
+#        tense is the discriminating half. A correction note reports what the text USED to
+#        say; a stale brief asserts in the present. `says`, `states` and `asserts` are
+#        deliberately absent for that reason, so "The ruling states that the N=40 floor
+#        takes the question bootstrap" gets no exculpation from the citation.
+#   (ii) a DISAVOWAL marker within a sentence either side -- a retraction, a withdrawal,
+#        a supersession, or a dated "until YYYY-MM-DD".
+# `This banner said "the estimand stops existing"` with nothing else in the paragraph
+# stays RED, and there is a control on it.
+#
+# THE QUOTATION TEST IS OVERLAP, NOT CONTAINMENT, and that was measured rather than
+# guessed: the three correction notes in this repo that record a WRONG-ESTIMATOR defect
+# write it as `... said the measured N=40 floor takes "Wilson on the count" for a whole
+# round after the ruling withdrew both candidates`, where the quotation opens in the
+# middle of the matched phrase. Containment sees no quotation there at all.
+#
+# WHAT IT COSTS, stated rather than discovered:
+#   * A disowning spread across two clauses is now flagged. "This is not our position. We
+#     hold that the estimand dissolves" was green under the old gate only by accident (the
+#     full stop already clipped it); "It is not our position, but the estimand dissolves"
+#     is now RED and a human would call that a fair reading of the sentence.
+#   * `\bno\b` is NOT a negator here, and the omission is load-bearing rather than an
+#     oversight: the index case reads "a count at NO FIXED THRESHOLD at all and takes the
+#     question bootstrap", and a gate that treated bare `no` as a denial would exculpate
+#     the one sentence this whole round exists to catch. `nothing`, `no longer` and
+#     `neither` are in, because each of them negates a proposition rather than a noun.
+#   * D3 can be bought with a quotation plus an unrelated "correction" in the next
+#     sentence. Narrow, and cheaper than the six false positives it removes.
+# --------------------------------------------------------------------------------------
+# A negator that negates a PROPOSITION. See the note above for why bare `no` is absent.
+_NEGATOR = (r"(?:\bnot\b|\bnever\b|\bnor\b|\bno longer\b|\bnothing\b|\bneither\b"
+            r"|\bnone\b|n['’]t\b|\bfails? to\b|\bdenies\b|\bdeny\b|\brefus\w+\b)")
+# ...and a contrastive frame, which disowns without negating.
+_CONTRAST = (r"(?:\brather than\b|\binstead of\b|\bas opposed to\b|\bfar from\b"
+             r"|\bother than\b|\bunlike\b|\bmistaken\w*\b|\bwrongly\b)")
+_DISOWN_RE = re.compile(_NEGATOR + "|" + _CONTRAST, re.IGNORECASE)
+
+# Where a clause starts. Sentence terminators (the same set `_TERM_RE` uses, so the two
+# cannot drift), a dash aside, a bracket, and a coordinating conjunction with or without
+# its comma. `and` is in the list: "The atom is not full and the estimand dissolves"
+# asserts the position in its second clause, and the first clause's `not` is about the
+# atom.
+_CLAUSE_BREAK_RE = re.compile(
+    r"[.:;!?](?=\s)"
+    r"|\s(?:--+|[–—])\s?"
+    r"|,\s*(?=(?:but|yet|and|so|though|although|however|while|whereas|because|since)\b)"
+    r"|\s(?=(?:but|yet|however|whereas|although|though)\b)"
+    r"|\s(?<=\s)and(?=\s)"
+    # A TABLE CELL WALL IS A CLAUSE BOUNDARY, and this repo is mostly tables outside
+    # paper/. Without it, `| the subset-averaged replayed floor (...) | the questions only
+    # | a bootstrap over questions only | | the measured N=40 floor | ... |` reads as one
+    # clause, and the estimator-ownership rule binds a phrase in one cell to a row name in
+    # the NEXT ROW -- measured, on results/replay_control.md's own summary table, which is
+    # correct as written.
+    r"|\|"
+    # ...and so is a code-comment marker. `strip_plain` collapses newlines, so a `.py` file
+    # arrives here as one unbroken line and a comment inherits the clause of whatever
+    # statement precedes it. Measured: `assert " ".join(b.split()) NOT in paper, "..."`
+    # followed by `# the estimand dissolves` exculpated the comment on the `not` of the
+    # assertion above it.
+    r"|#+"
+    r"|[()\[\]]",
+    re.IGNORECASE)
+
+# The claim is being withdrawn, not repeated. One of these must accompany a quotation
+# before D3 exculpates it.
+_DISAVOWAL = [
+    r"\buntil \d{4}-\d{2}-\d{2}\b", r"\bretract\w*", r"\bwithdraw\w*", r"\bwithdrew\b",
+    r"\bwithdrawn\b", r"\bused to\b", r"\bpreviously\b", r"\bformerly\b",
+    r"\bno longer\b", r"\bsupersede\w*", r"\bretire[ds]?\b", r"\bstruck\b",
+    r"\bdeleted\b", r"\bcorrect(?:ed|ion|ions)\b", r"\bwas wrong\b", r"\bis wrong\b",
+    r"\bmust not\b", r"\bdo not (?:restate|print|write|say|quote|reinstate)\b",
+    r"\bsec(?:tion)?\.?\s*13\b", r"\bsec(?:tion)?\.?\s*2\b", r"\bbanned\b",
+    r"\bforbid\w*", r"\bdead claim\b", r"\bhad been changed\b", r"\bchanged to\b",
+    r"\bthe defect\b", r"\bcontradict\w*", r"\bdisagree\w*", r"\bnothing caught it\b",
+]
+_DISAVOWAL_RE = re.compile("|".join(_DISAVOWAL), re.IGNORECASE)
+
+# PAST-TENSE ATTRIBUTION. What a correction note reaches for when it reports what the text
+# used to say. The present-tense reporting verbs (`says`, `states`, `asserts`, `claims`)
+# are DELIBERATELY ABSENT -- they are how a live claim is cited, and admitting them would
+# let "the ruling states that the N=40 floor takes the question bootstrap" buy its own
+# exculpation off a nearby word.
+_ATTRIBUTED = re.compile(
+    r"\b(?:said|read|carried|gave|stated|instructed|told|wrote|printed|reprinted"
+    r"|named|claimed|asserted|proposed|concluded"
+    r"|used to \w+|went on \w+ing|had \w+ed|was \w+ing|previously \w+)\b",
+    re.IGNORECASE)
+
+# A quoted stretch. `"` and the curly pair only: `'` is an apostrophe far more often than
+# a quotation mark in this repo's prose, and backticks are already gone by the time the
+# plain flattener is done with them.
+_QUOTE_RE = re.compile(r"[\"“][^\"“”]{0,600}[\"”]")
 
 
 # --------------------------------------------------------------------------------------
@@ -1120,7 +1306,19 @@ _COVERAGE_PAIR = (
 _BOTH_BRANCHES = [
     r"\bif (?:it|that|this|they|so|not|the population|the pool|the top|the sample"
     r"|the atom|the rung)\b",
-    r"\bonly if\b", r"\bunless\b", r"\bwhether\b",
+    r"\bonly if\b",
+    # `whether` and `unless` WERE BARE UNTIL 2026-08-27, and bare they are magic words in
+    # the same way `calibrated` was: "reports a smaller floor, whether or not anyone
+    # checks" and "...unless the run crashes" both exculpated on a conditional about
+    # something else entirely. They now have to be conditional ON THE THING IN DISPUTE,
+    # which is the rule the `if` entry above has always followed and the reason it names
+    # its subjects. Checked afterwards against all five passages in this repo that state
+    # the dichotomy correctly: none of them loses its exculpation, because every one is
+    # already carried by the `if` entry.
+    r"\bwhether (?:it|that|this|the population|the pool|the top|the sample|the atom"
+    r"|the rung|the floor|a larger pool|\w+ can)\b",
+    r"\bunless (?:it|that|this|the population|the pool|the top|the sample|the atom"
+    r"|the rung|the floor)\b",
     r"\bnot identified\b", r"\bnon-?identif", r"\bunidentified\b",
     r"\bnot determinable\b", r"\bcannot be (?:decided|settled|determined)\b",
     r"\bcannot (?:decide|settle|tell|distinguish|choose)\b",
@@ -1147,9 +1345,21 @@ _BOTH_BRANCHES = [
 # entries earn their place the moment the scope widens to results/ and scripts/, where
 # the corrected tables are plain text and do carry a literal `tau_top`. Verified rather
 # than assumed -- test_strip_latex_is_not_safe_for_the_files_this_ledger_is_aimed_at.
+#
+# `calibrated` IS NO LONGER A MAGIC WORD, 2026-08-27. It was admitted bare, and bare it
+# exculpates on a word that has nothing to do with this dichotomy: `\bcalibrated\b` occurs
+# in 36 of the 228 tier-2 files, meaning embedding calibration, judge-threshold
+# calibration or probability calibration, so
+#     "The judge threshold was calibrated on the pilot; Wilson covers 53.7% at nominal 95%"
+# passed with no branch named anywhere in it -- the exact defect, wearing a neighbouring
+# subfield's vocabulary. The exculpation is now tied to the BRANCH BEING NAMED: `calibrated`
+# has to be calibrating the Ewens fit / the model / the branch, which is what every
+# corrected site in this repo actually writes ("calibrated Ewens (tau_top = 0.2726%)").
+# Re-measured against the corrected sites afterwards: no loss.
 _BRANCH_NAMED = [
     r"\bEwens\b", r"\bzero branch\b", r"\btau[_ ]?top\b", r"\btau\s*\*",
-    r"\bcalibrated\b", r"\bbranch[- ]conditional\b",
+    r"\bcalibrated (?:\w+ ){0,2}(?:fit|model|branch|Ewens)\b",
+    r"\bcalibrated Ewens\b", r"\bbranch[- ]conditional\b",
 ]
 
 # Topical gates. `_FLOOR_CTX` keeps "reports a smaller one" pinned to this floor;
@@ -1167,6 +1377,78 @@ _FLOOR_CTX = [r"\bfloor\b", r"\brung\b", r"\bpool\b", r"\batom\b"]
 _COVERAGE_CTX = [r"\bcover(?:s|ed|age|ing)?\b", r"\bnominal\b"]
 _FLOOR_RESOLUTION_CTX = [r"\bresolution\b", r"\b4/200\b", rf"\b2\.0{PCT}",
                          r"\bfloor\b", r"N\s*\{?=\}?\s*40\b"]
+
+# --------------------------------------------------------------------------------------
+# THE SHAPES, 2026-08-27. Widened from single spellings after 30 of 56 evasion probes got
+# through -- and widened only as far as the THREAT MODEL justifies, which is the part worth
+# reading. This guard does not defend against an adversary; nobody is trying to smuggle a
+# retracted claim past it. It defends against a writer working from a stale brief. So the
+# test for admitting a rendering is "would a careless writer produce this sentence", and
+# the test for declining one is the same question answered no.
+#
+# ADMITTED, because they are the ordinary English for the retracted claim:
+#   dissolves / breaks / stops existing / ceases to exist   (the six that were already here)
+#   vanishes / evaporates / disappears / dissipates / goes away / melts away
+#   is undefined / is no longer well defined / stops being well defined
+#   has no referent / has nothing left to name / stops naming anything
+#
+# DECLINED, each with the writer who would have to produce it:
+#   * "the estimand sublimates", "the estimand is annihilated". Nobody writing about a
+#     false-alarm floor reaches for these. A rule for them buys nothing and enlarges the
+#     surface on which a false positive can happen.
+#   * Any rendering that drops the noun `estimand` entirely -- "there is nothing left to
+#     estimate", "the target of estimation goes away". These are declined for a specific
+#     reason rather than for taste: the ceiling-atom argument the paper makes CORRECTLY
+#     uses that vocabulary ("what is left varying is which 200 questions were drawn"), and
+#     an anchor-free rule would have to arbitrate a topic it cannot see. The noun is what
+#     makes the claim about the estimand rather than about the estimator, and the estimator
+#     half is exactly what six correct passages say ("both estimators fail").
+#   * The passive with an agent -- "the estimand is dissolved by the empty atom". Grammatical
+#     and vanishingly unlikely; and `dissolv\w*` catches it anyway, which is the argument for
+#     stemming rather than enumerating.
+_ESTIMAND_GONE = (
+    r"(?:dissolv\w*|stops? existing|stopped existing|ceas\w+ to exist"
+    r"|breaks?\b|broken\b|no longer exists?\b"
+    r"|vanish\w*|evaporat\w*|disappear\w*|dissipat\w*|goes away\b|melts? away\b"
+    r"|undefined\b|stops? being (?:well[- ])?defined"
+    r"|has no (?:referent|target|meaning)\b|stops? naming\b)")
+
+# THE SMALLER-FLOOR SHAPE. Same widening, same test. The rule matched one verb and two
+# nouns -- `reports a smaller floor|one` -- and missed "reports a LOWER floor", "gives a
+# smaller number for the floor" and "the floor shrinks as the pool grows", all three of
+# which are how the claim gets restated by someone paraphrasing rather than copying.
+#
+# TWO PATTERNS, NOT ONE, because the claim has two grammars. The TRANSITIVE one has the
+# pool as subject ("a larger pool reports a smaller floor"); the INTRANSITIVE one has the
+# floor as subject ("the floor shrinks as the pool grows") and no reporting verb at all,
+# so no widening of the first can reach it.
+#
+# DECLINED: "the floor is a decreasing function of pool size" (nobody in this repo writes
+# in that register, and a rule for it would reach every monotonicity statement in the
+# Methods); and the quantified form "537 of 1000 replicate pools reached a higher rung",
+# which is a MEASUREMENT of the branch rather than an assertion of it -- the ruling's own
+# section 8 prints numbers of that shape on purpose.
+_SMALLER = r"(?:strictly |much |far |slightly |systematically )?(?:smaller|lower|tinier)"
+_REPORTS_SMALLER = (
+    r"(?:report|give|yield|produce|return|record|show|quote|print)\w*\s+"
+    r"(?:a |an |the )?" + _SMALLER + r"\s+(?:floor|one|number|rate|value|estimate)\b"
+    # ...but not the displaced-noun form, which the rule below owns. Without this the
+    # single sentence "gives a smaller number for the floor" is reported twice, and a
+    # register that reports one site twice is a register that gets skimmed.
+    r"(?!\s+for (?:the |its )?floor\b)")
+# ...and with the noun displaced: "gives a smaller number FOR THE FLOOR".
+_REPORTS_SMALLER_FOR = (
+    r"(?:report|give|yield|produce|return|record|show|quote|print)\w*\s+"
+    r"(?:a |an |the )?" + _SMALLER + r"\s+\w+\s+for (?:the |its )?floor\b")
+# The intransitive grammar. Gated on the pool GROWING, because a floor that falls for some
+# other reason is not this claim -- the whole content of the retracted sentence is that the
+# quantity moves WITH THE POOL.
+_FLOOR_FALLS = (r"\bfloor\b[^.;:!?]{0,24}?"
+                r"\b(?:shrinks?|falls?|drops?|declines?|goes down|gets smaller"
+                r"|becomes smaller|is smaller|is lower)\b")
+_POOL_GROWS = [r"larger pool", r"bigger pool", r"wider pool", r"pool grows",
+               r"pool gets larger", r"as the pool", r"with the pool", r"pool size",
+               r"more answers", r"grows\b"]
 
 _FLOOR_WITHDRAWN = (
     "the N=40 floor is printed as a POINT with no interval; the interval that survives "
@@ -1343,19 +1625,42 @@ SUPERSEDED: list[dict] = [
     # far above the truth. 0/200 is the modal outcome under BOTH. So the retraction is not
     # "the floor is smaller than we said" -- it is that tau_top is NOT IDENTIFIED, which is
     # model-free and stronger. Ruling sections 1 (M5), 2, 8.4 and 13.
-    # `denial` IS ARMED ON THE FIVE FLAT RULES BELOW and on neither coverage rule. A flat
-    # rule has to survive being quoted in the sentence that disowns it, because that is how
-    # every corrected file in this repo records what it used to say. A coverage rule must
-    # not: "not 53.7%" is still 53.7% quoted with no branch named, which is the defect.
-    # This is `_is_non_binding` doing the same job it does for pool labels, not a new
-    # mechanism -- the lookback and the sentence clipping come with it, and the clipping is
-    # what keeps the pre-fix wording of START_HERE red while the post-fix wording is green.
-    {"pattern": r"estimand\b(?:(?!\b(?:not|never|nor|n't)\b)[^.;:!?]){0,28}?"
-                r"\b(?:dissolv\w*|stops? existing|stopped existing|ceas\w+ to exist"
-                r"|breaks?\b|broken\b|no longer exists?\b)",
+    # `denial` IS ARMED ON EVERY WORD RULE BELOW and on neither coverage rule. A word rule
+    # has to survive being quoted in the sentence that disowns it, because that is how every
+    # corrected file in this repo records what it used to say. A coverage rule must not:
+    # "not 53.7%" is still 53.7% quoted with no branch named, which is the defect.
+    # `denial` is `_is_disowned` -- three named disowning constructions, NOT a
+    # proximity-to-a-negative-word test; see the block above that function for what each one
+    # is, what changed on 2026-08-27 and what the change costs.
+    #
+    # THE VERB SET IS A SHAPE, NOT A SPELLING (widened 2026-08-27). It carried six verbs and
+    # a literal noun, and 30 of 56 evasion probes walked through the gaps: `the estimand
+    # vanishes`, `evaporates`, `is no longer well defined`. Every one of those is a sentence
+    # a writer working from a stale brief would actually produce -- they are the ordinary
+    # English for "dissolves" -- so they are closed here, on the `\b\d+/97\b` precedent that
+    # this file already applies to numerators. What is DECLINED, and why, is in the note
+    # below `_ESTIMAND_GONE`.
+    {"pattern": r"estimand\b(?:(?!" + _NEGATOR + r")[^.;:!?]){0,28}?\b" + _ESTIMAND_GONE,
      "denial": True, "wide": True, "run": "pre-sec-13",
      "quantity": "the N=40 floor's estimand described as DISSOLVING, breaking or ceasing "
                  "to exist once the ceiling atom empties",
+     "replacement": _NOT_IDENTIFIED},
+    # ...AND THE RENDERINGS WHOSE OWN WORDS CARRY THE NEGATION. "the estimand is no longer
+    # well defined" and "the estimand is not well defined" ARE the retracted claim; the
+    # negator belongs to the claim, not to a denial of it. They cannot ride on the rule
+    # above, whose tempered gap refuses to span a negator -- that tempering is what keeps
+    # "the estimand does not break" green and it must stay. So they are armed separately.
+    # `_is_disowned` reads only OUTER constructions, so the constitutive negation inside
+    # these patterns cannot exculpate them, while "It is not that the estimand is no longer
+    # well defined" still goes green on D2.
+    {"pattern": r"estimand\b[^.;:!?]{0,28}?\b(?:is|was|becomes?|became)\s+"
+                r"(?:no longer|not)\s+(?:a\s+|an\s+)?"
+                r"(?:well[- ]defined|defined|meaningful|coherent|identifiable"
+                r"|a real quantity|anything at all)",
+     "denial": True, "wide": True, "run": "pre-sec-13",
+     "quantity": "the N=40 floor's estimand described as NO LONGER WELL DEFINED once the "
+                 "ceiling atom empties -- the same retracted claim with the negation "
+                 "inside it",
      "replacement": _NOT_IDENTIFIED},
     # THE SAME CLAIM WITH THE WORDS THE OTHER WAY ROUND, which the rule above cannot see
     # because it anchors on the noun and scans forward. `results/n_scaling_grid.md` and its
@@ -1386,12 +1691,46 @@ SUPERSEDED: list[dict] = [
     # characters. `near` is doing a second, smaller job here: it is what keeps the
     # "...reports a smaller one" rendering (which `docs/START_HERE_overnight.md` carried)
     # from matching a smaller anything in a passage that is not about this floor at all.
-    {"pattern": r"report(?:s|ed|ing)? a (?:strictly |much |far )?smaller (?:floor|one)\b",
-     "near": _FLOOR_CTX, "absent": _BOTH_BRANCHES, "span": 1,
+    #
+    # IT NOW CARRIES `denial` TOO, AND THAT IS A FALSE-POSITIVE FIX (2026-08-27). It shipped
+    # without one, on the argument recorded in
+    # test_the_denial_gate_is_armed_on_the_flat_rules_and_on_no_coverage_rule: that a "not"
+    # thirty characters back is not evidence the DICHOTOMY was stated. The argument was
+    # sound about the OLD gate and it produced a plain false positive anyway --
+    #     "It does not follow that a larger pool reports a smaller floor"
+    # was RED, which is the guard reddening a sentence that says the right thing, on a rule
+    # whose own comment says a guard that fires on correct usage teaches its user to silence
+    # it. The premise has also changed: `_is_disowned` is not a lookback, it is a test for
+    # three disowning CONSTRUCTIONS, and "it does not follow that X" is one of them by
+    # construction rather than by proximity. `absent` still does the work it always did --
+    # stating the dichotomy is still what green normally requires -- and `denial` only adds
+    # the case where the sentence denies the claim outright instead of conditioning it.
+    {"pattern": _REPORTS_SMALLER,
+     "near": _FLOOR_CTX, "absent": _BOTH_BRANCHES, "span": 1, "denial": True,
      "wide": True, "run": "pre-sec-13",
      "quantity": "'a larger pool reaches a higher rung and reports a smaller floor' "
                  "stated UNCONDITIONALLY -- one branch of a dichotomy the sample cannot "
                  "settle, presented as the finding",
+     "replacement": _NOT_IDENTIFIED},
+    # ...the same claim with the noun displaced ("a smaller NUMBER for the floor"), which
+    # the pattern above cannot see because it requires the floor noun in the object slot.
+    {"pattern": _REPORTS_SMALLER_FOR,
+     "near": _FLOOR_CTX, "absent": _BOTH_BRANCHES, "span": 1, "denial": True,
+     "wide": True, "run": "pre-sec-13",
+     "quantity": "'a larger pool gives a smaller number for the floor' stated "
+                 "UNCONDITIONALLY -- the same single branch, with the floor noun moved "
+                 "out of the object slot",
+     "replacement": _NOT_IDENTIFIED},
+    # ...and the INTRANSITIVE grammar, which has no reporting verb at all and so cannot be
+    # reached by widening either pattern above: "the floor shrinks as the pool grows". Its
+    # `near` gate is `_POOL_GROWS` rather than `_FLOOR_CTX`, because a floor that falls for
+    # any other reason is a different sentence -- the retracted content is specifically that
+    # the quantity moves WITH THE POOL.
+    {"pattern": _FLOOR_FALLS,
+     "near": _POOL_GROWS, "absent": _BOTH_BRANCHES, "span": 1, "denial": True,
+     "wide": True, "run": "pre-sec-13",
+     "quantity": "'the floor shrinks as the pool grows' stated UNCONDITIONALLY -- the "
+                 "same single branch in the grammar where the floor is the subject",
      "replacement": _NOT_IDENTIFIED},
     # THE COVERAGE PAIR, ARMED AS AN ADJACENCY RULE RATHER THAN A PHRASE RULE, on this
     # file's standing paired-endpoint precedent (`\b9\.0\s*,\s*12\.2`, where 9.0 is live
@@ -1442,6 +1781,50 @@ SUPERSEDED: list[dict] = [
      "quantity": "the question bootstrap's coverage for the N=40 floor, quoted WITHOUT "
                  "the population it was measured under",
      "replacement": _COVERAGE_PAIR},
+    # ORDINARY NUMBER FORMS FOR THE SAME TWO COVERAGES, added 2026-08-27. The two rules
+    # above pin exact renderings -- `53.7` / `53.67` and `0.00%` -- and a writer restating a
+    # figure rounds it, drops a decimal or drops the percent sign. Measured: `0%`, `0.0%`
+    # and `about 54%` all passed.
+    #
+    # ARMED AS AN ADJACENCY TO THE COVERAGE VERB, NOT AS A NUMBER WITH A 300-CHARACTER
+    # `near` WINDOW, and the difference is a false positive this rule would otherwise
+    # certainly produce. `0.0%` is ALSO the at-cap mass -- `0/200 = 0.0% [0.0%, 1.9%]` --
+    # which is the quantity the ruling tells everyone to print INSTEAD, and in the corrected
+    # banners it sits one sentence away from the word "covers". A `near` gate cannot tell
+    # those apart; requiring the zero to be the grammatical object of the covering verb can,
+    # because nobody writes "covers 0.0%" about the at-cap mass. So the number has to sit
+    # within a clause of `cover*`, on either side of it, with no sentence boundary between.
+    #
+    # THE SET IS `0`, `0.0`, `54`, `54.0` AND NOTHING ELSE, and every exclusion was forced
+    # by a dry run rather than chosen:
+    #   * `53.x` is absent because the two exact rules already arm `53.7` and `53.67`, and
+    #     leaving it in produced a SECOND finding on the same site in two files -- one
+    #     figure reported twice is how a register learns to be skimmed. 53.67 rounds to 54
+    #     anyway, so a writer who rounds writes 54 and a writer who writes 53 is writing a
+    #     different number.
+    #   * `(?<![\d.%])` is load-bearing. Without it `\b0` matches the trailing zero of
+    #     `5.0%` -- `.` is a non-word character, so `\b` sits happily between the two -- and
+    #     `results/n_scaling_plan.md` has a budget table whose every row ends
+    #     `| 4.0% | ... | no -- interval covers 5% |`. Twenty rows of correct arithmetic,
+    #     reported as withdrawn coverage figures.
+    #   * the REVERSE arm requires the noun `coverage`, not any `cover*`, because a verb
+    #     after the number is nearly always the containment sense ("interval covers 5%")
+    #     and the noun is nearly always the probabilistic one ("0.00% coverage").
+    # Counts out of a replicate pool -- "covers in 537 of 1000 pools" -- are also absent,
+    # and that is a threat-model call rather than an oversight: a careless writer restating
+    # a coverage quotes the percentage, and the ruling's own section 8 prints replicate
+    # counts on purpose.
+    {"pattern": r"cover(?:s|ed|age|ing)?\b[^.;:!?]{0,44}?"
+                r"(?:about |roughly |around |approximately |nearly |just over "
+                r"|just under |some )?(?<![\d.%])(?:0|0\.0|54|54\.0)\s*" + PCT + r"(?!\d)"
+                r"|(?<![\d.%])(?:0|0\.0|54|54\.0)\s*" + PCT + r"(?!\d)"
+                r"[^.;:!?]{0,26}?\bcoverage\b",
+     "absent": _BRANCH_NAMED, "span": 1,
+     "wide": True, "run": "pre-sec-8.4",
+     "quantity": "one of the two withdrawn coverage figures in a rounded or "
+                 "decimal-free rendering, quoted WITHOUT the population it was measured "
+                 "under",
+     "replacement": _COVERAGE_PAIR},
     # THE SENTENCE THE RULING FORBIDS BY NAME. Section 2: "The first version proposed the
     # Abstract say that the 2.0% 'is the resolution of the pool and not a property of the
     # detector'. Do not print that sentence." It reached the Abstract and was committed
@@ -1471,6 +1854,174 @@ SUPERSEDED_RUN = "wk9_def"
 CURRENT_RUN = "wk9_defb"
 NEAR_WINDOW = 300
 
+# --------------------------------------------------------------------------------------
+# ESTIMATOR OWNERSHIP: WHICH INTERVAL EACH ROW TAKES.  (2026-08-27)
+#
+# WHY THIS EXISTS, AND IT IS NOT A NEW CLASS. It is the INDEX CASE of the class the eight
+# rules above were built for, and until today not one of them caught it. The defect that
+# opened round five was `paper/sections/discussion.tex:306`:
+#
+#     "the measured $N{=}40$ floor is a count at no fixed threshold at all and takes the
+#      question bootstrap for the reason given above."
+#
+# -- while line 166 of the same file said it "takes neither", 144 lines apart. Run through
+# all 37 SUPERSEDED patterns in both tiers, that sentence PASSES, and so do three obvious
+# rewordings ("takes a bootstrap over the 200 questions"; "We quote a question bootstrap
+# interval for the measured N=40 floor"; and the same assertion with Wilson in it). The
+# eight rules were fitted to the SWEEP -- the sixteen follow-on sites, every one of which
+# happened to be about dissolution or about a bare coverage figure -- and not to the CLASS.
+# A ledger that catches the follow-ons and not the original is a ledger built backwards,
+# and the original design note said so: it proposed this rule and nobody built it.
+#
+# WHY A TABLE AND NOT A REGEX. The vocabulary here is CLOSED. There are three estimators
+# (Wilson, the question bootstrap, neither) and a small fixed set of rows, and every row's
+# answer is a RULING -- results/n40_floor_estimator_ruling.md sections 1, 2, 8.4 and 13 --
+# not a fact about wording. So the answer is DATA. A future re-ruling changes one cell of
+# `OWNERSHIP_ROWS` and nothing else; it does not send anyone into a regex to work out which
+# alternation branch meant which row. That is the same reason FROZEN_COUNTS is a registry
+# and the same reason GROWING_CELLS is keyed by cell.
+#
+# THE ROWS AND THEIR ANSWERS, with the ruling section that decides each:
+#
+#   the measured N=40 floor (2.0%, 4/200)        NEITHER   sec. 1 (M6, M7), 2 row 1, 13
+#       Its threshold is not fixed a priori -- it is the top score THIS sample attained --
+#       so Wilson's coverage is branch-dependent and the bootstrap's lower endpoint is
+#       placed at 1/200 by the estimator's range rather than by the data. Both were
+#       withdrawn. The row prints a POINT.
+#   the at-cap mass at ln 40 (0/200 = 0.0%)      WILSON    sec. 1, 2 row 1
+#       Threshold fixed before the data, so the interval is valid in BOTH branches. This
+#       is the quantity the ruling tells everyone to print instead.
+#   the direct N=10 floor (19/200 at ln 10)      WILSON    sec. 2; discussion.tex:310
+#       A count of independent indicators at an a-priori threshold.
+#   the achieved 5%-budget point (10/200)        WILSON    sec. 2 row 2 -- "Print Wilson,
+#       5.0% [2.7, 9.0], and retire the bootstrap [2.5, 5.0]". Note this row runs the
+#       OPPOSITE way to row 1, which is exactly why `docs/START_HERE_overnight.md` warns
+#       against "making the two rows consistent" by giving them the same estimator.
+#   the replayed / subset-averaged rows          BOOTSTRAP discussion.tex:162-166
+#       Their point estimate is an average over subset draws and no count exists, so what
+#       is left varying is which 200 questions were drawn: a bootstrap over questions is
+#       the whole of it.
+#
+# NOT IN THE TABLE, AND THE OMISSION IS THE INTERESTING PART: "the N=20 floor" and "the
+# N=10 floor" unqualified. Each names TWO different rows -- the direct count (Wilson) and
+# the subset-averaged replay (bootstrap) -- and the paper quotes the replayed one at both
+# budgets while measuring the direct one at N=10. A rule that guessed would be wrong half
+# the time, and being wrong here means reddening correct prose. Silence is the right answer
+# for an ambiguous row name; only `direct N=10` and `replayed` are unambiguous, and only
+# those are listed.
+#
+# HOW IT DECIDES, and every step is chosen to fail SILENT rather than LOUD:
+#   1. Find an OWNERSHIP PHRASE -- a predicate from the closed list immediately followed,
+#      within 40 characters and no sentence boundary, by an estimator name. "takes the
+#      question bootstrap", "belongs to Wilson", "is priced by Wilson", "carries a Wilson
+#      interval", "we quote a question bootstrap interval". The adjacency is what keeps the
+#      rule off "Wilson prices a count of independent indicators", where the predicate is
+#      followed by a noun phrase and the ownership is asserted about a row named 60
+#      characters later, and off "Neither prices the floor", where the estimator precedes
+#      the predicate.
+#   2. Find the NEAREST row name in the same clause, either side. Nearest, not any-in-
+#      window, because "...the empty at-cap mass at ln 40---while the replayed rows take a
+#      bootstrap over the 200 questions" names two rows before one ownership phrase and the
+#      near one owns it. Clause-bounded, because discussion.tex:310 puts two rows and two
+#      answers on either side of a semicolon and a window that crossed it would flag the
+#      correct sentence.
+#   3. No row in range -> SILENT. "the paper takes Wilson on the count for those rows"
+#      (results/replay_control.md:18) names no row this table knows, and the guard has
+#      nothing to say about it.
+#   4. `_is_disowned` applies, so "the N=40 floor does not take the question bootstrap" and
+#      the quoted-to-disown correction notes stay green.
+# --------------------------------------------------------------------------------------
+# The estimators. Three, and the set is closed by the ruling rather than by this file.
+_EST_PATTERNS: dict[str, str] = {
+    "wilson": r"Wilson",
+    "bootstrap": r"(?:question |questions |q-)?bootstraps?",
+    "neither": r"neither",
+}
+_EST_ALT = "|".join(f"(?P<{k}>{v})" for k, v in _EST_PATTERNS.items())
+
+# The ownership predicates. Closed list, from the design note, plus the two spellings the
+# repo actually uses (`prices`, `quote ... for`). `uses` and `gets` are in because they are
+# what a paraphraser reaches for; each is harmless on its own and only counts when an
+# estimator name follows it inside the clause.
+_OWNS_PRED = (r"(?:takes?|taking|took|belongs? to|belonging to|is priced by|are priced by"
+              r"|priced by|prices?|gets?|carries|carry|carrying|quotes?|quoting|quote"
+              r"|uses?|using|is given|are given|is interval\w+ by|goes to)")
+# `|` WAS EXCLUDED FROM THIS GAP FOR ONE AFTERNOON and the exclusion is gone, because it
+# turned out to be redundant AND to cost recall -- which is the interesting half. The table
+# it was added for is results/replay_control.md's own summary, where a predicate in the
+# first cell and an estimator in the third bound to a row name in the NEXT table row; the
+# `|` in `_CLAUSE_BREAK_RE` already refuses that binding on its own, measured. Excluding
+# `|` here as well bought nothing and silenced a real defect: a three-column mapping table
+# reading `| the measured N=40 floor | none | takes | Wilson |` states the ownership across
+# cell walls, and that is exactly the shape the one table in this repo whose job is to state
+# the mapping actually had when it went wrong. Two mechanisms doing one job is how a suite
+# ends up with a mutation nothing catches.
+_OWNERSHIP_RE = re.compile(
+    r"\b" + _OWNS_PRED + r"\b(?:[^.;:!?]{0,40}?)\b(?:" + _EST_ALT + r")\b",
+    re.IGNORECASE)
+
+# How far from an ownership phrase a row name may sit and still be the row it is about.
+# Clause-bounded first; this is the second, harder stop.
+OWNERSHIP_CHAR_CAP = 220
+# ...and how far a row name may sit AFTER one, where it has to be the predicate's object
+# rather than the next clause's subject. See the asymmetry note in `_check_ownership`.
+OWNERSHIP_OBJECT_GAP = 40
+
+_N40 = r"N\s*\{?=\}?\s*40"
+_N10 = r"N\s*\{?=\}?\s*10"
+OWNERSHIP_ROWS: list[dict] = [
+    {"row": "the measured N=40 floor (2.0%, 4/200)",
+     "takes": "neither",
+     "names": [rf"measured\s+{_N40}\s+(?:achievable\s+)?(?:false-alarm\s+)?floor",
+               rf"{_N40}\s+(?:achievable\s+)?(?:false-alarm\s+)?floor",
+               rf"floor\s+at\s+{_N40}",
+               rf"{_N40}\s+floor'?s?",
+               r"measured\s+floor"],
+     "why": "its threshold is the top score THIS sample attained and not a value fixed "
+            "in advance, so Wilson's coverage is branch-dependent and the question "
+            "bootstrap's lower endpoint is placed at 1/200 by the estimator's range "
+            "rather than by the data. BOTH candidates are withdrawn; the row prints the "
+            "point 2.0% with no interval (ruling sec. 1 M6/M7, sec. 2 row 1, sec. 13)"},
+    {"row": "the at-cap mass at ln 40 (0/200 = 0.0% [0.0, 1.9])",
+     "takes": "wilson",
+     "names": [r"at-cap mass", r"at-cap column", r"at-cap row",
+               r"ceiling[- ]atom mass", r"empty at-cap\w*"],
+     "why": "its threshold IS fixed before the data (ln 40), so the Wilson interval is "
+            "valid in both branches -- this is the quantity the ruling tells the paper to "
+            "print instead of an interval on the floor (sec. 1, sec. 2 row 1)"},
+    {"row": "the direct N=10 floor (19/200 at ln 10)",
+     "takes": "wilson",
+     "names": [rf"direct(?:ly)?[- ]?(?:measured |cache |cached )?{_N10}\s+"
+               r"(?:achievable\s+)?(?:floor|row)",
+               r"direct[- ]cache floor", r"direct\s+cache\s+floor"],
+     "why": "it is a count of independent indicators at the a-priori threshold ln 10 "
+            "(ruling sec. 2; paper/sections/discussion.tex:310)"},
+    {"row": "the achieved 5%-budget operating point (10/200 = 5.0% [2.7, 9.0])",
+     "takes": "wilson",
+     "names": [r"achieved\s+5(?:\.0)?\s*\\?%?[- ]budget",
+               r"5(?:\.0)?\s*\\?%[- ]budget\s+(?:operating\s+)?point",
+               r"achieved\s+5(?:\.0)?\s*\\?%\s+(?:operating\s+)?point"],
+     "why": "ruling sec. 2 row 2: print Wilson, 5.0% [2.7, 9.0], and retire the "
+            "bootstrap [2.5, 5.0]. This row runs the OPPOSITE way to the N=40 floor -- "
+            "do not 'make the two rows consistent' by giving them one estimator"},
+    {"row": "the replayed / subset-averaged rows (12.0% at N=10, 3.1% at N=20)",
+     "takes": "bootstrap",
+     "names": [r"replayed\s+rows?", r"replay(?:ed)?\s+floors?",
+               r"subset-averaged\s+(?:replay(?:ed)?\s+)?floor",
+               r"subset-averaged\s+rows?"],
+     "why": "their point estimate is an average over subset draws and no count exists, "
+            "so what is left varying is which 200 questions were drawn and a bootstrap "
+            "over questions is the whole of it "
+            "(paper/sections/discussion.tex:162-166)"},
+]
+
+OWNERSHIP_ADVICE = (
+    "the vocabulary here is closed -- three estimators, five rows -- and the answer for "
+    "each row is a RULING, not a matter of wording. Look the row up in OWNERSHIP_ROWS "
+    "before writing which interval it takes, and if the ruling has changed, change the "
+    "table there in the same commit. See results/n40_floor_estimator_ruling.md "
+    "sections 1, 2, 8.4 and 13")
+
 # THE TIER-2 LEDGER: the entries that run outside paper/. Derived from the `wide` flag
 # rather than from a second hand-maintained list, so the two cannot drift -- the shape that
 # failed for `labels` (defect 5), for `numbers` (defect 6) and for FROZEN_COUNTS (defect 7)
@@ -1492,64 +2043,81 @@ WIDE_SUPERSEDED: list[dict] = [item for item in SUPERSEDED if item.get("wide")]
 # reported -- an allow-list of facts about the world expires exactly the way `labels` and
 # `numbers` did (defects 5, 6 and 7 above), and this one is a third copy of that shape.
 #
-# WHAT EACH ENTRY IS. Every one of the 32 was read and classified; the three classes are
-# stated rather than averaged into a number, because "9 open findings" tells the next
-# reader nothing about whether anyone should care. 6 + 21 + 5 = 32.
+# WHAT EACH ENTRY IS. Every one of the 26 was read and classified; the classes are stated
+# rather than averaged into a number, because "7 open findings" tells the next reader
+# nothing about whether anyone should care. 23 + 3 = 26.
 #
-#   QUOTED-TO-DISOWN (6). A file CORRECTED on 2026-08-26 that records what it used to say:
-#   `This banner said "because the estimand stops existing when the ceiling atom empties"
-#   until 2026-08-26; section 13 of the ruling retracts that`. The `denial` gate is a
-#   30-character lookback clipped at the previous sentence boundary, and it cannot reach a
-#   construction that puts the disavowal AFTER the quotation. Widening it until these go
-#   green is the one change this commit deliberately does not make: the note above the flat
-#   rules records that the same narrowness is what keeps the PRE-fix wording of
-#   docs/START_HERE_overnight.md red, and a gate that read "said X ... retracts that" would
-#   also read "said X" alone. Cheaper, and far more honest, to pin six sites.
-#
-#   A COVERAGE FIGURE WITH NO BRANCH NAMED (21). The largest class and the intended one:
+#   A COVERAGE FIGURE WITH NO BRANCH NAMED (23). The large class and the intended one:
 #   `| N=40 (atom empty) | 0.27% | 53.7% | 0.00% |` in three copies of one table, the prose
-#   that reduces the 53.7% to an identity, a refusal message, a risk-register row, and five
+#   that reduces the 53.7% to an identity, a refusal message, a risk-register row, and the
 #   post-mortem sentences that cite "withdrawn at 0.00% coverage" while discussing a
-#   scheduling error. All 21 figures are TRUE under the calibrated Ewens fit; what is
+#   scheduling error. All 23 figures are TRUE under the calibrated Ewens fit; what is
 #   retracted is quoting them bare, because under the zero branch the same two estimators
 #   cover 95.06% and 100% and the data excludes neither branch. Most are one word from
 #   green.
 #
-#   A LIVE, UNCONDITIONAL ASSERTION OF A RETRACTED POSITION (5), in two files, and these
+#   A LIVE, UNCONDITIONAL ASSERTION OF A RETRACTED POSITION (3), in two files, and these
 #   are findings rather than debt. They are named per file below. Nobody may lower one of
 #   them by editing this map.
 #
+#   AND A THIRD CLASS THAT IS NO LONGER HERE, which is the part of this revision worth
+#   reading. The register shipped on 2026-08-26 with SIX findings classified as
+#   QUOTED-TO-DISOWN -- correct sentences, in files that had already been fixed, recording
+#   what they used to say -- pinned because the `denial` gate could not see a disavowal
+#   that FOLLOWS its quotation. The module docstring meanwhile told readers that
+#   quoting-to-disown was the one innocent restatement and that "the `denial` gate already
+#   handles" it. Both cannot be true, and the register was the honest half. The gate now
+#   handles it (D3 in the block above `_is_disowned`), and all six went green without a
+#   line of those files changing: figures/README.md 1 -> 0,
+#   scripts/derived_paper_quantities.py 1 -> 0, results/replay_control.md 7 -> 5,
+#   scripts/replay_control.py 9 -> 7. Two files leave the register entirely.
+#   Six false positives on correct writing, held for a day, is the honest description of
+#   what that was -- and by this file's own threat model it outranked every miss it was
+#   traded against.
+#
 # WHAT THIS REGISTER WAS STRUCK AGAINST, because a baseline with no provenance is the same
-# object as an untagged operational figure. It is the WORKING TREE of 2026-08-26 22:28,
-# which at that moment carried four uncommitted corrections on top of 852e0f7 --
-# figures/README.md, results/derived_paper_quantities.md,
-# tests/test_derived_paper_quantities.py and tests/test_replay_control.py, edited 21:17-21:18
-# and not in that commit. Measured both ways rather than reasoned about: at HEAD the tier-2
-# backlog is 41 findings in 10 files; with those four edits applied it is 32 in 7. So the guard, pointed at HEAD,
-# independently reports every file that afternoon's corrections touched -- which is the
-# closest thing to an out-of-sample check this device is going to get. If those four edits
-# are ever reverted the ratchet breaches on four files, and that is the correct behaviour,
-# not a false alarm.
+# object as an untagged operational figure. Struck 2026-08-27 against the working tree at
+# commit e58915f, UNDER THE RULESET IN THIS FILE AS IT NOW STANDS -- and the second half of
+# that sentence is the half the previous note left out. A finding count is a function of
+# the RULES as much as of the files. The old note read "at HEAD the tier-2 backlog is 41
+# findings in 10 files" with no commit named and no ruleset named, and both omissions
+# matter, because that figure is now three different numbers depending on what you hold
+# fixed. Re-derived, all four cells, rather than repeated:
+#
+#                                   ruleset at e58915f      ruleset shipping here
+#     tree at 852e0f7                  41 in 10 files          36 in  9 files
+#     tree at e58915f (= today)        32 in  7 files          26 in  5 files
+#
+# The COLUMNS differ by this revision's disowning gate: 5 and 6 quoted-to-disown findings
+# respectively, cleared without a line of those files changing. The ROWS differ by the four
+# corrections that landed after 852e0f7 -- figures/README.md,
+# results/derived_paper_quantities.md, tests/test_derived_paper_quantities.py,
+# tests/test_replay_control.py -- which account for 9 findings under the old rules
+# (3->1, 2->0, 3->0, 2->0) and 10 under these (3->0, 2->0, 3->0, 2->0). Every cell
+# reproduces:
+#     git archive 852e0f7 | tar -x -C /tmp/at852
+#     python -c "import pathlib, check_population_labels as C; \
+#       print(sum(len(C.check_file(f)) for f in C.wide_files(pathlib.Path('/tmp/at852'))))"
+# If those four edits are ever reverted the ratchet breaches on four files, and that is the
+# correct behaviour, not a false alarm.
 KNOWN_OPEN: dict[str, int] = {
     # 3, all `0.00%` with no branch named, all three in the post-mortem prose that
     # describes the scheduling defect ("...toward the estimator that had been retired at
     # 0.00% measured coverage"). The figure is true under the calibrated Ewens fit and the
     # sentences are about the handoff rather than about coverage -- but they are exactly
     # the shape the rule exists to catch, and the fix is one clause each. Note what is NOT
-    # in this count: the file's corrected line at :190 ("The reason is not data selection.
-    # It is that...") is GREEN, because the `denial` gate exculpates it -- and the PRE-fix
-    # wording of that same line is one of the 12 findings this file yields at 852e0f7^.
+    # in this count: the file's corrected line at :190 ("The reason is not data selection,
+    # and it is NOT that...") is GREEN, because the disowning gate reads it -- and the
+    # PRE-fix wording of that same line, which puts a full stop where the comma is, is
+    # still RED. That pair is a test.
     "docs/START_HERE_overnight.md": 3,
-    # 1: the correction note, verbatim -- `This section said "Wilson ... 53.7% ... Neither
-    # estimator is broken ... the estimand is" until 2026-08-26; ruling sec. 13 retracts
-    # that`. The retracted sentence is inside quotation marks and the retraction follows it.
-    "figures/README.md": 1,
     # 5, and TWO OF THEM ARE LIVE. The coverage table's N=40 row reads
     # `| N=40 (atom empty) | 0.27% | 53.7% | 0.00% |` and is followed by "Neither estimator
     # is broken. The estimand dissolves at the moment the atom empties" -- an unconditional
-    # assertion of the position section 13 retracts. It is not a quotation and nothing near
-    # it disowns it. This is the single most valuable finding the widening produced and it
-    # must not be pinned away: the entry stays at 5 until someone edits that paragraph.
+    # assertion of the position section 13 retracts. It is not a quotation, it is not
+    # attributed to a past state of the file, and nothing near it disowns it. This is the
+    # single most valuable finding the widening produced and it must not be pinned away:
+    # the entry stays at 5 until someone edits that paragraph.
     #
     # WHY THIS FILE IS IN SCOPE AT ALL, given that critique_log.md is not. It is dated
     # 2026-08-19, a week before the ruling that retracts the sentence, so the append-only
@@ -1558,33 +2126,30 @@ KNOWN_OPEN: dict[str, int] = {
     # of the scope test. A document cannot be both the record of what was believed and the
     # place a reader is sent for what is true. In scope until it stops being the latter.
     "results/morning_review_2026_08_19.md": 5,
-    # 7: 2 correction notes (quoted-to-disown) + 2 on the coverage table at :401-405 + 3 in
-    # the prose that reduces the 53.7% to an identity. The table's branch is named nowhere
-    # near it: the paragraph above says "a population model ... fitted at N=40, tuned on
-    # N=20, validated out of sample on the N=10 atom", which is precisely the wording
-    # `_BRANCH_NAMED` deliberately refuses -- every one of the sixteen defective sites named
-    # a model in those words and not one named WHICH BRANCH, which was the entire defect. So
-    # these are true findings of the intended class; the table's fix is one word in a header.
-    "results/replay_control.md": 7,
-    # 6, and THREE ARE LIVE -- all three in one sentence: "Wilson covers in 53.7% ... the
-    # question bootstrap in 0.00% -- because the estimand dissolves once the ceiling atom
-    # empties" gives the retracted position as the REASON for the withdrawal and quotes
-    # both coverages with no branch named. The other three: the risk-register row
-    # `| Wilson 53.7% / bootstrap 0.00% coverage, 40,000 pools | MEASURED |`, and one
-    # post-mortem sentence. A schedule is read FORWARD by whoever works next, which makes
-    # this the entry to clear first even though it is not the largest.
+    # 5: 2 on the coverage table at :401-405 + 3 in the prose that reduces the 53.7% to an
+    # identity. (It was 7; the two correction notes are half of the quoted-to-disown class
+    # the new gate reads.) The table's branch is named nowhere near it: the paragraph above
+    # says "a population model ... fitted at N=40, tuned on N=20, validated out of sample on
+    # the N=10 atom", which is precisely the wording `_BRANCH_NAMED` deliberately refuses --
+    # every one of the sixteen defective sites named a model in those words and not one
+    # named WHICH BRANCH, which was the entire defect. So these are true findings of the
+    # intended class; the table's fix is one word in a header.
+    "results/replay_control.md": 5,
+    # 6, and ONE IS LIVE: "Wilson covers in 53.7% ... the question bootstrap in 0.00% --
+    # because the estimand dissolves once the ceiling atom empties" gives the retracted
+    # position as the REASON for the withdrawal and quotes both coverages with no branch
+    # named. The other five are the risk-register row `| Wilson 53.7% / bootstrap 0.00%
+    # coverage, 40,000 pools | MEASURED |` and post-mortem sentences. A schedule is read
+    # FORWARD by whoever works next, which makes this the entry to clear first even though
+    # it is not the largest.
     "results/schedule_2026_08_26.md": 6,
-    # 1: the corrected comment in the generator, which quotes its own retracted phrasing --
-    # `This comment used to give the first pair alone and conclude "the ESTIMAND breaks";
-    # sec. 13 retracts that phrasing`. Quoted-to-disown.
-    "scripts/derived_paper_quantities.py": 1,
-    # 9: the largest, and it is the .md above with its generator's `log(...)` calls wrapped
-    # round it -- 2 correction banners + 2 on the coverage table + 3 on the identity
-    # paragraphs + 2 in the refusal message that fires when the floor row grows an interval
-    # again. Fixing results/replay_control.md WITHOUT fixing this file would regenerate the
+    # 7: the largest, and it is results/replay_control.md with its generator's `log(...)`
+    # calls wrapped round it -- 2 in the refusal message that fires when the floor row
+    # grows an interval again, 2 on the coverage table, 3 on the identity paragraphs.
+    # Fixing results/replay_control.md WITHOUT fixing this file would regenerate the
     # finding on the next run, which is the ratchet earning its keep: the pair must move
     # together, and a drop on one side alone is reported as ratchet-stale on the other.
-    "scripts/replay_control.py": 9,
+    "scripts/replay_control.py": 7,
 }
 
 RATCHET_ADVICE = (
@@ -1626,8 +2191,20 @@ RATCHET_ADVICE = (
 # a semicolon IS a terminator here, which matters: the if/else at discussion.tex is joined
 # by one, so `span` must be at least 1 for the forward half of that site to be visible.
 # The backward half ("If it is not,") is visible at span 0, and both are checked below.
-ABSENT_SPAN = 1        # sentence boundaries the exculpation search may cross, each side
-ABSENT_CHAR_CAP = 600  # ...and a hard stop, so unpunctuated prose is not a blanket licence
+# `ABSENT_SPAN = 1` USED TO SIT HERE AS A DEFAULT AND IT WAS DEAD, removed 2026-08-27.
+# Every rule with an `absent` gate states its own `span`, so `item.get("span",
+# ABSENT_SPAN)` never once took the fallback -- which is why setting the constant to 9 left
+# the entire suite green. A default nobody takes is a claim about the code that is not
+# true, and this file's own standard for that is stated three times over: a check that
+# cannot fail is not a check. `span` is now REQUIRED on any entry with `absent`, and
+# test_every_absent_rule_states_its_own_span holds it there.
+#
+# ABSENT_CHAR_CAP survives, but it needed the same interrogation and it now has a mutation
+# test of its own (test_mutation_raising_the_char_cap_licenses_a_distant_exculpation).
+# Without it a passage with no terminators in it -- a generated table, a `log(...)` block,
+# a Python comment run through `strip_plain`, all of which this repo is full of -- would
+# let a branch name 5000 characters up the page exculpate a bare coverage figure.
+ABSENT_CHAR_CAP = 600  # a hard stop, so unpunctuated prose is not a blanket licence
 
 
 # --------------------------------------------------------------------------------------
@@ -2011,6 +2588,64 @@ def _is_non_binding(flat: str, start: int, terms: list[int]) -> bool:
     return bool(_NON_BINDING_RE.search(flat[lo:start]))
 
 
+
+
+def _clause_scope(flat: str, start: int) -> int:
+    """Index where the clause containing `start` begins. See `_CLAUSE_BREAK_RE`."""
+    lo = 0
+    for m in _CLAUSE_BREAK_RE.finditer(flat, 0, start):
+        lo = max(lo, m.end())
+    return lo
+
+
+def _clause_bounds(flat: str, terms: list[int], pos: int) -> tuple[int, int]:
+    """The SENTENCE-ish unit around `pos`, as (lo, hi).
+
+    Deliberately NOT `_CLAUSE_BREAK_RE`. That function's job is to decide whether a
+    negation reaches a claim, where a coordinating conjunction genuinely starts a new
+    clause. Estimator ownership needs the wider unit: `discussion.tex:310` writes
+    "the direct N=10 row is a count ... AND takes Wilson", where the row and its predicate
+    sit either side of a bare `and`, and a boundary there would blind the rule to the one
+    correct sentence it most needs to read. The SEMICOLON in that same line is what has to
+    stop the search, and `_TERM_RE` already treats it as one.
+    """
+    i = bisect_left(terms, pos) - 1
+    lo = terms[i] + 1 if i >= 0 else 0
+    j = bisect_left(terms, pos)
+    hi = terms[j] if j < len(terms) else len(flat)
+    return lo, hi
+
+
+def _is_disowned(flat: str, start: int, end: int, terms: list[int]) -> bool:
+    """True if this occurrence of a retired position is being DISOWNED rather than made.
+
+    D2 and D3 only. D1 -- "the claim's own verb is negated" -- is NOT implemented here,
+    and the reason is worth stating because the obvious implementation is a trap. A
+    span-internal negator test cannot tell a DENIAL from a CONSTITUTIVE negation, and half
+    the patterns in this ledger contain one: `neither estimator is broken`, `not a property
+    of the detector`, `estimand ... no longer exists`, `takes neither`. Every one of those
+    would exculpate itself on the very word that makes it a defect -- measured, on the
+    first build of this gate: "The at-cap mass takes neither" went green, and so did four
+    probes that had been red since round five.
+    So the claim's own verb is negated WHERE THE PATTERN CAN SEE IT: the estimand rule
+    carries a TEMPERED gap that refuses to span a negator, which is the same job done in
+    the one place that knows which words are the claim's own. That mechanism predates this
+    gate and has its own mutation test.
+    """
+    if _DISOWN_RE.search(flat[_clause_scope(flat, start):start]):
+        return True                                             # D2
+    # D3, two keys. Key (i): quoted, or attributed in the past tense earlier in the same
+    # sentence. Key (ii): a disavowal within a sentence either side.
+    quoted = any(q.start() < end and start < q.end() for q in _QUOTE_RE.finditer(flat))
+    sent_lo, _ = _clause_bounds(flat, terms, start)
+    attributed = bool(_ATTRIBUTED.search(flat[sent_lo:start]))
+    if quoted or attributed:
+        lo, hi = _absent_window(flat, terms, start, end, 1)
+        if _DISAVOWAL_RE.search(flat[lo:hi]):
+            return True
+    return False
+
+
 def _scan_labels(flat: str, patterns: list[str], terms: list[int]) -> list[tuple]:
     spans = []
     for pat in patterns:
@@ -2067,14 +2702,33 @@ def _rel(path: Path) -> str:
 
 
 def _line_hint(raw: str, matched: str) -> str:
-    """Best-effort source line for a token that markup may have split (`$22$ of the $39$`)."""
+    """Best-effort source line for a token that markup may have split (`$22$ of the $39$`).
+
+    TWO PASSES, and the second one was added 2026-08-27 for the estimator-ownership rule.
+    The flatteners collapse newlines, so a matched phrase routinely straddles a line break
+    in the source -- and the index case is exactly that shape:
+
+        the measured $N{=}40$ floor is a count at no fixed threshold at all and takes the
+        question bootstrap for the reason given above.
+
+    A per-line search can never find `takes the question bootstrap` there, so the finding
+    was printed with no line number at all -- on the one sentence this whole round exists
+    to catch. The second pass joins each adjacent PAIR of lines and reports the first of
+    the pair, which is where a reader should start looking. Pairs only: three-line spans
+    are rare enough, and widening the search costs precision in a file that repeats its
+    values on every table row.
+    """
     parts = [re.escape(p) for p in matched.split() if p]
     if not parts:
         return ""
     pat = re.compile(r"[\s$\\{}~]*".join(parts), re.IGNORECASE)
-    for i, line in enumerate(raw.splitlines(), 1):
+    lines = raw.splitlines()
+    for i, line in enumerate(lines, 1):
         if pat.search(line):
             return f":{i}"
+    for i in range(len(lines) - 1):
+        if pat.search(lines[i] + " " + lines[i + 1]):
+            return f":{i + 1}"
     return ""
 
 
@@ -2194,17 +2848,17 @@ def _check_provenance(raw: str, flat: str, terms: list[int], shown: str,
     Three gates. `near` requires a cue to be PRESENT before firing (a bare decimal that
     means nothing on its own). `absent` requires one to be ABSENT within `span` sentences
     (a phrase that is correct when it names the branch it belongs to, and retracted when
-    it does not). `denial` reuses the label geometry's `_is_non_binding`, so a retired
-    position that is being DISOWNED -- "it is NOT that the estimand dissolves: ruling
-    sec. 13 retracts that sentence", `docs/START_HERE_overnight.md` -- stays green. That
-    third gate is the narrowest of the three on purpose: the lookback is 30 characters and
-    is clipped at the previous sentence boundary, so "The reason is not data selection. It
-    is that the estimand dissolves" still fires, which is the pre-fix wording of the very
-    same file.
+    it does not). `denial` asks `_is_disowned` -- named DISOWNING CONSTRUCTIONS, not
+    a proximity-to-a-negative-word test -- so a retired position that is being disowned
+    ("it is NOT that the estimand dissolves: ruling sec. 13 retracts that sentence",
+    `docs/START_HERE_overnight.md`) or quoted in order to be withdrawn ("This banner said
+    '...' until 2026-08-26") stays green, while "The reason is not obvious, but the
+    estimand dissolves" does not. See the block above `_is_disowned` for what each
+    construction is and what the gate costs.
 
     `items` selects the ledger. It defaults to all of SUPERSEDED (tier 1, `paper/*.tex`);
     tier 2 passes WIDE_SUPERSEDED, the eight retired POSITIONS. See the SCOPE section of
-    the module docstring for the 302-finding measurement behind that split.
+    the module docstring for the 1083-finding measurement behind that split.
     """
     problems: list[str] = []
     for item in (SUPERSEDED if items is None else items):
@@ -2217,10 +2871,10 @@ def _check_provenance(raw: str, flat: str, terms: list[int], shown: str,
                     continue
             if "absent" in item:
                 lo, hi = _absent_window(flat, terms, hit.start(), hit.end(),
-                                        item.get("span", ABSENT_SPAN))
+                                        item["span"])
                 if any(re.search(p, flat[lo:hi], re.IGNORECASE) for p in item["absent"]):
                     continue
-            if item.get("denial") and _is_non_binding(flat, hit.start(), terms):
+            if item.get("denial") and _is_disowned(flat, hit.start(), hit.end(), terms):
                 continue
             where = f"{shown}{_line_hint(raw, hit.group(0))}"
             snippet = flat[max(0, hit.start() - 110):hit.end() + 110].strip()
@@ -2232,6 +2886,93 @@ def _check_provenance(raw: str, flat: str, terms: list[int], shown: str,
                 + item.get("replacement",
                            f"{CURRENT_RUN} (definitive) gives {item.get('current')}")
                 + f".\n      context: ...{snippet}...")
+    return problems
+
+
+def _check_ownership(raw: str, flat: str, terms: list[int], shown: str) -> list[str]:
+    """Flag a row of the floor table assigned to the wrong estimator.
+
+    A POSITION rule whose answers are a TABLE: see the block above `OWNERSHIP_ROWS` for
+    why the vocabulary is closed, why the row's correct estimator is data rather than a
+    regex, and why an ambiguous row name (a bare "N=20 floor") is deliberately absent.
+
+    The arbitration is the same shape the pool rules use -- nearest binding name wins --
+    with two differences that both push toward silence. There is no trailing penalty,
+    because "we quote a question bootstrap interval FOR the measured N=40 floor" puts the
+    row after the phrase and is as much an assertion as the other order; and a phrase with
+    no row name in its clause is not reported at all, because the guard cannot know which
+    row was meant and guessing here means reddening correct prose.
+    """
+    problems: list[str] = []
+    names: list[tuple[int, int, dict]] = []
+    for spec in OWNERSHIP_ROWS:
+        for pat in spec["names"]:
+            for m in re.finditer(pat, flat, re.IGNORECASE):
+                names.append((m.start(), m.end(), spec))
+
+    for hit in _OWNERSHIP_RE.finditer(flat):
+        claimed = next(k for k in _EST_PATTERNS if hit.group(k))
+        # `_is_disowned` reads only OUTER constructions, which is what this rule needs:
+        # one of the three estimator names IS a negator, so a span-internal test would let
+        # "the at-cap mass takes neither" exculpate itself on the word that makes it a
+        # defect. "The N=40 floor does NOT take the question bootstrap" puts its negator
+        # before the predicate, where D2 reads it.
+        if _is_disowned(flat, hit.start(), hit.end(), terms):
+            continue
+        lo = max(_clause_bounds(flat, terms, hit.start())[0],
+                 hit.start() - OWNERSHIP_CHAR_CAP)
+        hi = min(_clause_bounds(flat, terms, hit.end())[1],
+                 hit.end() + OWNERSHIP_CHAR_CAP)
+        best = None
+        for ns, ne, spec in names:
+            if ns >= hit.start() and ne <= hit.end():
+                continue                       # the phrase cannot name its own row
+            if ne <= hit.start():
+                dist = hit.start() - ne
+                if ns < lo:
+                    continue
+            elif ns >= hit.end():
+                # A row name AFTER the phrase has to be its OBJECT, and the test is
+                # asymmetric on purpose. Before the phrase, a row name is the subject and
+                # any amount of clause may sit between them: "the measured N=40 floor is a
+                # count at no fixed threshold at all AND takes the question bootstrap" is
+                # the index case, and a backward clause-break test would lose it on that
+                # `and`. After the phrase, a coordinating conjunction means a NEW clause
+                # with a new subject, which is live repo text --
+                #     "takes Wilson, as everywhere else in the paper, and only the replayed
+                #      rows ... take the bootstrap"   (scripts/replay_control.py:1131)
+                # -- where "the replayed rows" is the subject of the next clause and has
+                # nothing to do with the Wilson assertion. So a trailing row must be close
+                # and unbroken: at most OWNERSHIP_OBJECT_GAP characters, with no clause
+                # break between. "we quote a question bootstrap interval FOR the measured
+                # N=40 floor" clears both.
+                dist = ns - hit.end()
+                gap = flat[hit.end():ns]
+                if ne > hi or dist > OWNERSHIP_OBJECT_GAP:
+                    continue
+                if _CLAUSE_BREAK_RE.search(gap):
+                    continue
+            else:
+                dist = 0
+            if best is None or dist < best[0]:
+                best = (dist, spec, flat[ns:ne])
+        if best is None:
+            continue                           # no row named -- nothing to check against
+        _, spec, named = best
+        if claimed == spec["takes"]:
+            continue
+        want = ("NEITHER estimator" if spec["takes"] == "neither"
+                else f"the {spec['takes']}")
+        where = f"{shown}{_line_hint(raw, hit.group(0))}"
+        snippet = flat[max(0, hit.start() - 110):hit.end() + 110].strip()
+        problems.append(
+            f"{where}: [estimator ownership] WRONG ESTIMATOR FOR THIS ROW.\n"
+            f"      '{hit.group(0).strip()}' assigns "
+            f"{'no estimator' if claimed == 'neither' else 'the ' + claimed} to "
+            f"'{named}' -> {spec['row']},\n"
+            f"      which takes {want}: {spec['why']}.\n"
+            f"      {OWNERSHIP_ADVICE}.\n"
+            f"      context: ...{snippet}...")
     return problems
 
 
@@ -2275,8 +3016,15 @@ def _check_growing(raw: str, flat: str, shown: str) -> list[str]:
 def check_file(path: Path) -> list[str]:
     """Every problem in one file. The RULESET depends on the suffix -- see `flatten`.
 
-    `.tex`        tier 1: pools + provenance (all 37 entries) + growing denominators.
-    anything else tier 2: the retired POSITIONS only, on the plain flattener.
+    `.tex`        tier 1: pools + provenance (every entry) + growing denominators +
+                  estimator ownership.
+    anything else tier 2: the retired POSITIONS only -- the `wide` half of SUPERSEDED and
+                  estimator ownership -- on the plain flattener.
+
+    ESTIMATOR OWNERSHIP RUNS IN BOTH TIERS, and it belongs in tier 2 by the same property
+    test as the `wide` flag: its finding is a POSITION ("this row takes neither"), never a
+    recomputed value. A value is stored, pinned and corrected all over this repo; an
+    assignment of the wrong estimator to a row is only ever asserted.
 
     The tier-2 findings are what the ratchet counts, so this returns them and does not
     apply the baseline; `main` does that, because a baseline is a property of a file's
@@ -2289,8 +3037,10 @@ def check_file(path: Path) -> list[str]:
     if path.suffix == ".tex":
         return (_check_pools(raw, flat, terms, shown)
                 + _check_provenance(raw, flat, terms, shown)
+                + _check_ownership(raw, flat, terms, shown)
                 + _check_growing(raw, flat, shown))
-    return _check_provenance(raw, flat, terms, shown, items=WIDE_SUPERSEDED)
+    return (_check_provenance(raw, flat, terms, shown, items=WIDE_SUPERSEDED)
+            + _check_ownership(raw, flat, terms, shown))
 
 
 def paper_files(repo: Path | None = None) -> list[Path]:
@@ -2365,8 +3115,14 @@ def scope_census(repo: Path | None = None) -> dict[str, tuple[int, int]]:
                 ("growing", _check_growing(raw, flat, shown)),
                 ("retired-value",
                  _check_provenance(raw, flat, terms, shown, items=narrow)),
+                # ESTIMATOR OWNERSHIP IS COUNTED INSIDE `retired-position`, not beside it.
+                # The census row has to equal what tier 2 actually runs, or the ratchet and
+                # the argument the docstring makes from the census drift apart -- and two
+                # lists that must be edited together and are not is the shape this file has
+                # logged three times.
                 ("retired-position",
-                 _check_provenance(raw, flat, terms, shown, items=WIDE_SUPERSEDED))):
+                 _check_provenance(raw, flat, terms, shown, items=WIDE_SUPERSEDED)
+                 + _check_ownership(raw, flat, terms, shown))):
             if found:
                 tally[key][0] += len(found)
                 tally[key][1] += 1
@@ -2390,8 +3146,20 @@ def _dry_run(repo: Path | None = None) -> int:
     print("   (-> a file has GAINED findings; <- it has lost some and the pin is now "
           "stale -- lower it)")
     print(f"\n{len(files)} tier-2 files, {len(OUT_OF_SCOPE)} excluded by name, "
-          f"{len(WIDE_SUPERSEDED)} retired-position rules, "
+          f"{len(WIDE_SUPERSEDED)} retired-position rules + {len(OWNERSHIP_ROWS)} "
+          f"ownership rows, "
           f"{sum(KNOWN_OPEN.values())} finding(s) pinned in {len(KNOWN_OPEN)} file(s).")
+    # WHAT THE EXCLUSIONS COST, PRINTED RATHER THAN QUOTED. Each of these reasons used to
+    # carry a hand-written count and four of the eight had gone stale within a day. A
+    # figure a reader can re-derive on demand cannot go stale; one written into a comment
+    # always does.
+    print("\nExcluded by name, with what each would report if it were not (see "
+          "OUT_OF_SCOPE for why each is out):")
+    root = repo or REPO
+    for shown in sorted(OUT_OF_SCOPE):
+        f = root / shown
+        n = len(check_file(f)) if f.is_file() else -1
+        print(f"  {shown:46s} {'MISSING' if n < 0 else f'{n:5d} finding(s)'}")
     print("\nWhat each family WOULD report over those files -- the measurement the tier-2 "
           "line rests on\n(module docstring, SCOPE). Only the last row runs:")
     for name, (found, in_files) in scope_census(repo).items():
@@ -2458,7 +3226,8 @@ def main(argv: list[str] | None = None) -> int:
           f"{n_numbers} number patterns, {len(SUPERSEDED)} superseded-run patterns, "
           f"{len(GROWING_CELLS)} growing-cell patterns over {len(FROZEN_COUNTS)} frozen "
           f"counts; {len(wide)} wider files on {len(WIDE_SUPERSEDED)} retired-position "
-          f"rules, {sum(KNOWN_OPEN.values())} finding(s) pinned in {len(KNOWN_OPEN)})")
+          f"rules and {len(OWNERSHIP_ROWS)} estimator-ownership rows, "
+          f"{sum(KNOWN_OPEN.values())} finding(s) pinned in {len(KNOWN_OPEN)})")
     return 0
 
 
