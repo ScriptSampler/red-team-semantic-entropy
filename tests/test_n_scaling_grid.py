@@ -509,11 +509,18 @@ def test_the_floor_carries_an_interval_only_while_the_ceiling_atom_has_mass(budg
 
     While the atom carries mass the floor IS the atom: a binomial proportion at ln N, a
     threshold fixed before the data, and Wilson prices it. Once the atom empties, the
-    threshold becomes the top score this pool happened to reach, which is not the top of
-    the population's support -- a larger pool reaches a higher rung and reports a smaller
-    floor -- so the estimand moves with the pool. Measured coverage at nominal 95% is 53.7%
-    for Wilson and 0.00% for a question bootstrap
-    (`results/n40_floor_estimator_ruling.md`), so the cell must print no interval.
+    threshold becomes the top score this pool happened to reach, and whether THAT is the
+    top of the population's support is not determinable at n=200: if it is not, a larger
+    pool reaches a higher rung and reports a smaller floor; if it is, the floor is an
+    ordinary population proportion. The estimand is therefore NOT IDENTIFIED, and that is
+    why the cell must print no interval (`results/n40_floor_estimator_ruling.md` sec. 13).
+
+    This docstring previously gave the first branch as the unconditional reason and cited
+    "53.7% Wilson / 0.00% bootstrap" as measured coverage full stop. Both are properties
+    of the calibrated Ewens population; under the zero branch the same simulation gives
+    95.06% and 100% (ruling sec. 8.4). The assertions below never depended on either
+    figure -- they check the presence and absence of an interval, which the ruling leaves
+    unchanged -- so only the rationale moved.
 
     Both directions are asserted: an interval must appear when k > 0 and must NOT appear
     when k == 0. A one-directional version of this test would pass on a cell that never

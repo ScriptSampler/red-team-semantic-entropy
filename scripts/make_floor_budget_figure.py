@@ -58,10 +58,22 @@ INTERVALS. Each estimator gets the interval that belongs to it and no other
     which may not also resample the subset draw, because the subset-draw component has
     been averaged out of the point estimate.
   * NEITHER for the measured N=40 floor. It is a count at no threshold fixed in
-    advance, and once the atom is empty the estimand itself moves with the pool, so
-    both candidates were withdrawn on measured coverage (Wilson 53.7%, question
-    bootstrap 0.00%, at nominal 95%). It is plotted as a point -- see FLOOR[40] below,
-    whose interval entries are None, and the refusal check that enforces it.
+    advance, and once the atom is empty NOTHING IN THE SAMPLE SETTLES whether that
+    threshold is the top of the population's support. If it is not, a larger pool
+    reaches a higher rung and reports a smaller floor; if it is, 2.0% is an ordinary
+    population proportion and the count estimates it. n=200 cannot decide, and the two
+    readings are more than two orders of magnitude apart, so the quantity is not
+    identified and no interval prices it. It is plotted as a point -- see FLOOR[40]
+    below, whose interval entries are None, and the refusal check that enforces it.
+
+    The coverage figures are branch-conditional and must never travel without the
+    population they were measured under (ruling sec. 8.4, nominal 95%):
+      calibrated Ewens (tau_top = 0.2726%): Wilson 53.67%, question bootstrap 0.00%
+      zero branch      (tau*     = 2.0%):   Wilson 95.06%, question bootstrap 100%
+    This docstring said "the estimand itself moves with the pool, so both candidates
+    were withdrawn on measured coverage (Wilson 53.7%, bootstrap 0.00%)" until
+    2026-08-26. Both halves were the first row stated as though it were the data;
+    ruling sec. 13 retracts that framing while leaving the plotted output unchanged.
 
 This paragraph said "Wilson on the count for the two directly measured rows" until
 2026-08-26, which named the measured N=40 floor as taking Wilson. The CODE below never
@@ -137,8 +149,13 @@ CI_TOL_PTS = 0.15      # tolerance on a bootstrap percentile, in rate points
 # `None` means the row is plotted as a POINT with no interval. That is the ruling of
 # `results/n40_floor_estimator_ruling.md` for the N=40 floor, not an omission: once the
 # ceiling atom empties, "the floor" is the multiplicity of whichever rung this pool
-# happened to reach, it moves with the pool size, and measured coverage of the two
-# candidates at nominal 95% is 53.7% (Wilson on 4/200) and 0.00% (question bootstrap).
+# happened to reach, and whether that rung is the top of the population's support is not
+# determinable at n=200 -- so the estimand is NOT IDENTIFIED (ruling sec. 13). Coverage
+# of the two candidates depends on which branch holds and must be quoted with its
+# population: under the calibrated Ewens fit, 53.67% (Wilson on 4/200) and 0.00%
+# (question bootstrap); under the zero branch, 95.06% and 100% (ruling sec. 8.4). The
+# withdrawal rests on the non-identification, which needs no model, and not on the
+# first pair -- do not restate that pair alone as "both candidates fail".
 FLOOR = {                        # budget -> (point %, lo %, hi %) or (point %, None, None)
     10: (12.0, 8.9, 15.3),       # replay,   question bootstrap
     20: (3.1, 1.8, 4.7),         # replay,   question bootstrap
@@ -378,10 +395,14 @@ def rederive(boot: int, seed: int) -> dict:
     _agree("N=40 floor point", tied / 2, FLOOR[40][0], 1e-9)
     if FLOOR[40][1] is not None or FLOOR[40][2] is not None:
         sys.exit("REFUSING TO PLOT: the N=40 floor has been given an interval again. "
-                 "results/n40_floor_estimator_ruling.md withdrew both candidates -- "
-                 "Wilson on 4/200 covers the true floor 53.7% of the time and the "
-                 "question bootstrap 0.00%, at nominal 95%. If that ruling has been "
-                 "overturned, change it there first and say so here.")
+                 "results/n40_floor_estimator_ruling.md withdrew both candidates because "
+                 "the estimand is NOT IDENTIFIED at n=200 -- whether the pool's top rung "
+                 "is the population's is undecidable here, and the two readings differ by "
+                 "two orders of magnitude. (Coverage figures are branch-conditional: "
+                 "under the calibrated Ewens fit Wilson covers 53.67% and the question "
+                 "bootstrap 0.00%; under the zero branch, 95.06% and 100%. Quote neither "
+                 "pair without its population.) If that ruling has been overturned, "
+                 "change it there first and say so here.")
     lo, hi = wilson(atcap, 200)
     _agree("N=40 at-cap Wilson hi", hi, ATCAP[40][2], 0.05)
 

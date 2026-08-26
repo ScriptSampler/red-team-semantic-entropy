@@ -186,18 +186,27 @@ coverage table at `results/replay_control.md:396-398`, which is generated from t
 stops being the atom and becomes an order statistic: the top rung *this* pool happened to
 reach, `4/200 = 2.0%`. Both candidate intervals were then tested against a true population
 floor of **0.27%** and **both failed**: Wilson on 4/200 covers **53.7%**, the question
-bootstrap **0.00%**, at nominal 95%. The reason is not data selection. It is that the estimand
-dissolves — `4/200` is the **resolution limit of a 200-answer pool**, not an estimate of a
-population floor, and a larger pool reaches a higher rung and reports a smaller one.
+bootstrap **0.00%**, at nominal 95% — **under the fitted Ewens population, and only there.**
+The reason is not data selection, and it is NOT that the estimand dissolves: ruling §13 retracts
+that sentence as branch-conditional dressed as unconditional. It is that `tau_top` is **not
+identified**. If the population can never yield 39 mutually inequivalent answers out of 40, then
+`4/200` estimates a real population quantity, Wilson covers it at **95.06%** and the bootstrap at
+**100%**. If it can, `4/200` is the pool's resolution and can be arbitrarily far above the truth.
+`n = 200` cannot separate those cases: `p = 0.1175` for the fitted model against the measured
+`0/200`, and the model-free bound `[0%, 1.88%]` contains both zero and the model's `1.065%`. The
+practical ruling is unchanged — quote `2.0%`, no interval — but quote it for THIS reason, which
+needs no model, rather than for the retracted one, which needs the model to be right.
 
 > **Do not quote `53.7%` as a measurement.** Every number in that coverage table, *including*
 > the "true floor" column, is a property of the fitted Ewens/CRP model — there is no
 > measurement of a population floor anywhere in this project. Worse, the ruling's own sections
 > 7 and 8 show `53.7%` is a **step function**: moving the model's floor by 0.0100 points takes
-> it to 80.7%, and in the live zero branch it is 0%. It is `P(floor count = 1)` wearing a
-> coverage label. **The `0.00%` for the bootstrap is the robust half** — it holds across the
-> whole plausible range, because that interval's lower endpoint is pinned at `1/200` by
-> construction. Nothing in the practical ruling depends on `53.7%` being right.
+> it to 80.7%. It is `P(floor count = 1)` wearing a coverage label. **And the `0.00%` is not the
+> robust half either** — an earlier version of this box said it was, on the grounds that the
+> bootstrap's lower endpoint is pinned at `1/200` by construction. Under the zero branch that
+> pinning is exactly right and the bootstrap covers **100%**. Both columns are branch-conditional;
+> neither is a measurement. Nothing in the practical ruling depends on either being right, which
+> is the point of resting it on non-identification instead.
 
 **So the N=40 floor row prints the at-cap mass `0/200 = 0.0% [0.0, 1.9]`** — Wilson at the
 a-priori threshold `ln 40`, where it is valid — **with `2.0%` beside it carrying NO interval.**
@@ -327,8 +336,9 @@ any n, so it is the one block in this file you may quote without re-checking:
 | 40 | 37338 | **14116** | 23222 | 3.688879 | **42** |
 
 The N=40 row is added here because that is the budget the floor argument now turns on, and it
-makes the granularity point without any statistics: the lattice at N=40 is dense, which is
-precisely why `4/200` is a resolution limit of the *pool* and not a property of the detector.
+makes the granularity point without any statistics: the lattice at N=40 is dense, so `4/200`
+is what 200 answers can resolve — whether it is also the population's floor is the open branch
+above, and this document must not assert either side of it.
 `tests/test_judge_owed_conditions.py::test_n20_lattice_matches_the_repo_s_own_455` pins the
 455 against an independent implementation.
 

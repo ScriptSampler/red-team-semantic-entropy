@@ -294,14 +294,22 @@ CLAIMS = {c.name: c for c in [
     PaperClaim("n40_floor", 2.0, r"a measured $2.0\%$ at $N{=}40$", DISC),
 
     # THE N=40 FLOOR PRINTS NO INTERVAL, AND THAT IS THE FINDING, NOT AN OMISSION.
-    # `results/n40_floor_estimator_ruling.md` (2026-08-19) measured the coverage of both
-    # candidates against a population model validated out-of-sample on the N=20 and N=10
-    # atoms: Wilson [0.78, 5.03] covers the true floor 53.7% of the time at nominal 95%,
-    # the question bootstrap [0.50, 4.00] covers it 0.00% of the time, and neither is
-    # broken -- the ESTIMAND breaks, because once the ceiling atom empties "the floor" is
-    # the multiplicity of whichever rung this pool happened to reach and moves with the
-    # pool size. So the row is a point with no interval, and the interval the paper does
-    # print at N=40 is the at-cap mass above, whose threshold (ln 40) is fixed a priori.
+    # The reason is NON-IDENTIFICATION and it needs no model: once the ceiling atom
+    # empties, "the floor" is the multiplicity of whichever rung this pool happened to
+    # reach, and whether that rung is the top of the population's support cannot be
+    # decided at n=200. If it is, 2.0% is an ordinary population proportion; if it is
+    # not, the true floor is arbitrarily smaller. Two orders of magnitude apart, on a
+    # hypothesis the sample cannot test -- so no interval prices it.
+    #
+    # THE COVERAGE FIGURES ARE BRANCH-CONDITIONAL. Do not quote either pair without its
+    # population (`results/n40_floor_estimator_ruling.md` sec. 8.4, nominal 95%):
+    #   calibrated Ewens (tau_top = 0.2726%): Wilson [0.78, 5.03] 53.67%, bootstrap 0.00%
+    #   zero branch      (tau*     = 2.0%):   Wilson 95.06%,             bootstrap 100%
+    # This comment used to give the first pair alone and conclude "the ESTIMAND breaks";
+    # sec. 13 retracts that phrasing -- it is true only in the first branch, and the data
+    # does not exclude the second (p=0.1175 for the fitted model against 0/200).
+    # The interval the paper does print at N=40 is the at-cap mass above, whose
+    # threshold (ln 40) is fixed a priori and is valid in BOTH branches.
     #
     # Four retired literals, held down at every site each one occupied, because this row
     # has already been "corrected" in one file at a time twice tonight. A bare "5.03" is
@@ -669,10 +677,15 @@ def main(write: bool = True, quiet: bool = False) -> int:
     log("counts are artifact-sourced; the intervals are arithmetic and are recomputed here.")
     log("")
     log("ONE ROW PRINTS NO INTERVAL. The N=40 floor is a point, `2.0%`, and that is the")
-    log("ruling of `results/n40_floor_estimator_ruling.md`, not an omission: measured")
-    log("coverage of the two candidates at nominal 95% is 53.7% (Wilson on 4/200) and")
-    log("0.00% (question bootstrap), because once the ceiling atom empties the floor stops")
-    log("naming a population quantity a pool of 200 can see. The row below still prints")
+    log("ruling of `results/n40_floor_estimator_ruling.md`, not an omission: once the")
+    log("ceiling atom empties, whether the top score this pool reached is the top of the")
+    log("population's support is not determinable at n=200, so the estimand is NOT")
+    log("IDENTIFIED -- it is 2.0% if the population can never produce 39 mutually")
+    log("inequivalent answers out of 40, and can be arbitrarily smaller if it can. That")
+    log("argument uses no population model. Coverage figures for the two candidates DO")
+    log("use one and must be quoted with it: under the calibrated Ewens fit, 53.7%")
+    log("(Wilson on 4/200) and 0.00% (question bootstrap) at nominal 95%; under the zero")
+    log("branch, 95.06% and 100% (ruling sec. 8.4). The row below still prints")
     log("what Wilson WOULD give, so the withdrawal stays auditable, but nothing is")
     log("compared against the paper there -- the paper has no interval on that row to")
     log("compare to, and both candidates are pinned as retired literals above.")

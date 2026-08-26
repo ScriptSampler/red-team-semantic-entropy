@@ -27,18 +27,37 @@ no sub-2.0% operating point at this budget.
 
 **And the floor at N=40 is printed WITHOUT an interval, which is a finding
 rather than an omission.** The same event that separates these two columns --
-the empty atom -- also breaks the floor as an estimand. Its threshold is no
+the empty atom -- also stops the floor being IDENTIFIED. Its threshold is no
 longer ln N, fixed in advance, but the top score this pool happened to reach,
-and that rung is not the top of the population's support: a larger pool
-reaches a higher one and reports a SMALLER floor, so the quantity moves with
-the pool rather than holding still to be estimated. Measured coverage at a
-nominal 95%, against a population model validated out-of-sample on the two
-smaller budgets in this table: Wilson on the first-firing count 53.7%, a
-question bootstrap over the questions 0.00%. Each also has an endpoint placed
-by construction -- the bootstrap cannot return less than 1 negative in n, and
-Wilson counts a rung the population may not have. Neither is quotable.
-`results/n40_floor_estimator_ruling.md` settles this; the at-cap column is
-the one that keeps an interval, because ln N really is fixed a priori.
+and whether that rung is the top of the population's support is a question
+200 answers cannot settle. The two answers differ by more than two
+orders of magnitude: if the population can never produce 39 mutually
+inequivalent answers out of 40, then 2.0% IS the population quantity and no
+larger pool reports a smaller floor; if it can, the true floor sits
+arbitrarily far below 2.0%. Nothing in this data chooses between them --
+0/200 is a p=0.1175 outcome under the fitted model, and the
+model-free bound on the rate, [0%, 1.88%], contains both zero and the
+model's 1.065%. An estimand whose value moves by two orders of magnitude
+across a hypothesis the sample cannot test does not have a confidence
+interval, and that argument needs no population model at all.
+
+**Coverage depends on which branch holds, so never quote it without naming
+the population it was measured under.** At a nominal 95%:
+
+| population | Wilson on the first-firing count | question bootstrap |
+| --- | --- | --- |
+| calibrated Ewens (tau_top = 0.2726%) | 53.67% | 0.00% |
+| zero branch (tau* = 2.0%) | 95.06% | 100% |
+
+"Both estimators fail" is a statement about the first row only, and the
+data does not exclude the second. What is true in BOTH rows is that quoting
+either interval means committing to a branch this sample cannot decide.
+Each also has an endpoint placed by construction -- the bootstrap cannot
+return less than 1 negative in n, and Wilson counts a rung the population
+may not have. So the cell prints the count and the rate and no interval.
+`results/n40_floor_estimator_ruling.md` sections 2, 8.4 and 13 settle this;
+the at-cap column is the one that keeps an interval, because ln N really is
+fixed a priori.
 
 **The replayed rows are ONE subset draw, and the paper quotes a different
 estimator.** Every row above marked `replicate 0` is a single uniformly random

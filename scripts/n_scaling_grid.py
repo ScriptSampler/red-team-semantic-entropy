@@ -780,14 +780,29 @@ def floor_cells(neg: np.ndarray, rows: list[dict], budget: int) -> dict:
     # THE FLOOR LOSES ITS INTERVAL EXACTLY WHEN THE ATOM EMPTIES (2026-08-19).
     # While the atom carries mass the floor is a binomial proportion at ln N -- a
     # threshold fixed before the data -- and Wilson prices it. Once the atom empties the
-    # threshold is the top score THIS pool happened to reach, which is not the top of the
+    # threshold is the top score THIS pool happened to reach, and whether that rung is the
+    # top of the population's support is NOT DETERMINABLE from n=200. That is the reason
+    # for dropping the interval, and it is model-free.
+    #
+    # REVISED 2026-08-26. This comment used to say the rung "is not the top of the
     # population's support: a bigger pool reaches a higher rung and reports a smaller
-    # floor, so the estimand moves with the pool instead of holding still to be estimated.
-    # `results/n40_floor_estimator_ruling.md` measured what that costs, against a
-    # population model validated out-of-sample on the N=20 and N=10 atoms: at nominal 95%,
-    # Wilson on the first-firing count covers the true floor 53.7% of the time and a
-    # question bootstrap 0.00%. So the cell prints the count and the rate and no interval.
-    # The interval that survives at such a budget is the at-cap column beside it.
+    # floor". `results/n40_floor_estimator_ruling.md` section 13 retracts that sentence:
+    # it is true only in the branch where P(K >= 39) > 0. In the OTHER branch -- which the
+    # data does not exclude, p=0.1175 for the fitted model against 0/200 -- the pool max
+    # IS the population's top rung 98% of the time, no larger pool reports a smaller
+    # floor, and the floor is an ordinary binomial proportion. Do not restate the old
+    # sentence, and do not restate its cousin "the estimand dissolves"; both are
+    # branch-conditional claims worn as unconditional ones.
+    #
+    # The coverage pair is branch-conditional TOO, and must never be quoted without the
+    # population beside it (ruling section 8.4, at nominal 95%):
+    #   calibrated Ewens (tau_top = 0.2726%): Wilson 53.67%, question bootstrap 0.00%
+    #   zero branch      (tau*     = 2.0%):   Wilson 95.06%, question bootstrap 100%
+    # So "both estimators fail" is a statement about the first row, not about the data.
+    # What holds unconditionally is that quoting either interval commits to a branch this
+    # sample cannot decide -- so the cell prints the count and the rate and no interval.
+    # The interval that survives at such a budget is the at-cap column beside it, whose
+    # threshold ln N really is fixed a priori.
     if not firing:
         floor_cell = "-"
     elif atom_empty:
@@ -1608,31 +1623,54 @@ def write_grid_report(args, records: list[dict], pool: Pool) -> int:
         rows_by_budget[b] = rows
         c = floor_cells(neg, rows, b)
         if c["atom_is_empty_so_floor_differs"]:
-            atom_breaks.append((b, f"{c['floor_fpr']:.1%}", c["at_cap"]))
+            # n and the at-cap count travel WITH the row rather than being read off the
+            # leaked loop variables below: `neg` would hold the LAST budget's negatives,
+            # which is right today only because every row has the same n.
+            atom_breaks.append((b, f"{c['floor_fpr']:.1%}", c["at_cap"], len(neg),
+                                f"{c['at_cap_k']}/{len(neg)}"))
         log(f"| {b} | {src} | {len(neg)} | {c['floor']} | {c['at_cap']} | "
             f"{c['next']} | "
             f"{n_firing_below(rows, 0.05)} | {n_firing_below(rows, 0.10)} | "
             f"{n_firing_below(rows, 0.25)} |")
     log("")
-    for b, fl, cap in atom_breaks:
+    for b, fl, cap, n_neg, at_cap_count in atom_breaks:
         log(f"At N={b} the ceiling atom is empty ({cap}), so the floor and the at-cap mass")
         log(f"come apart: the smallest purchasable false-alarm rate is {fl}, NOT 0. There is")
         log(f"no sub-{fl} operating point at this budget.")
         log("")
         log(f"**And the floor at N={b} is printed WITHOUT an interval, which is a finding")
         log("rather than an omission.** The same event that separates these two columns --")
-        log("the empty atom -- also breaks the floor as an estimand. Its threshold is no")
+        log("the empty atom -- also stops the floor being IDENTIFIED. Its threshold is no")
         log("longer ln N, fixed in advance, but the top score this pool happened to reach,")
-        log("and that rung is not the top of the population's support: a larger pool")
-        log("reaches a higher one and reports a SMALLER floor, so the quantity moves with")
-        log("the pool rather than holding still to be estimated. Measured coverage at a")
-        log("nominal 95%, against a population model validated out-of-sample on the two")
-        log("smaller budgets in this table: Wilson on the first-firing count 53.7%, a")
-        log("question bootstrap over the questions 0.00%. Each also has an endpoint placed")
-        log("by construction -- the bootstrap cannot return less than 1 negative in n, and")
-        log("Wilson counts a rung the population may not have. Neither is quotable.")
-        log(f"`results/n40_floor_estimator_ruling.md` settles this; the at-cap column is")
-        log("the one that keeps an interval, because ln N really is fixed a priori.")
+        log("and whether that rung is the top of the population's support is a question")
+        log(f"{n_neg} answers cannot settle. The two answers differ by more than two")
+        log("orders of magnitude: if the population can never produce 39 mutually")
+        log(f"inequivalent answers out of {b}, then {fl} IS the population quantity and no")
+        log("larger pool reports a smaller floor; if it can, the true floor sits")
+        log(f"arbitrarily far below {fl}. Nothing in this data chooses between them --")
+        log(f"{at_cap_count} is a p=0.1175 outcome under the fitted model, and the")
+        log("model-free bound on the rate, [0%, 1.88%], contains both zero and the")
+        log("model's 1.065%. An estimand whose value moves by two orders of magnitude")
+        log("across a hypothesis the sample cannot test does not have a confidence")
+        log("interval, and that argument needs no population model at all.")
+        log("")
+        log("**Coverage depends on which branch holds, so never quote it without naming")
+        log("the population it was measured under.** At a nominal 95%:")
+        log("")
+        log("| population | Wilson on the first-firing count | question bootstrap |")
+        log("| --- | --- | --- |")
+        log("| calibrated Ewens (tau_top = 0.2726%) | 53.67% | 0.00% |")
+        log(f"| zero branch (tau* = {fl}) | 95.06% | 100% |")
+        log("")
+        log("\"Both estimators fail\" is a statement about the first row only, and the")
+        log("data does not exclude the second. What is true in BOTH rows is that quoting")
+        log("either interval means committing to a branch this sample cannot decide.")
+        log("Each also has an endpoint placed by construction -- the bootstrap cannot")
+        log("return less than 1 negative in n, and Wilson counts a rung the population")
+        log("may not have. So the cell prints the count and the rate and no interval.")
+        log(f"`results/n40_floor_estimator_ruling.md` sections 2, 8.4 and 13 settle this;")
+        log("the at-cap column is the one that keeps an interval, because ln N really is")
+        log("fixed a priori.")
         log("")
 
     # The replayed rows are one subset draw. The paper quotes a different estimator, and the
