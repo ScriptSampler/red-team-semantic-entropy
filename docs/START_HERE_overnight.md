@@ -1,6 +1,7 @@
-# START HERE — current state, 2026-08-26 20:40
+# START HERE — current state, 2026-08-27 07:20
 
-**36 days to the 2026-10-01 arXiv target.** 27 citations resolve (27 cite keys, 27 bib
+**arXiv target: 2026-10-01** (no countdown here on purpose — see the note below on why a
+hard-coded one is a defect, not a convenience). 27 citations resolve (27 cite keys, 27 bib
 entries, exact bijection) — **[RE-DERIVED]** 2026-08-26 by parsing all 8 `.tex` files and
 `paper/related_work.bib`: no cited key is missing from the bib and no bib entry is uncited.
 The overnight record is `docs/critique_log.md` entry **38**.
@@ -84,7 +85,12 @@ The distro is `Ubuntu-24.04`. Always `wsl -d Ubuntu-24.04`, never `wsl -d Ubuntu
 **Progress, from the checkpoint itself** — `results/null_control_ckpt_defb.jsonl`, counted as
 distinct `question_id`, 0 torn lines:
 
-- **[LIVE]** 32 of 80 false-alarm targets complete at 20:40; **48 remaining**. All 32 are
+- **[LIVE as of 2026-08-27 07:20]** **54 of 80** false-alarm targets complete; **26
+  remaining**. The run was STOPPED BY THE USER at 07:15:57 — signal to GPU-free in 14 s,
+  wrapper killed first, signal consumed. Nothing is lost: checkpointing is per target and
+  the last write was 06:48:43, so at most the one in-flight target. Relaunch with
+  `scripts/overnight_2026_08_14.sh`; it resumes at 55.  (Superseded line follows.)
+- ~~**[LIVE]** 32 of 80 false-alarm targets complete at 20:40; **48 remaining**. All 32 are~~
   carried over: the checkpoint's mtime is still 2026-08-19 08:18:38, so **nothing has been
   written since the resume at 20:23:41** and the first target of this session is still in
   flight.
