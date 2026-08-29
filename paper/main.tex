@@ -28,7 +28,12 @@ Sampling-Based Hallucination Detectors}
 
 \begin{abstract}
 % ABSTRACT LENGTH BUDGET. arXiv's abstract field takes 1920 characters.
-% NOW: 299 words / 1897 characters, counted 2026-08-26 by the rule below -- 23 to spare.
+% NOW: 302 words / 1909 characters, counted 2026-08-29 by the rule below -- 11 to spare.
+% Was 299 words / 1897 characters (23 to spare) until 2026-08-29, when the closing sentence
+% changed from "The confirmatory evaluation is under way" to the landed result; that cost 12
+% characters and nothing was dropped to pay for it -- no clause, number, interval, qualifier
+% or concession. Longer candidates naming the null explicitly were costed and declined at 1
+% to 4 characters of remaining margin.
 % Was 321 words / 2020 characters (over by 100) until the 2026-08-26 work; ~215 words on
 % 2026-08-19, ~200 at the critic gate of 2026-08-13. That work was two passes. Pass 1 was
 % pure prose economy -- 19 rewordings, 127 characters, no clause, number, interval,
@@ -85,7 +90,17 @@ Sampling-Based Hallucination Detectors}
 %    admissible readings differ by more than two orders of magnitude, which is why the row
 %    gets no interval rather than a wide one. Do not read its absence here as doubt about
 %    it, and restore it first if characters ever free up.
-%  - "we claim no attack effect here": the confirmatory evaluation is still running.
+%  - "we claim no attack effect here". THE RUN IS NO LONGER PENDING. It completed 80/80 on
+%    2026-08-29 03:57 (results/null_control_report_defb.md), so this clause is now a
+%    MEASURED NON-REJECTION and not a placeholder: the pre-committed randomised-tie
+%    exceedance test gives p = 0.939 (NLI), 1.000 (exact), 1.000 (judge) at n=77 -- medians
+%    over 101 tie-break draws, with no draw in any arm reaching 0.05 -- and the median
+%    observed exceedance total sits ABOVE its null expectation in every arm, the direction
+%    against the attack. (The shared-NLI total dips just under expectation in the most
+%    attack-favourable draws; that is where its p bottoms out at 0.229.) Keep the clause. Do NOT restore any "under way", "is running",
+%    "pending" or "should the effect survive" wording anywhere in the paper; six such sites
+%    across five files were cleared on 2026-08-29 and the whole point of listing this here
+%    is that a comment does not merely record an error, it schedules one.
 %  - The literal "($0/200$, at most $1.9\%$)" is pinned by
 %    scripts/derived_paper_quantities.py, and the population labels "1424 clean correct"
 %    and "the fair pool's 200 correct answers" by scripts/check_population_labels.py.
@@ -117,8 +132,8 @@ selected paraphrase on an independent sample retains only $44\%$ [$23\%$, $64\%$
 apparent effect. Our
 protocol makes it answerable: score-independent target selection, an answer-invariance
 success criterion, a null priced against the attacker's search budget, and an independent
-LLM-judge equivalence oracle. The confirmatory evaluation is under way; we claim no attack
-effect here.
+LLM-judge equivalence oracle. The confirmatory run is complete and does not reject; we claim
+no attack effect here.
 \end{abstract}
 
 \section{Introduction}

@@ -52,11 +52,14 @@ effect sizes in its native units are censored on just over half of attacked targ
 null must remain valid when attack and benign candidates tie at the cap. And because the
 detector's clusterer is the same model that certifies our paraphrases as
 meaning-preserving, no single-clusterer measurement can separate a real change in the
-model's answers from that model's own inconsistency. The confirmatory evaluation is running
-under a protocol built to survive all three, and we confine claims to what it supports: targets
+model's answers from that model's own inconsistency. The confirmatory evaluation was run
+under a protocol built to survive all three---targets
 chosen without reference to the detector's own scores, success requiring the hallucination
 status to survive the paraphrase, and a null that prices the attacker's search budget in
-rather than comparing a maximum against single draws.
+rather than comparing a maximum against single draws---and we confine claims to what it
+supports, which on the evidence it returned is no attack effect: in every clustering arm, and
+at every one of $101$ tie-break draws, the pre-committed exceedance test fails to reject, with
+the median observed exceedance count above its null expectation rather than below it.
 
 Two boundaries remain, and we state them as the work to do rather than as caveats to
 wave away. First, our clusterer and our equivalence gate are the same NLI model, so
@@ -65,9 +68,13 @@ self-inconsistency turns on an independent clustering oracle. We build one: the 
 candidates (exact match, sentence embeddings) fail on the adversarial case, but a
 victim- and NLI-independent LLM-judge, validated on a domain-matched proxy of that case
 ($0.93$ vs.\ $0.51$), clears it---and it is under this judge that the confirmatory large-$n$ run,
-now under way, adjudicates whether the false-alarm effect survives the independent clusterer (the
-direction to which the judge is re-scoped; Methods), a
-verdict we draw from that run rather than from the machinery-validation sample. Second,
+now complete, adjudicated whether the false-alarm effect survives the independent clusterer (the
+direction to which the judge is re-scoped; Methods). It does not survive it: the adjudicator's
+exceedance test does not reject, and index-matched against a benign candidate selected the same
+way the attack's own query was, the adjudicator arm cannot be distinguished from zero
+($+0.016$ [$-0.112$, $+0.150$] nats). That is the
+verdict we draw from that run rather than from the machinery-validation sample, and it bounds
+the effect we could have seen at this sample size rather than excluding one. Second,
 the meaning-preserving guarantee rests on an automatic gate; a human equivalence audit
 is needed before it is fully established. Whether a simple reformulation-averaging
 defense confers measurable robustness is an open question we frame but do not yet

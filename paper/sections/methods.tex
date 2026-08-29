@@ -340,15 +340,23 @@ pairs, a domain-matched \emph{proxy} for the deployed clustering decision over s
 answers, and a validation on messy real sample pairs remains owed (Limitations).
 \emph{We disclose a deviation.} Our pre-registered
 acceptance gate required both hard-negative \emph{and} positive-alias recognition above
-$0.8$; the judge clears the first but not the second ($0.65$ [$0.59$, $0.70$]): it
-over-splits some genuine
+$0.8$; the judge clears the first but not the second ($0.65$ [$0.59$, $0.70$]): on those
+clean pairs it over-splits some genuine
 aliases, in part correctly rejecting noisy TriviaQA alias labels. Over-splitting inflates
-baseline entropy, which makes the judge \emph{conservative} for the false-alarm direction
-(a surviving effect is understated) but \emph{not} for hide; we therefore re-scope it to
+baseline entropy, which would make the judge \emph{conservative} for the false-alarm direction
+(a surviving effect is understated) but \emph{not} for hide; we therefore re-scoped it to
 false-alarm adjudication under a hard-negative-primary criterion. This is an
 outcome-triggered re-specification of a pre-registered gate, which we flag rather than
 bury, and we report the NLI and exact-match bracket \emph{alongside} the judge so no
-conclusion rests on the re-scoped oracle alone. Re-clustering
+conclusion rests on the re-scoped oracle alone. \emph{We flag one further thing, because the
+argument for the re-scope did not survive the data it was made about.} On the sampled answers
+the judge actually clusters---as opposed to the clean alias pairs it was validated on---it
+under-splits rather than over-splits, merging all ten samples into one cluster on $27$ of the
+$80$ false-alarm targets' clean baselines against the NLI clusterer's $4$. The re-scoping
+decision stands, since it rests on the hard-negative accuracy the judge does clear, but the
+conservativeness rationale attached to it does not, and the direction of the residual bias is
+anti-conservative rather than conservative; Section~\ref{sec:limitations} states what that
+costs and what it leaves owed. Re-clustering
 the answer samples under this validated judge has so far been exercised only on a
 preliminary $n{=}6$ machinery-validation pass, which establishes that the judge arm runs
 end-to-end and reports correctly, and nothing else. We quote no point estimate from it, for
@@ -361,14 +369,29 @@ the arm-level diagnostic is a mean over the six targets of each target's rank wi
 benign-move distribution, and a target contributes at most $K{=}5$ benign draws, so the
 arm-level statistic moves in steps of roughly $1/30$---while the difference between the
 shared-NLI and the judge arm is about one such step. A gap that small reflects the sample
-size, not a measured ordering of the arms. Which arm the judge's verdict resembles is
-therefore still open, and the
-confirmatory $n{\geq}80$ run under the validated judge is the gate on that question as much
-as on the effect itself. The statistic reported there is the randomised-tie exceedance test
+size, not a measured ordering of the arms. Which arm the judge's verdict resembles was
+therefore left to the
+confirmatory run under the validated judge, which was the gate on that question as much
+as on the effect itself and which completed on 2026-08-29. The statistic reported there is the
+randomised-tie exceedance test
 described in Section~\ref{sec:experiments}, which prices the attacker's search budget into
 the null analytically; the percentile-in-benign indicator and the survival ratio are shown
 as diagnostics only, both being upward-biased by that same budget. Absent a cleared claim,
 attribution is an explicit bracket, not an assertion.
+
+\emph{The pre-registered sample-size threshold was met by the campaign and missed by the
+test, and we state that here rather than only in Limitations.} The pre-registration set
+$n{\geq}80$ with $m{=}50$ benign paraphrases per target. The attacked false-alarm stratum
+reached its $80$ targets, and nothing else in the analysis did: on three of them the
+feasibility gate rejected all $250$ benign attempts, so they have no benign arm at all and
+are excluded rather than absorbed, leaving the exceedance test and every paired quantity at
+$n{=}77$; of those $77$, the full $m{=}50$ budget was achieved on $71$, the remaining six
+running at $m$ of $1$, $26$, $27$, $27$, $35$ and $38$ because attempts are capped at five
+times the declared budget and the same gate rejects the rest. The convention-sensitivity row
+that excludes no-op targets runs on $69$. A short benign
+arm costs the exceedance test power rather than calibration, since its null carries each
+target's own $m$; the threshold was nonetheless not met by the statistic the decision rule is
+stated on, and a non-rejection has to be read against that.
 
 \paragraph{Transfer and defense.}
 To test whether the vulnerability is paradigm-level rather than implementation-

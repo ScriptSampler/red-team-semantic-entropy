@@ -40,11 +40,18 @@ with the same oracle that labelled the data; and (iii) effect sizes are reported
 \emph{net of a benign-paraphrase noise floor}, since the detector score is a
 finite-sample estimate and an optimiser selecting the extremum over many candidates
 otherwise mistakes sampling variance for success. Whether the optimised attack moves the
-detector beyond what benign rephrasing achieves is not something we report here: the only
-pass run so far is an $n{=}6$ machinery-validation sample, which establishes that the
-pipeline runs and reports correctly and nothing else, so we quote no point estimate from it
-and draw no reading either way, leaving the confirmatory run at scale to decide the question
-(Section~\ref{sec:experiments}). The measure that pass exercises would in any case be the
+detector beyond what benign rephrasing achieves is a question we do now report on, and the
+answer is that it does not: run to completion over the $80$ correct-answer targets of the
+false-alarm stratum, the pre-committed exceedance test---whose null prices in the attacker's
+$\sim$$181$-candidate search budget---fails to reject in every clustering arm, at $p{=}0.939$
+(shared NLI), $1.000$ (exact match) and $1.000$ (LLM judge) on the $77$ of those targets that
+have a benign arm. Those are medians over $101$ tie-break draws and no draw in any arm reaches
+the $5\%$ cut; at the median the observed exceedance count sits \emph{above} its null
+expectation in all three, which is the direction against the attack
+(Section~\ref{sec:experiments}). That is a
+non-rejection by a design with power $0.77$ against a two-fold effect, so it bounds what we
+could have seen rather than measuring a zero, and we claim no attack effect from it. The arm
+the optimiser actually searched is in any case the
 detector's own NLI clusterer---precisely the measure that cannot
 separate a change in the model's answer distribution from an inconsistency of the NLI
 model that the detector's clustering and the attack's equivalence gate \emph{share}.
@@ -154,8 +161,10 @@ detector's NLI model both clusters answers and certifies paraphrase equivalence,
 single-clusterer evaluation cannot separate a real change in the model's answers from that
 model's own inconsistency. Cheap oracles do not resolve it---sentence embedders are
 near-chance on exactly the adversarial case---so we build and validate an LLM-judge that
-clears it ($0.93$ vs.\ $0.51$); the confirmatory evaluation under it at the pre-registered
-scale is under way.
+clears it ($0.93$ vs.\ $0.51$). The confirmatory evaluation under it has run, and under that
+adjudicator the exceedance test does not reject; the pre-registered $n{\geq}80$ was met by the
+attacked stratum but not by the test, which ran on the $77$ of those targets with a benign arm
+(Section~\ref{sec:experiments}).
 (5) \textbf{The attack itself}---bidirectional, NLI-constrained, foregrounding the
 induced-false-positive direction---as the case study that exercises the protocol, and a
 reformulation-averaging defense with an analysis of what it does and does not close. We
@@ -189,7 +198,7 @@ half of this is the score-granularity gap named by~\citet{sun2026granularity}; w
 is its instantiation for a sampling-based detector, where the lattice is set by the sample
 budget and is at its coarsest at the top of the scale that both a false alarm and an
 operator's threshold must reach. What we claim is what this victim class forces on the measurement,
-not the move itself. No effect size enters the body until the definitive
-$n{\geq}80$ run lands under the budget-matched null control
+not the move itself. No effect size entered the body until the definitive
+run landed under the budget-matched null control, which it did on 2026-08-29
 (Section~\ref{sec:experiments}); the small-sample machinery pass is treated as
 pipeline-validation only.

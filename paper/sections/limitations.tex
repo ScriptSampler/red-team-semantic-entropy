@@ -138,11 +138,28 @@ check. First, the cheap independent oracles are unreliable on the adversarial ca
 on a single LLM-judge; while that judge is validated ($0.93$) on the hard discrimination
 the others fail, one oracle---even independent and validated---is not dispositive, and a
 human or multi-judge equivalence audit remains owed. Second, the judge's own
-positive-recognition is imperfect (it slightly over-splits genuine aliases), which makes
-its adjudication \emph{conservative} for the false-alarm direction but not necessarily for
-hide; and our validation labels (TriviaQA alias lists) carry noise that the judge, in
-places, more than corrects for. The independent-clusterer result is therefore reported as preliminary
-evidence, pending the confirmatory $n{\geq}80$ run.
+positive-recognition is imperfect ($0.65$ [$0.59$, $0.70$]): on the clean gold-alias pairs
+it was validated on it \emph{over}-splits genuine aliases, in part correctly rejecting noisy
+TriviaQA alias labels, and the pre-registered conservativeness argument for the false-alarm
+direction was built on that---over-splitting inflates the clean baseline, so a surviving
+false-alarm effect is understated. \textbf{That argument does not survive contact with this
+campaign's own data.} On the messy sampled answers the deployed judge actually clusters, it
+\emph{under}-splits: over the $80$ false-alarm targets its mean clean baseline entropy is
+$0.648$ nats against the NLI clusterer's $1.477$, and it collapses all ten samples into a
+single cluster on $27$ of the $80$ clean baselines where NLI does so on $4$. Both statements
+are true of different inputs---the judge over-splits clean alias pairs and under-splits
+sampled answers---and the second is the one that governs the numbers we report, so we do not
+carry the first forward as though it settled the direction of the bias. The consequence runs
+the other way from the pre-registered worry: a floored baseline bounds the measured
+false-alarm move below by zero on those $27$ targets, which is anti-conservative for a
+false-alarm claim rather than conservative. We disclose it rather than correct it, because we
+did not make a false-alarm claim: dropping the floored targets leaves the judge-arm move at
+$+0.247$ [$+0.072$, $+0.429$] nats against $+0.291$ [$+0.152$, $+0.440$] on all $80$, and the
+adjudicator's
+exceedance test does not reject either way. The independent-clusterer result is reported as
+the confirmatory $n{\geq}80$ run's own result and no longer as preliminary evidence; what
+remains preliminary is the merge-side bias estimate, which the planned validation was
+designed to be blind to and which is owed before any judge-arm effect size is claimed.
 
 \paragraph{Equivalence is certified automatically, not by humans.}
 Feasibility is a bidirectional-entailment judgement, and our answer-flip
