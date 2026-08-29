@@ -1,5 +1,11 @@
 % Discussion. Draft prose --- mechanism + implications; keep claims scoped to what
-% the null-controlled results support. Fill exact numbers at revision.
+% the null-controlled results support.
+% 2026-08-29: the null control landed (80/80). The four "pending / under way" sites are
+% updated to the landed result. The rule was NON-REJECTION, so every sentence here says
+% "not demonstrated at this power", never "no effect" -- if you find the latter, it is a
+% regression. The judge paired net of -0.173 is NOT cited as an attack deficit: it is a
+% comparator artifact, and the index-matched +0.016 is the like-for-like number
+% (experiments.tex, "What the judge arm does and does not say").
 \label{sec:discussion}
 
 \paragraph{Hypothesised mechanism.}
@@ -394,8 +400,12 @@ the matter; the second does not, because the natural rebuttal---use an estimator
 range---concedes the point. That rebuttal is already being built: coverage-adjusted
 estimators exist precisely because the plug-in statistic misrepresents the quantity it
 estimates at deployed $N$~\citep{mccabe2025alphabet, pan2026shade}. Whether the remaining, uncensored margin is one an adversary can
-reliably exploit is the question the confirmatory evaluation answers, and we report that
-result with the same prominence whichever way it falls.
+reliably exploit is the question the confirmatory evaluation answers. It has now answered it,
+and we report the answer with the prominence we promised it whichever way it fell: on the
+false-alarm targets the pre-registered exceedance test does not reject in any clusterer arm
+(Section~\ref{sec:experiments}). No exploitable margin is demonstrated. That is a statement
+about what we can show at this design's power, not a demonstration that none exists, and the
+two must not be run together.
 
 That reading also disciplines what we may say about magnitude. Because roughly half of
 attacked targets end at the cap, the attack and any other method that also saturates become
@@ -414,7 +424,9 @@ selection on estimator noise---measurably about half, on our own data. Strip bot
 what remains is a modest and heavily conditioned quantity. We think the honest summary is
 that whatever margin exists is small, and that most of the apparent margin in an uncorrected
 report is an artefact of how the number was obtained. Whether the remainder is real is the
-question the confirmatory run decides; consistent with Methods, we do not claim it here.
+question the confirmatory run decides. It has now run, and it does not decide it in the
+attack's favour: the pre-registered statistic does not reject, so, consistent with Methods,
+we claim no attack effect here.
 
 \paragraph{Is the weakness structural?}
 We conjecture the mechanism generalises beyond one implementation: any detector that
@@ -428,15 +440,52 @@ answers and sentence embedders are near-chance on the adversarial, word-preservi
 (Methods)---but a victim- and NLI-independent LLM-judge, validated to $0.93$ accuracy on
 the gold-alias hard negatives that proxy that adversarial discrimination (where the
 embedder scores $0.51$), can---for the false-alarm direction, under the disclosed
-re-scoped gate (Methods). Under it, the
-structural question is open. The only pass run so far is an $n{=}6$ machinery-validation
-sample, and it is evidence about the pipeline rather than about the mechanism: its interval
-includes zero, and its per-target diagnostics are too coarse at that sample size to order
-the clusterer arms (Methods), so we quote no point estimate from it and draw no reading
-either way. The confirmatory $n{\geq}80$ run now under way is the gate on the claim, and we
-report it whichever way it falls. A single validated judge, however independent, is in any case not the
+re-scoped gate (Methods). Under it, the structural question now has an answer for one
+direction of one detector, and the answer is negative. An earlier $n{=}6$
+machinery-validation sample is evidence about the pipeline rather than about the mechanism:
+its interval includes zero, and its per-target diagnostics are too coarse at that sample size
+to order the clusterer arms (Methods), so we quote no point estimate from it and draw no
+reading either way. The confirmatory run has since completed on all $80$ false-alarm
+targets, and the adjudicator's pre-registered exceedance test does not reject
+(Section~\ref{sec:experiments}): with the attacker's own search budget priced into the null,
+the optimised search does not beat a budget-matched benign one under an equivalence oracle
+the detector does not supply. We report that as the gate said we would, and we decline the
+stronger form of it. A non-rejection by a design with power $0.77$ against a two-fold effect
+bounds what we could have seen, not what exists; it is confined to the false-alarm direction
+of the SE detector on those $80$ targets, and it leaves the hide direction and SRE untested.
+What the run removes is the licence to claim the effect, not the possibility of one. A single
+validated judge, however independent, is in any case not the
 last word; SE-to-SRE transfer, confounded by the shared DeBERTa backbone, is at best
 corroborating.
+
+\paragraph{The null control's own result is a measurement-validity result.}
+The adjudicator arm does not report one number, it reports a family, and the family does not
+agree on a sign. Against the mean benign draw the attack's paired net under the LLM judge is
+$+0.175$ [$+0.045$, $+0.312$] nats; against the benign candidate selected the same way the
+attack's own query was selected it is $+0.016$ [$-0.112$, $+0.150$]; against the best of
+$50$ benign candidates ranked on the judge itself it is $-0.173$ [$-0.302$, $-0.039$]. The
+attack, the targets and the oracle are identical across those three rows. The only thing
+that changes is what the attack is being compared against, and it moves the interval from
+excluding zero above to excluding zero below. Not even the top row is a clean win, and we
+say so rather than borrow its sign: its bootstrap interval clears zero but its sign test
+does not ($p{=}0.44$), because the mean there is carried by a minority of large movers. That
+the same data can be read three ways is the point. This is the paper's thesis arriving inside the
+paper's own experiment: an attack effect quoted against an unbudgeted comparator is in large
+part a statement about the comparator, and the same is true of an attack \emph{deficit}
+quoted against an over-budgeted one.
+
+We hold ourselves to that in both directions, which is the part worth saying out loud. The
+$-0.173$ is the number a reader most wants us to keep, because it is the number least
+flattering to our own attack, and we do not keep it as a finding: the comparator that
+produces it is handed a judge-targeted search over $50$ candidates while the attack's judge
+score is an unselected re-scoring of a query chosen on the detector's NLI. That is a maximum
+compared against a differently-budgeted maximum---the exact defect the null control was
+built to remove, reappearing one level down, per clusterer arm rather than per design. It
+survived because it ran the wrong way: a review looking for bias toward the attack has no
+reason to stop on a number that hurts the attack. A validity check with a direction is not a
+validity check, and we would not have caught this one by tightening the checklist we already
+had. Index-matched, the adjudicator arm cannot be distinguished from zero at $n{=}77$, and
+that---not the reversal, and not a win---is what we claim.
 
 \paragraph{Why lead with false alarms.}
 Red-teaming of \emph{sampling-based} uncertainty estimators has emphasised the hide
@@ -463,6 +512,8 @@ failure condition is explicit: if the interval covers zero, reformulation-averag
 bought the attacker's query cost rather than robustness, and the defence claim is false.
 That experiment has not been run. Its arms and its statistic are fixed in advance, and we
 report the verdict whichever way it falls. Everything above is to be read against a null noise floor, so that
-what we ultimately claim are effects exceeding what benign rephrasing achieves by chance;
-the confirmatory run supplies that floor, and until it lands these remain readings of
-preliminary data rather than claims.
+what we ultimately claim are effects exceeding what benign rephrasing achieves by chance.
+That floor has now been measured for the false-alarm direction and is reported in
+Section~\ref{sec:experiments}; the defence curve and the SE$\leftrightarrow$SRE transfer are
+not covered by it, have not been run, and remain readings of preliminary data rather than
+claims.
