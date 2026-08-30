@@ -1,4 +1,4 @@
-% Red-Teaming Semantic Entropy --- arXiv preprint scaffold.
+% Red-Teaming Semantic Entropy. An arXiv preprint scaffold.
 % Generic arXiv-friendly preamble (swap in neurips/iclr style before submission).
 \documentclass[11pt]{article}
 
@@ -13,7 +13,7 @@
 \usepackage[numbers]{natbib}
 \usepackage[margin=1in]{geometry}
 
-% Working title --- avoids collision with "Adversarial Paraphrasing" (2506.07001).
+% Working title. It avoids collision with "Adversarial Paraphrasing" (2506.07001).
 % PROPOSED Option-B title (protocol-led); the attack-led original is kept below, commented.
 \title{Crying Wolf, Carefully: What It Takes to Evaluate Paraphrase Attacks on
 Sampling-Based Hallucination Detectors}
@@ -28,16 +28,42 @@ Sampling-Based Hallucination Detectors}
 
 \begin{abstract}
 % ABSTRACT LENGTH BUDGET. arXiv's abstract field takes 1920 characters.
-% NOW: 302 words / 1909 characters, counted 2026-08-29 by the rule below -- 11 to spare.
+% NOW: 308 words / 1915 characters, counted 2026-08-30 by the rule below. 5 to spare.
+%
+% NO EM DASHES, ANYWHERE IN THIS FILE, IN ANY SPELLING. Not the three-hyphen LaTeX form,
+% not a literal U+2014, not a two-hyphen stand-in doing an em dash's job. On 2026-08-30 the
+% file held seven of the first kind and thirteen of the third; it holds none of either now.
+% The seven were three in the Abstract, two in the title comments at the top of the file,
+% and two in THE RULE below; the thirteen were all in these comments. Do not reintroduce
+% one, in the Abstract or in a comment.
+%
+% Was 302 words / 1909 characters (11 to spare) until 2026-08-30, when the Abstract's three
+% were restructured away. Net cost 6 characters, and nothing was dropped to pay for them:
+% no clause, no number, no interval, no qualifier, no concession. Only sentence shape
+% changed, at three sites, and two of the three paid for the first.
+%  (1) COST 9. The appositive gloss on the floor became its own sentence: "...mutually
+%      distinct meanings. That is 10.5% [9.0, 12.2] on 1424 clean correct answers." A
+%      relative clause ("..., which is 10.5%") was one character dearer and read worse,
+%      and "That chance is" was seven dearer. The 10.5% and its "1424 clean correct" label
+%      stay in ONE sentence, which is what the proximity guard cares about.
+%  (2) PAID BACK 2. The aside inside the N=40 sentence was promoted to the main clause and
+%      the conclusion split off behind it: "At N=40 none of the fair pool's 200 correct
+%      answers reaches ln 40 (0/200, at most 1.9%). The atom is empty, and the obstruction
+%      goes with it." The pinned literal "(0/200, at most 1.9%)" and the label "the fair
+%      pool's 200 correct answers" stay in ONE sentence, and "it" now sits in the same
+%      sentence as the atom it refers to. Keeping the old "Running the fair pool's 200
+%      correct answers to N=40 empties the atom" as the lead sentence instead cost 1 and
+%      left "it" pointing back across a sentence break, so it was declined.
+%  (3) PAID BACK 1. The 5%-budget sentence was cut in two at "which we report as".
 % Was 299 words / 1897 characters (23 to spare) until 2026-08-29, when the closing sentence
-% changed from "The confirmatory evaluation is under way" to the landed result; that cost 12
-% characters and nothing was dropped to pay for it -- no clause, number, interval, qualifier
+% changed from "The confirmatory evaluation is under way" to the landed result. That cost 12
+% characters and nothing was dropped to pay for it: no clause, number, interval, qualifier
 % or concession. Longer candidates naming the null explicitly were costed and declined at 1
 % to 4 characters of remaining margin.
 % Was 321 words / 2020 characters (over by 100) until the 2026-08-26 work; ~215 words on
 % 2026-08-19, ~200 at the critic gate of 2026-08-13. That work was two passes. Pass 1 was
-% pure prose economy -- 19 rewordings, 127 characters, no clause, number, interval,
-% qualifier or concession dropped. Pass 2 replaced the floor sentence with the
+% pure prose economy. It made 19 rewordings worth 127 characters and dropped no clause,
+% number, interval, qualifier or concession. Pass 2 replaced the floor sentence with the
 % non-identification wording below and paid for it by spending the gloss "so about half of
 % an uncorrected result is selection on sampling noise" (69), which was redundant against
 % the 44% [23%, 64%] it restated. The one large candidate still unspent is the
@@ -47,40 +73,41 @@ Sampling-Based Hallucination Detectors}
 % critique_log 37/38. Spend it in all three or in none.
 %
 % THE RULE, written out because this comment twice said "the same rule" and never named it.
-% Count what sits between this environment's begin and end lines -- those two lines are
-% markup and do NOT count -- with: these comment lines dropped; every macro replaced by
-% what it RENDERS (\emph{x} -> x, $N{=}10$ -> N=10, \% -> %, \ln -> ln, --- -> ONE em dash,
-% $ deleted); runs of whitespace collapsed to a single space. A newline in this file becomes
-% one space in the arXiv field, so the line wrapping here costs nothing -- but PASTE THE
-% RENDERED TEXT, not this source: pasted verbatim, with --- as three characters and {=}
-% intact, the same abstract is 1905, which still fits but eats most of the margin.
+% Count what sits between this environment's begin and end lines. Those two lines are markup
+% and do NOT count. Drop these comment lines. Replace every macro by what it RENDERS
+% (\emph{x} -> x, $N{=}10$ -> N=10, \% -> %, \ln -> ln, $ deleted). Collapse runs of
+% whitespace to a single space. A newline in this file becomes one space in the arXiv field,
+% so the line wrapping here costs nothing. But PASTE THE RENDERED TEXT, not this source.
+% Pasted with {=} left intact, the same abstract is 1921, one character OVER the cap and
+% rejected. The old figure here said 1905 and called it a fit; it was wrong on both counts
+% and it was wrong for the 1909-character Abstract too, which measured 1921 the same way.
 % Recount before believing any number above.
 %
 % WHAT MAY NOT BE TRIMMED. Each of these was bought with a withdrawn claim:
 %  - EVERY INTERVAL. Quoting a rate without one is this project's named failure mode.
 %  - EVERY SCOPE QUALIFIER. "At that standard N=10" is the difference between a correct
-%    claim and a retracted one -- the 5%-budget claim is true at N=10 and false at N=40,
-%    and the paper concedes that. "discrete" scopes the estimator: the result does not
+%    claim and a retracted one. The 5%-budget claim is true at N=10 and false at N=40, and
+%    the paper concedes that. "discrete" scopes the estimator: the result does not
 %    transfer to the likelihood-weighted Eq.(5) variant its authors call their main method.
 %  - THE N=40 CONCESSION. The claim is that the OBSTRUCTION is gone, never that some
 %    interval clears 5%. Do NOT reinstate an interval on the 2.0% floor. The reason is NOT
 %    that the two candidate intervals were imprecise; it is that the quantity a reader
-%    would take the interval to describe -- the population mass at the top of support,
-%    which is what "the floor" means to an operator who could see the whole population --
-%    is NOT IDENTIFIED at n=200. It equals 2.0% if the population can never yield 39
+%    would take the interval to describe is NOT IDENTIFIED at n=200. That quantity is the
+%    population mass at the top of support, which is what "the floor" means to an operator
+%    who could see the whole population. It equals 2.0% if the population can never yield 39
 %    distinct meanings in 40, and can be arbitrarily smaller if it can; 0/200 is the modal
 %    outcome under both branches and the sample cannot choose between them. This argument
 %    is model-free (results/n40_floor_estimator_ruling.md sections 1 and 13); the coverage
 %    simulation quantifies one branch and is not the reason.
 %
 %    TWO SENTENCES ARE RETRACTED BY NAME. Neither may come back, in this file or any other:
-%     (i) that the 2.0% "is the resolution of the pool and not a property of the detector"
-%         -- ruling section 2, verbatim: "Do not print that sentence." It is true only in
+%     (i) that the 2.0% "is the resolution of the pool and not a property of the detector".
+%         Ruling section 2, verbatim: "Do not print that sentence." It is true only in
 %         the second branch. In the first, 2.0% estimates a real population quantity and
 %         section 8 measures Wilson's coverage there at 95.06%. It was in this Abstract
 %         until 2026-08-26 and a prose sweep caught it; it is not a stylistic variant of
 %         the sentence now printed, it is the claim that one was written to replace.
-%     (ii) that "the estimand dissolves once the ceiling atom empties" -- ruling section 13,
+%     (ii) that "the estimand dissolves once the ceiling atom empties". Ruling section 13,
 %         "What does not survive". A branch-conditional claim dressed as an unconditional
 %         one. It was in THIS COMMENT until 2026-08-26, which is worse than being in the
 %         body: a comment instructs the next editor, so it does not merely record an error,
@@ -93,14 +120,15 @@ Sampling-Based Hallucination Detectors}
 %  - "we claim no attack effect here". THE RUN IS NO LONGER PENDING. It completed 80/80 on
 %    2026-08-29 03:57 (results/null_control_report_defb.md), so this clause is now a
 %    MEASURED NON-REJECTION and not a placeholder: the pre-committed randomised-tie
-%    exceedance test gives p = 0.939 (NLI), 1.000 (exact), 1.000 (judge) at n=77 -- medians
-%    over 101 tie-break draws, with no draw in any arm reaching 0.05 -- and the median
+%    exceedance test gives p = 0.939 (NLI), 1.000 (exact), 1.000 (judge) at n=77. Those are
+%    medians over 101 tie-break draws, and no draw in any arm reaches 0.05. The median
 %    observed exceedance total sits ABOVE its null expectation in every arm, the direction
 %    against the attack. (The shared-NLI total dips just under expectation in the most
-%    attack-favourable draws; that is where its p bottoms out at 0.229.) Keep the clause. Do NOT restore any "under way", "is running",
-%    "pending" or "should the effect survive" wording anywhere in the paper; six such sites
-%    across five files were cleared on 2026-08-29 and the whole point of listing this here
-%    is that a comment does not merely record an error, it schedules one.
+%    attack-favourable draws; that is where its p bottoms out at 0.229.) Keep the clause.
+%    Do NOT restore any "under way", "is running", "pending" or "should the effect survive"
+%    wording anywhere in the paper; six such sites across five files were cleared on
+%    2026-08-29 and the whole point of listing this here is that a comment does not merely
+%    record an error, it schedules one.
 %  - The literal "($0/200$, at most $1.9\%$)" is pinned by
 %    scripts/derived_paper_quantities.py, and the population labels "1424 clean correct"
 %    and "the fair pool's 200 correct answers" by scripts/check_population_labels.py.
@@ -117,15 +145,15 @@ estimator we study weights meaning clusters by sample counts, so it is the entro
 partition of $N$: at the standard $N{=}10$ it takes $39$ values, with an atom at the maximum.
 Every threshold above the maximum flags nothing, so while the atom carries mass the lowest
 false-alarm rate a firing threshold can have \emph{is} the chance a clean correct answer
-yields $N$ mutually distinct meanings---$10.5\%$ [$9.0$, $12.2$] on $1424$ clean correct
-answers. At that standard $N{=}10$ an operator cannot have a $5\%$ false-alarm budget,
-however well the score ranks; the qualifier is load-bearing. Running the fair pool's $200$
-correct answers to $N{=}40$ empties the atom---none reaches $\ln 40$ ($0/200$, at most
-$1.9\%$)---and the obstruction goes with it. What $200$ answers cannot then do is locate the
+yields $N$ mutually distinct meanings. That is $10.5\%$ [$9.0$, $12.2$] on $1424$ clean
+correct answers. At that standard $N{=}10$ an operator cannot have a $5\%$ false-alarm
+budget, however well the score ranks; the qualifier is load-bearing. At $N{=}40$ none of the
+fair pool's $200$ correct answers reaches $\ln 40$ ($0/200$, at most $1.9\%$). The atom is
+empty, and the obstruction goes with it. What $200$ answers cannot then do is locate the
 floor: their cheapest alarm costs $2.0\%$, but that is the population's floor only if it can
 never yield $39$ distinct meanings in $40$, a question $200$ answers cannot settle, so we
 quote no interval. The threshold honouring a $5\%$ budget achieves
-$5.0\%$ [$2.7$, $9.0$] on the same $200$ answers, which we report as a measured operating
+$5.0\%$ [$2.7$, $9.0$] on the same $200$ answers. We report that as a measured operating
 point, not a demonstration that one at or below $5\%$ exists. Measuring an attack here needs
 stronger controls than the literature's random-perturbation baseline: re-scoring each
 selected paraphrase on an independent sample retains only $44\%$ [$23\%$, $64\%$] of the

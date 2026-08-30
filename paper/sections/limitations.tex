@@ -1,247 +1,240 @@
-% Limitations. Draft prose --- owns the construct-validity issues surfaced by our
+% Limitations. Draft prose. Owns the construct-validity issues surfaced by our
 % own adversarial audit; verify numbers/scope at revision.
 \label{sec:limitations}
 
 \paragraph{Our results are scoped to the discrete estimator, and one of them may not transfer.}
-We study discrete semantic entropy, for the three reasons given in
-Section~\ref{sec:methods}, and the paper's claims do not all have the same standing under the
-likelihood-weighted estimator that \citet{farquhar2024detecting} designate as their main
-method. The $\log N$ ceiling transfers by construction: their Eq.~(5) normalises cluster
-likelihoods into a categorical distribution over the same at most $N$ observed clusters, so
-its plug-in entropy lies in $[0, \log N]$ exactly as ours does. The $39$-point lattice does
-not: real-valued weights are not confined to the entropies of integer partitions of $N$, so
-the exact ties at the cap, the $0.139$ nats separating the top two attainable values, the
-unwinnable share of the false-alarm denominator, and the hard-tie machinery the exceedance
-test needs all lapse. Our headline result lapses with them, and we say so plainly: the finite
-grid of achievable false-alarm rates, and the floor beneath it, exist because the maximum
-$\log N$ is an \emph{atom}, which under real-valued weights it is not---Eq.~(5) attains its
-maximum only when the normalised cluster likelihoods are exactly equal. Whether a pile-up
-\emph{near} the cap would leave a near-atom, and so a near-floor, is a separate empirical
-question, and the only part of this we can speak to without the real weights. Re-weighting our
-own cached cluster structure---the $1424$ greedy-correct questions (alias-aware span oracle, as
-everywhere else in this paper) of our $2000$-question replication pass, and the $200$-question
-correct stratum of the fair pool nested within it---with simulated length-normalised
-likelihoods $\ell \sim \mathcal{N}(0, s^2)$ in place of sample counts separates two things that
-``the pile-up'' runs together (\texttt{scripts/likelihood\_weight\_sensitivity.py}). The
-\emph{exact} atom does not survive: at any positive spread no question sits exactly at
-$\log N$, and the achievable floor collapses to $1/n$. That is the measure-zero argument above
-restated as a measurement rather than a bracket, and no choice of $s$ rescues it. Near-cap
-\emph{crowding} does survive at small spread and decays smoothly: on the fair pool the share of
-clean correct answers within $0.05$ nats of the top score is $9.5\%$ at $s{=}0$, still $9.5\%$
-at $s{=}0.1$, and halves by $s \approx 0.46$. What we cannot say is where the real spread
-falls. Nothing we have measured constrains $s$ for length-normalised sequence log-likelihoods
-from our quantised model on these answers---our cache stores sample strings, not
-likelihoods---so we report the curve and decline to claim that its crossover falls inside a
-plausible range. Settling it needed the real weights, so we re-scored our stored samples under
-the generating model's own sequence likelihoods, on the same questions and the same
-clusterings, and computed all three estimators side by side. The simulation's prediction
-holds and sharpens. Over all $2000$ questions of the replication pass at natural prevalence
-(the $1424$-answer clean-correct superset above together with its complement, not the fair
-pool), with length-normalised likelihoods the at-cap
-atom is \emph{gone}---$0$ of those $2000$, $0.0\%$ [$0.0$, $0.2$], against $295$ of $2000$,
-$14.8\%$ [$13.3$, $16.4$], under the discrete estimator---while near-cap crowding partially
-survives, at $399$ of $2000$, $20.0\%$ [$18.3$, $21.8$], in the top tenth of the range
-against $556$ of $2000$, $27.8\%$ [$25.9$, $29.8$]. The atom, and therefore the false-alarm
-floor it induces, is a property of sample-proportion weighting; the crowding is not. Length
+We study discrete semantic entropy, for the three reasons given in Section~\ref{sec:methods},
+and the paper's claims do not all have the same standing under the likelihood-weighted
+estimator that \citet{farquhar2024detecting} designate as their main method. The $\log N$
+ceiling transfers by construction: their Eq.~(5) normalises cluster likelihoods into a
+categorical distribution over the same at most $N$ observed clusters, so its plug-in entropy
+lies in $[0, \log N]$ exactly as ours does. The $39$-point lattice does not: real-valued
+weights are not confined to the entropies of integer partitions of $N$, so the exact ties at
+the cap, the $0.139$ nats separating the top two attainable values, the unwinnable share of
+the false-alarm denominator, and the hard-tie machinery the exceedance test needs all lapse.
+Our headline result lapses with them, and we say so plainly. The finite grid of achievable
+false-alarm rates, and the floor beneath it, exist because the maximum $\log N$ is an
+\emph{atom}. Under real-valued weights it is not one, because Eq.~(5) attains its maximum
+only when the normalised cluster likelihoods are exactly equal. Whether a pile-up \emph{near}
+the cap would leave a near-atom, and so a near-floor, is a separate empirical question, and
+the only part of this we can speak to without the real weights. Our own cached cluster
+structure covers the $1424$ greedy-correct questions (alias-aware span oracle, as everywhere
+else in this paper) of our $2000$-question replication pass, and with them the $200$-question
+correct stratum of the fair pool nested within that set. Re-weighting that structure with
+simulated length-normalised likelihoods $\ell \sim \mathcal{N}(0, s^2)$ in place of sample
+counts separates two things that ``the pile-up'' runs together
+(\texttt{scripts/likelihood\_weight\_sensitivity.py}). The \emph{exact} atom does not
+survive: at any positive spread no question sits exactly at $\log N$, and the achievable
+floor collapses to $1/n$. That is the measure-zero argument above restated as a measurement
+rather than a bracket, and no choice of $s$ rescues it. Near-cap \emph{crowding} does survive
+at small spread and decays smoothly: on the fair pool the share of clean correct answers
+within $0.05$ nats of the top score is $9.5\%$ at $s{=}0$, still $9.5\%$ at $s{=}0.1$, and
+halves by $s \approx 0.46$. What we cannot say is where the real spread falls. Our cache
+stores sample strings and not likelihoods, so nothing we have measured constrains $s$ for
+length-normalised sequence log-likelihoods from our quantised model on these answers. We
+therefore report the curve and decline to claim that its crossover falls inside a plausible
+range. Settling it needed the real weights, so we re-scored our stored samples under the
+generating model's own sequence likelihoods, on the same questions and the same clusterings,
+and computed all three estimators side by side. The simulation's prediction holds and
+sharpens. That comparison runs over all $2000$ questions of the replication pass at natural
+prevalence, which is the $1424$-answer clean-correct superset above together with its
+complement, and not the fair pool. With length-normalised likelihoods the at-cap atom is
+\emph{gone}, at $0$ of those $2000$, $0.0\%$ [$0.0$, $0.2$], against $295$ of $2000$,
+$14.8\%$ [$13.3$, $16.4$], under the discrete estimator. Near-cap crowding partially
+survives, at $399$ of $2000$, $20.0\%$ [$18.3$, $21.8$] in the top tenth of the range against
+$556$ of $2000$, $27.8\%$ [$25.9$, $29.8$]. The atom, and therefore the false-alarm floor it
+induces, is a property of sample-proportion weighting; the crowding is not. Length
 normalisation is the choice doing that work: on raw sequence likelihoods the cluster softmax
-is nearly one-hot and rank
-agreement with the discrete estimator collapses to $\rho{=}0.38$, whereas length-normalised it
-is $\rho{=}0.99$, and on the score-independent fair pool ($200$ correct, $200$ hallucinating)
-it scores AUROC $0.703$ against the discrete estimator's $0.704$. Every AUROC in this paper
-therefore stands under Eq.~(5) as we compute it, and only the saturation arithmetic is
-estimator-specific.
+is nearly one-hot and rank agreement with the discrete estimator collapses to $\rho{=}0.38$,
+whereas length-normalised it is $\rho{=}0.99$, and on the score-independent fair pool ($200$
+correct, $200$ hallucinating) it scores AUROC $0.703$ against the discrete estimator's
+$0.704$. Every AUROC in this paper therefore stands under Eq.~(5) as we compute it, and only
+the saturation arithmetic is estimator-specific.
 
 \paragraph{One cached generation run underlies every $N{=}10$ number here.}
 The re-scoring above, the achievable false-alarm floor and its grid, the clean AUROC on the
 fair pool, and the corresponding floor on the $1424$-answer superset are all computed from a
-single cached pass of $N{=}10$ samples over $2000$ TriviaQA validation questions, generated
-in June 2026. Two properties of that cache bound what any of them establishes, and neither
-is visible in the numbers themselves.
+single cached pass of $N{=}10$ samples over $2000$ TriviaQA validation questions, generated in
+June 2026. Two properties of that cache bound what any of them establishes, and neither is
+visible in the numbers themselves.
 
-First, the run is under-recorded. Its manifest pins the model id, $4$-bit loading, the
-sample count, temperature $1.0$, a $48$-token generation budget, the seed and the split, and
-of the settings that determine what the model emits it pins nothing further: not
-\texttt{top\_p}, not the $4$-bit quantisation type, not whether
-double quantisation was applied, not the compute dtype, not a model revision, and not the
-\texttt{transformers} version. Those six values are recovered from the defaults of the
-sampling script's own source rather than read off the artefact. This paper quotes none of
-them as a property of the June run, and a later draft should not start: the one place a
-value for any of them is on record in this project---\texttt{top\_p}${=}1.0$, in the
-$N{=}40$ run's own provenance block---describes the August generation pass and says nothing
-about this cache. The absent revision hash is the one we would most like back: without it we
-cannot certify that a re-run today would load the same weights. A further gap is structural.
-The cache stores decoded answer strings and never the token ids the sampler emitted, so the
-likelihood re-scoring teacher-forces each answer under its \emph{canonical} tokenisation;
-$17$ of the $20{,}000$ cached samples ($0.085\%$) retokenise past the $48$-token budget,
-which proves the two id sequences differ for at least those, and the detokenise--retokenise
-string round trip itself is exact for only $19{,}996$ of the $20{,}000$, its four failures
-all trailing whitespace. Both figures are lower bounds, since a resegmentation that
-preserves the token count leaves no trace in either check, so
-what Eq.~(5) recovers above is the likelihood of each answer \emph{string} under its
-canonical tokenisation rather than of the sequence the model emitted.
+First, the run is under-recorded. Its manifest pins the model id, $4$-bit loading, the sample
+count, temperature $1.0$, a $48$-token generation budget, the seed and the split, and of the
+settings that determine what the model emits it pins nothing further: not \texttt{top\_p}, not
+the $4$-bit quantisation type, not whether double quantisation was applied, not the compute
+dtype, not a model revision, and not the \texttt{transformers} version. Those six values are
+recovered from the defaults of the sampling script's own source rather than read off the
+artefact. This paper quotes none of them as a property of the June run, and a later draft
+should not start. Exactly one place in this project has a value for any of them on record, the
+\texttt{top\_p}${=}1.0$ in the $N{=}40$ run's own provenance block. That block describes the
+August generation pass and says nothing about this cache. The absent revision hash is the one
+we would most like back: without it we cannot certify that a re-run today would load the same
+weights. A further gap is structural. The cache stores decoded answer strings and never the
+token ids the sampler emitted, so the likelihood re-scoring teacher-forces each answer under
+its \emph{canonical} tokenisation; $17$ of the $20{,}000$ cached samples ($0.085\%$) retokenise
+past the $48$-token budget, which proves the two id sequences differ for at least those, and
+the detokenise-then-retokenise string round trip itself is exact for only $19{,}996$ of the
+$20{,}000$, its four failures all trailing whitespace. Both figures are lower bounds, since a
+resegmentation that preserves the token count leaves no trace in either check, so what Eq.~(5)
+recovers above is the likelihood of each answer \emph{string} under its canonical tokenisation
+rather than of the sequence the model emitted.
 
 Second, generation runs of this pipeline are not interchangeable, and we have measured that
-they are not. The August $N{=}40$ run, drawing fresh samples for the same fair-pool
-questions, produces answers about $3.6$ characters longer ($z{=}+4.0$) that end in terminal
-punctuation about $1.6$ points less often; the two runs' artefacts record only the token
-budget and the seed in common, so we cannot certify that the rest of their configurations
-matched either. We disclose that drift in Section~\ref{sec:discussion}, where it bears on a
-comparison between the two runs---but it bears on every June-cache number in this paper, and
-we have not bounded it for any of them. The statistic that would carry it into them is the
-distribution of the cluster count at $N{=}10$, which is the whole of what the discrete score
-is a function of, and on the fair pool's $200$ correct answers that distribution is not
-distinguishable from what the August run's recorded verdicts predict for it. We decline to
-read that as a bound: a comparison on $200$ questions that fails to separate two runs is not
-a measurement of how close they are, and treating it as one is the move this paper has had
-to retract elsewhere. One fresh direct $N{=}10$ pass on the current machine separates drift
-from sampling noise by subtraction, and we regard it as owed.
+they are not. The August $N{=}40$ run, drawing fresh samples for the same fair-pool questions,
+produces answers about $3.6$ characters longer ($z{=}+4.0$) that end in terminal punctuation
+about $1.6$ points less often; the two runs' artefacts record only the token budget and the
+seed in common, so we cannot certify that the rest of their configurations matched either. We
+disclose that drift in Section~\ref{sec:discussion}, where it bears on a comparison between the
+two runs. It bears on every June-cache number in this paper as well, and we have not bounded it
+for any of them. The statistic that would carry it into them is the distribution of the cluster
+count at $N{=}10$, which is the whole of what the discrete score is a function of, and on the
+fair pool's $200$ correct answers that distribution is not distinguishable from what the August
+run's recorded verdicts predict for it. We decline to read that as a bound: a comparison on
+$200$ questions that fails to separate two runs is not a measurement of how close they are, and
+treating it as one is the move this paper has had to retract elsewhere. One fresh direct
+$N{=}10$ pass on the current machine separates drift from sampling noise by subtraction, and we
+regard it as owed.
 
-\paragraph{Selection on a noisy estimator---measured, not merely acknowledged.}
-Semantic entropy is a finite-sample quantity: for each candidate we cluster
-$N{=}10$ sampled answers, so the score is a Monte-Carlo estimate of the true
-entropy. Our optimiser selects the extremum of this estimate over $\sim$180
-candidate paraphrases, and the extremum of many noisy-but-unbiased estimates is
-biased in the attacker's favour even when, as here, sampling is seeded so each
-estimate is \emph{reproducible}. Reproducibility is not the same as noise-freeness.
+\paragraph{Selection on a noisy estimator, measured rather than merely acknowledged.}
+Semantic entropy is a finite-sample quantity: for each candidate we cluster $N{=}10$ sampled
+answers, so the score is a Monte-Carlo estimate of the true entropy. Our optimiser selects the
+extremum of this estimate over $\sim$180 candidate paraphrases, and the extremum of many
+noisy-but-unbiased estimates is biased in the attacker's favour even when, as here, sampling is
+seeded so each estimate is \emph{reproducible}. Reproducibility is not the same as
+noise-freeness.
 
-We quantify the resulting inflation directly, by re-scoring each \emph{selected}
-paraphrase on an independent sample---same $N$, a different sampling seed---which is the
-classical diagnostic for selection on noise and requires neither an oracle nor a benign
-floor. The re-scored set is the $69$ of the $80$ false-alarm targets on which the optimiser
-found a paraphrase at all; on the other $11$ the search returned the original question, so
-there was no selection to re-test. Across those, the mean intended move falls from $+0.609$
-nats at selection to $+0.268$ nats on fresh samples.
-Two statements follow, with very different strengths, and we separate them. \emph{That} the
-selection-time figure is inflated is demonstrated: the shrinkage is $-0.341$ nats with a
-bootstrap interval of $[-0.469, -0.212]$ that excludes zero. \emph{How much} it is inflated
-is not tightly determined: retention is a ratio of means, and its interval is wide at
-$44\%$ $[23\%, 64\%]$. So roughly half of the effect a naive report would claim is
-selection on sampling noise rather than a property of the paraphrase, but the honest range
-runs from under a quarter to two-thirds surviving. Signal remains either way---$37$ of the
-$69$ keep a positive move and the two measurements correlate at $r{=}0.48$.
+We quantify the resulting inflation directly, by re-scoring each \emph{selected} paraphrase on
+an independent sample at the same $N$ under a different sampling seed. That is the classical
+diagnostic for selection on noise, and it requires neither an oracle nor a benign floor. The
+re-scored set is the $69$ of the $80$ false-alarm targets on which the optimiser found a
+paraphrase at all; on the other $11$ the search returned the original question, so there was no
+selection to re-test. Across those, the mean intended move falls from $+0.609$ nats at
+selection to $+0.268$ nats on fresh samples. Two statements follow, with very different
+strengths, and we separate them. \emph{That} the selection-time figure is inflated is
+demonstrated: the shrinkage is $-0.341$ nats with a bootstrap interval of $[-0.469, -0.212]$
+that excludes zero. \emph{How much} it is inflated is not tightly determined: retention is a
+ratio of means, and its interval is wide at $44\%$ $[23\%, 64\%]$. So roughly half of the
+effect a naive report would claim is selection on sampling noise rather than a property of the
+paraphrase, but the honest range runs from under a quarter to two-thirds surviving. Signal
+remains either way, since $37$ of the $69$ keep a positive move and the two measurements
+correlate at $r{=}0.48$.
 
 We therefore do not report raw effect sizes as the headline. The claim statistic prices the
-attacker's search budget into the null (Section~\ref{sec:experiments}), so an effect that
-does not exceed what a benign search of comparable size achieves by chance is not claimed.
-We note that this re-scoring diagnostic bounds only the \emph{selection} component: it says
-nothing about whether random rephrasing achieves the same move, which is the separate
-question the null control answers.
+attacker's search budget into the null (Section~\ref{sec:experiments}), so an effect that does
+not exceed what a benign search of comparable size achieves by chance is not claimed. We note
+that this re-scoring diagnostic bounds only the \emph{selection} component: it says nothing
+about whether random rephrasing achieves the same move, which is the separate question the null
+control answers.
 
 \paragraph{The clusterer and the equivalence gate share one NLI model.}
-Semantic entropy is \emph{defined} by DeBERTa-large-MNLI bidirectional clustering,
-and our attack's feasibility constraint uses the same model, so a measured degradation
-could in part reflect that one model's self-inconsistency rather than a paradigm-level
-weakness. We address this directly by re-clustering the answer samples under equivalence
-oracles independent of the DeBERTa-MNLI supervision (Methods), but two caveats bound the
-check. First, the cheap independent oracles are unreliable on the adversarial case
-(exact-match saturates; the sentence embedder is near-chance), so the adjudication rests
-on a single LLM-judge; while that judge is validated ($0.93$) on the hard discrimination
-the others fail, one oracle---even independent and validated---is not dispositive, and a
-human or multi-judge equivalence audit remains owed. Second, the judge's own
-positive-recognition is imperfect ($0.65$ [$0.59$, $0.70$]): on the clean gold-alias pairs
-it was validated on it \emph{over}-splits genuine aliases, in part correctly rejecting noisy
-TriviaQA alias labels, and the pre-registered conservativeness argument for the false-alarm
-direction was built on that---over-splitting inflates the clean baseline, so a surviving
-false-alarm effect is understated. \textbf{That argument does not survive contact with this
-campaign's own data.} On the messy sampled answers the deployed judge actually clusters, it
-\emph{under}-splits: over the $80$ false-alarm targets its mean clean baseline entropy is
-$0.648$ nats against the NLI clusterer's $1.477$, and it collapses all ten samples into a
-single cluster on $27$ of the $80$ clean baselines where NLI does so on $4$. Both statements
-are true of different inputs---the judge over-splits clean alias pairs and under-splits
-sampled answers---and the second is the one that governs the numbers we report, so we do not
-carry the first forward as though it settled the direction of the bias. The consequence runs
-the other way from the pre-registered worry: a floored baseline bounds the measured
-false-alarm move below by zero on those $27$ targets, which is anti-conservative for a
-false-alarm claim rather than conservative. We disclose it rather than correct it, because we
-did not make a false-alarm claim: dropping the floored targets leaves the judge-arm move at
-$+0.247$ [$+0.072$, $+0.429$] nats against $+0.291$ [$+0.152$, $+0.440$] on all $80$, and the
-adjudicator's
-exceedance test does not reject either way. The independent-clusterer result is reported as
-the confirmatory $n{\geq}80$ run's own result and no longer as preliminary evidence; what
-remains preliminary is the merge-side bias estimate, which the planned validation was
-designed to be blind to and which is owed before any judge-arm effect size is claimed.
+Semantic entropy is \emph{defined} by DeBERTa-large-MNLI bidirectional clustering, and our
+attack's feasibility constraint uses the same model, so a measured degradation could in part
+reflect that one model's self-inconsistency rather than a paradigm-level weakness. We address
+this directly by re-clustering the answer samples under equivalence oracles independent of the
+DeBERTa-MNLI supervision (Methods), but two caveats bound the check. First, the cheap
+independent oracles are unreliable on the adversarial case (exact-match saturates; the sentence
+embedder is near-chance), so the adjudication rests on a single LLM-judge. That judge is
+validated ($0.93$) on the hard discrimination the others fail, but a single oracle is not
+dispositive even when it is independent and validated, and a human or multi-judge equivalence
+audit remains owed. Second, the judge's own positive-recognition is imperfect, at $0.65$
+[$0.59$, $0.70$]. On the clean gold-alias pairs it was validated on, it \emph{over}-splits
+genuine aliases, in part correctly rejecting noisy TriviaQA alias labels. The pre-registered
+conservativeness argument for the false-alarm direction was built on that behaviour.
+Over-splitting inflates the clean baseline, so a surviving false-alarm effect is understated.
+\textbf{That argument does not survive contact with this campaign's own data.} On the messy
+sampled answers the deployed judge actually clusters, it \emph{under}-splits: over the $80$
+false-alarm targets its mean clean baseline entropy is $0.648$ nats against the NLI clusterer's
+$1.477$, and it collapses all ten samples into a single cluster on $27$ of the $80$ clean
+baselines where NLI does so on $4$. Both statements are true, each of a different input. The
+judge over-splits clean alias pairs, and it under-splits sampled answers. The second behaviour
+is the one that governs the numbers we report, so we do not carry the first forward as though
+it settled the direction of the bias. The consequence runs the other way from the
+pre-registered worry: a floored baseline bounds the measured false-alarm move below by zero on
+those $27$ targets, which is anti-conservative for a false-alarm claim rather than
+conservative. We disclose it rather than correct it, because we did not make a false-alarm
+claim: dropping the floored targets leaves the judge-arm move at $+0.247$ [$+0.072$, $+0.429$]
+nats against $+0.291$ [$+0.152$, $+0.440$] on all $80$, and the adjudicator's exceedance test
+does not reject either way. The independent-clusterer result is reported as the confirmatory
+$n{\geq}80$ run's own result and no longer as preliminary evidence; what remains preliminary is
+the merge-side bias estimate, which the planned validation was designed to be blind to and
+which is owed before any judge-arm effect size is claimed.
 
 \paragraph{Equivalence is certified automatically, not by humans.}
-Feasibility is a bidirectional-entailment judgement, and our answer-flip
-subcategory---successful attacks in which the model's correctness flips under
-$q'$---is a \emph{lower} bound on how often the gate admits a non-equivalent
-paraphrase, since a $q'$ can shift scope or presupposition while leaving the greedy
-answer unchanged. We do not yet report a human (or disclosed strong-LLM-judge)
-equivalence audit of a random sample of successful $q'$; such an audit, with an
-inter-annotator agreement estimate, is needed before the meaning-preserving claim is
-fully established.
+Feasibility is a judgement of bidirectional entailment. Our answer-flip subcategory collects
+the successful attacks in which the model's correctness flips under $q'$, and that subcategory
+is a \emph{lower} bound on how often the gate admits a non-equivalent paraphrase, since a $q'$
+can shift scope or presupposition while leaving the greedy answer unchanged. We do not yet
+report a human (or disclosed strong-LLM-judge) equivalence audit of a random sample of
+successful $q'$; such an audit, with an inter-annotator agreement estimate, is needed before
+the meaning-preserving claim is fully established.
 
 \paragraph{Status check versus what the detector sees.}
-The success criterion re-checks the model's answer with a single greedy decode, while
-the detector clusters temperature-$1.0$ samples. The two can disagree---a greedy
-answer may stay wrong while the sampled distribution shifts toward correct (or vice
-versa)---so we report both the greedy status and the fraction of the detector's own
-samples that are correct under $q'$, rather than relying on the greedy check alone.
+The success criterion re-checks the model's answer with a single greedy decode, while the
+detector clusters temperature-$1.0$ samples. The two can disagree, because a greedy answer may
+stay wrong while the sampled distribution shifts toward correct (or vice versa). We therefore
+report both the greedy status and the fraction of the detector's own samples that are correct
+under $q'$, rather than relying on the greedy check alone.
 
 \paragraph{Model, precision, data, and budget.}
-Results are on a single model family (Llama-3.1-8B-Instruct) run in 4-bit
-quantisation on one 16\,GB GPU; quantisation may shift both the entropy estimates and
-the attack surface relative to a full-precision detector, and generalisation across
-model families and scales is untested. Our primary dataset is TriviaQA; broader
-datasets (e.g.\ SQuAD) are in progress. The attack budget (beam and iteration counts)
-is modest by necessity, and the reported cells use small per-stratum $n$, so the
-confidence intervals are wide and the numbers are best read as preliminary effect
-sizes rather than tight estimates.
+Results are on a single model family (Llama-3.1-8B-Instruct) run in 4-bit quantisation on one
+16\,GB GPU; quantisation may shift both the entropy estimates and the attack surface relative
+to a full-precision detector, and generalisation across model families and scales is untested.
+Our primary dataset is TriviaQA; broader datasets (e.g.\ SQuAD) are in progress. The attack
+budget (beam and iteration counts) is modest by necessity, and the reported cells use small
+per-stratum $n$, so the confidence intervals are wide and the numbers are best read as
+preliminary effect sizes rather than tight estimates.
 
 \paragraph{One measured sample budget, and how coarse the ladder is.}
 The budget in the paragraph above is the \emph{attacker's} search budget; this one is the
 detector's sample budget $N$, and the scope limit we draw from it needs stating in its own
-right. That the achievable false-alarm floor falls as $N$ rises---so that the absence of any
-low false-alarm operating point is a fact about $N{=}10$ and not about semantic
-entropy---rests on a single directly measured budget. We ran $N{=}40$ once, over the fair pool's $400$
+right. The achievable false-alarm floor falls as $N$ rises, so that the absence of any low
+false-alarm operating point is a fact about $N{=}10$ and not about semantic entropy. That claim
+rests on a single directly measured budget. We ran $N{=}40$ once, over the fair pool's $400$
 targets, $200$ per stratum. The $N{=}10$ and $N{=}20$ rows of the falling sequence are not
-further experiments: they are replays of that one run's recorded pairwise equivalence
-verdicts on random subsets of its $40$ samples, unbiased for the smaller budget by the
-exchangeability argument of Section~\ref{sec:discussion}, but read off one generation run
-rather than three. Only the top of the ladder is a measurement and nothing above it was run,
-so what we can say is that the floor is non-increasing in $N$, which we prove rather than
-measure, and that on the fair pool's $200$ correct answers it had reached a measured $2.0\%$
-by $N{=}40$; how it behaves further out, and whether the decay between two coupled points is
-the shape it keeps, we cannot say. Three narrower scopes ride along. The ladder exists only
-on the fair pool---the $1424$-answer superset that estimates the same $N{=}10$ floor as the
-fair pool's $9.5\%$ over seven times as many negatives has no $N{=}40$ counterpart---so
-every row here is estimated on $200$ negatives,
-a resolution that cannot separate false-alarm rates less than half a point apart. It is one
-model family in one quantisation on one dataset, and the floor is a fact about how often
-that model answers a question $N$ different ways, a property of the model and the question
-distribution rather than of the estimator's arithmetic, which is exactly the kind of
+further experiments: they are replays of that one run's recorded pairwise equivalence verdicts
+on random subsets of its $40$ samples, unbiased for the smaller budget by the exchangeability
+argument of Section~\ref{sec:discussion}, but read off one generation run rather than three.
+Only the top of the ladder is a measurement and nothing above it was run, so what we can say is
+that the floor is non-increasing in $N$, which we prove rather than measure, and that on the
+fair pool's $200$ correct answers it had reached a measured $2.0\%$ by $N{=}40$; how it behaves
+further out, and whether the decay between two coupled points is the shape it keeps, we cannot
+say. Three narrower scopes ride along. The ladder exists only on the fair pool. The
+$1424$-answer superset estimates the same $N{=}10$ floor as the fair pool's $9.5\%$ over seven
+times as many negatives, but it has no $N{=}40$ counterpart, so every row here is estimated on
+$200$ negatives, a resolution that cannot separate false-alarm rates less than half a point
+apart. It is one model family in one quantisation on one dataset, and the floor is a fact about
+how often that model answers a question $N$ different ways, a property of the model and the
+question distribution rather than of the estimator's arithmetic, which is exactly the kind of
 quantity that need not transfer to another model or another corpus. And what the extra
 operating points are \emph{worth} we do not report in either direction: at a matched
 false-alarm rate the cross-budget change in true positives has a magnitude that depends on
-which decision rule is paired and a sign that depends on which $N{=}10$ cache is paired, and
-no pairing separates the budgets on $200$ questions, so we claim no discrimination benefit
-from a larger budget and, equally, none against one.
+which decision rule is paired and a sign that depends on which $N{=}10$ cache is paired, and no
+pairing separates the budgets on $200$ questions, so we claim no discrimination benefit from a
+larger budget and, equally, none against one.
 
 \paragraph{SRE fidelity and threat model.}
-We reproduce SRE with exact-match-then-NLI-union-find clustering rather than the
-paper's full energy-based hybrid, and our NLI backend (deberta-large-mnli) is
-weaker than the deberta-v2-xlarge used in some prior work; the SRE target
-(paper $0.871$) depends further on the clustering backend we simplified. Our \emph{SE}
-replication reaches AUROC $0.694$ under the greedy alias-aware span oracle this paper
-operates with, against the paper's SE figure of $0.828$. We do not attribute that $0.134$
-gap to the backend. The nearer-looking $0.790$ is the same run scored under an
-all-samples-correct label, a convention mechanically coupled to semantic entropy that we use
-nowhere else (Section~\ref{sec:experiments}); backend and correctness convention are thus
-confounded in the gap, and separating them needs an ablation we have not run. Because SRE
-re-paraphrases its input
-internally, the attacker's chosen $q'$ is only one input to a detector that then
-generates its own reformulations; the SRE threat model (whether the attacker controls
-the reformulation set) needs to be stated and matched to the implementation, which we
-flag as a limitation of the SRE results specifically.
+We reproduce SRE with exact-match-then-NLI-union-find clustering rather than the paper's full
+energy-based hybrid, and our NLI backend (deberta-large-mnli) is weaker than the
+deberta-v2-xlarge used in some prior work; the SRE target (paper $0.871$) depends further on
+the clustering backend we simplified. Our \emph{SE} replication reaches AUROC $0.694$ under the
+greedy alias-aware span oracle this paper operates with, against the paper's SE figure of
+$0.828$. We do not attribute that $0.134$ gap to the backend. The nearer-looking $0.790$ is the
+same run scored under an all-samples-correct label, a convention mechanically coupled to
+semantic entropy that we use nowhere else (Section~\ref{sec:experiments}); backend and
+correctness convention are thus confounded in the gap, and separating them needs an ablation we
+have not run. Because SRE re-paraphrases its input internally, the attacker's chosen $q'$ is
+only one input to a detector that then generates its own reformulations; the SRE threat model
+(whether the attacker controls the reformulation set) needs to be stated and matched to the
+implementation, which we flag as a limitation of the SRE results specifically.
 
 \paragraph{Our novelty claims carry a documented search gap.}
-Every ``to our knowledge'' in this paper is bounded by a coverage limit we can state
-precisely. We searched the public arXiv record, ICLR 2026, TMLR under-review, six ARR
-cycles, and the COLM and ICML workshop tracks. We could not search the NeurIPS 2026 main
-track, the ARR February, June and July 2026 cycles---whose indices return zero results to
-control queries that return hits for neighbouring cycles, so we have verified the index is
-empty rather than merely finding nothing---the COLM 2026 main track, or the full text of any
-OpenReview submission. Absence of hits from those venues is therefore \emph{uninformative},
-not weakly reassuring, and we do not treat it as evidence. The relevant pace: the closest
+Every ``to our knowledge'' in this paper is bounded by a coverage limit we can state precisely.
+We searched the public arXiv record, ICLR 2026, TMLR under-review, six ARR cycles, and the COLM
+and ICML workshop tracks. We could not search the NeurIPS 2026 main track, the ARR February,
+June and July 2026 cycles, the COLM 2026 main track, or the full text of any OpenReview
+submission. For those three ARR cycles the indices return zero results to control queries that
+return hits for neighbouring cycles, so we have verified the index is empty rather than merely
+finding nothing. Absence of hits from those venues is therefore \emph{uninformative}, not
+weakly reassuring, and we do not treat it as evidence. The relevant pace: the closest
 concurrent work we identified had been public for six days when we found
 it~\citep{khanmohammadi2026answerpreserving}.

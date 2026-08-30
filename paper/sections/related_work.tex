@@ -1,5 +1,5 @@
 % Related Work. Grounded in docs/positioning.md; citations in related_work.bib.
-% Draft prose --- tighten to ~700 words at revision.
+% Draft prose. Tighten to ~700 words at revision.
 
 \paragraph{Sampling-based hallucination detection.}
 Semantic entropy estimates a model's uncertainty by sampling several answers,
@@ -22,9 +22,9 @@ the entropy from a single hidden state, removing the sampling
 cost~\citep{kossen2024seps}. A parallel line questions the \emph{clustering} step
 itself: Kernel Language Entropy replaces hard NLI equivalence-class clustering with a
 semantic-graph kernel, precisely because hard-NLI clustering is
-brittle~\citep{nikitin2024kle} --- the very sensitivity our attack exploits. We treat
-these as \emph{detectors to be attacked}: our contribution is to test the invariance claim
-adversarially, a question none of these papers ask of themselves. Whether the attack
+brittle~\citep{nikitin2024kle}. That brittleness is the very sensitivity our attack exploits.
+We treat these as \emph{detectors to be attacked}: our contribution is to test the invariance
+claim adversarially, a question none of these papers ask of themselves. Whether the attack
 transfers to such richer-clustering variants, or is specific to hard-NLI-equivalence
 clustering, is an open question our null-controlled protocol is designed to pose.
 
@@ -55,25 +55,25 @@ with~\citet{cheng2025advparaphrasing}.
 
 \paragraph{Manipulating uncertainty and probes.}
 The closest input-side neighbour is \citet{obadinma2025verbal}, who show that
-semantics-preserving perturbations degrade an LLM's \emph{verbal} confidence---carrying that
-group's own calibration-attack line~\citep{obadinma2024calibration} from vision into language. The victim
-differs in the way that matters here: verbal confidence is the model's prompted
-self-report, whereas semantic entropy is computed from a sampled answer set clustered by
-meaning, so the attack surface is the sampling-and-clustering pipeline rather than a
-self-assessment; we also impose a bidirectional-NLI equivalence gate they do not, and our
-success criterion \emph{requires} the model's answer status to survive the paraphrase,
+semantics-preserving perturbations degrade an LLM's \emph{verbal} confidence. That work
+carries the same group's calibration-attack line~\citep{obadinma2024calibration} from vision
+into language. The victim differs in the way that matters here. Verbal confidence is the
+model's prompted self-report, whereas semantic entropy is computed from a sampled answer set
+clustered by meaning, so the attack surface is the sampling-and-clustering pipeline rather
+than a self-assessment. We also impose a bidirectional-NLI equivalence gate they do not, and
+our success criterion \emph{requires} the model's answer status to survive the paraphrase,
 whereas their attacks frequently change the answer. Also on the ``manipulate uncertainty''
 axis, \citet{uncertaintyfragile2024}
 shift answer confidence via a fine-tuned backdoor trigger on multiple-choice
-self-evaluation --- a different threat model (weight access, not input
-paraphrase).
+self-evaluation, which is a different threat model altogether: weight access rather than
+input paraphrase.
 
 We should be explicit that the \emph{direction} we foreground is not itself new. Moving a
 confidence signal in an attacker-chosen direction while holding the underlying prediction
 fixed is an established family with a name: \citet{obadinma2024calibration} give what they
 describe as the first dedicated study of \emph{calibration attacks}, which ``trap victim
-models to be heavily miscalibrated without altering their predicted labels'', and the family
-is still active---\citet{martinezmartinez2026uat} propose an underconfidence attack that
+models to be heavily miscalibrated without altering their predicted labels''. The family is
+still active, and \citet{martinezmartinez2026uat} propose an underconfidence attack that
 lowers confidence while preserving the prediction, paired with an adversarial-training
 defence. Forcing a detector into a false \emph{positive} has a
 direct text-modality precedent: \citet{rusert2025redherring} perturb text so that an
@@ -87,36 +87,39 @@ carry consequences rather than labels. First, the manipulated quantity is an ent
 meaning-clustered samples rather than a softmax or a learned detector's logit: a stochastic
 finite-sample estimate, bounded above by $\log N$, produced by the same NLI model that
 certifies the attacker's constraint. Second, the perturbation is a question rewrite rather
-than a pixel budget or a hidden-state intervention---channels a deployed adversary does not
-possess---so semantic invariance cannot be granted by an $\ell_p$ ball and must instead be
+than a pixel budget or a hidden-state intervention, and a deployed adversary possesses
+neither of those channels. Semantic invariance therefore cannot be granted by an $\ell_p$
+ball and must instead be
 certified. We accordingly treat the equivalence constraint as an instrument requiring its
 own validation rather than as a definition: we constrain, re-check that answer invariance
 actually held, measure how often the gate nonetheless admitted a non-equivalent rewrite and
 report that as a disclosed lower bound, and validate the oracle making the judgement on an
 adversarial discrimination that disqualified the obvious cheap candidate ($0.51$). An attack
 whose constraint is an $\ell_p$ ball has no analogue of these steps, because there the
-constraint is definitional rather than inferred. Most relevant of all, CORVUS red-teams single-pass hallucination
-detectors and degrades SEP~\citep{corvus2026} --- establishing that SE-\emph{family}
-detectors can be attacked, which we do not claim as our novelty. Our distinction is
-substantive rather than a label: CORVUS perturbs a frozen hidden-state probe
+constraint is definitional rather than inferred. Most relevant of all, CORVUS red-teams
+single-pass hallucination detectors and degrades SEP~\citep{corvus2026}, which establishes
+that SE-\emph{family} detectors can be attacked. We do not claim that as our novelty. Our
+distinction is substantive rather than a label. CORVUS perturbs a frozen hidden-state probe
 \emph{model-side} (LoRA fine-tuning, fixed inputs, suppression-only, no
-semantic-equivalence constraint, Alpaca/FAVA), whereas we perturb the \emph{input} under a
-hard equivalence constraint and target the sampling-and-NLI-clustering pipeline itself --- a
-different attack surface --- in both directions, on TriviaQA/SQuAD. A weaker neighbour prompts
-LLMs to fool generic activation probes~\citep{blandfort2025redteamprobes}, but
-not in the hallucination-detection setting. Each ingredient of our attack is by now standard: constrained search over meaning-preserving
-paraphrases is an established primitive---\citet{kaneko2026paa} run essentially our optimiser
-loop, searching paraphrases that raise an LLM reviewer's score under semantic-equivalence and
-naturalness constraints---and directional manipulation of a confidence signal
-under prediction-preservation is an established family. What does not carry over is the
-\emph{evaluation}: a victim whose score is a stochastic, ceiling-bounded estimate produced by
-the same model that certifies the attacker's constraint invalidates the standard protocol in
-three specific ways --- selection on estimator noise, right-censoring at the cap, and
-unattributability under a shared clusterer --- none of which arises for a classifier victim.
-That is where we locate our contribution (we evaluate the false-alarm direction here and
-build the hide direction as its mirror). The bidirectional-NLI equivalence gate is our design choice for
-certifying meaning-preservation, not itself a novelty axis --- indeed our own analysis
-treats the detector's reliance on that same NLI model as the central confound.
+semantic-equivalence constraint, Alpaca/FAVA). We perturb the \emph{input} under a
+hard equivalence constraint, in both directions, on TriviaQA/SQuAD. Our target is the
+sampling-and-NLI-clustering pipeline itself, which is a different attack surface. A weaker
+neighbour prompts LLMs to fool generic activation probes~\citep{blandfort2025redteamprobes},
+but not in the hallucination-detection setting. Each ingredient of our attack is by now
+standard. Constrained search over meaning-preserving paraphrases is an established
+primitive, and \citet{kaneko2026paa} run essentially our optimiser loop, searching
+paraphrases that raise an LLM reviewer's score under semantic-equivalence and naturalness
+constraints. Directional manipulation of a confidence signal under prediction-preservation
+is an established family. What does not carry over is the \emph{evaluation}. Our victim's
+score is a stochastic, ceiling-bounded estimate produced by the same model that certifies
+the attacker's constraint, and such a victim invalidates the standard protocol in three
+specific ways: selection on estimator noise, right-censoring at the cap, and
+unattributability under a shared clusterer. None of the three arises for a classifier
+victim. That is where we locate our contribution, and we evaluate the false-alarm direction
+here while building the hide direction as its mirror. The bidirectional-NLI equivalence gate
+is our design choice for certifying meaning-preservation rather than a novelty axis in its
+own right. Our own analysis in fact treats the detector's reliance on that same NLI model as
+the central confound.
 
 \paragraph{What the estimator can and cannot express.}
 A separate line studies semantic entropy as a \emph{statistic} rather than as a detector.
@@ -124,7 +127,7 @@ A separate line studies semantic entropy as a \emph{statistic} rather than as a 
 semantic entropy at practical sample sizes, because the semantic alphabet is under-covered,
 and correct it upward; \citet{pan2026shade} pursue the same correction with a
 coverage-adjusted estimator fusing Good--Turing coverage with a spectral term over an
-entailment-weighted response graph. We characterise the same estimator's opposite tail---it
+entailment-weighted response graph. We characterise the same estimator's opposite tail. It
 cannot exceed $\log N$, and in deployment it piles up there. That two groups now correct the
 estimator upward is itself evidence for our reading rather than against it: a remedy at the
 level of the \emph{estimator} concedes that the deployed plug-in statistic is the limiting
@@ -139,31 +142,31 @@ so we claim agreement with their finding and not a diagnosis of it.
 Separately, \citet{sun2026granularity} name the \emph{score granularity
 gap} for black-box LLM classification: a confidence score may rank well and still take so
 few distinct values that an operator has only a handful of usable thresholds. \emph{Discrete}
-semantic entropy inherits this pathology at the budget it is deployed at---$39$ attainable
-values at the standard $N{=}10$, two of them in the top tenth of the range---with the twist
-that the granularity limit is set by the sampling budget rather than by a verbalisation
-format, and is therefore relaxable by spending in a way a verbalisation format is not:
-$N{=}20$ affords $455$ values, seven of them in that top tenth. We accordingly assert the
-claim at $N{=}10$ and nowhere else, and what carries to larger $N$ is only that the lattice
-stays sparsest at the top of the scale, which is where a false alarm and an operator's
-threshold both have to land. Our contribution here is the instantiation and its consequence
-for attack evaluation, not the argument itself. The
+semantic entropy inherits this pathology at the budget it is deployed at, with $39$
+attainable values at the standard $N{=}10$ and two of them in the top tenth of the range.
+The twist is that the granularity limit is set by the sampling budget rather than by a
+verbalisation format, and is therefore relaxable by spending in a way a verbalisation format
+is not: $N{=}20$ affords $455$ values, seven of them in that top tenth. We accordingly assert
+the claim at $N{=}10$ and nowhere else, and what carries to larger $N$ is only that the
+lattice stays sparsest at the top of the scale, which is where a false alarm and an
+operator's threshold both have to land. Our contribution here is the instantiation and its
+consequence for attack evaluation, not the argument itself. The
 likelihood-weighted estimator does not inherit it: real-valued cluster weights are not
 confined to the entropies of integer partitions of $N$, so the lattice dissolves even though
 the $\log N$ ceiling remains (Section~\ref{sec:methods}). The granularity claim is thus the
-sharper and the narrower of our two---narrower in the estimator it holds for and in the
-sample budget it is asserted at---and we keep the two apart wherever we make them. Read
-together with the originating papers---which report that clusters are few and grow slowly
-with $N$, and treat that as a computational
-saving~\citep{kuhn2023semantic, farquhar2024detecting}---the picture is of a well-known
-observation whose measurement consequences have not been drawn out.
+sharper and the narrower of our two. It is narrower in the estimator it holds for and in the
+sample budget it is asserted at, and we keep the two claims apart wherever we make them. The
+originating papers report that clusters are few and grow slowly with $N$, and treat that as a
+computational saving~\citep{kuhn2023semantic, farquhar2024detecting}. Taken together with
+those reports, the picture is of a well-known observation whose measurement consequences have
+not been drawn out.
 
 \paragraph{Evaluating the evaluation.}
 Because our framing is protocol-led, two methodological strands matter beyond the attack
-neighbours. First, the individual failure modes our controls target are classical ---
+neighbours. First, the individual failure modes our controls target are classical:
 selection on the evaluated system's own scores, selection of an extremum of a noisy
-estimate, and success criteria that drift from the construct --- and so are the individual
-remedies: comparing an adversarial perturbation against a random one of equivalent
+estimate, and success criteria that drift from the construct. So are the individual
+remedies. Comparing an adversarial perturbation against a random one of equivalent
 magnitude is established practice in vision robustness
 evaluation~\citep{rossolini2026worstcase}, and plain-paraphrase baselines are routine in
 AI-text-detector evasion~\citep{cheng2025advparaphrasing}. We claim neither as new. That an
@@ -173,10 +176,10 @@ perturbation-based selection rule that disappears once a format- and budget-matc
 is introduced, the control tracking or exceeding the method on every benchmark. What we
 are not aware of, for a paraphrase attack on a sampling-based hallucination detector, is
 the \emph{joint} application of score-independent selection, answer-invariance checking,
-and a noise floor that is \emph{budget-matched} to the attacker's own search --- the
-quantity the attack's maximum is actually compared against. Our contribution is assembling
-these into a pre-registered protocol with a decision rule, and we state the gap as ``to our
-knowledge'' rather than as priority.
+and a noise floor that is \emph{budget-matched} to the attacker's own search. That floor is
+the quantity the attack's maximum is actually compared against. Our contribution is
+assembling these into a pre-registered protocol with a decision rule, and we state the gap
+as ``to our knowledge'' rather than as priority.
 Second, using an LLM as an equivalence oracle inherits the LLM-as-judge literature's
 lesson that judges track humans well yet carry biases and must be validated per
 task~\citep{zheng2023judging}. Our judge contribution is accordingly not the concept but

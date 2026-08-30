@@ -22,7 +22,7 @@
 % Also added: the anti-conservative exchangeability violation in the NLI arm (PREREG section
 % 6), which the "only place the test asks its designed question" paragraph did not disclose.
 % Discipline unchanged: no confirmatory claim until n>=80/stratum. The n>=80 is met by the
-% CAMPAIGN and by nothing else -- every benign-referenced statistic runs on 77 or fewer.
+% CAMPAIGN and by nothing else. Every benign-referenced statistic runs on 77 or fewer.
 % DO NOT quote the embed arm: it is length 0 on all 80 records (embedding_model="").
 % DO NOT quote the judge paired net as an attack loss: it is a comparator artifact; the
 % index-matched row of tab:nullcontrol is the like-for-like number.
@@ -49,7 +49,7 @@ convention, and we have not run the ablation that would separate the two.
 
 We flag the all-samples label specifically, because it is the one convention mechanically
 coupled to the score. It calls a question correct \emph{iff} all ten sampled answers are
-correct, and semantic entropy is the entropy of the clustering of those same ten samples---an
+correct, and semantic entropy is the entropy of the clustering of those same ten samples. An
 all-correct sample set is far likelier to be semantically homogeneous, hence low-entropy, so
 part of the AUROC it awards is the score being scored against itself. Validating a paper
 whose third contribution is score-independent selection on the most score-entangled label
@@ -57,19 +57,20 @@ available would undercut the contribution. Reporting the operative figure also r
 would otherwise be an unexplained tension with the next sentence: targets are drawn by the
 stratified score-independent sampler, and on the resulting fair pool the clean detector
 scores AUROC $0.704$ [$0.653$, $0.753$], against the $1.0$ that score-dependent selection
-manufactures by construction---an interval that contains the operative replication figure
+manufactures by construction. That interval contains the operative replication figure
 but excludes the all-samples one. That $0.704$ is one of the figures
 Section~\ref{sec:limitations} traces to a single June 2026 generation cache, whose
 sampling configuration is under-recorded and against which the later $N{=}40$ run shows a
 measured generation drift; neither has been bounded for this number.
 
 \paragraph{Reading the null control.}
-Table~\ref{tab:nullcontrol} places the optimised attack against two null bands---a
-same-question \emph{seed-noise} floor and a \emph{benign-paraphrase} floor of $m{=}50$
-NLI-passing non-adversarial rephrasings, whose comparison against the attacker's
+Table~\ref{tab:nullcontrol} places the optimised attack against two null bands, under each
+clustering relation the campaign instantiates. The first band is a same-question
+\emph{seed-noise} floor. The second is a \emph{benign-paraphrase} floor of $m{=}50$
+NLI-passing non-adversarial rephrasings, and its comparison against the attacker's
 $\sim$180-candidate ($\sim$181-evaluation) search is budget-matched \emph{analytically} by
 the exceedance test below rather than by drawing $m$ equal to
-that budget---under each clustering relation the campaign instantiates. ($m$ is
+that budget. ($m$ is
 distinct from SRE's samples-per-reformulation $K$.) The
 shared-NLI arm is the detector's own clusterer and is the \emph{confounded upper bound}:
 it cannot separate a real change in the answer distribution from the NLI model's own
@@ -82,28 +83,28 @@ rather than leave a blank column to be misread: the definitive run was launched 
 empty embedding-model setting, so the embedding arm's benign list has length $0$ on all
 $80$ targets of the false-alarm stratum and its attack move is undefined. There is no
 embedding measurement here. Its absence is not a measured null, and we do not report it as
-one. The LLM-judge (Qwen2.5-7B-Instruct), victim- and NLI-independent and
-validated to $0.93$ [$0.90$, $0.96$] ($n{=}300$) on domain-matched gold-alias hard
-negatives---a proxy for the deployed clustering decision---is the \textbf{adjudicator}
-(for the false-alarm direction, under the disclosed re-scoped gate; Methods).
+one. The LLM-judge (Qwen2.5-7B-Instruct) is the \textbf{adjudicator} for the false-alarm
+direction, under the disclosed re-scoped gate (Methods). It is victim- and NLI-independent,
+and it is validated to $0.93$ [$0.90$, $0.96$] ($n{=}300$) on domain-matched gold-alias hard
+negatives, which are a proxy for the deployed clustering decision.
 
 \paragraph{The claim statistic, and why the obvious ones fail.}
 The attack reports the \emph{maximum} over the $\sim$181 objective evaluations it spends
-per target---the original question and the $\sim$180 candidate paraphrases it proposes
-(Section~\ref{sec:methods})---so any comparison against individual benign draws is
-upward-biased by construction: under the null a max-of-181 sits at $\sim$$99\%$ of an
-individual-draw distribution, not $50\%$. We
+per target. Those evaluations are the original question and the $\sim$180 candidate
+paraphrases it proposes (Section~\ref{sec:methods}). Any comparison against individual
+benign draws is therefore upward-biased by construction: under the null a max-of-181 sits at
+$\sim$$99\%$ of an individual-draw distribution, not $50\%$. We
 therefore price the search budget into the null analytically. Under the hypothesis that the
 optimiser carries no signal, a target's $A$ scored candidates and its $m$ benign draws are
 exchangeable, so $F(\text{attack-max}) \sim \mathrm{Beta}(A,1)$ and the number of benign
 draws above the attack's maximum is $K \sim \mathrm{BetaBinomial}(m; 1, A)$, with
-$\mathbb{E}[K] = m/(A{+}1)$, where $A$ is the attacker's search budget---the number of
-scored evaluations the maximum ranges over, $A \approx 181$, one more than the
-$\sim$180 candidate paraphrases because the original's own score is among them---and is
+$\mathbb{E}[K] = m/(A{+}1)$. Here $A$ is the attacker's search budget, meaning the number of
+scored evaluations the maximum ranges over. It takes the value $A \approx 181$, one more than
+the $\sim$180 candidate paraphrases because the original's own score is among them. $A$ is
 distinct from the per-question sample budget $N$, which is $10$ throughout this section.
-It is not $10$ throughout the paper: Sections~\ref{sec:discussion}
+$N$ is not $10$ throughout the paper: Sections~\ref{sec:discussion}
 and~\ref{sec:limitations} characterise the clean detector on the fair pool at $N{=}20$ and
-$N{=}40$ as well. Fewer exceedances than that is evidence for the attack; the
+$N{=}40$ as well. Fewer exceedances than that expectation is evidence for the attack; the
 one-sided $p$-value follows by exact convolution over targets, and the effect size is the
 \emph{effective benign budget} $n_{\mathrm{eff}} = m/\bar{K} - 1$, read as ``the search is
 worth $n_{\mathrm{eff}}$ random paraphrases''.
@@ -132,14 +133,15 @@ at $0.041$ for the pre-registered $m{=}50$; levels and powers are paired on the 
 $4{,}000$ simulated trials per cell, and the analytic null's own nominal tails at those cut
 points are $0.031$ and $0.044$, so the shipped test is stricter than it believes itself to
 be. We quote the deployed test throughout. On the same draws, a critical value calibrated
-against the true simulated null---an oracle the deployed test does not have---reaches $0.66$
-at level $0.056$ and $0.84$ at $0.064$ for those two cells. The difference between the two
+against the true simulated null reaches $0.66$
+at level $0.056$ and $0.84$ at $0.064$ for those two cells. Such a calibration is an oracle
+the deployed test does not have. The difference between the two
 columns is a level, not a statistic: at a common $m$ the analytic $p$-value is strictly
 increasing in the exceedance total alone, so the deployed and oracle tests are the same cut
 rule on the same statistic, applied at different cut points. Re-cut to the oracle's achieved
 level, the deployed test's power equals the oracle's to three decimals at every $m$ we
 simulate. The analytic null therefore costs nothing in discriminating power and buys
-conservatism---and, unlike the oracle, it delivers a level the pipeline can state without
+conservatism. Unlike the oracle, it also delivers a level the pipeline can state without
 knowing the truth it is testing. What it does cost is the operating point rather than the
 statistic: the cut we ship is the stricter one, so a non-rejection must be read against the
 deployed power and not the oracle's. Both inadmissible rules are
@@ -153,17 +155,17 @@ pins the maximum's value; our optimiser records it per target.
 \footnotesize
 \setlength{\tabcolsep}{4pt}
 \caption{Null-controlled attack effect, SE / false-alarm direction, per clustering
-relation. Every cell is measured on the \emph{false-alarm stratum of the attacked pool}---the
-$80$ score-independently selected correct-answer targets the optimiser was run on---and not
-on the fair pool used to characterise the clean detector (Section~\ref{sec:methods}). The two
-are nested: these targets are a prefix of the fair pool's $200$ correct answers, so the
-distinction is not between disjoint question sets but one of scope---a single correctness
-stratum, under the optimiser's own selection---and no number is carried between them.
+relation. Every cell is measured on the \emph{false-alarm stratum of the attacked pool}, the
+$80$ score-independently selected correct-answer targets the optimiser was run on. No cell is
+measured on the fair pool used to characterise the clean detector (Section~\ref{sec:methods}).
+The two are nested: these targets are a prefix of the fair pool's $200$ correct answers. The
+distinction is therefore not between disjoint question sets but one of scope, a single
+correctness stratum under the optimiser's own selection. No number is carried between them.
 \textbf{Three different denominators appear and they are not interchangeable}: the bands over
 all $80$ attacked targets; every benign-referenced row over the $77$ with a non-empty benign
 arm; and the convention~(c) row of Table~\ref{tab:nullconventions} over $69$. Three targets
-(\texttt{qb\_565}, \texttt{qz\_3393}, \texttt{qb\_2689}) have \emph{no} benign arm---the
-feasibility gate rejected all $250$ attempts---and are excluded rather than absorbed. They are
+(\texttt{qb\_565}, \texttt{qz\_3393}, \texttt{qb\_2689}) have \emph{no} benign arm, because the
+feasibility gate rejected all $250$ attempts, and they are excluded rather than absorbed. They are
 also targets for which the optimiser found no feasible paraphrase, but they are not the only
 ones: $11$ of the $80$ have no feasible paraphrase at the optimiser's best, and these three are
 the subset of those $11$ on which the benign sampler failed as well. Bands are mean intended
@@ -173,9 +175,10 @@ reported beside it because it governs how much the nats bands can be trusted, an
 inadmissible tie rules are shown so that any disagreement between them is visible. The
 paired net is \textbf{supplementary}, is shown under the pre-registered convention~(d)
 (Table~\ref{tab:nullconventions}), and is shown against three comparators because its sign
-depends on which one is used. The $m{=}50$ benign budget was reached on $71$ of the $77$;
-six arms are short ($m$ of $1$, $26$, $27$, $27$, $35$, $38$), which inflates the net by a
-measured $+0.006$ nats as-is and $+0.001$ under~(d)---disclosed, not corrected. The
+depends on which one is used. The $m{=}50$ benign budget was reached on $71$ of the $77$.
+Six arms are short ($m$ of $1$, $26$, $27$, $27$, $35$, $38$), which inflates the net by a
+measured $+0.006$ nats as-is and $+0.001$ under~(d). We disclose that inflation rather than
+correct for it. The
 embedding relation was not instantiated in this run and has no column; see the text.}
 \label{tab:nullcontrol}
 \begin{tabular}{lccc}
@@ -223,8 +226,8 @@ bounded below by $0$ everywhere (measured minimum $+0.0000$ over all $80$); the 
 gate forbids the benign arm from drawing the no-op, so its maximum is unconstrained and is
 negative on $10$ of $77$ targets under NLI. \emph{Convention~(c) drops eight rows, not
 eleven, and the arithmetic is worth spelling out because $77{-}11$ is not $69$}: three of the
-$11$ no-op targets are the three with an empty benign arm, which are already outside the $77$,
-so only the remaining eight are excluded here. The paired net therefore credits the attack with
+$11$ no-op targets are the three with an empty benign arm, and those three are already outside
+the $77$, so only the remaining eight are excluded here. The paired net therefore credits the attack with
 the null's losses unless a convention intervenes. \textbf{Convention~(d) was locked in advance
 of the last $12$ targets, in a pre-registration written with $68$ of $80$ visible and after
 the effect of every candidate convention had been computed. It was not blind, and we do not
@@ -233,8 +236,8 @@ document requires. (d) is the least favourable to our own attack in all three ar
 the direction that makes a post-hoc choice non-self-serving; (a) is indefensible on principle
 and (c) changes the denominator. Read with Table~\ref{tab:nullcontrol}: under \emph{every}
 convention, the judge column is measured against a benign maximum selected on the judge while
-the attack's judge score is unselected, and that asymmetry---not the convention---is what puts
-the judge column below zero.}
+the attack's judge score is unselected. That asymmetry is what puts the judge column below
+zero, and the convention is not.}
 \label{tab:nullconventions}
 \begin{tabular}{llccc}
 \toprule
@@ -251,9 +254,9 @@ Convention & $n$ & Shared NLI & Exact-match & LLM-judge \\
 \end{table}
 
 \paragraph{Decision rule (single, pre-registered, with disclosed deviations).}
-Reframe~(a)---``the attack targets the detector''---is claimed iff, at $n{\geq}80$ with
-$m{=}50$ benign paraphrases per target, the adjudicator clusterer's randomised-tie
-exceedance test rejects at the $5\%$ level in the direction of the attack. That design was
+Reframe~(a) is the claim that ``the attack targets the detector''. It is claimed iff, at
+$n{\geq}80$ with $m{=}50$ benign paraphrases per target, the adjudicator clusterer's
+randomised-tie exceedance test rejects at the $5\%$ level in the direction of the attack. That design was
 fixed in advance at a simulated power of $0.84$ against a two-fold effect and $0.99$ against
 a three-fold one, chosen over a cheaper $m{=}30$ (power $0.67$ at the design-time
 simulation settings, $0.66$ on the higher-precision re-run quoted above) because our own
@@ -261,8 +264,8 @@ selection-on-noise measurement indicates the true effect is modest and the desig
 able to see a small one. We disclose that those pre-registration figures were the
 oracle-calibrated ones; the deployed analytic-null test, cutting at its stricter achieved
 level, delivers $0.77$ at $m{=}50$ and $0.51$ at $m{=}30$. That shortfall is a level rather
-than a weaker statistic---re-cut to the oracle's level the two agree to three decimals, as
-above---but it is the operating point we actually ship. The ordering that drove the choice
+than a weaker statistic, since re-cut to the oracle's level the two agree to three decimals,
+as above. It is nonetheless the operating point we actually ship. The ordering that drove the choice
 is unchanged and we do not re-choose $m$ after the fact, but the design rejects less
 readily than the number we picked it on, and
 a non-rejection must be read against $0.77$ rather than $0.84$. If the test does not reject, (a) is not claimed, and the
@@ -278,10 +281,10 @@ the winner's-curse mismatch surfaced in adversarial review. The budget correctio
 from brute-force matching to the analytic exceedance null, triggered by the matched design
 pricing out at what we then costed as $228$ GPU-hours. We correct that figure here rather than
 leave it standing: re-derived from the wall clock of runs that have since executed, the matched
-design is about $99$ GPU-hours. The deviation still holds---an analytic null that costs nothing
-is preferable to a four-day matched arm---but the trigger we recorded was $2.3\times$ too
-large, and a reader checking whether the rule was tuned is entitled to the corrected number.
-And the tie rule moved from
+design is about $99$ GPU-hours. The deviation still holds, because an analytic null that costs
+nothing is preferable to a four-day matched arm. Even so, the trigger we recorded was
+$2.3\times$ too large, and a reader checking whether the rule was tuned is entitled to the
+corrected number. And the tie rule moved from
 conservative to randomised
 breaking, triggered by the simulation above showing the conservative rule has no power under
 the ceiling. Each trigger is objective, each was recorded before the corresponding data was
@@ -290,9 +293,9 @@ reader is entitled to check that the rule was not tuned to the result.
 
 \paragraph{Result: what the rule returns.}
 The confirmatory run completed on 2026-08-29. It attacks the \emph{false-alarm stratum of the
-attacked pool}---all $80$ score-independently selected correct-answer targets, the
-pre-registered $n{\geq}80$ met by this population and by no other quantity in this section---and
-scores each target's outcome under three clustering relations, against $m{=}50$ benign feasible
+attacked pool}, all $80$ score-independently selected correct-answer targets, which is the
+pre-registered $n{\geq}80$ met by this population and by no other quantity in this section. The
+run scores each target's outcome under three clustering relations, against $m{=}50$ benign feasible
 paraphrases drawn from the same proposer and passed through the same feasibility gate, plus a
 three-seed same-question band. The judge is Qwen2.5-7B-Instruct. \textbf{The rule returns a
 non-rejection, and it does so in every arm.} In the adjudicator arm the randomised-tie
@@ -302,15 +305,17 @@ $1.000$. Reframe~(a) is therefore \textbf{not claimed}. The direction is worth s
 it is not merely a failure to clear a threshold: the observed exceedance total is \emph{above}
 its null expectation in all three arms, which is the
 direction \emph{against} the attack, so the statistic does not sit ambiguously near the cut.
-That total is itself a tie-break realisation and we quote it as one rather than beside a median
-$p$ as though it were fixed: at the seed-$0$ draw it is $30$, $383$ and $636$ against an
-expectation of $20.4$, and the medians over the same $101$ draws the $p$-values summarise are
+That total is itself a tie-break realisation, and we quote it as one rather than setting it
+beside a median $p$ as though it were fixed. At the seed-$0$ draw it is $30$, $383$ and $636$
+against an expectation of $20.4$. The medians over the same $101$ draws that the $p$-values
+summarise are
 $28$, $383$ and $652$. The shared-NLI total is the one that moves, over $[16,41]$ across those
-draws, so the most attack-favourable realisations do put it just below expectation---and that
+draws, so the most attack-favourable realisations do put it just below expectation. That
 is exactly the realisation at which its $p$ bottoms out at $0.229$, still more than four times
 the $5\%$ cut. In
 the arm the optimiser actually searched, its $181$ scored evaluations behave like
-$n_{\mathrm{eff}}{\approx}122$ random feasible paraphrases---fewer than the budget it spent.
+$n_{\mathrm{eff}}{\approx}122$ random feasible paraphrases, which is fewer than the budget it
+spent.
 Doubling the measured tie multiplicity, the one perturbation that moves $p$ downward, leaves
 the NLI arm at $0.229$ and the other two at $1.000$.
 
@@ -326,19 +331,22 @@ below, and it gets the same wording rather than a stronger one.
 \paragraph{Denominators, and the convention, both disclosed.}
 Four different $n$ appear above, all of them inside the false-alarm stratum of the attacked
 pool, and none of them may be substituted for another. The campaign
-is $80$; every benign-referenced statistic---the exceedance test and the paired net alike---runs
+is $80$; every benign-referenced statistic runs
 on $77$, because three targets have no benign arm at all; convention~(c) runs on $69$; and the
-full $m{=}50$ budget was achieved on $71$. The three empty arms
+full $m{=}50$ budget was achieved on $71$. The exceedance test and the paired net are both
+benign-referenced, so both run on $77$. The three empty arms
 (\texttt{qb\_565}, \texttt{qz\_3393}, \texttt{qb\_2689}) are the targets whose every one of
 $250$ feasibility attempts was rejected, and on each of them the optimiser also found no
-feasible paraphrase---joint evidence that no feasible paraphrase of those
+feasible paraphrase. Taken together, those two failures are evidence that no feasible
+paraphrase of those
 questions exists, rather than that the sampler was unlucky. That second property is not
 peculiar to those three: $11$ of the $80$ targets have no feasible candidate at the
 optimiser's best, identically identified by three independent criteria (the returned query
 equals the original, the optimiser records no improvement, and its feasible-at-best count is
 zero). What singles out these three is that the benign sampler failed on them too, and it is
 the empty benign arm, not the optimiser's no-op, that removes a target from the denominator.
-They are excluded and stated, never absorbed into a denominator of $80$. Six further arms are short; the resulting inflation of the
+They are excluded and stated, never absorbed into a denominator of $80$. Six further arms are
+short. The resulting inflation of the
 net is $+0.006$ nats as-is and $+0.001$ under the locked convention, because the benign score
 distributions are lumpy: the discrete estimator has only $39$ attainable values at $N{=}10$,
 and $29\%$ of a target's benign NLI draws already sit at that target's own maximum, so a maximum over
@@ -361,8 +369,9 @@ not: there the attack contributes one unselected observation, so the null expect
 more extreme than it has any reason to be, and $p$ is inflated. The mis-specification runs
 against the attack, which is the conservative direction for the claim we are not making, but it
 has a consequence a reader should not have to derive: the exact-match and judge non-rejections
-are weaker evidence than the NLI one, and the NLI arm---confounded though it is as an effect
-estimate---is the only place where this test is asking the question it was designed to ask.
+are weaker evidence than the NLI one, and the NLI arm is the only place where this test is
+asking the question it was designed to ask. That holds even though the NLI arm is itself
+confounded as an effect estimate.
 
 That arm carries a mis-specification of its own, and it runs the other way, so we disclose it
 here rather than leave it to the pre-registration. Exchangeability requires the attack's
@@ -371,35 +380,36 @@ draws. On a no-op target it is not: the optimiser returned the original question
 attack's move is a structural $0$, while the feasibility gate rejects an identical
 ``paraphrase'' as its first test, so the benign arm can never produce one. The eight no-op
 targets that have a benign arm therefore donate an observed exceedance count of exactly $0$
-against an expectation of $1.93$---and they do so in all $101$ tie-break realisations, not on
-average---which pushes $S$ down and $p$ toward rejection \emph{in the attack's favour}. It is
+against an expectation of $1.93$, and they do so in all $101$ tie-break realisations rather than
+on average. That pushes $S$ down and $p$ toward rejection \emph{in the attack's favour}. It is
 an anti-conservative violation of the one arm the test is correctly budgeted for, it is
 unresolved, and at a borderline result it would matter. It does not change this one: with
 $1.93$ of the shared-NLI arm's $20.4$ expected exceedances handed to the attack for free, the
-test still does not reject at any realisation. The other two arms show the reverse---their
-no-op targets donate far \emph{more} exceedances than expected---so nothing about this
-violation is shared across the three.
+test still does not reject at any realisation. The other two arms show the reverse, since their
+no-op targets donate far \emph{more} exceedances than expected. Nothing about this
+violation is therefore shared across the three.
 
 Nor does the opposite correction rescue the attack. Pricing those arms at a budget of one
 would over-correct: the attack's judge value is not an independent draw but the judge score of
 an NLI argmax, so its effective budget is whatever the argmax inherits through the correlation
 between the two clusterers, somewhere strictly between $1$ and $A$. We do not model that
-quantity. The index-matched row of Table~\ref{tab:nullcontrol} sidesteps the need to, by
-holding the selection rule fixed across both sides, and it covers zero.
+quantity. The index-matched row of Table~\ref{tab:nullcontrol} sidesteps the need to model it,
+by holding the selection rule fixed across both sides, and it covers zero.
 
 \paragraph{What the judge arm does and does not say.}
 Under the locked convention the paired net in the adjudicator arm is
 $-0.173$ [$-0.302$, $-0.039$] nats, an interval lying entirely below zero, and we state the
 sign plainly: measured this way, the optimised attack moves the adjudicator's semantic entropy
 \emph{less} than the benign comparator does, by about $0.17$ nats per target. The result is
-stable to the convention---it is negative under (b), (b$'$), (c) and (d)---and to the bootstrap,
-agreeing with a $t$-test ($p{=}0.013$) and a signed-rank test ($p{=}0.007$).
+stable to the convention and to the bootstrap. It is negative under (b), (b$'$), (c) and (d),
+and it agrees with a $t$-test ($p{=}0.013$) and a signed-rank test ($p{=}0.007$).
 
 It would nonetheless be an error to report that as ``the attack loses to budget-matched random
 paraphrasing'', and we do not. The comparator in that row is the benign candidate that maximises
 the \emph{judge} score, chosen from $50$; the attack's judge score is an unselected re-scoring of
-a query chosen on NLI. The benign arm is handed a search the attack never ran---worth
-$+0.49$ nats of selection premium in that arm, and the NLI-selected benign candidate attains the
+a query chosen on NLI. The benign arm is handed a search the attack never ran, and that search
+is worth
+$+0.49$ nats of selection premium in that arm. The NLI-selected benign candidate attains the
 judge maximum on only $37$ of those $77$ targets. Scoring both sides the same way, by taking the
 benign candidate that maximises NLI and reading \emph{its} judge move, the net is
 $+0.016$ [$-0.112$, $+0.150$] with a sign test at $p{=}0.66$; the exact-match arm moves the same
@@ -409,14 +419,15 @@ percentile of its target's benign draws. The sign of the adjudicator's ``attack 
 therefore a property of how the null is budgeted and selected, not of the attack: the interval
 clears zero above against a single draw, contains zero against a matched selection, and clears
 zero below against a judge-targeted best-of-$50$. We do not read the first of those as a win
-either---its sign test does not reject ($p{=}0.44$), so its mean is carried by a minority of
-large movers. This is the same defect the null control exists to
-correct---a maximum compared against a differently-budgeted maximum---reappearing one level
-down, per arm rather than per design, and running \emph{against} the attack rather than for it,
-which is very likely why review aimed at pro-attack bias did not surface it. \textbf{The
-defensible reading of the adjudicator arm is that its index-matched interval covers zero}---and
-by the rule stated above we report it as covering zero rather than as null, which an interval
-spanning $[-0.112, +0.150]$---about a quarter of a nat---does not license: at this $n$, on this
+either. Its sign test does not reject ($p{=}0.44$), so its mean is carried by a minority of
+large movers. The null control exists to correct one defect, a maximum compared against a
+differently-budgeted maximum, and that defect reappears here one level
+down, per arm rather than per design. This time it runs \emph{against} the attack rather than
+for it, which is very likely why review aimed at pro-attack bias did not surface it. \textbf{The
+defensible reading of the adjudicator arm is that its index-matched interval covers zero}. By
+the rule stated above we report it as covering zero rather than as null. An interval
+spanning $[-0.112, +0.150]$, about a quarter of a nat, does not license that stronger word.
+What it does support is narrower: at this $n$, on this
 population,
 and with the comparator matched, we cannot distinguish the optimised attack from a
 budget-matched benign
@@ -424,7 +435,7 @@ search. Even index-matched the attack retains $181$ NLI evaluations against the 
 $50$, so that reading is not a claim in the attack's favour either.
 
 \paragraph{Transfer and defense.}
-These results are pending: the SE$\leftrightarrow$SRE transfer table and the
-reformulation-averaging defense curve fill from the same campaign; both are reported net of the benign floor and
-read as corroborating rather than independent evidence (the two detectors share the
-DeBERTa backbone).
+These results are pending. Both the SE$\leftrightarrow$SRE transfer table and the
+defense curve for reformulation-averaging fill from the same campaign. Both are reported net
+of the benign floor, and both read as corroborating rather than independent evidence, because
+the two detectors share the DeBERTa backbone.

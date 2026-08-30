@@ -1,88 +1,84 @@
-% Conclusion. Draft prose --- framing stable; keep claims scoped to null-controlled
+% Conclusion. Draft prose. Framing stable; keep claims scoped to null-controlled
 % evidence. Fill the final effect size at revision.
 
 Sampling-based hallucination detectors treat semantic uncertainty as a property of the
 question, invariant to surface form. We set out to test that assumption adversarially and
 found that the more informative obstacle lay upstream of the adversary, and that it is
 sharpest stated as a constraint on the operator rather than on the attacker. At $N{=}10$ the
-\emph{discrete} estimator we study is confined to a lattice of $39$ attainable values with an
-atom at the maximum, so a detector that flags when the score reaches a threshold can be run
-only at a finite list of false-alarm rates. Scored clean on the fair pool's $200$ correct
-answers, the achievable rates below one in four are $0\%$, $9.5\%$ [$6.2$, $14.4$] and
-$21.5\%$, catching $0\%$, $27.5\%$ and $44.5\%$ of that pool's $200$ hallucinating answers;
-an operator who specifies a $5\%$ false-alarm budget cannot have one at that sample budget,
-because the only threshold that honours it never fires. That floor is an identity rather than
-a measurement for as long as the cap carries mass, since every threshold above $\ln N$ flags
-nothing and the smallest rate a firing threshold can have is therefore the mass of the
-ceiling atom itself---the probability that a clean
-correct answer yields $N$ mutually distinct meanings, which the $1424$-answer superset puts
-at $10.5\%$ [$9.0$, $12.2$]. At $N{=}10$ a $5\%$ budget is excluded at $95\%$ confidence on
-both populations; a $10\%$ budget is on the boundary and we claim no more than that. The
+\emph{discrete} estimator we study is confined to a lattice of $39$ attainable values with
+an atom at the maximum, so a detector that flags when the score reaches a threshold can be
+run only at a finite list of false-alarm rates. Scored clean on the fair pool's $200$
+correct answers, the achievable rates below one in four are $0\%$, $9.5\%$ [$6.2$, $14.4$]
+and $21.5\%$, catching $0\%$, $27.5\%$ and $44.5\%$ of that pool's $200$ hallucinating
+answers. An operator who specifies a $5\%$ false-alarm budget cannot have one at that sample
+budget, because the only threshold that honours it never fires. That floor is an identity
+rather than a measurement for as long as the cap carries mass, since every threshold above
+$\ln N$ flags nothing and the smallest rate a firing threshold can have is therefore the
+mass of the ceiling atom itself. That mass is the probability that a clean correct answer
+yields $N$ mutually distinct meanings, which the $1424$-answer superset puts at $10.5\%$
+[$9.0$, $12.2$]. At $N{=}10$ a $5\%$ budget is excluded at $95\%$ confidence on both
+populations; a $10\%$ budget is on the boundary and we claim no more than that. The
 qualifier is load-bearing: measured out to $N{=}40$ over the same $200$ correct answers the
 cap carries no mass ($0.0\%$ [$0.0$, $1.9$]), the floor ceases to be an identity and becomes
-an ordinary order statistic at $2.0\%$, and the threshold that honours a
-$5\%$ budget achieves $5.0\%$ [$2.7$, $9.0$] on that same correct stratum of the fair pool.
-We report the second as a measured operating point and not as an existence claim, and we
-attach no interval to the first: its threshold is the top score \emph{these} $200$ answers
-happened to reach, so $2.0\%$ is the cheapest alarm a pool of this size can exhibit rather
-than an estimate of how cheap an alarm can be. What the pre-registered criterion asks for is
-a one-sided bound on the mass \emph{at the cap}, and that bound is the $1.9\%$ above---under
-the line, not over it
-(Section~\ref{sec:discussion}). The claim is
-about deterministic rules: a randomised rule reaches the chords between these points, but
-only by paying an indivisible block's average, and below the floor the reachable frontier is
-a single chord out of the origin. The $\log N$ ceiling behind all of this is shared with the
-likelihood-weighted estimator its authors designate as their main method; the lattice, and so
-the grid of achievable false-alarm rates, is particular to the discrete variant that the same
-authors run for their
-GPT-4 results and that semantic entropy probes are trained to predict. This is not a claim that the detector fails: on the
-score-independent \emph{fair} pool ($200$ correct, $200$ hallucinating)---the wider
-population on which we characterise the detector, and the one our targets are a sub-sample
-of---it separates correct from
-hallucinating answers moderately well, at AUROC $0.704$ [$0.653$, $0.753$]. It is a claim
-that at $N{=}10$ the region where a false alarm lives is
-compressed to the point where an operator has no usable choice inside it, and differences
-there are largely unmeasurable in the detector's own units.
+an ordinary order statistic at $2.0\%$, and the threshold that honours a $5\%$ budget
+achieves $5.0\%$ [$2.7$, $9.0$] on that same correct stratum of the fair pool. We report the
+second as a measured operating point and not as an existence claim, and we attach no
+interval to the first: its threshold is the top score \emph{these} $200$ answers happened to
+reach, so $2.0\%$ is the cheapest alarm a pool of this size can exhibit rather than an
+estimate of how cheap an alarm can be. What the pre-registered criterion asks for is a
+one-sided bound on the mass \emph{at the cap}, and that bound is the $1.9\%$ above, which
+falls under the line rather than over it (Section~\ref{sec:discussion}). The claim is about
+deterministic rules: a randomised rule reaches the chords between these points, but only by
+paying an indivisible block's average, and below the floor the reachable frontier is a
+single chord out of the origin. The $\log N$ ceiling behind all of this is shared with the
+likelihood-weighted estimator its authors designate as their main method. The lattice, and
+so the grid of achievable false-alarm rates, is particular to the discrete variant that the
+same authors run for their GPT-4 results and that semantic entropy probes are trained to
+predict. This is not a claim that the detector fails. On the score-independent \emph{fair}
+pool ($200$ correct, $200$ hallucinating) it separates correct from hallucinating answers
+moderately well, at AUROC $0.704$ [$0.653$, $0.753$]. That fair pool is the wider population
+on which we characterise the detector, and the one our targets are a sub-sample of. The
+claim is instead that at $N{=}10$ the region where a false alarm lives is compressed to the
+point where an operator has no usable choice inside it, and differences there are largely
+unmeasurable in the detector's own units.
 
-Establishing even that much honestly turned out to require more care than the question
-first appears to need. Because the attack reports a maximum over a large candidate search,
-about half of its apparent effect is selection on estimator noise, which we measure directly
-by re-scoring the selected paraphrase on independent samples. Because the score saturates,
-effect sizes in its native units are censored on just over half of attacked targets, and a
-null must remain valid when attack and benign candidates tie at the cap. And because the
-detector's clusterer is the same model that certifies our paraphrases as
-meaning-preserving, no single-clusterer measurement can separate a real change in the
-model's answers from that model's own inconsistency. The confirmatory evaluation was run
-under a protocol built to survive all three---targets
-chosen without reference to the detector's own scores, success requiring the hallucination
-status to survive the paraphrase, and a null that prices the attacker's search budget in
-rather than comparing a maximum against single draws---and we confine claims to what it
-supports, which on the evidence it returned is no attack effect: in every clustering arm, and
-at every one of $101$ tie-break draws, the pre-committed exceedance test fails to reject, with
-the median observed exceedance count above its null expectation rather than below it.
+Establishing even that much honestly turned out to require more care than the question first
+appears to need. Because the attack reports a maximum over a large candidate search, about half
+of its apparent effect is selection on estimator noise, which we measure directly by re-scoring
+the selected paraphrase on independent samples. Because the score saturates, effect sizes in
+its native units are censored on just over half of attacked targets, and a null must remain
+valid when attack and benign candidates tie at the cap. And because the detector's clusterer is
+the same model that certifies our paraphrases as meaning-preserving, no single-clusterer
+measurement can separate a real change in the model's answers from that model's own
+inconsistency. The confirmatory evaluation was run under a protocol built to survive all three.
+Targets were chosen without reference to the detector's own scores, success required the
+hallucination status to survive the paraphrase, and the null prices the attacker's search
+budget in rather than comparing a maximum against single draws. We confine claims to what that
+protocol supports, and on the evidence it returned that is no attack effect. In every
+clustering arm, and at every one of $101$ tie-break draws, the pre-committed exceedance test
+fails to reject, and the median observed exceedance count sits above its null expectation
+rather than below it.
 
-Two boundaries remain, and we state them as the work to do rather than as caveats to
-wave away. First, our clusterer and our equivalence gate are the same NLI model, so
-whether the vulnerability is a property of the \emph{paradigm} or of one model's
-self-inconsistency turns on an independent clustering oracle. We build one: the cheap
-candidates (exact match, sentence embeddings) fail on the adversarial case, but a
-victim- and NLI-independent LLM-judge, validated on a domain-matched proxy of that case
-($0.93$ vs.\ $0.51$), clears it---and it is under this judge that the confirmatory large-$n$ run,
-now complete, adjudicated whether the false-alarm effect survives the independent clusterer (the
-direction to which the judge is re-scoped; Methods). It does not survive it: the adjudicator's
-exceedance test does not reject, and index-matched against a benign candidate selected the same
-way the attack's own query was, the adjudicator arm cannot be distinguished from zero
-($+0.016$ [$-0.112$, $+0.150$] nats). That is the
-verdict we draw from that run rather than from the machinery-validation sample, and it bounds
-the effect we could have seen at this sample size rather than excluding one. Second,
-the meaning-preserving guarantee rests on an automatic gate; a human equivalence audit
-is needed before it is fully established. Whether a simple reformulation-averaging
-defense confers measurable robustness is an open question we frame but do not yet
-settle---the experiment is specified and has not been run---and we have specified it so
-that it can fail: the $d$-averaged arm must beat a cost-matched $d{=}1$ fresh-redraw control
-by a per-question paired margin whose $95\%$ interval excludes zero, and an interval
-covering zero means the defense bought the attacker's query cost rather than robustness.
-Taken together, the results argue that ``semantic'' uncertainty
-inherits the blind spots of whatever model defines its notion of meaning, and that
-detectors built on a learned equivalence relation should be evaluated as the
-adversarial targets they now are.
+Two boundaries remain, and we state them as the work to do rather than as caveats to wave away.
+First, our clusterer and our equivalence gate are the same NLI model, so whether the
+vulnerability is a property of the \emph{paradigm} or of one model's self-inconsistency turns
+on an independent clustering oracle. We build one. The cheap candidates (exact match, sentence
+embeddings) fail on the adversarial case, but a victim- and NLI-independent LLM-judge,
+validated on a domain-matched proxy of that case ($0.93$ vs.\ $0.51$), clears it. It is under
+this judge that the confirmatory large-$n$ run, now complete, adjudicated whether the
+false-alarm effect survives the independent clusterer (the direction to which the judge is
+re-scoped; Methods). It does not survive it: the adjudicator's exceedance test does not reject,
+and index-matched against a benign candidate selected the same way the attack's own query was,
+the adjudicator arm cannot be distinguished from zero ($+0.016$ [$-0.112$, $+0.150$] nats).
+That is the verdict we draw from that run rather than from the machinery-validation sample, and
+it bounds the effect we could have seen at this sample size rather than excluding one. Second,
+the meaning-preserving guarantee rests on an automatic gate; a human equivalence audit is
+needed before it is fully established. Whether a simple reformulation-averaging defense confers
+measurable robustness is an open question we frame but do not yet settle. The experiment is
+specified and has not been run. We have specified it so that it can fail: the $d$-averaged arm
+must beat a cost-matched $d{=}1$ fresh-redraw control by a per-question paired margin whose
+$95\%$ interval excludes zero, and an interval covering zero means the defense bought the
+attacker's query cost rather than robustness. Taken together, the results argue that
+``semantic'' uncertainty inherits the blind spots of whatever model defines its notion of
+meaning. They also argue that detectors built on a learned equivalence relation should be
+evaluated as the adversarial targets they now are.

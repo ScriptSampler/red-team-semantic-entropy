@@ -1,21 +1,22 @@
-% Introduction. Draft prose --- motivation + contributions are stable; the single
-% quantitative finding is a placeholder until the null-controlled headline lands.
+% Introduction. Motivation and contributions are stable. The null-controlled headline
+% landed on 2026-08-29 and its figures are live in the text below.
 
 Large language models are increasingly paired with \emph{hallucination detectors}
 that estimate whether a generated answer can be trusted. A prominent family is
-sampling-based: semantic entropy (SE)~\citep{kuhn2023semantic, farquhar2024detecting}
+sampling-based. Semantic entropy (SE)~\citep{kuhn2023semantic, farquhar2024detecting}
 samples several answers, clusters them by meaning with a natural-language-inference
-(NLI) equivalence check, and reports an entropy over the resulting clusters (we study the
-\emph{discrete} variant, which weights clusters by sample counts; the literature carries three
-estimators and Section~\ref{sec:methods} separates them); semantic reformulation entropy
-(SRE)~\citep{tong2025sre} extends this with input reformulations. These detectors are deployed on an implicit promise: that
+(NLI) equivalence check, and reports an entropy over the resulting clusters. The literature
+carries three such estimators, and Section~\ref{sec:methods} separates them; we study the
+\emph{discrete} variant, which weights clusters by sample counts. Semantic reformulation
+entropy (SRE)~\citep{tong2025sre} extends the idea with input reformulations. These
+detectors are deployed on an implicit promise: that
 the uncertainty they report is a property of the \emph{question and answer}, invariant
 to how the question happens to be phrased.
 
 That invariance has been asserted but not adversarially tested \emph{on the detector
-itself}. Prior red-teaming of LLMs targets the model's answer---eliciting
-hallucinations~\citep{liang2025seca, liang2026realista}---or evades text-origin
-classifiers by paraphrasing~\citep{cheng2025advparaphrasing, fang2025copa}; work on
+itself}. Prior red-teaming of LLMs targets the model's answer, either by eliciting
+hallucinations~\citep{liang2025seca, liang2026realista} or by evading text-origin
+classifiers through paraphrase~\citep{cheng2025advparaphrasing, fang2025copa}. Work on
 uncertainty manipulation has used fine-tuning or backdoors rather than a
 meaning-preserving input change~\citep{uncertaintyfragile2024}, and the closest
 detector-side attack degrades a hidden-state probe model-side~\citep{corvus2026}.
@@ -23,46 +24,48 @@ Uncertainty \emph{is} attackable from the input side: \citet{obadinma2025verbal}
 semantics-preserving perturbations degrade an LLM's \emph{verbal} confidence. We therefore
 scope the gap narrowly. What remains untested is the \emph{sampling-based} family, whose
 score is not a self-report but a statistic of an answer distribution partitioned by a
-learned equivalence relation---so the attack surface is that sampling-and-clustering
-pipeline rather than a model's self-assessment. The
-question we ask is accordingly: can an attacker who only \emph{rephrases the question},
-under a hard semantic-equivalence constraint, move a sampling-based detector's score
-in a chosen direction while the model's answer---and its correctness---stays put?
+learned equivalence relation. Its attack surface is accordingly that sampling-and-clustering
+pipeline rather than a model's self-assessment. The question we ask is therefore whether an
+attacker who only \emph{rephrases the question}, under a hard semantic-equivalence
+constraint, can move a sampling-based detector's score in a chosen direction while the
+model's answer stays put, and its correctness with it.
 
 Answering this question rigorously turns out to require controls that, to our knowledge,
-prior evaluations of this detector family do not jointly apply, and once they are applied
-the picture is more subtle than a clean ``we broke it.'' We contribute those controls as a protocol and report
-what they reveal. Three are load-bearing: (i) targets are selected
-\emph{score-independently}, or the clean detector is evaluated on a pool its own scores
-defined---a circularity that inflates clean AUROC to $1.0$; (ii) an attack counts only
-if the model's \emph{hallucination status} is unchanged under the paraphrase, checked
-with the same oracle that labelled the data; and (iii) effect sizes are reported
-\emph{net of a benign-paraphrase noise floor}, since the detector score is a
+prior evaluations of this detector family do not jointly apply. Once those controls are in
+place, the picture is more subtle than a clean ``we broke it.'' We contribute the controls
+as a protocol and report what they reveal. Three of them are load-bearing. (i) Targets are
+selected \emph{score-independently}, since otherwise the clean detector is evaluated on a
+pool its own scores defined, a circularity that inflates clean AUROC to $1.0$. (ii) An
+attack counts only if the model's \emph{hallucination status} is unchanged under the
+paraphrase, checked with the same oracle that labelled the data. (iii) Effect sizes are
+reported \emph{net of a benign-paraphrase noise floor}, since the detector score is a
 finite-sample estimate and an optimiser selecting the extremum over many candidates
-otherwise mistakes sampling variance for success. Whether the optimised attack moves the
-detector beyond what benign rephrasing achieves is a question we do now report on, and the
-answer is that it does not: run to completion over the $80$ correct-answer targets of the
-false-alarm stratum, the pre-committed exceedance test---whose null prices in the attacker's
-$\sim$$181$-candidate search budget---fails to reject in every clustering arm, at $p{=}0.939$
-(shared NLI), $1.000$ (exact match) and $1.000$ (LLM judge) on the $77$ of those targets that
-have a benign arm. Those are medians over $101$ tie-break draws and no draw in any arm reaches
-the $5\%$ cut; at the median the observed exceedance count sits \emph{above} its null
-expectation in all three, which is the direction against the attack
-(Section~\ref{sec:experiments}). That is a
+otherwise mistakes sampling variance for success.
+
+We do now report on whether the optimised attack moves the detector beyond what benign
+rephrasing achieves, and the answer is that it does not. The pre-committed exceedance test
+has a null that prices in the attacker's $\sim$$181$-candidate search budget. Run to
+completion over the $80$ correct-answer targets of the false-alarm stratum, that test fails
+to reject in every clustering arm, at $p{=}0.939$ (shared NLI), $1.000$ (exact match) and
+$1.000$ (LLM judge) on the $77$ of those targets that have a benign arm. Those figures are
+medians over $101$ tie-break draws and no draw in any arm reaches the $5\%$ cut; at the
+median the observed exceedance count sits \emph{above} its null expectation in all three,
+which is the direction against the attack (Section~\ref{sec:experiments}). This is a
 non-rejection by a design with power $0.77$ against a two-fold effect, so it bounds what we
-could have seen rather than measuring a zero, and we claim no attack effect from it. The arm
-the optimiser actually searched is in any case the
-detector's own NLI clusterer---precisely the measure that cannot
-separate a change in the model's answer distribution from an inconsistency of the NLI
-model that the detector's clustering and the attack's equivalence gate \emph{share}.
-The independent oracles one would reach for to break this tie---sentence embedders---turn
-out to be near-chance on exactly the word-preserving, meaning-shifted case an attack
-produces. On current evidence, then, the attribution is \emph{unresolved but bounded},
-and single-clusterer paraphrase-attack claims on these detectors are not adequately
-supported. We formulate the attack in \emph{both} directions---\emph{hide} designed to
-suppress a wrong answer's score, \emph{false-alarm} to inflate a
-correct answer's---as the case study that exercises the protocol; only the false-alarm
-direction is evaluated under the null control in this work.
+could have seen rather than measuring a zero, and we claim no attack effect from it.
+
+The arm the optimiser actually searched is in any case the detector's own NLI clusterer.
+That is precisely the measure that cannot separate a change in the model's answer
+distribution from an inconsistency of the NLI model that the detector's clustering and the
+attack's equivalence gate \emph{share}. The independent oracles one would reach for to break
+that tie are sentence embedders, and they turn out to be near-chance on exactly the
+word-preserving, meaning-shifted case an attack produces. On current evidence, then, the
+attribution is \emph{unresolved but bounded}, and single-clusterer paraphrase-attack claims
+on these detectors are not adequately supported. We formulate the attack in \emph{both}
+directions as the case study that exercises the protocol. The \emph{hide} direction is
+designed to suppress a wrong answer's score, and the \emph{false-alarm} direction to inflate
+a correct answer's. Only the false-alarm direction is evaluated under the null control in
+this work.
 
 \paragraph{Contributions.}
 (1) \textbf{A measurement-validity result about \emph{discrete} semantic entropy}, independent
@@ -71,13 +74,13 @@ the discrete variant is the one \citet{farquhar2024detecting} name and run for a
 GPT-4 results, the one \citet{kossen2024seps} train their probes to predict, and the only one
 computable under the black-box access we assume (Section~\ref{sec:methods}). The two halves of
 the result have different reach, and we keep them apart. That a plug-in entropy over at most
-$N$ observed clusters
-cannot exceed $\log N$ is elementary, and we claim no novelty for it; our contribution is
-the measurement of \emph{how tightly that bound binds in deployment}. That half is shared with
-the likelihood-weighted Eq.~(5), which normalises to a categorical distribution over the same
-clusters and so inherits the same ceiling---though not with Kuhn's unnormalised Eq.~(4), which
-has no such bound, so the ceiling is not a property of ``semantic entropy'' unqualified. The
-lattice half below is discrete-specific and does not transfer. At the standard $N{=}10$ the
+$N$ observed clusters cannot exceed $\log N$ is elementary, and we claim no novelty for it;
+our contribution is the measurement of \emph{how tightly that bound binds in deployment}.
+That half is shared with the likelihood-weighted Eq.~(5), which normalises to a categorical
+distribution over the same clusters and so inherits the same ceiling. It is not shared with
+Kuhn's unnormalised Eq.~(4), which has no such bound, so the ceiling is not a property of
+``semantic entropy'' unqualified. The lattice half below is discrete-specific and does not
+transfer. At the standard $N{=}10$ the
 estimator is confined to a lattice of $39$ attainable values with an atom at the maximum
 $\ln 10$, and the consequence we measure is a constraint on the \emph{operator} rather than on
 the attacker: a detector that flags when the score reaches a threshold can only change its
@@ -86,23 +89,23 @@ run at are a short finite list. Scored clean on the fair pool's $200$ correct an
 achievable clean false-positive rates below one in four are $0\%$, $9.5\%$ [$6.2$, $14.4$]
 and $21.5\%$ [$16.4$, $27.7$], with nothing in between; an operator who specifies a $5\%$
 false-alarm budget cannot have one at that sample budget, because the only threshold that
-honours it never fires. Running the same $200$ correct answers out to $N{=}40$ buys the
-missing operating point---the ceiling atom empties and a $5\%$ budget is honoured at an
-achieved $5.0\%$ [$2.7$, $9.0$]---so the claim is scoped to $N{=}10$ wherever we make it
-(Section~\ref{sec:discussion}).
+honours it never fires. Running the same $200$ correct answers out to $N{=}40$ empties the
+ceiling atom and buys the missing operating point, so a $5\%$ budget is honoured at an
+achieved $5.0\%$ [$2.7$, $9.0$]. We therefore scope the claim to $N{=}10$ wherever we make
+it (Section~\ref{sec:discussion}).
 That floor is an identity, not a measurement we happened to make: every threshold above
 $\ln N$ flags nothing, so the smallest false-positive rate a firing threshold can have
 \emph{is} the probability that a clean correct answer yields $N$ mutually distinct meanings.
 The identity binds only while the cap carries mass. At $N{=}10$ it does, on the direct
-cache. At $N{=}20$ it does as well, but that figure is a \emph{replay}---the $N{=}40$ run's
+cache. At $N{=}20$ it does as well, but that figure is a \emph{replay}. The $N{=}40$ run's
 samples subset down to $20$, which by exchangeability is an unbiased estimator of a direct
 $N{=}20$ pass but is not one: no direct measurement of the grid at $N{=}20$ exists, the
 only answers this project has ever scored at that budget being the $15$ saturated targets
 of the headroom pilot below, which were selected on their attacked $N{=}10$ score. At
-$N{=}40$ it does not: no clean correct answer reaches $\ln 40$---the at-cap mass is
-$0.0\%$ [$0.0$, $1.9$]---the floor reverts to an ordinary order statistic, and the cheapest
-threshold that fires at all costs $2.0\%$ rather than nothing. We attach no interval to that
-$2.0\%$; Section~\ref{sec:discussion} says why.
+$N{=}40$ the identity does not bind: no clean correct answer reaches $\ln 40$, the at-cap
+mass is $0.0\%$ [$0.0$, $1.9$], the floor reverts to an ordinary order statistic, and the
+cheapest threshold that fires at all costs $2.0\%$ rather than nothing. We attach no
+interval to that $2.0\%$; Section~\ref{sec:discussion} says why.
 We put that probability at $9.5\%$ on the fair pool's correct stratum and, on the
 $1424$-answer superset that stratum is a subset of, at $10.5\%$ [$9.0$, $12.2$], whose lower
 bound closes off a $5\%$
@@ -116,11 +119,12 @@ distinct values realised: that quantity is monotone in the number of targets sco
 same population yields $28$ at $n{=}200$ and $35$ at $n{=}2000$, and $22$ sits at the $37$th
 percentile of what a random $80$ produces), so it measures the sample, not the estimator, and
 the total number of operating points inherits the same defect. What does not move with the
-sample is the lattice size, and at the low end the floor. The general argument---that a score's distinct-value count caps
-what an operator can do with it, however well it ranks---has been made and named for
-black-box LLM classification~\citep{sun2026granularity}; we instantiate it for a
-sampling-based generative detector, where the granularity limit is imposed by the sample
-budget itself. The originating work sees the same crowding from the other side, reporting
+sample is the lattice size, and at the low end the floor. The general argument has been made
+and named for black-box LLM classification~\citep{sun2026granularity}: a score's
+distinct-value count caps what an operator can do with it, however well it ranks. We
+instantiate that argument for a sampling-based generative detector, where the granularity
+limit is imposed by the sample budget itself.
+The originating work sees the same crowding from the other side, reporting
 that clusters are few and grow little with $N$, and reads it as a computational
 saving~\citep{kuhn2023semantic, farquhar2024detecting}. Read instead as a measurement
 property, it means false-alarm effects are \emph{right-censored} on just over half of attacked
@@ -141,57 +145,60 @@ statements this supports have very different strengths and we keep them apart: \
 the selection-time figure is inflated is established, since the shrinkage is $-0.341$ nats
 with a $95\%$ CI of $[-0.469, -0.212]$ that excludes zero; \emph{how much} is not, since the
 retention interval runs from under a quarter to two-thirds. Roughly half of what an
-uncorrected report would claim is selection on sampling noise. That attack success scales with the search budget is
-known~\citep{hughes2024bon}, as is the case that success-rate comparisons need explicit
-measurement validity~\citep{chouldechova2025comparison}; what we add is the measurement for
-a \emph{stochastic detector score}, where the randomness being resampled lives inside the
-estimator rather than in the victim's decoding.
+uncorrected report would claim is selection on sampling noise. That attack success scales
+with the search budget is known~\citep{hughes2024bon}, as is the case that success-rate
+comparisons need explicit measurement validity~\citep{chouldechova2025comparison}; what we
+add is the measurement for a \emph{stochastic detector score}, where the randomness being
+resampled lives inside the estimator rather than in the victim's decoding.
 (3) \textbf{A protocol that makes the question answerable}: score-independent target
-selection (without it the clean detector looks perfect---AUROC $1.0$ by construction, versus
-$0.704$ [$0.653$, $0.753$] on the fair pool), an answer-invariance success criterion,
-and an exceedance test that prices the attacker's search budget into the null analytically,
-with tie handling that remains valid when the score saturates. Each control is individually
+selection, an answer-invariance success criterion, and an exceedance test that prices the
+attacker's search budget into the null analytically, with tie handling that remains valid
+when the score saturates. Without score-independent selection the clean detector looks
+perfect, reaching AUROC $1.0$ by construction, versus $0.704$ [$0.653$, $0.753$] on the fair
+pool. Each control is individually
 precedented; we are not aware of them applied jointly to a sampling-based hallucination
-detector. That hedge carries a stated coverage limit rather than an implied one:
+detector. That hedge carries a stated coverage limit rather than an implied one.
 Section~\ref{sec:limitations} enumerates the venues our search could not reach, including
-indices we verified return nothing to control queries---so absence of hits there is
-uninformative, not weakly reassuring, and this claim is bounded accordingly.
+indices we verified return nothing to control queries. Absence of hits in those indices is
+therefore uninformative rather than weakly reassuring, and this claim is bounded accordingly.
 (4) \textbf{The independent equivalence oracle the attribution requires.} Because the
 detector's NLI model both clusters answers and certifies paraphrase equivalence, a
 single-clusterer evaluation cannot separate a real change in the model's answers from that
-model's own inconsistency. Cheap oracles do not resolve it---sentence embedders are
-near-chance on exactly the adversarial case---so we build and validate an LLM-judge that
-clears it ($0.93$ vs.\ $0.51$). The confirmatory evaluation under it has run, and under that
-adjudicator the exceedance test does not reject; the pre-registered $n{\geq}80$ was met by the
-attacked stratum but not by the test, which ran on the $77$ of those targets with a benign arm
-(Section~\ref{sec:experiments}).
-(5) \textbf{The attack itself}---bidirectional, NLI-constrained, foregrounding the
-induced-false-positive direction---as the case study that exercises the protocol, and a
-reformulation-averaging defense with an analysis of what it does and does not close. We
+model's own inconsistency. Cheap oracles do not resolve it. Sentence embedders are
+near-chance on exactly the adversarial case, so we build and validate an LLM-judge that
+clears that discrimination ($0.93$ vs.\ $0.51$). The confirmatory evaluation under it has
+run, and under that adjudicator the exceedance test does not reject; the pre-registered
+$n{\geq}80$ was met by the attacked stratum but not by the test, which ran on the $77$ of
+those targets with a benign arm (Section~\ref{sec:experiments}).
+(5) \textbf{The attack itself as the case study that exercises the protocol}, together with
+a reformulation-averaging defense and an analysis of what it does and does not close. The
+attack is bidirectional and NLI-constrained, and it foregrounds the induced-false-positive
+direction. We
 claim neither the direction nor the search primitive as new: inducing a detector false
 positive while the underlying prediction stays correct is an established
 family~\citep{rusert2025redherring, khanmohammadi2026answerpreserving}, and constrained
 paraphrase search is a standard tool~\citep{liang2025seca, liang2026realista}. What is not
 inherited is the \emph{evaluation}, because of three properties of this victim class. First,
-and most structurally: semantic entropy's score \emph{is} an equivalence judgement---it
-counts how many distinct meanings a sample set contains---computed by the same kind of
-semantic-equivalence decision the attack's gate must make, and in our case by literally the
-same model. The effect is therefore unattributable without an oracle independent of the
-detector. That confound cannot arise for a constraint given by an $\ell_p$ ball, which is
-model-free and definitional, nor for a classifier, whose score is not an equivalence
-relation at all. Second, the score is a finite-sample estimate, so a maximum over candidates
-inflates: we measure $44\%$ retention on re-scoring. This does not arise against the
-deterministic classifiers targeted in the work above, though it would against any stochastic
-scorer. Third, the estimator is not merely bounded---classifier confidence is bounded
-too---but \emph{discrete}, and coarsest exactly where the attack must land: at $N{=}10$ the
-estimator's attainable lattice has $39$ points, and its top two lie $0.139$ nats apart---less
-than the success criterion's own $\delta$---so $21$ of our $80$ correct targets cannot
-register a success at any usable $\delta$, whatever the paraphrase. Raising $N$
-relaxes this, and substantially ($N{=}20$ affords $455$ points, seven of them in the top
-tenth of the range); what a lifted cap returns in \emph{usable headroom} is a different
+and most structurally, semantic entropy's score \emph{is} an equivalence judgement: it
+counts how many distinct meanings a sample set contains. The decision that produces it is
+the same kind of semantic-equivalence decision the attack's gate must make, and in our case
+it is made by literally the same model. The effect is therefore unattributable without an
+oracle independent of the detector. That confound cannot arise for a constraint given by an
+$\ell_p$ ball, which is model-free and definitional, nor for a classifier, whose score is
+not an equivalence relation at all. Second, the score is a finite-sample estimate, so a
+maximum over candidates inflates: we measure $44\%$ retention on re-scoring. This does not
+arise against the deterministic classifiers targeted in the work above, though it would
+against any stochastic scorer. Third, the estimator is \emph{discrete}, and coarsest exactly
+where the attack must land. Boundedness alone would not set it apart, since classifier
+confidence is bounded too. At $N{=}10$ the
+estimator's attainable lattice has $39$ points, and its top two lie $0.139$ nats apart,
+which is less than the success criterion's own $\delta$, so $21$ of our $80$ correct targets
+cannot register a success at any usable $\delta$, whatever the paraphrase. Raising $N$
+relaxes this, and substantially: $N{=}20$ affords $455$ points, seven of them in the top
+tenth of the range. What a lifted cap returns in \emph{usable headroom} is a different
 quantity and the only one of the two we measured, at $+0.304$ nats against a nominal
 $+0.693$ on a pilot of $15$ saturated targets, selected on their \emph{attacked}
-$N{=}10$ score---a measurement we report without a mechanism for it
+$N{=}10$ score. We report that measurement without a mechanism for it
 (Section~\ref{sec:discussion}). Effect sizes are
 therefore right-censored and any null must stay valid under ties at the cap. The discreteness
 half of this is the score-granularity gap named by~\citet{sun2026granularity}; what we add

@@ -1,13 +1,13 @@
-% Discussion. Draft prose --- mechanism + implications; keep claims scoped to what
+% Discussion. Draft prose covering mechanism and implications; keep claims scoped to what
 % the null-controlled results support.
 % 2026-08-29: the null control landed (80/80). The four "pending / under way" sites were
-% updated to the landed result -- and a FIFTH was missed and caught in the same-day sweep:
+% updated to the landed result, and a FIFTH was missed and caught in the same-day sweep:
 % "should the effect survive the confirmatory run" in "Why lead with false alarms", about 50
 % lines after "Is the weakness structural?" in this same file already said the run had
 % completed. Grep this file for "survive", "under
 % way", "pending" and "would be new" before believing it is clean.
 % The rule was NON-REJECTION, so every sentence here says
-% "not demonstrated at this power", never "no effect" -- if you find the latter, it is a
+% "not demonstrated at this power", never "no effect". If you find the latter, it is a
 % regression. The judge paired net of -0.173 is NOT cited as an attack deficit: it is a
 % comparator artifact, and the index-matched +0.016 is the like-for-like number
 % (experiments.tex, "What the judge arm does and does not say").
@@ -23,10 +23,10 @@ distribution, and hence the induced cluster structure and its entropy. The
 false-alarm direction exploits the detector's tendency to over-fragment a correct
 answer that can be expressed many ways; the hide direction exploits the mirror,
 collapsing a wrong answer's diverse phrasings toward apparent consensus. In both
-cases we hypothesise the manipulation lives in the gap between two notions of
-equivalence---the NLI gate's and the sampling distribution's---that the detector
-implicitly assumes coincide; isolating that this gap is the cause (rather than a
-correlate) is exactly what the independent-clusterer check would establish.
+cases we hypothesise that the manipulation lives in the gap between two notions of
+equivalence that the detector implicitly assumes coincide. One notion is the NLI gate's and
+the other is the sampling distribution's. Isolating that this gap is the cause rather than a
+correlate is exactly what the independent-clusterer check would establish.
 
 \paragraph{How much of this is an attack, and how much is the detector?}
 The mechanism above presumes there is room to move the score. At the top of the scale there
@@ -40,19 +40,20 @@ actually specifies: a false-alarm budget.
 
 \paragraph{The achievable false-alarm rates are a short finite list.}
 A detector that flags when the score reaches $\tau$ changes its false-positive rate only when
-$\tau$ crosses a value some clean correct answer actually took, so on any given population
-the rates it can be operated at form a finite set---one per distinct clean score, plus the
-always-available policy that never fires. That set is not spread evenly. Enumerated on the
+$\tau$ crosses a value some clean correct answer actually took. So on any given population
+the rates it can be operated at form a finite set. That set holds one rate per distinct
+clean score, plus the always-available policy that never fires, and it is not spread evenly.
+Enumerated on the
 fair pool's $200$ correct answers, the achievable rates below one in four false alarms are
-exactly three---$0\%$, $9.5\%$ [$6.2$, $14.4$] and $21.5\%$---catching respectively $0\%$,
+exactly three. They are $0\%$, $9.5\%$ [$6.2$, $14.4$] and $21.5\%$, catching respectively $0\%$,
 $27.5\%$ [$21.8$, $34.1$] and $44.5\%$ [$37.8$, $51.4$] of that pool's $200$ hallucinating
 answers. Counted against the budget an operator would state, the number of firing operating
 points at or below $1\%$, $5\%$, $10\%$ and $20\%$ false alarms is $0$, $0$, $1$ and $1$. We
-count against a budget rather than reporting how many operating points exist in total,
-because the total is a property of the sample---more negatives realise more of the
-lattice---while the low end is not. This is the argument of
-\citet{sun2026granularity}---that a score can rank acceptably and still leave an operator
-only a handful of usable thresholds---counted out for a sampling-based detector, where the
+count against a budget rather than reporting how many operating points exist in total. More
+negatives realise more of the lattice, so the total is a property of the sample, while the
+low end is not. \citet{sun2026granularity} argue that a score can rank acceptably and still
+leave an operator only a handful of usable thresholds. We count that argument out for
+a sampling-based detector, where the
 thresholds available are fixed by the sample budget rather than by a model's verbal habits.
 
 The lower end of that list is an \emph{identity} rather than a measurement, for as long as the
@@ -73,12 +74,12 @@ estimates the same parameter with seven times the negatives, at $10.5\%$ [$9.0$,
 the \emph{same} grid as its correct stratum and there is no separate pooled figure to report;
 what the hallucinating stratum supplies is the true-positive column. The superset is the full
 labelled pool's correct stratum, of which the fair pool's is a strict subset, so it pins the
-same parameter rather than a different one---which is what makes it a precision check on the
+same parameter rather than a different one. That is what makes it a precision check on the
 floor and not a second population with a second answer.}
 A $10\%$ budget we do \emph{not} claim to exclude. It falls between the two populations'
-estimates---honoured at $9.5\%$ on the fair pool's correct stratum, unavailable at all on the
-superset, with overlapping intervals either way---so the defensible statement is that the
-floor is about one correct answer in ten and a $10\%$ budget sits on the boundary of
+estimates. It is honoured at $9.5\%$ on the fair pool's correct stratum, unavailable at all
+on the superset, and the intervals overlap either way. The defensible statement is therefore
+that the floor is about one correct answer in ten and a $10\%$ budget sits on the boundary of
 feasibility. The $5\%$ claim needs no such hedge on either population.
 
 Prevalence changes the consequences of a chosen operating point but not the grid, which is a
@@ -88,9 +89,10 @@ lowest firing threshold raises $148$ alerts per thousand questions, of which $49
 [$43.5$, $54.8$] are genuine, and leaves $216$ hallucinations per thousand unflagged.
 
 What makes that gap a gap, rather than an interval a finer threshold could subdivide, is that
-the ceiling is an \emph{atom} and not merely a maximum. At $\tau{=}\ln 10$ the flagged set is a single block of
-items carrying an identical score---$19$ of the fair pool's $200$ correct answers together
-with $55$ of its $200$ hallucinating ones---and no threshold can separate them, so those
+the ceiling is an \emph{atom} and not merely a maximum. At $\tau{=}\ln 10$ the flagged set is
+a single block of items carrying an identical score. That block is
+$19$ of the fair pool's $200$ correct answers together
+with $55$ of its $200$ hallucinating ones, and no threshold can separate them, so those
 $19$ false alarms are not a tuning failure but the fixed price of those $55$ detections. The
 same holds one step down, where the second-largest attainable value moves the whole grid from
 $9.5\%$ to $21.5\%$ false alarms in one jump. This is what the coarseness of the lattice near
@@ -104,8 +106,8 @@ population, and an operator's entire low-false-alarm menu is to take neither, on
 \caption{Every operating point a deterministic threshold rule on discrete semantic entropy
 can occupy at $N{=}10$, with the false-positive rate measured on the fair pool's correct
 stratum ($n{=}200$) and the true-positive rate on its $200$ hallucinating answers. They are
-\emph{points}, not a curve---a finite achievable set whose size grows with the
-sample---and the dashed line is the upper convex hull, reachable only by a rule that
+\emph{points}, not a curve, and the finite achievable set they form grows with the sample.
+The dashed line is the upper convex hull, reachable only by a rule that
 randomises. Below the floor of $9.5\%$ that hull is a single chord out of the
 origin, so a randomised rule buys sub-floor false-alarm rates only by paying the average of
 an indivisible block (a $5\%$ budget costs a true-positive rate of $14.5\%$ against the
@@ -116,8 +118,9 @@ the shaded region.}
 
 \paragraph{What this does and does not say about the ROC curve.}
 It does not say the ROC curve is fictional, and we state the limit of the claim before a
-reader has to. A \emph{randomised} rule---flag a ceiling item with probability $p$ and
-otherwise never fire---reaches any point on the chord between two adjacent achievable points,
+reader has to. A \emph{randomised} rule flags a ceiling item with probability $p$ and
+otherwise never fires. Such a rule reaches any point on the chord between two adjacent
+achievable points,
 so a $5\%$ false-alarm rate is attainable at $p{=}0.526$, for a true-positive rate of
 $14.5\%$. Three things survive that concession. Every \emph{deterministic} operating point,
 which is the only kind a deployment can be audited against and the only kind under which the
@@ -136,7 +139,8 @@ pairwise inequivalent then so are any ten of them, so $\{\text{saturate at }20\}
 contained in $\{\text{saturate at }10\}$, and the first ten of an i.i.d.\ draw of twenty have
 the law of an i.i.d.\ draw of ten. Raising the budget can therefore only lower the
 false-alarm floor, and the floor itself is a fact about how often the model answers a
-question $N$ different ways---a property of the model and the question distribution, not of
+question $N$ different ways. That frequency is a property of the model and the question
+distribution, not of
 the estimator's arithmetic. Not settled that way: whether the grid becomes usably
 \emph{fine} near the operating region. Enumeration bounds the number of thresholds available in the top tenth of
 the range at seven ($455$ attainable values at $N{=}20$, against $39$ and two at $N{=}10$),
@@ -161,23 +165,23 @@ points [$-0.2$, $2.4$], which \emph{covers} it. The end-to-end fall is real and 
 increment is not separately resolved at $200$ questions; both belong in the claim, and the
 second is the kind of thing this section elsewhere refuses to read a sign off.
 Figure~\ref{fig:floor_budget} plots the three budgets and the three paired differences
-together.
-The first two entries are replays of the
+together. The first two entries are replays of the
 $N{=}40$ run's recorded verdicts on random subsets, which is why they are quoted from that
 run rather than from the direct Week-4 cache the rest of this paper uses, where the same
 $N{=}10$ floor over the fair pool's $200$ correct answers is $9.5\%$ [$6.2$, $14.4$]; the two
 paragraphs below are about that difference. Which interval a row takes is decided by the
-estimator and not by whether the row was replayed: Wilson prices a count of independent
+estimator and not by whether the row was replayed. Wilson prices a count of independent
 indicators at a threshold fixed \emph{before} the data, so it belongs to the two rows that
-are exactly that---the direct $N{=}10$ floor, $19$ of $200$ at $\ln 10$, and the empty
-at-cap mass at $\ln 40$---while the replayed rows take a bootstrap over the $200$ questions,
+are counts of exactly that kind. Those two rows are the direct $N{=}10$ floor, $19$ of
+$200$ at $\ln 10$, and the empty
+at-cap mass at $\ln 40$. The replayed rows take a bootstrap over the $200$ questions instead,
 because their point estimate is an average over subset draws rather than a count. Those
-resample a draw of questions
-and nothing else; the paragraph below is about why
+resample a draw of questions and nothing else; the paragraph below is about why
 the replayed rows may not also resample the subset. The measured $N{=}40$ floor takes
 neither, for the reason below. What changes qualitatively at the top budget is that the floor stops
 being the ceiling atom: no clean correct answer reaches $\ln 40$ at all, so the at-cap mass is
-$0.0\%$ [$0.0$, $1.9$] and the floor becomes an ordinary order statistic---the four
+$0.0\%$ [$0.0$, $1.9$] and the floor becomes an ordinary order statistic. That statistic is
+the four
 highest-scoring clean answers, $2.0\%$ of the fair pool's correct stratum, at a threshold that
 catches $6.0\%$ [$3.5$, $10.2$] of that pool's $200$ hallucinating answers. That is also
 why we quote no interval for it. Its threshold is not $\ln 40$ or any
@@ -188,7 +192,7 @@ quantity being estimated moves with the pool instead of holding still to be esti
 is, the floor is an ordinary population proportion and the count in front of us estimates it.
 Nothing here decides which, and the two readings are far apart. Both candidate intervals
 inherit that indeterminacy, and each
-also has an endpoint placed by construction rather than by the data---a question bootstrap
+also has an endpoint placed by construction rather than by the data. A question bootstrap
 over these questions cannot return less than $1/200$ however small the floor really is, and
 Wilson on a count of four cannot know that the rung it counts may not be the population's
 top one. Neither prices the floor, so we report $2.0\%$ as the cheapest alarm $200$ answers
@@ -206,7 +210,7 @@ the sample budget, every budget read off the one $N{=}40$ pairwise-verdict check
 no step in the sequence is also a change of cache; the direct $N{=}10$ point from the June
 cache is shown separately because it is a different generation run. Left: the floor, and in
 grey the ceiling-atom mass, which is the same quantity until the atom empties at $N{=}40$ and
-then is not---there the atom is $0/200$ with a Wilson upper bound of $1.9\%$, while the
+then is not. There the atom is $0/200$ with a Wilson upper bound of $1.9\%$, while the
 cheapest alarm the pool can exhibit costs $2.0\%$ and is drawn without an interval, its
 threshold being the top score this sample reached rather than a value fixed in advance.
 Right: the three matched paired differences over the same $200$ questions, which is why they
@@ -233,11 +237,12 @@ it was written against, the two were the same number. At $N{=}40$ they came apar
 at-cap count is $0$, not $4$, its Wilson upper bound is $1.9\%$, and the criterion is met
 with three counts to spare. We disclose that reading rather than bury it, because the plan
 did not anticipate the atom emptying, and because comparing the four first-firing answers
-against a threshold derived for the at-cap count compares two different quantities---the
-same conflation this work has already had to correct once in the grid report. What the
+against a threshold derived for the at-cap count compares two different quantities. That is
+the same conflation this work has already had to correct once in the grid report. What the
 criterion licenses is narrow and we keep it narrow: the obstruction that closed off a $5\%$
-budget at $N{=}10$---an atom of mass at the ceiling, which no threshold can cut into---is
-gone at $N{=}40$. It does not license reading the $5.0\%$ achieved on the fair pool's $200$
+budget at $N{=}10$ is gone at $N{=}40$. That obstruction was an atom of mass at the ceiling,
+which no threshold can cut into.
+The criterion does not license reading the $5.0\%$ achieved on the fair pool's $200$
 correct answers as a demonstration that a
 sub-$5\%$ operating point exists, and we do not read it that way. One assumption holds the
 certificate up and we state it rather than leave it to be found: that some question in the
@@ -249,36 +254,39 @@ advance too: thirty further correct answers along
 the same seed-$0$ ordering, taken from the larger correct stratum this one is a subset of,
 at the pessimistic end of its own predicted floor, with the instruction to trigger the
 extension on the measured floor rather than on a hunch. The measured floor triggers it and
-we have not run it. So the concession is made at the strength its sample supports---five
+we have not run it. So the concession is made at the strength its sample supports. That
+strength is five
 firing thresholds at or below $5\%$ where $N{=}10$ offers none, and a floor of $2.0\%$ that
-we do not certify to sit below $5\%$---and
-the achieved rate carries the same caution from the other side, since the threshold that
+we do not certify to sit below $5\%$.
+The achieved rate carries the same caution from the other side, since the threshold that
 honours the budget is chosen on the same $200$ correct answers whose false-alarm rate it is
 then quoted at.
 
 We pre-registered where the claim would break. Before any of these samples were drawn we
 predicted, from the $N{=}10$ cache alone, that the ceiling-atom mass would fall to
 $3.5$--$5.3\%$ at $N{=}20$ and $1.2$--$2.4\%$ at $N{=}40$; we recorded in advance that the
-$N{=}20$ prediction sits on the very $5\%$ boundary this claim turns on, and committed to the
-reversal before the data existed---``if it comes in far below, the finding becomes `here is
-the budget that buys a $5\%$ false-alarm rate'\thinspace''---so that neither branch could be
-written after the fact. The branch that fired is the one that was written down---but only at
+$N{=}20$ prediction sits on the very $5\%$ boundary this claim turns on, and we committed to
+the reversal before the data existed, so that neither branch could be written after the
+fact. The plan's own wording was ``if it comes in far below, the finding becomes `here is
+the budget that buys a $5\%$ false-alarm rate'\thinspace''.
+The branch that fired is the one that was written down, but it fired only at
 $N{=}40$, and the prediction that led to it did badly. Both budgets came in \emph{below}
 their bands, a replayed $3.1\%$ at $N{=}20$ and an empty atom at $N{=}40$, and the plan had
 stated in advance, in bold, that its numbers were lower bounds on the atom and so erred if at
 all towards predicting too much relaxation. The pre-registered direction of the error is
 therefore itself falsified, which is worth more to a reader than two band misses are. At
 $N{=}20$ we claim nothing from the miss, and the reason is narrower than the row's interval
-covering the prediction. The row is a replay---of an estimator shown unbiased below, but a
-replay---and its interval does \emph{not} cover the whole predicted band: it reaches
+covering the prediction. The row is a replay of an estimator shown unbiased below, but it is
+still a replay, and its interval does \emph{not} cover the whole predicted band: it reaches
 $4.7\%$, short of the band's top at $5.3\%$, while containing the band's lower edge of
 $3.5\%$. So the top of the prediction is excluded and its bottom is not, which is a partial
 miss and not the plan's ``far below'': a band whose lower edge survives has not been shown
 to be wrong, and a row we have just said may carry no load-bearing claim cannot be turned
-into a falsification either. At $N{=}40$ the atom emptied, a $5\%$ operating point appeared, and the reversal clause is the
-one that applies; even there the band is missed only on the quantity as it was predicted,
-since the plan identified the atom with the floor, and read as a floor the measured $2.0\%$
-on the fair pool's correct stratum lands inside the predicted $1.2$--$2.4\%$---the two parted
+into a falsification either. At $N{=}40$ the atom emptied, a $5\%$ operating point appeared,
+and the reversal clause is the
+one that applies. Even there the band is missed only on the quantity as it was predicted,
+since the plan identified the atom with the floor. Read as a floor, the measured $2.0\%$
+on the fair pool's correct stratum lands inside the predicted $1.2$--$2.4\%$. The two parted
 company exactly when the atom emptied. We give the prediction not as decoration but because
 it is what separates a scoped claim from a retreat.
 
@@ -300,8 +308,7 @@ direction of apparent caution.
 
 The floor a single replicate reports is a mean of independent indicators, one per question,
 question $i$ saturating with probability $p_i$ under the subset draw; so its variance splits
-as
-$\overline{p(1-p)} + \operatorname{var}(p) = \bar p(1-\bar p)$, identically. The left term is
+as $\overline{p(1-p)} + \operatorname{var}(p) = \bar p(1-\bar p)$, identically. The left term is
 the subset draw and the right term is the draw of questions, and their sum is exactly the
 binomial variance a Wilson interval on that one replicate already reports. On the fair pool's
 $200$ correct answers at $N{=}20$ the two terms, each written as the standard deviation it
@@ -313,8 +320,9 @@ balance. The subset draw is
 therefore not missing from a single-replicate interval, and cannot be added to one.
 
 Which interval belongs to which estimator follows. We quote the subset-averaged replay
-floor---$12.0\%$ at $N{=}10$, $3.1\%$ at $N{=}20$, each the mean of the $200$ per-question
-$p_i$ to a Monte-Carlo error under $0.01$ points---and never a single replicate. That
+floor and never a single replicate. That floor is $12.0\%$ at $N{=}10$ and $3.1\%$ at
+$N{=}20$, each value the mean of the $200$ per-question
+$p_i$ to a Monte-Carlo error under $0.01$ points. The subset-averaged
 estimator has the subset draw averaged out of it, so its interval must not put the subset
 draw back: what is left varying is which $200$ questions were drawn, each contributing an
 independent $p_i$, and a bootstrap over questions is the whole of it. The direct $N{=}10$
@@ -325,8 +333,8 @@ is to interval the subset-averaged floor by a bootstrap that resamples targets \
 redraws the subset: that counts the subset draw twice, once inside the target resample where
 it already sits and once again in the redraw, and on this data it returns intervals about
 twice the width the quoted estimator carries. Widening an interval is not the safe direction
-when the interval is the evidence---it converts a measurable difference into a null---and it
-is why we state, for every rate in this section, which estimator the interval belongs to.
+when the interval is the evidence, because it converts a measurable difference into a null.
+That is why we state, for every rate in this section, which estimator the interval belongs to.
 None of this bears on the unbiasedness argument above: it concerns the width of an interval
 and not the location of a point.
 
@@ -334,8 +342,9 @@ The second limit is a provenance question we have not closed. At $N{=}10$ the fl
 fair pool's $200$ correct answers is $9.5\%$ [$6.2$, $14.4$] measured directly on the Week-4
 cache against $12.0\%$ [$8.9$, $15.3$] replayed from the $N{=}40$ run: a step of $+2.5$ points
 whose paired interval, $[-0.7, +5.5]$ over the questions,
-covers zero, with the direct value sitting near the fifth percentile of the replay
-distribution over $200$ subset draws---low in it, not outside it. Subsetting cannot produce
+covers zero. The direct value sits near the fifth percentile of the replay
+distribution over $200$ subset draws, which puts it low in that distribution and not outside
+it. Subsetting cannot produce
 the step, by the argument above, so two candidates remain. Sampling noise in the direct arm is
 one: that cache has $19$ of its $200$ correct answers at the $\ln 10$ cap, fewer than the
 replay predicts, at an exact one-sided Poisson-binomial $p{=}0.081$, with the rest of the
@@ -347,7 +356,7 @@ points less often. What we cannot do is read that drift against a configuration 
 because the two runs' artefacts record only the token budget and the seed in common: past
 the model id, its $4$-bit loading, temperature and that budget, the June manifest pins little
 of what decides the model's
-output---not the nucleus, not the quantisation type, not the model revision---and the
+output. It does not pin the nucleus, the quantisation type or the model revision. The
 August checkpoint records nothing of its generation settings at all beyond the sample
 count, the token budget and the seed (Section~\ref{sec:limitations}). The drift may be run-to-run variation under configurations
 that did match, or a configuration difference we cannot see, and nothing in either artefact
@@ -359,16 +368,16 @@ separate subsetting error from generation drift, and we claim no direction for t
 clean direct $N{=}10$ pass on the current machine separates them by subtraction. It is one of
 two measurements this section is short of, both of them cells the budget plan pre-registered
 in advance and neither of them run: this one, a fresh $N{=}10$ pass over $40$ answers of
-the correct stratum, and a direct $N{=}20$ pass over $60$ answers of the same stratum, whose
-stated question is the other half of this one---does a replayed grid match a directly
+the correct stratum, and a direct $N{=}20$ pass over $60$ answers of the same stratum. The
+second pass asks the other half of this question. Does a replayed grid match a directly
 measured one at the same budget?
 
 The one $N{=}20$ re-score elsewhere in this work stands in for none of the above. On $15$
 saturated targets re-scored at $N{=}20$, lifting the cap by $0.693$ nats
 left $20\%$ of them still pinned and returned a mean of $+0.304$ nats of usable headroom
 rather than the full $+0.693$. We report that shortfall without a mechanism for it. The
-obvious candidate---that the clean baseline climbs along with the cap---is not ours to
-offer: a plug-in entropy that rises towards its estimand as the sample grows is that
+obvious candidate is that the clean baseline climbs along with the cap, and it is not ours to
+offer. A plug-in entropy that rises towards its estimand as the sample grows is that
 estimator's negative bias decaying, which is the coverage-adjustment account this paper
 cites in \emph{support}~\citep{mccabe2025alphabet, pan2026shade}, and one finding cannot be
 both our explanation and their result. The pilot is
@@ -398,11 +407,11 @@ seen from the two ends of the deployment, and the first is the stronger form bec
 statement about what does not exist rather than a frequency we observed. The qualifier is
 load-bearing and we do not drop it: the ceiling behind this reading
 is shared with the likelihood-weighted estimator, but the lattice that makes the range so
-coarse---and with it the discrete grid of achievable false-alarm rates---is not
-(Section~\ref{sec:methods}). The
+coarse is not, and the discrete grid of achievable false-alarm rates that comes with it is
+not shared either (Section~\ref{sec:methods}). The
 first claim invites the reply that a stronger detector, or a stronger optimiser, would settle
-the matter; the second does not, because the natural rebuttal---use an estimator with more
-range---concedes the point. That rebuttal is already being built: coverage-adjusted
+the matter. The second does not, because the natural rebuttal is to use an estimator with
+more range, and that rebuttal concedes the point. The rebuttal is already being built: coverage-adjusted
 estimators exist precisely because the plug-in statistic misrepresents the quantity it
 estimates at deployed $N$~\citep{mccabe2025alphabet, pan2026shade}. Whether the remaining, uncensored margin is one an adversary can
 reliably exploit is the question the confirmatory evaluation answers. It has now answered it,
@@ -415,9 +424,9 @@ two must not be run together.
 That reading also disciplines what we may say about magnitude. Because roughly half of
 attacked targets end at the cap, the attack and any other method that also saturates become
 indistinguishable there, and effect sizes expressed in nats are censored. The cap bites
-asymmetrically---on the fair pool $27.5\%$ of hallucinating answers sit there against $9.5\%$
+asymmetrically. On the fair pool $27.5\%$ of hallucinating answers sit there against $9.5\%$
 of correct ones, which is the same pair of numbers as the lowest firing operating point
-above, read from the other direction---but we are careful not to over-read that. AUROC is a rank statistic and
+above, read from the other direction. We are careful not to over-read that. AUROC is a rank statistic and
 $\min(\cdot,\log N)$ is monotone, so censoring changes no pairwise ordering except among
 pairs where \emph{both} members are pinned. That is $0.275 \times 0.095 = 2.6\%$ of pairs,
 bounding the downward bias at $0.013$ against a confidence half-width of $0.050$. The
@@ -425,7 +434,8 @@ asymmetry in fact makes the effect \emph{smaller}: had both strata been censored
 higher of the two rates, $2.9\times$ as many pairs would be affected. The consequence of the asymmetry is therefore about which
 class loses resolution, not about the reported AUROC. And because the
 reported effect is the maximum over a large candidate search, a further part of it is
-selection on estimator noise---measurably about half, on our own data. Strip both away and
+selection on estimator noise, and on our own data that part is measurably about half.
+Strip both away and
 what remains is a modest and heavily conditioned quantity. We think the honest summary is
 that whatever margin exists is small, and that most of the apparent margin in an uncorrected
 report is an artefact of how the number was obtained. Whether the remainder is real is the
@@ -436,15 +446,15 @@ we claim no attack effect here.
 \paragraph{Is the weakness structural?}
 We conjecture the mechanism generalises beyond one implementation: any detector that
 operationalises ``semantic equivalence'' through a learned model inherits that
-model's decision boundary as an attack surface---the very component that defines the
+model's decision boundary as an attack surface. The very component that defines the
 score is the component an attacker steers. This \emph{a-priori} argument follows from
 the construction alone; the load-bearing \emph{empirical} test is whether the effect
 survives an equivalence oracle independent of the detector's own NLI. We run that test.
-Cheap independent oracles do not settle it---exact-match saturates on short factoid
-answers and sentence embedders are near-chance on the adversarial, word-preserving case
-(Methods)---but a victim- and NLI-independent LLM-judge, validated to $0.93$ accuracy on
+Cheap independent oracles do not settle it. Exact-match saturates on short factoid
+answers, and sentence embedders are near-chance on the adversarial, word-preserving case
+(Methods). A victim- and NLI-independent LLM-judge, validated to $0.93$ accuracy on
 the gold-alias hard negatives that proxy that adversarial discrimination (where the
-embedder scores $0.51$), can---for the false-alarm direction, under the disclosed
+embedder scores $0.51$), can settle it for the false-alarm direction, under the disclosed
 re-scoped gate (Methods). Under it, the structural question now has an answer for one
 direction of one detector, and the answer is negative. An earlier $n{=}6$
 machinery-validation sample is evidence about the pipeline rather than about the mechanism:
@@ -484,13 +494,13 @@ $-0.173$ is the number a reader most wants us to keep, because it is the number 
 flattering to our own attack, and we do not keep it as a finding: the comparator that
 produces it is handed a judge-targeted search over $50$ candidates while the attack's judge
 score is an unselected re-scoring of a query chosen on the detector's NLI. That is a maximum
-compared against a differently-budgeted maximum---the exact defect the null control was
+compared against a differently-budgeted maximum. It is the exact defect the null control was
 built to remove, reappearing one level down, per clusterer arm rather than per design. It
 survived because it ran the wrong way: a review looking for bias toward the attack has no
 reason to stop on a number that hurts the attack. A validity check with a direction is not a
 validity check, and we would not have caught this one by tightening the checklist we already
-had. Index-matched, the adjudicator arm cannot be distinguished from zero at $n{=}77$, and
-that---not the reversal, and not a win---is what we claim.
+had. Index-matched, the adjudicator arm cannot be distinguished from zero at $n{=}77$. That
+is what we claim. We do not claim the reversal, and we do not claim a win.
 
 \paragraph{Why lead with false alarms.}
 Red-teaming of \emph{sampling-based} uncertainty estimators has emphasised the hide
@@ -506,13 +516,15 @@ direction is the protocol that makes the question answerable and a bound on the 
 $n$, not the exposure. The direction itself was not new either.
 
 \paragraph{Defence.}
-Averaging the detector score over several reformulations of whatever input is
-received---the mechanism SRE already builds in---should dilute a single adversarial
-phrasing. We state that expectation as a prediction the experiment can refute. Because the
+Averaging the detector score over several reformulations of whatever input is received
+should dilute a single adversarial
+phrasing, and that averaging is the mechanism SRE already builds in.
+We state that expectation as a prediction the experiment can refute. Because the
 attacked paraphrase was selected as a maximum over $\sim$$181$ noisy estimates, merely
 re-scoring it on fresh samples shrinks the effect by roughly half with no defence of any
 kind, so the defended arm has to be measured against a \emph{cost-matched} control that pays
-exactly that re-sampling cost and nothing else---a $d{=}1$ fresh redraw of the same two
+exactly that re-sampling cost and nothing else. That control is a $d{=}1$ fresh redraw of
+the same two
 inputs. The claim under test is that the per-question paired reduction of the $d$-averaged
 arm against that control is positive with a $95\%$ confidence interval excluding zero. Its
 failure condition is explicit: if the interval covers zero, reformulation-averaging has

@@ -1,4 +1,4 @@
-% Methods. Draft prose --- target ~800 words; verify symbols at revision.
+% Methods. Draft prose. Target ~800 words; verify symbols at revision.
 \label{sec:methods}
 
 \paragraph{Detectors, and which semantic-entropy estimator we study.}
@@ -28,11 +28,15 @@ exceed $\log N$, and being unbounded is what lets it do so. The point is only th
 argued for one estimator may not be quoted for another.
 
 \emph{(b) Equation~(5) of \citet{farquhar2024detecting}} supplies the missing normalisation,
-$P(C_i|x) = P(c_i|x) / \sum_c P(c|x)$, on the stated grounds that ``[w]ithout this
+\[
+P(C_i|x) = P(c_i|x) / \sum_c P(c|x).
+\]
+The stated grounds are that ``[w]ithout this
 normalization step cluster `probabilities' could exceed one because of length normalization,
-resulting in degeneracies,'' and takes the plug-in entropy of the resulting categorical
-distribution. They are explicit about its status: ``Equation (5) is the estimator giving our
-main method that we refer to as semantic entropy throughout the text.''
+resulting in degeneracies,'' and the estimator then takes the plug-in entropy of the
+resulting categorical distribution. They are explicit about its status: ``Equation (5) is
+the estimator giving our main method that we refer to as semantic entropy throughout the
+text.''
 
 \emph{(c) Discrete semantic entropy}, the estimator we study, discards the likelihoods and
 weights each cluster by the number of generations in it, giving the Shannon entropy of the
@@ -46,7 +50,7 @@ H_{\mathrm{SE}}(q) = -\sum_{c \in \mathcal{C}(q)} p(c)\log p(c),
 simplification but the victim's own: for ``scenarios in which the sequence probabilities are
 not available,'' \citet{farquhar2024detecting} ``propose a variant of semantic entropy which
 [they] call `discrete' semantic entropy,'' which ``approximates $P(C_i|x)$ directly from the
-number of generations in each cluster''---and it carries their flagship closed-model result,
+number of generations in each cluster''. It also carries their flagship closed-model result,
 being the estimator ``which we use for all GPT-4 results in this paper and which performs
 similarly well.'' Second, it is the quantity the probe line is trained to predict:
 \citet{kossen2024seps} ``use an additional approximation, employing the \emph{discrete}
@@ -64,35 +68,35 @@ with it travel the existence of a ceiling, the possibility of right-censored fal
 effect sizes, and the requirement that a null remain valid under ties. They do \emph{not}
 transfer to Kuhn's Eq.~(4), which is unbounded above; the ceiling therefore cannot be asserted
 of ``semantic entropy'' unqualified, and writing ``discrete'' once would not be enough.
-Claims resting on \emph{discreteness} are ours alone: the $39$-point lattice at $N{=}10$, the
-$0.139$ nats between its top two points, the unwinnable share of the
+Claims resting on \emph{discreteness} are ours alone. They are the $39$-point lattice at
+$N{=}10$, the $0.139$ nats between its top two points, the unwinnable share of the
 false-alarm denominator, the exact-saturation counts, the hard-tie handling in the
-exceedance test, and---most consequentially---the finite grid of achievable false-alarm rates
-and the non-zero floor beneath it all presuppose integer cluster sizes and lapse under
-real-valued weights. Eq.~(5) attains its own maximum only when the normalised cluster
-likelihoods are exactly equal, an event of measure zero, so it has no ceiling \emph{atom} and
-hence no floor on the false-positive rates it can be operated at; the ceiling is shared, the
-atom that makes the ceiling an operating constraint is not.
+exceedance test, the finite grid of achievable false-alarm rates, and the non-zero floor
+beneath it. All of them presuppose integer cluster sizes and lapse under real-valued
+weights, and the last two are the most consequential. Eq.~(5) attains its own maximum only
+when the normalised cluster likelihoods are exactly equal, an event of measure zero, so it
+has no ceiling \emph{atom} and hence no floor on the false-positive rates it can be operated
+at; the ceiling is shared, the atom that makes the ceiling an operating constraint is not.
 
 We state the consequence for the main method plainly, where the scoping is introduced,
 rather than leave a reader to derive it from the argument, because it is the least
-favourable reading of our own result and it is now measured rather than argued. Re-scoring
-all $2000$ cached sample sets of our replication pass---natural prevalence over the
-$1424$-answer clean-correct superset and its complement, not the fair pool---under Eq.~(5)
-with the generating model's own
-length-normalised sequence likelihoods---holding the clustering fixed, so that the weighting
-rule is the only thing that varies---puts $0.0\%$ [$0.0$, $0.2$] of them at the cap, against
+favourable reading of our own result and it is now measured rather than argued. We re-scored
+all $2000$ cached sample sets of our replication pass under Eq.~(5), using the generating
+model's own length-normalised sequence likelihoods and holding the clustering fixed, so that
+the weighting rule is the only thing that varies. Those sample sets are at natural prevalence
+over the $1424$-answer clean-correct superset and its complement, not the fair pool. Under
+Eq.~(5), $0.0\%$ [$0.0$, $0.2$] of the $2000$ cached sample sets fall at the cap, against
 $14.8\%$ [$13.3$, $16.4$] under the discrete estimator. \textbf{The estimator
 \citet{farquhar2024detecting} designate as their main method does not exhibit the atom at
 all}, and the false-alarm floor the atom induces is therefore a property of sample-proportion
 weighting rather than of semantic entropy. Three things bound how far that reaches and none
 of them undoes it, so we give them here and not only in mitigation. The reweighting preserves
-the ordering---Spearman $\rho{=}0.99$ against the discrete estimator---so every AUROC in this
-paper stands under Eq.~(5) \emph{as we compute it}, and only the saturation arithmetic is
-estimator-specific. The qualifier is not a formality: length normalisation is the modelling
-choice that decides this, and on raw sequence likelihoods the cluster softmax is nearly
-one-hot and rank agreement with the discrete estimator collapses to $\rho{=}0.38$
-(Section~\ref{sec:limitations}).
+the ordering. It gives Spearman $\rho{=}0.99$ against the discrete estimator, so every AUROC
+in this paper stands under Eq.~(5) \emph{as we compute it}, and only the saturation
+arithmetic is estimator-specific. The qualifier is not a formality: length normalisation is
+the modelling choice that decides this, and on raw sequence likelihoods the cluster softmax
+is nearly one-hot and rank agreement with the discrete estimator collapses to
+$\rho{=}0.38$ (Section~\ref{sec:limitations}).
 Near-cap \emph{crowding} partially survives: $20.0\%$ [$18.3$, $21.8$] of the same questions
 still fall in the top tenth of the range under Eq.~(5), against $27.8\%$ [$25.9$, $29.8$]
 under the discrete estimator, so the range is genuinely crowded near its top under both and
@@ -100,7 +104,7 @@ only the discrete estimator turns that crowding into a floor. And one ceiling-de
 is invariant to the weighting altogether. Because every variant scores the \emph{same}
 clustering and differs only in how the clusters are weighted, and because $H \leq \log K$ for
 any normalised weighting over $K$ observed clusters, a score in the top tenth of the range
-$[0, \log N]$ requires $K \geq \lceil N^{0.9} \rceil$ distinct meanings---at $N{=}10$,
+$[0, \log N]$ requires $K \geq \lceil N^{0.9} \rceil$ distinct meanings. At $N{=}10$ that is
 $K \geq 8$, since $\log 8 = 2.079$ exceeds $0.9 \log 10 = 2.072$ while $\log 7 = 1.946$ does
 not. That is a necessary condition on the clustering, which the estimators share, rather than
 on the weighting, which is what they disagree about; on the fair pool it is met by $58$ of
@@ -108,12 +112,13 @@ $200$ correct answers ($29.0\%$ [$23.2$, $35.6$]) against $115$ of $200$ halluci
 ($57.5\%$ [$50.6$, $64.1$]), so for most of the correct stratum the top of the scale is
 unreachable under any weighting rather than merely unreached under ours. The bound follows
 from the $\log N$ ceiling, so it too is silent about Kuhn's Eq.~(4). Two disclosed gaps ride
-along with the re-scoring and we do not paper over them: the cache stores decoded answer
-strings rather than the token ids the sampler emitted, so teacher forcing scores each answer
-under its \emph{canonical} tokenisation---$17$ of $20{,}000$ samples retokenise past the
-generation budget, which proves the two differ for at least those---and the sampling manifest
-pins neither the quantisation type nor the model revision. The full estimator comparison is
-in Section~\ref{sec:limitations}.
+along with the re-scoring and we do not paper over them. First, the cache stores decoded
+answer strings rather than the token ids the sampler emitted, so teacher forcing scores each
+answer under its \emph{canonical} tokenisation. In the cache, $17$ of $20{,}000$ samples
+retokenise past the generation budget, which proves the two tokenisations differ for at
+least those.
+Second, the sampling manifest pins neither the quantisation type nor the model revision. The
+full estimator comparison is in Section~\ref{sec:limitations}.
 
 Semantic Reformulation Entropy (SRE)~\citep{tong2025sre} first generates
 $R$ paraphrases of $q$, draws $K$ samples from each, pools all $R{\times}K$
@@ -127,8 +132,8 @@ paraphraser, but has no gradients. It may replace the question $q$ with any
 paraphrase $q'$ subject to a hard equivalence constraint, $\mathrm{NLI}(q,q')$ and
 $\mathrm{NLI}(q',q)$ both entailment, so $q'$ is constrained to ask the same
 thing. This gate \emph{approximates} answer-invariance but does not guarantee it
-formally---bidirectional entailment between two questions is an NLI model's
-judgement, not a proof---which is exactly why the success criterion below spends a
+formally. Bidirectional entailment between two questions is an NLI model's
+judgement, not a proof. That is exactly why the success criterion below spends a
 separate condition re-checking the answer empirically. The model's answer is not
 otherwise constrained; the attack manipulates only the \emph{detector's score}.
 
@@ -160,19 +165,19 @@ and any capable paraphraser would serve. Anchoring every candidate
 to the original means equivalence error cannot \emph{accumulate} across rounds;
 it does not eliminate it. Because the optimizer searches many candidates for the
 one that maximizes the objective while passing the gate, it will preferentially
-surface single-hop NLI false positives---so the residual fidelity of that one
-gate hop is not assumed away but measured directly (the answer-flip subcategory
-of the evaluation below). The search terminates on a score threshold or an
-iteration budget of $20$ rounds ($1 + 20 \times P \times B \approx 181$ objective
-evaluations per target --- the attacker's search budget, which the benign noise floor of
-$m{=}50$ random NLI-passing paraphrases is matched against analytically, by the exceedance
-test of Section~\ref{sec:experiments}, rather than by setting $m$ equal to it). We swap SECA's objective (confidence in a wrong
-multiple-choice token) for the detector entropy above, and its LLM-judge
-feasibility check for the NLI gate.
+surface single-hop NLI false positives. The residual fidelity of that one
+gate hop is therefore not assumed away but measured directly, in the answer-flip
+subcategory of the evaluation below. The search terminates on a score threshold or an
+iteration budget of $20$ rounds, which is $1 + 20 \times P \times B \approx 181$ objective
+evaluations per target. That count is the attacker's search budget, and the benign noise
+floor of $m{=}50$ random NLI-passing paraphrases is matched against it analytically, by the
+exceedance test of Section~\ref{sec:experiments}, rather than by setting $m$ equal to it. We
+swap SECA's objective (confidence in a wrong multiple-choice token) for the detector entropy
+above, and its LLM-judge feasibility check for the NLI gate.
 
 \paragraph{Target selection.}
-Both attacks require a pool of questions with a known clean outcome---wrong
-answers for the hide attack, correct answers for the false-alarm attack. We label
+Both attacks require a pool of questions with a known clean outcome. The hide attack needs
+wrong answers and the false-alarm attack needs correct ones. We label
 correctness by greedy decoding under an alias-aware span-match oracle (canonical
 normalization, crediting any accepted answer form) and draw a
 \emph{score-independent}, stratified-random sample within each correctness
@@ -180,9 +185,9 @@ stratum. Selection reads only the correctness label and a fixed seed, never any
 detector score; consequently the SE and SRE campaigns operate on the
 \emph{identical} question set by construction, which is what makes the
 cross-detector comparison well-defined. This is a deliberate departure from
-selecting targets at extreme clean entropy: extreme selection inflates the clean
-detector AUROC toward $1.0$ by construction---the selection rule reflected
-back---and would overstate any measured degradation. We therefore report
+selecting targets at extreme clean entropy. Extreme selection inflates the clean
+detector AUROC toward $1.0$ by construction, because such an AUROC is the selection rule
+reflected back, and it would overstate any measured degradation. We therefore report
 degradation against the clean AUROC of the \emph{fair} pool, not the extreme one.
 
 \paragraph{Measurement headroom, and why the two directions are not comparable in nats.}
@@ -195,13 +200,13 @@ two attack directions therefore face different amounts of room to move. Measured
 attacked subset), correctly-answered questions have clean mean entropy $1.380$, leaving
 $0.923$ nats to the ceiling, while wrongly-answered questions sit at $1.843$, leaving
 $1.843$ nats to the floor: the false-alarm direction has almost exactly \emph{half} the
-headroom of the hide direction. The consequence is visible in the attacked cells: of the
+headroom of the hide direction. The consequence is visible in the attacked cells. Of the
 $80$ false-alarm targets, $42$ finish \emph{exactly} at the ceiling and $8$ began there (so
-no upward move was ever possible), with a further $13$ beginning one lattice point below it,
-where the total remaining headroom is $0.139$ nats---less than the success criterion's own
-$\delta$, as we set out under that criterion below---whereas hide targets reach their floor
-only rarely. We
-deliberately attach no count to that second clause here: the hide cell is still filling
+no upward move was ever possible), and a further $13$ began one lattice point below it,
+where the total remaining headroom is $0.139$ nats. That headroom is less than the success
+criterion's own $\delta$, as we set out under that criterion below. Hide targets, by
+contrast, reach their floor only rarely. We
+deliberately attach no count to that last statement here: the hide cell is still filling
 against its planned $80$, so any figure we quote for it goes stale between drafts. We state
 the hide-side counts once, with their final $n$, when that cell completes.
 
@@ -219,17 +224,17 @@ that it is a different population but that it is a \emph{selected sub-sample of 
 stratum}: each direction draws from one correctness class only, the hide arm is additionally
 still incomplete against its planned $80$, and it is the sample the optimiser was actually
 run on. A quantity computed there describes correct answers, or hallucinating ones,
-under the attack's own sampling---never the correct-versus-hallucinating contrast that ``the
-detector's AUROC'' names. The ceiling and granularity counts are \emph{within}-stratum
+under the attack's own sampling. It never describes the correct-versus-hallucinating contrast
+that ``the detector's AUROC'' names. The ceiling and granularity counts are \emph{within}-stratum
 frequencies among correct targets, so we report them on the attacked pool and label them as
 such, while every correct-versus-hallucinating claim is made on the fair pool.
 
 One consequence of the nesting cuts against a contrast we previously drew, and we state it
 rather than leave it implicit. Because the attacked targets are a score-independent
 sub-sample of the very same strata, a clean separation measured on them estimates the
-\emph{same} quantity as the fair pool's, only far less precisely---so a discrepancy between
-the two would be sampling error over far fewer ranked pairs, not evidence that the detector
-behaves differently on attacked targets. We deliberately attach no number to that
+\emph{same} quantity as the fair pool's, only far less precisely. A discrepancy between
+the two would therefore be sampling error over far fewer ranked pairs, not evidence that the
+detector behaves differently on attacked targets. We deliberately attach no number to that
 discrepancy here, for the same reason we attach none to the hide-side counts above: any
 correct-versus-hallucinating quantity computed on the attack campaign has to pool the
 complete false-alarm arm with the hide arm, which is still filling, so its value and its
@@ -258,8 +263,8 @@ score moves in the intended direction by at least $\delta$ nats past its clean
 value ($\delta{=}0.25$; the cutoff is a convention, so we also report the success-rate
 curve over a sweep of $\delta$ rather than letting one value carry the result); and
 (iii) the model's hallucination \emph{status} is unchanged under
-$q'$---still wrong for the hide attack, still correct for the false-alarm
-attack---checked with the same greedy decode and span oracle used to label the
+$q'$, meaning still wrong for the hide attack and still correct for the false-alarm
+attack. We check that status with the same greedy decode and span oracle used to label the
 pool. Condition (iii) is essential: a score can fall because the paraphrase
 accidentally elicited a \emph{correct} answer (removing the hallucination rather
 than hiding it), or rise because it elicited a wrong one; without the status
@@ -270,21 +275,23 @@ explicit.
 \paragraph{A quarter of the false-alarm denominator cannot satisfy condition~(ii) at any
 usable $\delta$.}
 Condition~(ii) interacts with the discreteness of the score in a way we disclose here, where
-the criterion is defined, because it does not merely make some targets hard---it makes them
-impossible, while leaving them in the denominator of every rate we report. At $N{=}10$ the
+the criterion is defined. The interaction does not merely make some targets hard. It makes
+them impossible, while leaving them in the denominator of every rate we report. At $N{=}10$ the
 discrete plug-in entropy is not just bounded by $\ln 10$; it is confined to the $39$ values obtainable
 as the Shannon entropy of an integer partition of $10$ into cluster sizes, and the top two of
 those, $2.164$ and $\ln 10 = 2.303$, lie $0.139$ nats apart. A target whose clean score is
 already $2.164$ thus has $0.139$ nats of headroom \emph{in total}: no paraphrase whatsoever,
 adversarial or benign, can move it $\delta{=}0.25$ nats upward, and a target already at
 $\ln 10$ cannot be moved upward at all. Those two points hold $21$ of the $80$ false-alarm
-targets ($8$ at the ceiling, $13$ one point below), so $26.2\%$ of the pool---[$17.9$,
-$36.8$], Wilson---is unwinnable by construction. At $\delta{=}0.25$ the unwinnable set coincides exactly with
-the top-decile set, because the next lattice point down, $2.025$, still leaves $0.277$ nats.
+targets ($8$ at the ceiling, $13$ one point below), so $26.2\%$ [$17.9$, $36.8$] of the pool
+is unwinnable by construction. The interval is Wilson. At $\delta{=}0.25$ the unwinnable set
+coincides exactly with the top-decile set, because the next lattice point down, $2.025$,
+still leaves $0.277$ nats.
 The $\delta$-sweep we offer above does not rescue these targets: it re-prices the cutoff, not
 the headroom. Every $\delta \geq 0.139$ is unsatisfiable for all $21$ of them, and no
-$\delta > 0$ whatsoever is satisfiable for the $8$ already at the cap; only a cutoff below
-$0.139$ nats---finer than one step of the lattice near its top---could recover even the $13$.
+$\delta > 0$ whatsoever is satisfiable for the $8$ already at the cap. Recovering even the
+$13$ would need a cutoff below $0.139$ nats, which is finer than one step of the lattice near
+its top.
 We therefore report this count alongside every false-alarm success rate, so that a rate is
 read against the part of its denominator that could in principle have produced a success.
 This is a property of the discrete estimator at the deployed sample budget, not of our attack:
@@ -297,10 +304,11 @@ We report every rate with a bootstrap $95\%$ confidence interval over questions.
 Beyond the aggregate score shift we report operating-point flips: fixing a
 detector threshold at a target false-positive rate on clean data, we count hide
 targets that move from flagged to unflagged and false-alarm targets that move
-from unflagged to flagged---the operationally meaningful events. Fixing that threshold is
-less innocent than it sounds, and we do it explicitly rather than by quantile. Because the
-score is discrete, a rule that flags when $H \geq \tau$ realises only the false-positive
-rates attained by some clean negative, so a nominal target such as $5\%$ or $10\%$ generally
+from unflagged to flagged. Those are the operationally meaningful events. Fixing that
+threshold is less innocent than it sounds, and we do it explicitly rather than by quantile.
+Because the score is discrete, a rule that flags when $H \geq \tau$ realises only the
+false-positive rates attained by some clean negative, so a nominal target such as
+$5\%$ or $10\%$ generally
 does not exist; interpolating between order statistics returns a threshold that silently runs
 at a different rate, in our case answering a $10\%$ request with a threshold that operates at
 more than twice it. We therefore select $\tau$ as the largest threshold whose \emph{achieved} clean
@@ -326,16 +334,17 @@ re-cluster the identical answer samples under equivalence relations independent 
 DeBERTa-MNLI supervision: an exact-match relation (canonical-normalised string equality)
 and an embedding-cosine relation using \texttt{e5-base-unsupervised}, the E5 checkpoint
 trained only by contrastive pretraining before any NLI fine-tuning. We report the
-attack's net effect under each as a bracket---the shared-NLI arm as the confounded upper
-bound, exact-match as a strict lower bound---together with the survival ratio between
-them, shown as a diagnostic only and not as a claim statistic. We find that no cheap independent oracle adjudicates cleanly: exact-match saturates
+attack's net effect under each as a bracket, with the shared-NLI arm as the confounded upper
+bound and exact-match as a strict lower bound. Alongside it we report the survival ratio
+between them, shown as a diagnostic only and not as a claim statistic. We find that no cheap
+independent oracle adjudicates cleanly: exact-match saturates
 on short factoid answers, and the embedding oracle, though excellent on easy paraphrase
 pairs (STS-B AUROC $0.99$), is near-chance on the word-preserving, meaning-shifted pairs
 the attack produces (hard-negative AUROC $0.51$), so its clustering cannot be trusted to
 adjudicate. We therefore build and validate a victim- and NLI-independent LLM-judge
-equivalence oracle (Qwen2.5-7B-Instruct), which on the same labelled pairs---in the
-deployed symmetric configuration---reaches hard-negative accuracy $0.93$ [$0.90$, $0.96$]
-($n{=}300$) where the embedder is near-chance ($0.51$); these strata are clean gold-alias
+equivalence oracle (Qwen2.5-7B-Instruct). In the deployed symmetric configuration, on the
+same labelled pairs, it reaches hard-negative accuracy $0.93$ [$0.90$, $0.96$]
+($n{=}300$) where the embedder is near-chance ($0.51$). These strata are clean gold-alias
 pairs, a domain-matched \emph{proxy} for the deployed clustering decision over sampled
 answers, and a validation on messy real sample pairs remains owed (Limitations).
 \emph{We disclose a deviation.} Our pre-registered
@@ -349,10 +358,10 @@ false-alarm adjudication under a hard-negative-primary criterion. This is an
 outcome-triggered re-specification of a pre-registered gate, which we flag rather than
 bury, and we report the NLI and exact-match bracket \emph{alongside} the judge so no
 conclusion rests on the re-scoped oracle alone. \emph{We flag one further thing, because the
-argument for the re-scope did not survive the data it was made about.} On the sampled answers
-the judge actually clusters---as opposed to the clean alias pairs it was validated on---it
-under-splits rather than over-splits, merging all ten samples into one cluster on $27$ of the
-$80$ false-alarm targets' clean baselines against the NLI clusterer's $4$. The re-scoping
+argument for the re-scope did not survive the data it was made about.} The judge was
+validated on clean alias pairs, but what it actually clusters is sampled answers. On those it
+under-splits rather than over-splits. It merges all ten samples into one cluster on $27$ of
+the $80$ false-alarm targets' clean baselines, against the NLI clusterer's $4$. The re-scoping
 decision stands, since it rests on the hard-negative accuracy the judge does clear, but the
 conservativeness rationale attached to it does not, and the direction of the residual bias is
 anti-conservative rather than conservative; Section~\ref{sec:limitations} states what that
@@ -367,7 +376,7 @@ would otherwise invite an arm-to-arm reading are, at $n{=}6$, too coarse to supp
 last reason is worth stating exactly, because it is a resolution limit rather than a bound:
 the arm-level diagnostic is a mean over the six targets of each target's rank within its own
 benign-move distribution, and a target contributes at most $K{=}5$ benign draws, so the
-arm-level statistic moves in steps of roughly $1/30$---while the difference between the
+arm-level statistic moves in steps of roughly $1/30$. The difference between the
 shared-NLI and the judge arm is about one such step. A gap that small reflects the sample
 size, not a measured ordering of the arms. Which arm the judge's verdict resembles was
 therefore left to the
@@ -394,8 +403,8 @@ target's own $m$; the threshold was nonetheless not met by the statistic the dec
 stated on, and a non-rejection has to be read against that.
 
 \paragraph{Transfer and defense.}
-To test whether the vulnerability is paradigm-level rather than implementation-
-specific, we take a paraphrase optimized against one detector and measure the
+To test whether the vulnerability is paradigm-level rather than specific to one
+implementation, we take a paraphrase optimized against one detector and measure the
 score change it induces on another (SE$\leftrightarrow$SRE), and, as a stretch,
 on a hidden-state probe (SEP~\citep{kossen2024seps}) that never samples. As a
 first defense we average the detector score over $d$ paraphrases of whatever
