@@ -102,6 +102,38 @@ node_modules/
 results/*.jsonl
 !results/*.md
 
+# THE ONE CHECKPOINT A CLONE CANNOT DO WITHOUT.
+#
+# The rule above is right for run state: n_scaling_ckpt.jsonl is 2.4 MB,
+# null_control_ckpt_defb.jsonl 236 KB, rescore_likelihoods_ckpt.jsonl 635 KB, and every
+# rebuild that consumes them ALSO needs data/cache/, which is ignored wholesale at line 47.
+# Shipping them would not make those rebuilds runnable from a clone; they would still exit
+# non-zero on the missing cache, which is a loud, honest failure.
+#
+# The winner's-curse checkpoint is the exception on both counts. It is 19 KB, and
+# `winners_curse_reeval.py --report_only` reads NOTHING but the checkpoint — it is the only
+# no-GPU rebuild in this repo that is self-contained from a fresh clone. Leaving it ignored
+# did not fail loudly, it failed QUIETLY: the retired 60-record `_def` file was tracked (it
+# predates this rule), the script defaulted to it, and the documented rebuild overwrote
+# results/winners_curse_se_false_alarm.md with retention 45.2% [25%, 65%] in place of the
+# paper's 44% [23%, 64%], exit code 0.
+#
+# The glob covers both files deliberately: the retired `_def` checkpoint and the definitive
+# `_defb` one have to travel together, or the marker below names a file that isn't there.
+#
+# NOTE FOR WHOEVER COMMITS THIS: un-ignoring makes the file untracked-and-not-ignored, which
+# `git clean -fd` DELETES. `git add results/winners_curse_ckpt_se_false_alarm_defb.jsonl` in
+# the same commit. (This cell is finished, not in-progress: 69 of 80 targets, the other 11
+# skipped because the optimiser found no paraphrase to re-test.)
+!results/winners_curse_ckpt_*.jsonl
+
+# Machine-readable retirement notices that sit beside a checkpoint, e.g.
+# results/winners_curse_ckpt_se_false_alarm_def.jsonl.SUPERSEDED.json. `results/*.json`
+# (line 48) would otherwise swallow them. A .jsonl cannot carry the `> SUPERSEDED` banner
+# the .md reports carry, so this sidecar IS the banner and must ship with the data it
+# retires — an ignored retirement notice is the same defect as no notice at all.
+!results/*.SUPERSEDED.json
+
 # the equivalence-audit sheet, key and labels are EVIDENCE, not derived output.
 # results/*.csv above would have silently excluded them, which breaks the
 # transparency-in-place-of-inter-annotator-kappa argument the protocol rests on.

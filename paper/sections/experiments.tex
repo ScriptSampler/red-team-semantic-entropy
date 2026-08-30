@@ -77,12 +77,17 @@ clustering relation the campaign instantiates. The first band is a same-question
 NLI-passing non-adversarial rephrasings, and its comparison against the attacker's
 $\sim$180-candidate ($\sim$181-evaluation) search is budget-matched \emph{analytically} by
 the exceedance test below rather than by drawing $m$ equal to
-that budget. ($m$ is
+that budget, subject to the budget parameter that test needs being only partly identified
+from what the run recorded (below). ($m$ is
 distinct from SRE's samples-per-reformulation $K$.) The
 shared-NLI arm is the detector's own clusterer and is the \emph{confounded upper bound}:
 it cannot separate a real change in the answer distribution from the NLI model's own
-inconsistency, because that same model gates the attack's paraphrases. Exact-match is a
-\emph{strict lower bound} that saturates on short factoid answers. The
+inconsistency, because that same model gates the attack's paraphrases. Exact-match is the
+\emph{saturation-limited lower bound}: it is the strictest relation, so it splits the most
+and saturates on short factoid answers. Its bracket with the NLI arm holds on the attack's
+own mean intended move, the first row of Table~\ref{tab:nullcontrol}, and it does not survive
+differencing against a benign comparator (Section~\ref{sec:methods}), so it is not a bound on
+any other row of that table. The
 \texttt{e5-base-unsupervised} embedding relation is NLI-supervision-free but near-chance
 on the adversarial, word-preserving case (hard-negative AUROC $0.51$), so it cannot
 adjudicate. It is also \emph{absent} from the campaign reported below, and we state that
@@ -106,12 +111,15 @@ that statistic because saturation governs how far the nats bands can be trusted.
 \setlength{\tabcolsep}{4pt}
 \caption{Null-controlled attack effect, SE / false-alarm direction, per clustering relation,
 on the false-alarm stratum of the attacked pool. Denominators differ by block; see the text,
-which also says why the embedding relation has no column.}
+which also says why the embedding relation has no column. The bound labels in the column
+heads describe the attack's own mean intended move and no other row: every comparison below
+it subtracts an arm-specific benign comparator, and the bracket does not survive that
+subtraction (Section~\ref{sec:methods}).}
 \label{tab:nullcontrol}
 \begin{tabular}{lccc}
 \toprule
  & Shared NLI & Exact-match & LLM-judge \\
- & (confounded UB) & (strict LB) & (adjudicator) \\
+ & (confounded UB) & (saturating LB) & (adjudicator) \\
 \midrule
 \multicolumn{4}{l}{\emph{Bands: mean intended move (nats) [$95\%$ paired bootstrap over targets]}} \\
 Attack ($n{=}80$)                        & $+0.526$ [$+0.414$, $+0.642$] & $+0.213$ [$+0.127$, $+0.311$] & $+0.291$ [$+0.152$, $+0.440$] \\
@@ -119,16 +127,19 @@ Seed-noise floor ($n{=}80$)              & $-0.015$ [$-0.097$, $+0.070$] & $+0.0
 Benign floor, mean draw ($n{=}77$)       & $-0.049$ [$-0.166$, $+0.066$] & $+0.002$ [$-0.096$, $+0.097$] & $-0.071$ [$-0.172$, $+0.028$] \\
 Benign floor, best of $m$ ($n{=}77$)     & $+0.363$ [$+0.232$, $+0.490$] & $+0.213$ [$+0.117$, $+0.313$] & $+0.422$ [$+0.299$, $+0.546$] \\
 \midrule
-\multicolumn{4}{l}{\emph{Claim statistic: randomised-tie exceedance test, $n{=}77$, $A{=}181$ scored candidates per target}} \\
+\multicolumn{4}{l}{\emph{Claim statistic: randomised-tie exceedance test, $n{=}77$, at $A{=}181$ (a budget upper bound)}} \\
 \textbf{Exceedance $p$, median of $101$ tie draws} & $\mathbf{0.939}$ & $\mathbf{1.000}$ & $\mathbf{1.000}$ \\
 \quad range over those $101$ draws       & [$0.229$, $1.000$] & [$1.000$, $1.000$] & [$1.000$, $1.000$] \\
 \quad draws reaching $p{\leq}0.05$       & $0/101$ & $0/101$ & $0/101$ \\
 Exceedances $S$, seed-$0$ draw / expected & $30$ / $20.4$ & $383$ / $20.4$ & $636$ / $20.4$ \\
 \quad median $S$ over those $101$ draws  & $28$ & $383$ & $652$ \\
 \textbf{Effective benign budget $n_{\mathrm{eff}}$} & $\mathbf{122.5}$ & $\mathbf{8.7}$ & $\mathbf{4.8}$ \\
+\quad median $p$ at $A{=}121$, the budget point estimate & $0.403$ & $1.000$ & $1.000$ \\
+\quad median $p$ at $A{=}41$, its hard lower bound & $<0.001$ & $1.000$ & $1.000$ \\
 \midrule
 \multicolumn{4}{l}{\emph{Ceiling saturation over the false-alarm targets, and the two inadmissible tie rules}} \\
 Saturation at $\log N$: clean / attacked  & $10.0\%$ / $52.5\%$ & $46.2\%$ / $70.0\%$ & $1.2\%$ / $10.0\%$ \\
+Power against a ceiling-saturating attack & $0.56$ & $\mathbf{0.00}$ & $1.00$ \\
 Diagnostic: strict-tie $p$               & $<0.001$ & $1.000$ & $1.000$ \\
 Diagnostic: conservative-tie $p$         & $1.000$ & $1.000$ & $1.000$ \\
 \midrule
@@ -142,18 +153,17 @@ Attack's mid-rank percentile in benign   & $0.931$ [$0.903$, $0.955$] & $0.736$ 
 \end{table}
 
 \paragraph{The claim statistic, and why the obvious ones fail.}
-The attack reports the \emph{maximum} over the $\sim$181 objective evaluations it spends
-per target. Those evaluations are the original question and the $\sim$180 candidate
-paraphrases it proposes (Section~\ref{sec:methods}). Any comparison against individual
+The attack spends $181$ objective evaluations per target, the original question and the
+$180$ candidate paraphrases it proposes (Section~\ref{sec:methods}), and reports the
+\emph{maximum} over whichever of those its feasibility gate admits. Any comparison against individual
 benign draws is therefore upward-biased by construction: under the null a max-of-181 sits at
 $\sim$$99\%$ of an individual-draw distribution, not $50\%$. We
 therefore price the search budget into the null analytically. Under the hypothesis that the
-optimiser carries no signal, a target's $A$ scored candidates and its $m$ benign draws are
+optimiser carries no signal, a target's $A$ candidates and its $m$ benign draws are
 exchangeable, so $F(\text{attack-max}) \sim \mathrm{Beta}(A,1)$ and the number of benign
 draws above the attack's maximum is $K \sim \mathrm{BetaBinomial}(m; 1, A)$, with
 $\mathbb{E}[K] = m/(A{+}1)$. Here $A$ is the attacker's search budget, meaning the number of
-scored evaluations the maximum ranges over. It takes the value $A \approx 181$, one more than
-the $\sim$180 candidate paraphrases because the original's own score is among them. $A$ is
+candidates the reported maximum actually ranges over. $A$ is
 distinct from the per-question sample budget $N$, which is $10$ throughout this section.
 $N$ is not $10$ throughout the paper: Sections~\ref{sec:discussion}
 and~\ref{sec:limitations} characterise the clean detector on the fair pool at $N{=}20$ and
@@ -226,6 +236,38 @@ Convention & $n$ & Shared NLI & Exact-match & LLM-judge \\
 \end{tabular}
 \end{table}
 
+\paragraph{The budget $A$ is not identified, and the verdict does not rest on it.}
+The optimiser spends exactly $181$ objective evaluations on each of the $80$ targets, and it
+is tempting to read $A$ off that count. It is the wrong count. A candidate can become the
+reported maximum only if it also passes the feasibility gate, and our gate is applied
+\emph{lazily}: only candidates that already match or beat the running best are submitted to
+it. Of the $14{,}400$ proposed children, $4{,}703$ ($32.7\%$) were feasibility-checked at
+all, and $3{,}058$ of those passed, a pooled pass rate of $0.650$; the rest were scored,
+dropped on the pre-filter, and never gated. Their feasibility is not recoverable, because the
+run stores the feasible candidates' scores but not the ungated candidates' strings, so no
+re-analysis of what we recorded can settle it. $A{=}181$ is therefore an \emph{upper} bound
+and not a measurement. The lower bound is the case in which no never-gated candidate would
+have passed, leaving the maximum ranging over the recorded feasible set plus the original: a
+mean of $41$ over the $77$ targets the test runs on. Extrapolating the observed pass rate to
+the never-gated children puts the point estimate near $121$. The defensible range is
+$[41,181]$, and we report the test across it rather than at one end of it.
+
+What that range does to the three arms is not symmetric, and it is why the defence is stated
+this way. The shared-NLI arm's $p$-value is \emph{not identified}: its median over $101$ tie
+draws runs from $0.939$ at $A{=}181$ to below $0.001$ at $A{=}41$, and it crosses the $5\%$
+cut near $A{=}90$. Nothing we recorded rules that region out. The two re-scored arms do not
+move at all. The adjudicator's median $p$ is $1.000$ at every $A$ in $[41,181]$ and at every
+one of the $101$ tie draws, and so is the exact-match arm's; their exceedance totals, $652$
+and $383$ at $A{=}181$ and larger still at lower budgets, stand more than fourfold above the
+null expectation even at $A{=}41$, where that expectation rises to $88.2$ from the $20.4$ of
+$A{=}181$.
+\textbf{The decision rule was pre-registered on the adjudicator arm alone} (below), and that
+arm's verdict is invariant to the one parameter we cannot pin down. That invariance, and not
+any headroom in the shared-NLI arm, is what the non-rejection rests on. Reporting the NLI
+arm's $0.939$ beside it is reporting a $p$-value at the end of a range most favourable to the
+conclusion we draw, and we say so rather than quote it as though the budget behind it had
+been measured.
+
 \paragraph{Decision rule (single, pre-registered, with disclosed deviations).}
 Reframe~(a) is the claim that ``the attack targets the detector''. It is claimed iff, at
 $n{\geq}80$ with $m{=}50$ benign paraphrases per target, the adjudicator clusterer's
@@ -243,8 +285,11 @@ is unchanged and we do not re-choose $m$ after the fact, but the design rejects 
 readily than the number we picked it on, and
 a non-rejection must be read against $0.77$ rather than $0.84$. If the test does not reject, (a) is not claimed, and the
 NLI/exact-match bracket together with the judge's point estimate is reported as the honest
-bounded result. That is the branch the run took, and the paragraphs after the deviations
-report it.
+result. We are precise about what is bounded there, because the pre-registration was not: the
+bracket bounds the mean intended move, and the judge's point estimate lies outside it on the
+paired nets of Table~\ref{tab:nullcontrol} that the closing paragraphs lead with, so the word
+\emph{bounded} is not available for the quantities this section concludes from. That is the branch the run took, and
+the paragraphs after the deviations report it.
 
 Four deviations from the original pre-registration are disclosed as outcome-triggered
 rather than folded silently into ``the pre-registered rule''. The adjudicator moved from the
@@ -273,22 +318,30 @@ paraphrases drawn from the same proposer and passed through the same feasibility
 three-seed same-question band. The judge is Qwen2.5-7B-Instruct. \textbf{The rule returns a
 non-rejection, and it does so in every arm.} In the adjudicator arm the randomised-tie
 exceedance test gives a median $p$ of $1.000$ across $101$ tie-break realisations, with no
-realisation anywhere near the $5\%$ cut; the shared-NLI and exact-match arms give $0.939$ and
-$1.000$. Reframe~(a) is therefore \textbf{not claimed}. The direction is worth stating because
-it is not merely a failure to clear a threshold: the observed exceedance total is \emph{above}
-its null expectation in all three arms, which is the
-direction \emph{against} the attack, so the statistic does not sit ambiguously near the cut.
-That total is itself a tie-break realisation, and we quote it as one rather than setting it
-beside a median $p$ as though it were fixed. At the seed-$0$ draw it is $30$, $383$ and $636$
-against an expectation of $20.4$. The medians over the same $101$ draws that the $p$-values
-summarise are
-$28$, $383$ and $652$. The shared-NLI total is the one that moves, over $[16,41]$ across those
-draws, so the most attack-favourable realisations do put it just below expectation. That
-is exactly the realisation at which its $p$ bottoms out at $0.229$, still more than four times
-the $5\%$ cut. In
-the arm the optimiser actually searched, its $181$ scored evaluations behave like
-$n_{\mathrm{eff}}{\approx}122$ random feasible paraphrases, which is fewer than the budget it
-spent.
+realisation anywhere near the $5\%$ cut and no admissible budget that moves it; the shared-NLI
+and exact-match arms give $0.939$ and $1.000$ at the declared $A{=}181$.
+Reframe~(a) is therefore \textbf{not claimed}. The direction is worth stating, but it has to
+be stated arm by arm rather than for the design as a whole, because the expectation it is
+measured against moves with the budget and the budget is not identified.
+The observed total is itself a tie-break realisation, and we quote it as one rather than
+setting it beside a median $p$ as though it were fixed. At the seed-$0$ draw it is $30$,
+$383$ and $636$ against an expectation of $20.4$ at $A{=}181$. The medians over the same
+$101$ draws that the $p$-values summarise are
+$28$, $383$ and $652$. The exact-match and adjudicator totals sit \emph{above} their null
+expectation at every admissible budget, which is the direction \emph{against} the attack and
+is the invariance the verdict rests on. The shared-NLI total does not: it is above
+expectation at $A{=}181$, but the expectation catches it near $A{=}131$ and passes it below
+that, so over most of the defensible range the NLI statistic sits on the attack's side of its
+own null, and below $A{\approx}90$ a majority of tie draws would reject. That is a statement
+about a parameter we cannot measure rather than a result, and it is the reason the rule is
+stated on the arm that does not depend on it. The shared-NLI total is also the one that moves
+across tie draws, over $[16,41]$, and $0.229$ is its lowest $p$ at $A{=}181$ and not in
+general. In
+the arm the optimiser actually searched, its search behaves like
+$n_{\mathrm{eff}}{\approx}122$ random feasible paraphrases. We do not read that as fewer than
+the budget it spent: $n_{\mathrm{eff}}$ is denominated in feasible paraphrases while the
+$181$ counts scored evaluations, and against the feasible budget's own point estimate of
+$121$ it falls short of nothing.
 Doubling the measured tie multiplicity, the one perturbation that moves $p$ downward, leaves
 the NLI arm at $0.229$ and the other two at $1.000$.
 
@@ -353,7 +406,8 @@ principle and (c) changes the denominator.
 
 \paragraph{Where the exceedance null is, and is not, correctly specified.}
 The attack's objective is the shared-NLI entropy and nothing else, so the query it reports is an
-argmax over $A{\approx}181$ \emph{NLI} evaluations, and the exact-match and judge values are
+argmax over that target's feasible \emph{NLI} candidates, at most $181$ of them, and the
+exact-match and judge values are
 independent re-scorings of that single query. The exceedance null prices in a maximum over $A$
 exchangeable draws. That is exactly what the NLI arm contains and exactly what the other two do
 not: there the attack contributes one unselected observation, so the null expects it to be far
@@ -364,7 +418,24 @@ are weaker evidence than the NLI one, and the NLI arm is the only place where th
 asking the question it was designed to ask. That holds even though the NLI arm is itself
 confounded as an effect estimate.
 
-That arm carries a mis-specification of its own, and it runs the other way, so we disclose it
+For one of the three arms that weakness is total, and we state it rather than let three
+reported $p$-values read as three confirmations. The deployed cut is $S{\leq}11$: exact
+convolution of the per-target nulls gives $\Pr(S{\leq}11) = 0.0296$ and
+$\Pr(S{\leq}12) = 0.0501$, so $11$ is the largest total this test can reject on at $n{=}77$.
+The exact-match arm cannot produce one. Its benign draws are pinned at the $\log N$ ceiling
+on $1{,}461$ of $3{,}704$ draws ($39.4\%$), against $10.7\%$ of the NLI arm's draws and
+$1.2\%$ of the judge's; that is a draw-level rate, not the target-level clean saturation
+Table~\ref{tab:nullcontrol} reports. Every one of those ties hands the benign side tie
+credit. Simulating the strongest
+alternative this design exists to catch, an attack that reaches the ceiling on every target at
+that target's measured tie multiplicity, the exact-match total has expectation $150$ and its
+smallest value over $20{,}000$ draws is about $110$. Its rejection region is unreachable.
+Power against that alternative is $0.56$ in the shared-NLI arm and $1.00$ in the
+adjudicator's, and $0.00$ in exact-match. The exact-match $p{=}1.000$ is therefore a certainty
+of the arithmetic rather than evidence about the attack: the non-rejection rests on two arms
+that could have rejected and did not, not on three.
+
+The shared-NLI arm carries a mis-specification of its own, and it runs the other way, so we disclose it
 here rather than leave it to the pre-registration. Exchangeability requires the attack's
 reported value to be a draw from the same feasible-paraphrase distribution as the benign
 draws. On a no-op target it is not: the optimiser returned the original question, so the

@@ -63,10 +63,12 @@ clean answer reaches it, the first
 threshold that fires at all is $\tau{=}\ln N$, which flags exactly the answers at the
 ceiling. The minimum non-zero false-positive rate is then not a tuning choice: it
 \emph{is} $\Pr(\text{a clean correct answer yields } N \text{ mutually distinct meanings})$,
-the mass of the ceiling atom. At $N{=}10$ an operator who specifies a $5\%$ false-alarm
+the mass of the ceiling atom. At $N{=}10$, and under the DeBERTa-large-MNLI clustering that
+decides which meanings are distinct, an operator who specifies a $5\%$ false-alarm
 budget cannot have one: the only threshold that honours it is the one that never fires,
-catching nothing. That qualifier is load-bearing, and the budget-scaling paragraph below
-measures what lifting it costs.
+catching nothing. Both qualifiers are load-bearing. The budget-scaling paragraph below
+measures what lifting the sample budget costs, and the equivalence-relation paragraph below
+measures how far the clusterer alone moves the floor.
 Nor is the shortfall a property of our sample. The Wilson lower bound on the fair pool's
 correct stratum is $6.2\%$, and the $1424$-answer superset that stratum is a subset of
 estimates the same parameter with seven times the negatives, at $10.5\%$ [$9.0$, $12.2$].%
@@ -84,9 +86,16 @@ feasibility. The $5\%$ claim needs no such hedge on either population.
 
 Prevalence changes the consequences of a chosen operating point but not the grid, which is a
 within-negatives object and so does not move when the mix of correct and hallucinating
-questions does. Stated at the full labelled pool's natural hallucination rate, running at the
-lowest firing threshold raises $148$ alerts per thousand questions, of which $49.2\%$
-[$43.5$, $54.8$] are genuine, and leaves $216$ hallucinations per thousand unflagged.
+questions does. What does move is the rest of the arithmetic, so we state the operator's
+experience on the full labelled pool throughout: its own floor of $10.5\%$ [$9.0$, $12.2$] on
+$1424$ correct answers, its own true-positive rate of $25.2\%$ [$21.8$, $28.9$] on the $576$
+hallucinating ones at the threshold that floor sits at, and its natural hallucination rate of $28.8\%$
+($576$ of $2000$). The fair pool cannot supply this row. It is $200$ correct against $200$
+hallucinating by construction, a mix the sampler chose rather than one the world presented,
+so it has no natural prevalence to state. Running at the lowest firing threshold then raises
+$148$ alerts per thousand questions ($295$ of $2000$), of which $49.2\%$ [$43.5$, $54.8$] are
+genuine ($145/295$), and leaves $216$ hallucinations per thousand unflagged ($431$ of
+$2000$).
 
 What makes that gap a gap, rather than an interval a finer threshold could subdivide, is that
 the ceiling is an \emph{atom} and not merely a maximum. At $\tau{=}\ln 10$ the flagged set is
@@ -101,6 +110,35 @@ attainable values are not a small slice of the scale but two indivisible blocks 
 population, and an operator's entire low-false-alarm menu is to take neither, one, or both.
 The entries of that menu are \emph{points}, not a curve, and the finite achievable set they
 form grows with the sample.
+
+\paragraph{The floor belongs to the whole detector, equivalence relation included.}
+The floor identity above has a term in it that we have so far left implicit. ``$N$ mutually
+distinct meanings'' means distinct \emph{under some equivalence relation}, and the relation
+is a component of the detector rather than a property of the model, so the atom whose mass
+is the floor is a joint fact about the two. Our own campaign puts a number on how much that
+matters. Table~\ref{tab:nullcontrol} reports the same clean saturation rate three times over
+one fixed set of samples, the $80$ correct-answer targets of the false-alarm stratum, with
+nothing varying between the three but the relation that decides which of a question's
+answers count as the same meaning. Under exact match it is $46.2\%$ [$35.7$, $57.1$]; under
+the DeBERTa-large-MNLI clustering that defines the score it is $10.0\%$ [$5.2$, $18.5$];
+under the LLM judge it is $1.2\%$ [$0.22$, $6.75$], which is a single target out of $80$. The
+first two intervals do not overlap. The relation therefore moves this estimand by a factor of
+thirty-seven on identical samples, and it moves it across the very $5\%$ line the identity
+above calls unreachable. So we scope every floor claim in this paper to the relation that
+produced it, and the scoped form is the one to carry forward: at $N{=}10$, under
+bidirectional DeBERTa-large-MNLI clustering, a $5\%$ false-alarm budget is unavailable.
+
+We do not read the converse off the same table, and the reason is the denominator. The
+judge's rate is one target in $80$, an interval reaching $6.75\%$, so these numbers do not
+establish that a $5\%$ budget \emph{is} available under a more permissive relation; they
+establish that the floor is not identified until the relation is named. Nor would a lower
+floor be free if one were confirmed. A relation that merges more readily lowers every score
+it touches, the hallucinating answers' scores included, and every target measured here is a
+correct answer, so nothing in this campaign says what that trade does to detection. The
+point of the row is not that one of the three relations is right and the others wrong. It is
+that the floor is a property of the detector as a whole, its equivalence relation included,
+rather than of the language model alone, and that a floor reported without naming the
+relation has under-specified its own estimand.
 
 \begin{figure}[t]
 \centering
@@ -136,8 +174,8 @@ pairwise inequivalent then so are any ten of them, so $\{\text{saturate at }20\}
 contained in $\{\text{saturate at }10\}$, and the first ten of an i.i.d.\ draw of twenty have
 the law of an i.i.d.\ draw of ten. Raising the budget can therefore only lower the
 false-alarm floor, and the floor itself is a fact about how often the model answers a
-question $N$ different ways. That frequency is a property of the model and the question
-distribution, not of
+question in $N$ ways the clusterer holds apart. That frequency is a property of the model,
+the question distribution and the equivalence relation jointly, not of
 the estimator's arithmetic. Not settled that way: whether the grid becomes usably
 \emph{fine} near the operating region. Enumeration bounds the number of thresholds available in the top tenth of
 the range at seven ($455$ attainable values at $N{=}20$, against $39$ and two at $N{=}10$),
@@ -217,7 +255,8 @@ $N{=}10$ cache offers exactly one, the $9.5\%$ point, against fourteen. So the $
 that $N{=}10$ cannot honour at all is honoured at $N{=}40$, at an achieved $5.0\%$
 [$2.7$, $9.0$] on the fair pool's $200$ correct answers. The unqualified form of the claim
 above is therefore false and we scope it rather than defend it: the absence of any false-alarm rate
-between zero and roughly one correct answer in ten holds \emph{at $N{=}10$}, and quadrupling
+between zero and roughly one correct answer in ten holds \emph{at $N{=}10$} and under this
+clusterer, and quadrupling
 the sample budget buys the missing operating point.
 
 We report the achieved rate as a measured point and not as a certificate, and we read the
@@ -392,12 +431,13 @@ to go, which disqualifies $21$ of the $80$ correct-answer targets of the attack 
 before any paraphrase is generated (Methods).
 
 The sharpest way to put the finding is therefore not ``we constructed an attack that defeats
-semantic entropy'' but ``at the standard $N{=}10$, discrete semantic entropy offers an
+semantic entropy'' but ``at the standard $N{=}10$, and under the DeBERTa-large-MNLI
+clustering that defines it, discrete semantic entropy offers an
 operator no false-alarm rate between zero and roughly one correct answer in ten, and the
 false-alarm direction is correspondingly unmeasurable in the detector's own units.'' The two halves are the same fact
 seen from the two ends of the deployment, and the first is the stronger form because it is a
-statement about what does not exist rather than a frequency we observed. The qualifier is
-load-bearing and we do not drop it: the ceiling behind this reading
+statement about what does not exist rather than a frequency we observed. Every qualifier in
+it is load-bearing and we drop none of them. \emph{Discrete} carries one: the ceiling behind this reading
 is shared with the likelihood-weighted estimator, but the lattice that makes the range so
 coarse is not, and the discrete grid of achievable false-alarm rates that comes with it is
 not shared either (Section~\ref{sec:methods}). The

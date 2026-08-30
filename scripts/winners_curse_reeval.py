@@ -21,11 +21,31 @@ percentile bootstrap of one can be badly behaved).
 Verified prerequisite: seeded draws at different seeds are genuinely different samples
 (checked explicitly — a 20-sample draw is not a prefix-superset of a 10-sample draw).
 
-    ./.venv-wsl/bin/python scripts/winners_curse_reeval.py --tag _def --cell se_false_alarm
+    ./.venv-wsl/bin/python scripts/winners_curse_reeval.py --tag _defb --cell se_false_alarm
 
 Rebuild the report from an existing checkpoint with no GPU and no model load:
 
-    .venv/Scripts/python.exe scripts/winners_curse_reeval.py --report_only --tag _def
+    .venv/Scripts/python.exe scripts/winners_curse_reeval.py --report_only --tag _defb
+
+WHICH TAG IS DEFINITIVE, AND THE GATE THAT ENFORCES IT.
+
+`_defb` (69 records) is the definitive cell. `_def` (60 records) is RETIRED: it is the same
+experiment stopped nine targets early, and it yields retention 45.2% [25%, 65%] against the
+paper's 44% [23%, 64%]. Both are stable, plausible-looking reports; nothing in the numbers
+themselves says which is current. The defaults above were `_def` until 2026-08-30, so the
+documented no-GPU rebuild silently overwrote `results/winners_curse_se_false_alarm.md` with
+the retired figures — a wrong answer that exits 0.
+
+A `.jsonl` cannot carry the `> SUPERSEDED` banner that the `.md` reports carry, so the
+supersession lives in a marker file BESIDE the checkpoint:
+
+    results/winners_curse_ckpt_se_false_alarm_def.jsonl.SUPERSEDED.json
+
+`supersession_marker()` reads it and `main()` REFUSES (exit 3) before loading anything —
+whether the checkpoint was reached through `--tag` or through an explicit `--checkpoint`,
+and whether the run would rebuild the report or append fresh GPU scores to it. The retired
+numbers can still be re-derived for forensics, but only via `--allow_superseded` together
+with an explicit `--out`, so they can never land on the canonical report path.
 """
 from __future__ import annotations
 
@@ -252,13 +272,29 @@ def summarize(records: list[dict]) -> dict:
     return out
 
 
-def build_report(records: list[dict], cell: str, fresh_seed) -> str:
+def build_report(records: list[dict], cell: str, fresh_seed, *,
+                 superseded: dict | None = None) -> str:
     """The report text, as a pure function of the records — so it can be rebuilt from a
     checkpoint with `--report_only` and no GPU. Every number here comes from code; nothing
-    in this file should ever be hand-edited."""
+    in this file should ever be hand-edited.
+
+    `superseded` is the sidecar marker of a RETIRED checkpoint (see `supersession_marker`).
+    When it is set, the report opens with the same `> SUPERSEDED` banner the retired `.md`
+    files in `results/` already carry — so that a forensic re-derivation stays labelled as
+    one no matter where the file is later copied to. Keyword-only and defaulted, so the
+    ordinary three-argument call is unchanged."""
     s = summarize(records)
     seed_txt = fresh_seed if fresh_seed is not None else "unrecorded"
-    L = [f"# Winner's-curse re-evaluation — {cell} (fresh seed {seed_txt})", "",
+    L = []
+    if superseded:
+        by = superseded.get("superseded_by") or "the definitive checkpoint"
+        L += [f"> ⚠ **SUPERSEDED — DO NOT CITE.** Re-derived from a RETIRED checkpoint "
+              f"({superseded.get('superseded', 'see marker')}) for forensics only. The "
+              f"current figures come from `{by}`; rebuild them with "
+              f"`scripts/winners_curse_reeval.py --report_only`."
+              + (f" Retirement notice: `{superseded['_marker_path']}`."
+                 if superseded.get("_marker_path") else ""), ""]
+    L += [f"# Winner's-curse re-evaluation — {cell} (fresh seed {seed_txt})", "",
          "The attack reports the MAXIMUM over ~181 noisy entropy estimates, so its move is "
          "inflated by selection-on-noise. Here the SELECTED paraphrase is re-scored on an "
          "INDEPENDENT sample (same N, different seed). Regression toward the mean measures "
@@ -339,6 +375,77 @@ def build_report(records: list[dict], cell: str, fresh_seed) -> str:
     return "\n".join(L) + "\n"
 
 
+SUPERSEDED_SUFFIX = ".SUPERSEDED.json"
+
+
+def supersession_marker(ck: Path | None) -> dict | None:
+    """The machine-readable retirement notice for a checkpoint, or None if it is current.
+
+    WHY A SIDECAR FILE. Every retired `.md` in `results/` opens with a `> SUPERSEDED`
+    banner, so a human who opens it is told before reading a number. A `.jsonl` has no
+    comment syntax and no header — there is nowhere in the file to put that sentence, and
+    a reader of `winners_curse_ckpt_se_false_alarm_def.jsonl` sees 60 well-formed records
+    that reduce to a stable, credible interval. The retirement therefore has to live in a
+    separate file that a machine can find WITHOUT being told to look: same directory, same
+    name, `.SUPERSEDED.json` appended.
+
+    Keyed on the checkpoint PATH rather than on the `--tag` string, so that reaching the
+    retired file the other way (`--checkpoint results/..._def.jsonl`) is gated identically.
+
+    A marker that exists but will not parse is itself a refusal (`_unreadable`), never a
+    silent pass: the failure mode this guards against is a report that looks right, and
+    "the notice was corrupt so we ignored it" reproduces exactly that.
+    """
+    if ck is None:
+        return None
+    m = ck.with_name(ck.name + SUPERSEDED_SUFFIX)
+    if not m.exists():
+        return None
+    try:
+        d = json.loads(m.read_text(encoding="utf-8"))
+        if not isinstance(d, dict):
+            raise ValueError(f"expected a JSON object, got {type(d).__name__}")
+    except Exception as exc:                       # noqa: BLE001 — any parse failure gates
+        d = {"_unreadable": f"{type(exc).__name__}: {exc}"}
+    d["_marker_path"] = str(m)
+    return d
+
+
+def supersession_refusal(ck: Path, sup: dict) -> str:
+    """The message printed when a retired checkpoint is reached. Says what is retired, what
+    replaced it, and what the two disagree about — a bare 'refusing' would send the reader
+    back to the same ambiguity the marker exists to remove."""
+    L = [f"[wc] REFUSING: {ck} is SUPERSEDED.",
+         f"       marker: {sup.get('_marker_path')}"]
+    if sup.get("_unreadable"):
+        L += [f"       the marker could not be parsed ({sup['_unreadable']}).",
+              "       A checkpoint with an unreadable retirement notice is treated as "
+              "retired, not as current."]
+    else:
+        if sup.get("superseded_by"):
+            L.append(f"       use instead: {sup['superseded_by']}"
+                     + (f"  (--tag {sup['superseded_by_tag']})"
+                        if sup.get("superseded_by_tag") else ""))
+        if sup.get("retired_on"):
+            L.append(f"       retired: {sup['retired_on']}")
+        if sup.get("reason"):
+            L.append(f"       reason: {sup['reason']}")
+        ret, cur = sup.get("retired_headline"), sup.get("current_headline")
+        if ret or cur:
+            L.append(f"       this file reports {ret or '?'}; "
+                     f"the paper reports {cur or '?'}")
+    L += ["",
+          "  To rebuild the CURRENT report:",
+          "      scripts/winners_curse_reeval.py --report_only"
+          + (f" --tag {sup['superseded_by_tag']}" if sup.get("superseded_by_tag") else ""),
+          "  To re-derive the RETIRED numbers for forensics, name a scratch destination",
+          "  OUTSIDE results/ (a retired report left in results/ is the next person's",
+          "  problem, and check_population_labels.py scans that directory):",
+          "      scripts/winners_curse_reeval.py --report_only --allow_superseded \\",
+          "          --checkpoint <this file> --out <scratch dir>/superseded_forensic.md"]
+    return "\n".join(L)
+
+
 def load_checkpoint(ck: Path | None) -> dict[str, dict]:
     done: dict[str, dict] = {}
     if ck is None or not ck.exists():
@@ -384,7 +491,9 @@ def seed_provenance(done: dict[str, dict], fresh_seed: int) -> tuple[str | None,
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--tag", default="_def")
+    ap.add_argument("--tag", default="_defb",
+                    help="campaign tag; DEFINITIVE is _defb (69 records). _def (60) is "
+                         "RETIRED and gated — see the module docstring")
     ap.add_argument("--cell", default="se_false_alarm")
     ap.add_argument("--fresh_seed", type=int, default=1, help="a DIFFERENT seed from the run's 0")
     ap.add_argument("--n_targets", type=int, default=0, help="0 = all")
@@ -392,10 +501,42 @@ def main() -> int:
     ap.add_argument("--report_only", action="store_true",
                     help="rebuild the report from the existing checkpoint; no GPU, no model "
                          "load, no new scoring")
+    ap.add_argument("--out", default="",
+                    help="report destination (default results/winners_curse_<cell>.md); "
+                         "REQUIRED with --allow_superseded")
+    ap.add_argument("--allow_superseded", action="store_true",
+                    help="re-derive a RETIRED checkpoint's numbers for forensics. Requires "
+                         "--out, so retired figures cannot reach the canonical report")
     args = ap.parse_args()
 
     ck = (RESULTS_DIR / f"winners_curse_ckpt_{args.cell}{args.tag}.jsonl"
           if args.checkpoint == "auto" else (Path(args.checkpoint) if args.checkpoint else None))
+
+    # THE SUPERSESSION GATE. Before the checkpoint is read, before any model is loaded, and
+    # before either branch below — a retired checkpoint must not be reported FROM and must
+    # not be appended TO.
+    canonical = RESULTS_DIR / f"winners_curse_{args.cell}.md"
+    out = Path(args.out) if args.out else canonical
+
+    sup = supersession_marker(ck)
+    if sup is not None:
+        if not args.allow_superseded:
+            print(supersession_refusal(ck, sup), file=sys.stderr, flush=True)
+            return 3
+        # --out is not a formality here: it is the whole guarantee. Compare RESOLVED paths,
+        # or `--out results/../results/winners_curse_se_false_alarm.md` walks straight past.
+        if not args.out or out.resolve() == canonical.resolve():
+            print(f"[wc] REFUSING: --allow_superseded needs an explicit --out that is NOT "
+                  f"the canonical report.\n"
+                  f"       {ck} is retired; its numbers must never land on {canonical}.",
+                  file=sys.stderr, flush=True)
+            return 3
+        # ASCII only: --report_only runs from the Windows venv, whose console codepage
+        # turns an em dash into a replacement character. This is the one line that has to
+        # survive being read in a hurry.
+        print(f"[wc] WARNING: reporting from the SUPERSEDED checkpoint {ck} into {out} -- "
+              f"these numbers are RETIRED and must not be cited.", flush=True)
+
     done = load_checkpoint(ck)
 
     err, warn, seed_txt = seed_provenance(done, args.fresh_seed)
@@ -408,7 +549,11 @@ def main() -> int:
     if args.report_only:
         records = list(done.values())
         if not records:
-            print(f"[wc] ERROR: --report_only but no records in {ck}", file=sys.stderr)
+            print(f"[wc] ERROR: --report_only but no records in {ck}\n"
+                  f"       The definitive checkpoint is committed; if it is missing from a "
+                  f"clone, check that .gitignore's `!results/winners_curse_ckpt_*.jsonl` "
+                  f"exception survived and that the file was `git add`ed.",
+                  file=sys.stderr, flush=True)
             return 1
         print(f"[wc] report-only: {len(records)} records from {ck}", flush=True)
     else:
@@ -452,12 +597,12 @@ def main() -> int:
             print(f"  {o.question_id}: selection {rec['move_selection']:+.3f} -> "
                   f"fresh {rec['move_fresh']:+.3f}", flush=True)
 
-    out = RESULTS_DIR / f"winners_curse_{args.cell}.md"
     # newline="\n" explicitly: this report is normally regenerated from WSL but --report_only
     # runs from the Windows venv, and default newline translation would rewrite every line of
     # a committed artifact as a phantom diff.
+    out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", encoding="utf-8", newline="\n") as fh:
-        fh.write(build_report(records, args.cell, seed_txt))
+        fh.write(build_report(records, args.cell, seed_txt, superseded=sup))
     print(f"[report] wrote {out}", flush=True)
     return 0
 

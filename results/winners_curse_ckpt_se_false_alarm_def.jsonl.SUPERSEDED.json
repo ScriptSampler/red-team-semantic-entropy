@@ -1,0 +1,49 @@
+{
+  "schema": "superseded-checkpoint/1",
+  "superseded": "results/winners_curse_ckpt_se_false_alarm_def.jsonl",
+  "superseded_by": "results/winners_curse_ckpt_se_false_alarm_defb.jsonl",
+  "superseded_by_tag": "_defb",
+  "retired_on": "2026-08-19",
+  "marked_on": "2026-08-30",
+  "generator": "scripts/winners_curse_reeval.py",
+  "reason": "Same experiment, stopped nine targets early. The _defb rerun carries all 60 of these question_ids plus 9 more (69 of the 80 false-alarm targets; the other 11 are skipped because the optimiser returned best_query == question, so there is no selection to re-test). _def records also predate fresh_seed stamping, so their seed is asserted by the CLI flag rather than read from the data. Every winner's-curse figure in the paper is a _defb figure.",
+  "retired_records": 60,
+  "current_records": 69,
+  "retired_headline": "retention 45.2% [25%, 65%], n=60",
+  "current_headline": "retention 44.0% [23%, 64%], n=69",
+  "retired_values": {
+    "n": 60,
+    "retention": 0.4515,
+    "retention_ci_95": [0.250, 0.649],
+    "retention_ci_95_whole_percent": [0.25, 0.65],
+    "shrinkage_nats": -0.383,
+    "shrinkage_ci_95": [-0.529, -0.234],
+    "kept_positive": "36/60"
+  },
+  "current_values": {
+    "n": 69,
+    "retention": 0.4400,
+    "retention_ci_95": [0.231, 0.642],
+    "retention_ci_95_whole_percent": [0.23, 0.64],
+    "shrinkage_nats": -0.341,
+    "shrinkage_ci_95": [-0.469, -0.212],
+    "kept_positive": "37/69"
+  },
+  "paper_sites_using_current": [
+    "paper/sections/limitations.tex:109  (n = 69 of 80)",
+    "paper/sections/limitations.tex:114  (shrinkage -0.341 [-0.469, -0.212])",
+    "paper/sections/limitations.tex:116  (retention 44% [23%, 64%])",
+    "paper/sections/limitations.tex:119  (37 of the 69)",
+    "paper/sections/introduction.tex:189 (44% retention)"
+  ],
+  "canonical_report": "results/winners_curse_se_false_alarm.md",
+  "do_not_write": "results/winners_curse_se_false_alarm.md",
+  "why_a_sidecar": "A .jsonl has no comment syntax and no header, so it cannot carry the '> SUPERSEDED' banner every retired .md in results/ opens with. This file is that banner. scripts/winners_curse_reeval.py reads it via supersession_marker() and refuses (exit 3) rather than rebuilding the canonical report from retired records.",
+  "verification": {
+    "verified_on": "2026-08-30",
+    "how": "Both checkpoints re-scored through scripts/winners_curse_reeval.py:summarize() at its documented defaults (10,000 paired bootstrap replicates, seed 0). _defb reproduces results/winners_curse_se_false_alarm.md and the paper exactly.",
+    "both_bootstraps_stable": true,
+    "fieller_g": {"_def": 0.031, "_defb": 0.041},
+    "note": "The retired interval is not obviously wrong on its face -- it is stable, it excludes neither endpoint implausibly, and it rounds to a similar story. That is precisely why the machine gate exists instead of a comment."
+  }
+}

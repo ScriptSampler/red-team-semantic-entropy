@@ -1,5 +1,28 @@
-% Conclusion. Draft prose. Framing stable; keep claims scoped to null-controlled
-% evidence. Fill the final effect size at revision.
+% Conclusion. Framing stable; keep claims scoped to null-controlled evidence.
+%
+% "Fill the final effect size at revision" USED TO STAND HERE AND IS RETIRED. The effect
+% sizes are filled: the run completed 80/80 on 2026-08-29 and every figure below is the
+% landed one. Leaving that instruction in place would have invited the next editor to
+% overwrite measured numbers, which is the defect class the Abstract's comment block calls
+% "a comment does not merely record an error, it schedules one".
+%
+% TWO SCOPE QUALIFIERS ARE LOAD-BEARING IN THIS FILE AND NEITHER IS DECORATION.
+%  (a) N=10. The 5%-budget exclusion is true at N=10 and false at N=40; the file concedes
+%      that in the same paragraph.
+%  (b) The clusterer. Added 2026-08-30 under item M1 of results/gemini_adjudication_
+%      2026_08_30.md. The same estimand reads 46.2% / 10.0% / 1.2% across exact match, the
+%      NLI clusterer and the judge on one fixed set of samples, so an unscoped floor
+%      under-specifies its own estimand. The canonical long form used across the paper is
+%      "bidirectional DeBERTa-large-MNLI clustering"; Discussion carries the three numbers
+%      and the factor, this file carries the scope only.
+%
+% THE NON-REJECTION RESTS ON THE ADJUDICATOR ARM, NOT ON ALL THREE. The sentence "in every
+% clustering arm, and at every one of 101 tie-break draws ... the median observed exceedance
+% count sits above its null expectation" was DELETED on 2026-08-30 and may not come back.
+% Both halves are conditional on the search budget A being 181, A is only bounded above by
+% what the run recorded, and the shared-NLI arm's p crosses 0.05 inside the admissible range
+% (experiments.tex has the range and the sensitivity rows). The adjudicator arm is invariant
+% across that range, which is why the verdict is drawn from it.
 
 Sampling-based hallucination detectors treat semantic uncertainty as a property of the
 question, invariant to surface form. We set out to test that assumption adversarially and
@@ -27,7 +50,15 @@ interval to the first: its threshold is the top score \emph{these} $200$ answers
 reach, so $2.0\%$ is the cheapest alarm a pool of this size can exhibit rather than an
 estimate of how cheap an alarm can be. What the pre-registered criterion asks for is a
 one-sided bound on the mass \emph{at the cap}, and that bound is the $1.9\%$ above, which
-falls under the line rather than over it (Section~\ref{sec:discussion}). The claim is about
+falls under the line rather than over it (Section~\ref{sec:discussion}). A second qualifier
+is load-bearing in the same way, and it names the clusterer rather than the budget.
+``Mutually distinct'' is whatever the equivalence relation says it is, and on the same
+attacked targets and the same clean samples the mass at the cap moves by more than an order
+of magnitude as that relation is varied from exact match to the detector's NLI clusterer to
+the independent judge, the exact-match and NLI intervals not overlapping
+(Section~\ref{sec:experiments}). The floor we report is accordingly the floor under the
+bidirectional DeBERTa-large-MNLI clustering the detector ships, and what we claim across
+relations is that dependence itself rather than a floor surviving all of them. The claim is about
 deterministic rules: a randomised rule reaches the chords between these points, but only by
 paying an indivisible block's average, and below the floor the reachable frontier is a
 single chord out of the origin. The $\log N$ ceiling behind all of this is shared with the
@@ -54,10 +85,14 @@ inconsistency. The confirmatory evaluation was run under a protocol built to sur
 Targets were chosen without reference to the detector's own scores, success required the
 hallucination status to survive the paraphrase, and the null prices the attacker's search
 budget in rather than comparing a maximum against single draws. We confine claims to what that
-protocol supports, and on the evidence it returned that is no attack effect. In every
-clustering arm, and at every one of $101$ tie-break draws, the pre-committed exceedance test
-fails to reject, and the median observed exceedance count sits above its null expectation
-rather than below it.
+protocol supports, and on the evidence it returned that is no attack effect. The
+pre-committed exceedance test fails to reject in every clustering arm. We draw that verdict
+from the pre-registered adjudicator arm rather than from the shared-NLI one, and the reason
+is a limit of our own instrumentation rather than a preference: the search budget the null
+prices in is the number of candidates the attack's equivalence gate admitted, the gate was
+applied lazily, and the run recorded enough to bound that number from above but not to
+identify it. The shared-NLI arm's $p$-value is sensitive to where in that range the true
+budget lies. The adjudicator's is not, and it does not reject anywhere in it.
 
 Two boundaries remain, and we state them as the work to do rather than as caveats to wave away.
 First, our clusterer and our equivalence gate are the same NLI model, so whether the

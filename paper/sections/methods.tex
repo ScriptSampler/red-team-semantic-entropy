@@ -206,9 +206,12 @@ no upward move was ever possible), and a further $13$ began one lattice point be
 where the total remaining headroom is $0.139$ nats. That headroom is less than the success
 criterion's own $\delta$, as we set out under that criterion below. Hide targets, by
 contrast, reach their floor only rarely. We
-deliberately attach no count to that last statement here: the hide cell is still filling
-against its planned $80$, so any figure we quote for it goes stale between drafts. We state
-the hide-side counts once, with their final $n$, when that cell completes.
+deliberately attach no count to that last statement here, and the reason has changed since we
+first wrote it. The hide cell has closed at its planned $80$, so no figure we quote for it
+would go stale between drafts any more; what remains true is that this paper reports no
+hide-direction result, so a count dropped in beside the false-alarm headroom would invite an
+arm-to-arm reading the campaign is not powered to support. The hide-side counts belong with
+the hide-side analysis.
 
 We label the population of every quantity we report. The two populations are \emph{nested},
 not disjoint, and being exact about how they are nested is what the labelling is for.
@@ -237,11 +240,11 @@ the two would therefore be sampling error over far fewer ranked pairs, not evide
 detector behaves differently on attacked targets. We deliberately attach no number to that
 discrepancy here, for the same reason we attach none to the hide-side counts above: any
 correct-versus-hallucinating quantity computed on the attack campaign has to pool the
-complete false-alarm arm with the hide arm, which is still filling, so its value and its
-denominator both go stale between drafts. We therefore quote the fair pool's $0.704$
+false-alarm arm with the hide arm, and the pooled figure would be a far less precise estimate
+of a quantity the fair pool already measures well. We therefore quote the fair pool's $0.704$
 [$0.653$, $0.753$] whenever we characterise the detector, we do not present an
 attacked-subset figure as a rival measurement of it, and we state the cross-stratum
-comparison once, with its final $n$, when the hide cell completes.
+comparison with the hide-side analysis rather than here.
 
 Two things follow, and we apply them throughout. First, false-alarm effect sizes measured in
 nats are \emph{censored}: on a saturated target the attack and any other method that also
@@ -311,13 +314,15 @@ false-positive rates attained by some clean negative, so a nominal target such a
 $5\%$ or $10\%$ generally
 does not exist; interpolating between order statistics returns a threshold that silently runs
 at a different rate, in our case answering a $10\%$ request with a threshold that operates at
-more than twice it. We therefore select $\tau$ as the largest threshold whose \emph{achieved} clean
+more than twice it. We therefore select $\tau$ as the smallest threshold whose \emph{achieved} clean
 false-positive rate is at or below the stated budget, assert that achieved rate at run time,
 and report it rather than the nominal one. Enumerating the achievable rates this way is what
 turns the ceiling into an operating constraint (Section~\ref{sec:discussion}). We additionally
 break out the subset of would-be successes voided by condition~(iii) because the
 model's answer flipped, since these are candidates for equivalence-gate leakage
-and lower-bound the fidelity of the NLI constraint. Both detectors are evaluated
+and \emph{lower}-bound how often the gate admits a non-equivalent paraphrase, which is an
+\emph{upper} bound on the fidelity of the NLI constraint and not a lower one
+(Section~\ref{sec:limitations} states it the same way). Both detectors are evaluated
 with a fixed sampling seed, so per-question entropy is reproducible and the
 SE--SRE comparison is like-for-like rather than one deterministic detector against
 one stochastic one. The operating-point FPR sweep and the entropy-cutoff curve are
@@ -334,9 +339,17 @@ re-cluster the identical answer samples under equivalence relations independent 
 DeBERTa-MNLI supervision: an exact-match relation (canonical-normalised string equality)
 and an embedding-cosine relation using \texttt{e5-base-unsupervised}, the E5 checkpoint
 trained only by contrastive pretraining before any NLI fine-tuning. We report the
-attack's net effect under each as a bracket, with the shared-NLI arm as the confounded upper
-bound and exact-match as a strict lower bound. Alongside it we report the survival ratio
-between them, shown as a diagnostic only and not as a claim statistic. We find that no cheap
+attack's mean \emph{intended move} under each as a bracket, with the shared-NLI arm as the
+confounded upper bound and exact-match as the saturation-limited lower bound. The bracket is
+a statement about the intended move only, and it does not survive differencing. Every
+budget-controlled quantity we report subtracts an arm-specific benign comparator, and a lower
+bound on the attack's move together with a lower bound on the benign comparator is not a
+lower bound on their difference. Exact-match is the strictest relation, so it splits the
+most, so its clean baselines sit closest to the $\log N$ ceiling, and that same saturation
+suppresses the benign best-of-$m$ by more than it suppresses the attack's single unselected
+score. The adjudicator therefore lies outside the bracket on the paired net
+(Section~\ref{sec:experiments}), and we report where it does rather than let the column
+headers imply otherwise. We find that no cheap
 independent oracle adjudicates cleanly: exact-match saturates
 on short factoid answers, and the embedding oracle, though excellent on easy paraphrase
 pairs (STS-B AUROC $0.99$), is near-chance on the word-preserving, meaning-shifted pairs
@@ -356,8 +369,14 @@ baseline entropy, which would make the judge \emph{conservative} for the false-a
 (a surviving effect is understated) but \emph{not} for hide; we therefore re-scoped it to
 false-alarm adjudication under a hard-negative-primary criterion. This is an
 outcome-triggered re-specification of a pre-registered gate, which we flag rather than
-bury, and we report the NLI and exact-match bracket \emph{alongside} the judge so no
-conclusion rests on the re-scoped oracle alone. \emph{We flag one further thing, because the
+bury, and we report the NLI and exact-match bracket \emph{alongside} the judge so the
+judge's intended move can be read against two relations that do not share its supervision.
+We claim no more for that than it delivers. The bracket covers the intended move and not the
+budget-controlled comparisons the judge's conclusions are drawn from, and on the ones the
+paper leads with, the paired nets against a selected benign maximum, the judge lies outside
+it; no independent arm bounds those quantities, so on exactly them the
+re-scoped oracle does stand alone, and we state that rather than let the bracket stand in
+for a guarantee it does not give. \emph{We flag one further thing, because the
 argument for the re-scope did not survive the data it was made about.} The judge was
 validated on clean alias pairs, but what it actually clusters is sampled answers. On those it
 under-splits rather than over-splits. It merges all ten samples into one cluster on $27$ of
@@ -384,8 +403,8 @@ confirmatory run under the validated judge, which was the gate on that question 
 as on the effect itself and which completed on 2026-08-29. The statistic reported there is the
 randomised-tie exceedance test
 described in Section~\ref{sec:experiments}, which prices the attacker's search budget into
-the null analytically; the percentile-in-benign indicator and the survival ratio are shown
-as diagnostics only, both being upward-biased by that same budget. Absent a cleared claim,
+the null analytically; the percentile-in-benign indicator is shown as a diagnostic only,
+being upward-biased by that same budget. Absent a cleared claim,
 attribution is an explicit bracket, not an assertion.
 
 \emph{The pre-registered sample-size threshold was met by the campaign and missed by the

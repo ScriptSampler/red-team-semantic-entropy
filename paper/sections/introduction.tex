@@ -1,5 +1,34 @@
 % Introduction. Motivation and contributions are stable. The null-controlled headline
 % landed on 2026-08-29 and its figures are live in the text below.
+%
+% THE PROVENANCE STORY IS LOAD-BEARING AND WAS BEING RETRACTED HERE. Until 2026-08-30
+% contribution (1) opened "A measurement-validity result about discrete semantic entropy,
+% INDEPENDENT OF WHETHER ANY ATTACK SUCCEEDS". That clause is logically true and narratively
+% fatal: the Abstract's one-line provenance ("We tried to break it with meaning-preserving
+% paraphrases and found the binding constraint falls on the operator, not the attacker")
+% asserts a causal link between the attack work and the headline, and the clause severs it,
+% leaving two unrelated papers stapled together. An external reviewer finished the 34-page
+% draft still asking why the paper is framed around the lattice rather than around the
+% clustering model's weaknesses, which is a referee reporting that the pivot did not land
+% (results/gemini_adjudication_2026_08_30.md section 6). Three changes answer it and they
+% work only together; do not revert one of them alone.
+%   (a) The clause now reads "which the attack investigation uncovered and which stands
+%       whether or not any attack succeeds". Same logical content, opposite narrative effect.
+%   (b) A bridging paragraph before \paragraph{Contributions.} says how the controls produced
+%       the finding: a null that must stay valid under ties at the cap forces you to
+%       characterise the cap, and characterising the cap IS the measurement-validity result.
+%   (c) The third paragraph names the pivot at line ~35 instead of leaving it until the
+%       contributions list. Sixty-eight lines of attack setup was too long to hold a reader
+%       on the wrong prior about what they were reading.
+%
+% TWO CLAIMS ABOUT THE EXCEEDANCE TEST WERE DELETED HERE ON 2026-08-30 AND MAY NOT RETURN:
+% that "no draw in any arm reaches the 5% cut", and that "the observed exceedance count sits
+% ABOVE its null expectation in all three, which is the direction against the attack". Both
+% hold only at A = 181, A is an upper bound rather than a measurement, and the shared-NLI
+% arm's p crosses 0.05 inside the admissible range. experiments.tex carries the range, the
+% sensitivity rows and the arithmetic; this file states the consequence only, which is that
+% the non-rejection is rested on the pre-registered adjudicator arm because that arm is the
+% one invariant to the unidentified budget.
 
 Large language models are increasingly paired with \emph{hallucination detectors}
 that estimate whether a generated answer can be trusted. A prominent family is
@@ -32,7 +61,10 @@ model's answer stays put, and its correctness with it.
 
 Answering this question rigorously turns out to require controls that, to our knowledge,
 prior evaluations of this detector family do not jointly apply. Once those controls are in
-place, the picture is more subtle than a clean ``we broke it.'' We contribute the controls
+place, the picture is more subtle than a clean ``we broke it,'' and the result we lead with
+is not about the attacker at all. Building the controls forced us to ask what a false-alarm
+rate can even be on a detector whose score takes finitely many values, and the answer to that
+question turned out to be the finding. We contribute the controls
 as a protocol and report what they reveal. Three of them are load-bearing. (i) Targets are
 selected \emph{score-independently}, since otherwise the clean detector is evaluated on a
 pool its own scores defined, a circularity that inflates clean AUROC to $1.0$. (ii) An
@@ -44,13 +76,18 @@ otherwise mistakes sampling variance for success.
 
 We do now report on whether the optimised attack moves the detector beyond what benign
 rephrasing achieves, and the answer is that it does not. The pre-committed exceedance test
-has a null that prices in the attacker's $\sim$$181$-candidate search budget. Run to
+has a null that prices the attacker's search budget in. Run to
 completion over the $80$ correct-answer targets of the false-alarm stratum, that test fails
 to reject in every clustering arm, at $p{=}0.939$ (shared NLI), $1.000$ (exact match) and
-$1.000$ (LLM judge) on the $77$ of those targets that have a benign arm. Those figures are
-medians over $101$ tie-break draws and no draw in any arm reaches the $5\%$ cut; at the
-median the observed exceedance count sits \emph{above} its null expectation in all three,
-which is the direction against the attack (Section~\ref{sec:experiments}). This is a
+$1.000$ (LLM judge) on the $77$ of those targets that have a benign arm, each a median over
+$101$ tie-break draws. Those $p$-values price in the $181$ scored evaluations the optimiser
+performs per target, and we report $181$ as an upper bound on the budget rather than as the
+budget: the attack's maximum ranges only over candidates its equivalence gate admitted, the
+gate is applied lazily so most scored candidates were never submitted to it, and nothing the
+run recorded identifies how many of them would have passed. The shared-NLI arm's $p$ moves
+with that unidentified quantity. The pre-registered adjudicator arm does not, and it is the
+arm we rest the non-rejection on: its $p$ holds at $1.000$ across the whole admissible range
+of the budget (Section~\ref{sec:experiments}). This is a
 non-rejection by a design with power $0.77$ against a two-fold effect, so it bounds what we
 could have seen rather than measuring a zero, and we claim no attack effect from it.
 
@@ -67,9 +104,20 @@ designed to suppress a wrong answer's score, and the \emph{false-alarm} directio
 a correct answer's. Only the false-alarm direction is evaluated under the null control in
 this work.
 
+The three controls above were built to measure that attack honestly, and building them is
+what surfaced the result we lead with. A null that has to stay valid when an attacked score
+and a benign one tie at the detector's maximum forces one to characterise that maximum, and
+characterising it shows that clean correct answers reach it often enough, at the sample budget
+the detector is deployed with, to put a floor under the false-alarm rate of every threshold
+rule that fires at all. That floor is the measurement-validity result below. We arrived at it
+by trying to measure an attack, not by setting out to audit the estimator, and we say so here
+because the order matters for reading what follows: the protocol is not scaffolding around the
+attack that we then reused, it is where the finding came from.
+
 \paragraph{Contributions.}
-(1) \textbf{A measurement-validity result about \emph{discrete} semantic entropy}, independent
-of whether any attack succeeds. The scope is deliberate and is the black-box deployment path:
+(1) \textbf{A measurement-validity result about \emph{discrete} semantic entropy}, which the
+attack investigation uncovered and which stands whether or not any attack succeeds. The scope
+is deliberate and is the black-box deployment path:
 the discrete variant is the one \citet{farquhar2024detecting} name and run for all of their
 GPT-4 results, the one \citet{kossen2024seps} train their probes to predict, and the only one
 computable under the black-box access we assume (Section~\ref{sec:methods}). The two halves of
@@ -91,8 +139,9 @@ and $21.5\%$ [$16.4$, $27.7$], with nothing in between; an operator who specifie
 false-alarm budget cannot have one at that sample budget, because the only threshold that
 honours it never fires. Running the same $200$ correct answers out to $N{=}40$ empties the
 ceiling atom and buys the missing operating point, so a $5\%$ budget is honoured at an
-achieved $5.0\%$ [$2.7$, $9.0$]. We therefore scope the claim to $N{=}10$ wherever we make
-it (Section~\ref{sec:discussion}).
+achieved $5.0\%$ [$2.7$, $9.0$]. We therefore scope the claim to $N{=}10$, and to the
+detector's own bidirectional DeBERTa-large-MNLI clustering, wherever we make it
+(Section~\ref{sec:discussion}).
 That floor is an identity, not a measurement we happened to make: every threshold above
 $\ln N$ flags nothing, so the smallest false-positive rate a firing threshold can have
 \emph{is} the probability that a clean correct answer yields $N$ mutually distinct meanings.
@@ -111,7 +160,16 @@ $1424$-answer superset that stratum is a subset of, at $10.5\%$ [$9.0$, $12.2$],
 bound closes off a $5\%$
 budget at $95\%$ confidence; a $10\%$ budget sits on the boundary, and the two populations
 land on opposite sides of it, so we claim only that the floor is about one correct answer in
-ten. The claim is about \emph{deterministic} rules, which is what a deployment can be audited
+ten. That floor is a fact about the equivalence relation deciding when two answers mean the
+same thing, and not about the sampler alone. Holding the same clean samples fixed and varying
+only that relation moves the at-cap rate by more than an order of magnitude, across a range
+that straddles the $5\%$ line, and the exact-match and NLI intervals do not overlap
+(Section~\ref{sec:experiments}). We accordingly state the floor under the clusterer the
+detector actually ships and claim its oracle-dependence, rather than a floor that holds under
+whatever relation a deployment happens to cluster with; the looser oracle we validate puts
+too little mass at the cap to be distinguished from $5\%$ in its own right, which is a reason
+to scope the claim and not a reason to weaken it.
+The claim is about \emph{deterministic} rules, which is what a deployment can be audited
 against: a randomised rule that flags a ceiling item with some probability does reach the
 chords between these points, at the price of paying an indivisible block's average, and below
 the floor the reachable frontier is a single chord out of the origin. Nothing here rests on a count of

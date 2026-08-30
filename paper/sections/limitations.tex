@@ -159,6 +159,18 @@ $n{\geq}80$ run's own result and no longer as preliminary evidence; what remains
 the merge-side bias estimate, which the planned validation was designed to be blind to and
 which is owed before any judge-arm effect size is claimed.
 
+One consequence of that shared dependence reaches past the attack and into the
+measurement-validity result, and we had not scoped it far enough. The achievable false-alarm
+floor we report is the mass of an atom at $\log N$, and what sits at $\log N$ is whatever the
+clusterer declines to merge, so the floor is a property of this clusterer as much as of the
+model. Section~\ref{sec:discussion} measures how far it moves when the relation is changed
+and the samples are held fixed: on one set of $80$ clean targets the same estimand reads
+three different ways, and the exact-match and NLI intervals do not overlap. Every floor claim
+in this paper is therefore scoped to bidirectional DeBERTa-large-MNLI clustering. We do not
+claim the converse, that a more permissive relation delivers a usable low false-alarm rate,
+because the one relation that would suggest it is measured at a denominator too small to
+exclude the budget in question.
+
 \paragraph{Equivalence is certified automatically, not by humans.}
 Feasibility is a judgement of bidirectional entailment. Our answer-flip subcategory collects
 the successful attacks in which the model's correctness flips under $q'$, and that subcategory
@@ -202,10 +214,12 @@ say. Three narrower scopes ride along. The ladder exists only on the fair pool. 
 $1424$-answer superset estimates the same $N{=}10$ floor as the fair pool's $9.5\%$ over seven
 times as many negatives, but it has no $N{=}40$ counterpart, so every row here is estimated on
 $200$ negatives, a resolution that cannot separate false-alarm rates less than half a point
-apart. It is one model family in one quantisation on one dataset, and the floor is a fact about
-how often that model answers a question $N$ different ways, a property of the model and the
-question distribution rather than of the estimator's arithmetic, which is exactly the kind of
-quantity that need not transfer to another model or another corpus. And what the extra
+apart. It is one model family in one quantisation on one dataset read through one equivalence
+relation, and the floor is a fact about how often that model answers a question in $N$ ways
+the clusterer holds apart, a property of the model, the question distribution and that
+relation jointly rather than of the estimator's arithmetic, which is exactly the kind of
+quantity that need not transfer to another model, another corpus or another notion of
+sameness. And what the extra
 operating points are \emph{worth} we do not report in either direction: at a matched
 false-alarm rate the cross-budget change in true positives has a magnitude that depends on
 which decision rule is paired and a sign that depends on which $N{=}10$ cache is paired, and no

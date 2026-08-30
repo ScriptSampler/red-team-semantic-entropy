@@ -1,5 +1,29 @@
 % Related Work. Grounded in docs/positioning.md; citations in related_work.bib.
-% Draft prose. Tighten to ~700 words at revision.
+%
+% "Tighten to ~700 words at revision" USED TO STAND HERE AND IS RETIRED. The section is well
+% past 700 words and every excess is a concession: each paragraph now names what a neighbour
+% did first so the paper does not claim it. Trimming to a word count would trim concessions,
+% which is the wrong direction for this paper. Tighten prose if you like; do not tighten by
+% dropping an attribution.
+%
+% TWO CORRECTIONS LANDED 2026-08-30 (results/gemini_adjudication_2026_08_30.md).
+%  (1) KLE WAS MISATTRIBUTED. The paragraph said Kernel Language Entropy replaces hard-NLI
+%      clustering "precisely because hard-NLI clustering is brittle", and then claimed "that
+%      brittleness is the very sensitivity our attack exploits". KLE's abstract argues
+%      COARSENESS, not brittleness: it "considers pairwise semantic dependencies between
+%      answers (or semantic clusters), providing more fine-grained uncertainty estimates than
+%      previous methods based on hard clustering of answers". Checked against the abstract on
+%      2026-08-30. The old text enlisted a neighbour as agreement it never gave. The bib
+%      annote under nikitin2024kle carried the same error and has been corrected too, because
+%      that annote is where the paper's sentence came from.
+%  (2) A CLASSICAL RESULT HAD NO CITATION. The paper's achievable-operating-point argument was
+%      positioned against one 2026 preprint, and a grep for neyman / lehmann / provost /
+%      fawcett / conformal over paper/ returned zero hits. The new "Achievable operating
+%      points and randomised rules" paragraph fixes that. Every property attributed there was
+%      read from the source on 2026-08-30 and the check is recorded in each bib annote. Note
+%      in particular the split kept under neyman1933testing: the 1933 paper is cited for the
+%      size-and-power framework ONLY, and the randomised test function is attributed to
+%      lehmann2005testing, which is where it is actually stated that way.
 
 \paragraph{Sampling-based hallucination detection.}
 Semantic entropy estimates a model's uncertainty by sampling several answers,
@@ -21,8 +45,16 @@ robustness~\citep{tong2025sre}, and Semantic Entropy Probes (SEPs) approximate
 the entropy from a single hidden state, removing the sampling
 cost~\citep{kossen2024seps}. A parallel line questions the \emph{clustering} step
 itself: Kernel Language Entropy replaces hard NLI equivalence-class clustering with a
-semantic-graph kernel, precisely because hard-NLI clustering is
-brittle~\citep{nikitin2024kle}. That brittleness is the very sensitivity our attack exploits.
+positive-semidefinite semantic kernel scored by a von Neumann entropy, on the ground that a
+hard partition is too \emph{coarse} to carry the pairwise semantic dependencies between
+answers and so returns uncertainty estimates less fine-grained than those dependencies
+support~\citep{nikitin2024kle}. We are careful not to enlist that as agreement with us,
+because it is a different objection. Theirs is about what a hard partition can
+\emph{represent}; ours is that the relation drawing the partition need not be stable under a
+rephrasing of the question, and separately that the entropy of a hard partition of $N$ samples
+can take only finitely many values. The three concerns land on the same step from different
+sides, and a graded relation answers the third by construction: a von Neumann entropy over a
+continuous-valued kernel is not confined to the entropies of integer partitions of $N$.
 We treat these as \emph{detectors to be attacked}: our contribution is to test the invariance
 claim adversarially, a question none of these papers ask of themselves. Whether the attack
 transfers to such richer-clustering variants, or is specific to hard-NLI-equivalence
@@ -160,6 +192,35 @@ originating papers report that clusters are few and grow slowly with $N$, and tr
 computational saving~\citep{kuhn2023semantic, farquhar2024detecting}. Taken together with
 those reports, the picture is of a well-known observation whose measurement consequences have
 not been drawn out.
+
+\paragraph{Achievable operating points and randomised rules.}
+That a decision rule built on a discrete statistic can be run at only finitely many operating
+points, and that the gaps between them are closed by randomising rather than by a better
+score, is classical, and we claim none of it. It is why randomised tests exist. The
+Neyman--Pearson formulation fixes a size and maximises power at
+it~\citep{neyman1933testing}; when the statistic is discrete a nonrandomised test attains only
+finitely many sizes, so the standard treatment states the fundamental lemma for test functions
+taking values in $[0,1]$, randomising the decision at the critical value, precisely so that a
+nominated level stays attainable exactly~\citep{lehmann2005testing}. The classification-side
+statement is the ROC convex hull. \citet{provost2001robust} identify the classifiers on the
+hull of a family's ROC points as exactly those potentially optimal under some combination of
+class distribution and misclassification costs, and realise a point interior to a hull segment
+by flipping a weighted coin, per instance, between the two classifiers at its ends;
+\citet{fawcett2006roc} states the same interpolation in textbook form. Distribution-free
+prediction meets the arithmetic from a third direction: conformal
+prediction~\citep{vovk2005algorithmic} calibrated on $n$ scores has its coverage pinned
+between $1-\alpha$ and $1-\alpha+1/(n{+}1)$, a band whose width is set by the calibration
+sample rather than by the operator's target, and holding its upper end under ties takes an
+explicit randomised tie-break that practice usually skips~\citep{angelopoulos2021gentle}. Our
+claim is therefore not that a finite operating grid is a new phenomenon. It is that this grid
+is imposed by the \emph{sampling budget}, so an operator cannot refine it by labelling more
+evaluation data as they could refine a calibration set; that it is coarsest at the top of the
+scale, which is exactly where a false alarm and a firing threshold both have to land; and that
+the atom at the very top puts a floor under the false-alarm rate of every deterministic rule,
+which is a constraint the classical results permit but do not predict, since none of them fixes
+where the atoms fall. Randomising does reach the chords here as it does there, at the price of
+paying an indivisible block's average and of a rule whose response to a given input cannot be
+audited against a fixed threshold, and we say so wherever we make the claim.
 
 \paragraph{Evaluating the evaluation.}
 Because our framing is protocol-led, two methodological strands matter beyond the attack

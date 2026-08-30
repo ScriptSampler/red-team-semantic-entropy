@@ -75,7 +75,7 @@ the quantity SEPs regress on.}
   author    = {Nikitin, Alexander and Kossen, Jannik and Gal, Yarin and Marttinen, Pekka},
   booktitle = {Advances in Neural Information Processing Systems 37 (NeurIPS)},
   year      = {2024},
-  annote    = {arXiv:2405.20003. Replaces hard NLI equivalence-class clustering with a semantic-graph kernel BECAUSE hard-NLI clustering is brittle — the SE-clustering-sensitivity neighbour closest to our thesis. Venue verified on the NeurIPS 2024 proceedings site 2026-08-03.}
+  annote    = {arXiv:2405.20003. Venue verified on the NeurIPS 2024 proceedings site 2026-08-03. ATTRIBUTION CORRECTED 2026-08-30 against the paper's own abstract, and this annote was the source of the error in related_work.tex. It previously read "replaces hard NLI equivalence-class clustering with a semantic-graph kernel BECAUSE hard-NLI clustering is brittle", and the paper then wrote that "brittleness is the very sensitivity our attack exploits". KLE DOES NOT ARGUE BRITTLENESS. Its abstract argues COARSENESS: KLE "considers pairwise semantic dependencies between answers (or semantic clusters), providing more fine-grained uncertainty estimates than previous methods based on hard clustering of answers". That is a claim about what a hard partition can REPRESENT, not about whether the relation drawing it is stable under a rephrasing of the question, which is our claim. The two are neighbours on the same step, not the same objection, and enlisting KLE as agreement with our thesis was an overreach. Do not restore any "brittle", "unstable" or "sensitive" wording under this key without reading the full text.}
 }
 
 % ---- Hallucination-elicitation attacks on models (shared tooling) ----------
@@ -270,4 +270,115 @@ the quantity SEPs regress on.}
   journal = {arXiv preprint arXiv:2606.00392},
   year    = {2026},
   annote  = {VERIFIED 2026-08-13 via the arXiv abs page, the arXiv API, and the PDF (submitted 29 May 2026, updated 12 Aug 2026; unvenued preprint). Cited ONLY to support the concession that constrained paraphrase search is a standard primitive we do not claim: DEPO formulates detector-evasive paraphrasing as a Constrained MDP "where detector evasion is the primary objective and semantic preservation is enforced as an explicit constraint", via Lagrangian primal-dual RL. Cleanest existing statement of constrained paraphrase search as a formal optimisation object. Distinguish on three axes: the victim is an AI-text-origin detector; the polarity is EVASION, the opposite of our false-alarm inflation, so there is no prediction to preserve -- the flagged output IS what is flipped; and the meaning constraint is a soft token-level BERTScore-F1 threshold, NOT a hard bidirectional-NLI entailment gate (verified: NLI and entail absent from the full text). No semantic entropy, no sampling-based uncertainty, no discreteness discussion.}
+}
+
+% ---- Classical detection theory: achievable operating points, randomised rules ----
+% ADDED 2026-08-30 in response to results/gemini_adjudication_2026_08_30.md. The paper
+% positioned a classical result (a discrete score admits only finitely many operating
+% points; randomisation reaches the chords) against a single 2026 preprint. A grep for
+% neyman / lehmann / provost / fawcett / conformal over paper/ returned ZERO hits before
+% this block. Every claim attached to these five keys was checked against the source on
+% 2026-08-30 and the check is recorded in each annote. Do not extend an annote with a
+% property that was not read.
+
+@article{neyman1933testing,
+  title   = {On the Problem of the Most Efficient Tests of Statistical Hypotheses},
+  author  = {Neyman, Jerzy and Pearson, Egon S.},
+  journal = {Philosophical Transactions of the Royal Society of London. Series A},
+  volume  = {231},
+  pages   = {289--337},
+  year    = {1933},
+  annote  = {Cited ONLY for the framework: fix a size, maximise power at it. NOT cited for
+             the randomisation device. The 1933 paper argues in a setting where a critical
+             region of size exactly alpha is available; the explicit randomised test
+             function is the modern textbook statement, and it is attributed to
+             lehmann2005testing instead. Keep that split: attributing randomisation to the
+             1933 paper is the easy error here.}
+}
+
+@book{lehmann2005testing,
+  title     = {Testing Statistical Hypotheses},
+  author    = {Lehmann, Erich L. and Romano, Joseph P.},
+  edition   = {Third},
+  publisher = {Springer},
+  address   = {New York},
+  year      = {2005},
+  annote    = {THE standard treatment, cited for the randomised test: the fundamental lemma
+               is stated for test functions taking values in [0,1], with a randomised
+               decision at the critical value, so that a nominated level stays attainable
+               exactly when the statistic is discrete and a nonrandomised test attains only
+               finitely many sizes. This is the testing-side twin of our achievable-FPR
+               grid, and it is why the paper's floor claim is scoped to DETERMINISTIC rules
+               everywhere it is made. Bibliographic data verified 2026-08-30; the section
+               numbering was NOT page-verified, so cite the book, not a section.}
+}
+
+@article{provost2001robust,
+  title   = {Robust Classification for Imprecise Environments},
+  author  = {Provost, Foster and Fawcett, Tom},
+  journal = {Machine Learning},
+  volume  = {42},
+  number  = {3},
+  pages   = {203--231},
+  year    = {2001},
+  annote  = {The ROC convex hull (ROCCH). VERIFIED 2026-08-30 against arXiv cs/0009007 and
+             the Springer record. Two properties are cited and both were read: (i) the hull
+             is the set of classifiers potentially optimal under some combination of class
+             distributions and misclassification costs, and a classifier off it can never be
+             optimal; (ii) an interior point of a hull segment is realised by randomising
+             between the two classifiers at its ends, in their words "for each input
+             instance flip a weighted coin and choose the answer given by classifier Cr with
+             probability p/d and that given by classifier Cl with probability 1-p/d". (ii)
+             is the classification-side statement of the chord argument our Introduction and
+             Conclusion make about a randomised threshold rule.}
+}
+
+@article{fawcett2006roc,
+  title   = {An Introduction to {ROC} Analysis},
+  author  = {Fawcett, Tom},
+  journal = {Pattern Recognition Letters},
+  volume  = {27},
+  number  = {8},
+  pages   = {861--874},
+  year    = {2006},
+  annote  = {VERIFIED 2026-08-30 from the article PDF, including volume, number, pages and
+             year. Cited for the same interpolation stated in textbook form: a point on the
+             line segment connecting two classifiers is achieved by randomly selecting one
+             classifier or the other with appropriate probabilities. Cited ALONGSIDE
+             provost2001robust rather than instead of it, because the ROCCH result is theirs
+             and this is the standard exposition of it.}
+}
+
+@book{vovk2005algorithmic,
+  title     = {Algorithmic Learning in a Random World},
+  author    = {Vovk, Vladimir and Gammerman, Alexander and Shafer, Glenn},
+  publisher = {Springer},
+  address   = {New York},
+  year      = {2005},
+  annote    = {Cited as the origin of conformal prediction ONLY, so that the third
+               instance of the achievable-level phenomenon has its primary reference. The
+               specific quantisation statement the paper makes is attributed to
+               angelopoulos2021gentle, which is where it was read. Do NOT attach the
+               1/(n+1) band or the smoothed-predictor detail to this key without page
+               verification.}
+}
+
+@article{angelopoulos2021gentle,
+  title   = {A Gentle Introduction to Conformal Prediction and Distribution-Free
+             Uncertainty Quantification},
+  author  = {Angelopoulos, Anastasios N. and Bates, Stephen},
+  journal = {arXiv preprint arXiv:2107.07511},
+  year    = {2021},
+  annote  = {VERIFIED 2026-08-30 from the arXiv PDF. Their equation (1) bounds split
+             conformal coverage BOTH ways, between 1-alpha and 1-alpha+1/(n+1) on n
+             calibration scores, so the attainable coverage band is spaced by the
+             calibration sample and not by the operator's target. Their footnote 1 is the
+             half we cite for randomisation: "Due to the discreteness of Y, a small
+             modification involving tie-breaking is needed to additionally satisfy the upper
+             bound ... this randomization is usually ignored in practice." Note the exact
+             role: the tie-break randomisation buys the UPPER bound, i.e. it prevents
+             over-coverage. Do not restate it as buying the lower bound or as "closing the
+             grid", which is the nearby claim it is easy to slide into. Year is the arXiv
+             posting year of 2107.07511; the paper was also published in a journal, which we
+             have NOT verified, so it is cited as a preprint.}
 }

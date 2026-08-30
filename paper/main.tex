@@ -101,6 +101,29 @@ Sampling-Based Hallucination Detectors}
 % ABSTRACT LENGTH BUDGET. arXiv's abstract field takes 1920 characters.
 % NOW: 308 words / 1915 characters, counted 2026-08-30 by the rule below. 5 to spare.
 %
+% THE ORACLE SCOPE QUALIFIER WAS ADDED AT ZERO NET COST on 2026-08-30, and this is the
+% record of what paid for it. The adjudication of that date (results/gemini_adjudication_
+% 2026_08_30.md, item M1) established that the floor is a fact about the EQUIVALENCE
+% RELATION as much as about the model: Table 1 prints the same estimand on the same 80
+% targets at 46.2% (exact match), 10.0% (NLI) and 1.2% (judge), and the exact and NLI
+% Wilson intervals do not overlap. An unscoped 10.5% is therefore not a claim about "the
+% detector", it is a claim about the detector's NLI clusterer. "Under NLI clustering "
+% (21) was inserted ahead of the 10.5%, keeping the rate and its "1424 clean correct"
+% label in ONE sentence, which is what the proximity guard cares about. Three rewordings
+% paid for it exactly, and none of them dropped a clause, number, interval, qualifier or
+% concession:
+%   (1) PAID 11. "Every threshold above the maximum flags nothing" -> "No threshold above
+%       the maximum fires". Same proposition; "fires" is already the paper's own verb for
+%       this ("the only threshold that honours it never fires", "the cheapest threshold
+%       that fires at all"), so the swap also removes a synonym.
+%   (2) PAID 5. "The atom is empty, and the obstruction goes with it." -> "...and the
+%       obstruction with it." Ellipsis only. "it" still sits in the same sentence as the
+%       atom it refers to, which is the property note (2) below was written to protect.
+%   (3) PAID 5. "What 200 answers cannot then do" -> "What 200 answers cannot do". A
+%       connective, carrying nothing.
+% Do NOT spend these three again: they are already spent, and the abstract is back at 5.
+% The scope qualifier is now covered by the WHAT MAY NOT BE TRIMMED rule below.
+%
 % NO EM DASHES, ANYWHERE IN THIS FILE, IN ANY SPELLING. Not the three-hyphen LaTeX form,
 % not a literal U+2014, not a two-hyphen stand-in doing an em dash's job. On 2026-08-30 the
 % file held seven of the first kind and thirteen of the third; it holds none of either now.
@@ -160,6 +183,20 @@ Sampling-Based Hallucination Detectors}
 %    claim and a retracted one. The 5%-budget claim is true at N=10 and false at N=40, and
 %    the paper concedes that. "discrete" scopes the estimator: the result does not
 %    transfer to the likelihood-weighted Eq.(5) variant its authors call their main method.
+%    "Under NLI clustering" scopes the RELATION, and it is the newest of the three and the
+%    one most likely to be trimmed by someone who reads it as filler. It is not filler. On
+%    the same 80 targets the at-cap rate is 46.2% under exact match and 1.2% under the
+%    judge, so the unscoped sentence would be asserting a property of "semantic entropy"
+%    that three defensible clusterings do not agree on, across a range that straddles the
+%    5% line the very next sentence rules out. That is the same defect class as the two
+%    retracted sentences below: a claim true on one branch, printed as if unconditional.
+%    THE ABSTRACT'S FORM IS THE COMPRESSED ONE, AND DELIBERATELY. The canonical scoped form
+%    the rest of the paper carries is "at N=10, under bidirectional DeBERTa-large-MNLI
+%    clustering" (discussion.tex, limitations.tex, introduction.tex, conclusion.tex). Naming
+%    the model here costs 8 characters over "Under NLI clustering" and there are 5, so the
+%    Abstract names the relation family and the body names the checkpoint. If characters
+%    ever free up, lengthening this is the SECOND thing to buy; the first is still the
+%    two-orders-of-magnitude gloss listed further down.
 %  - THE N=40 CONCESSION. The claim is that the OBSTRUCTION is gone, never that some
 %    interval clears 5%. Do NOT reinstate an interval on the 2.0% floor. The reason is NOT
 %    that the two candidate intervals were imprecise; it is that the quantity a reader
@@ -192,14 +229,27 @@ Sampling-Based Hallucination Detectors}
 %    2026-08-29 03:57 (results/null_control_report_defb.md), so this clause is now a
 %    MEASURED NON-REJECTION and not a placeholder: the pre-committed randomised-tie
 %    exceedance test gives p = 0.939 (NLI), 1.000 (exact), 1.000 (judge) at n=77. Those are
-%    medians over 101 tie-break draws, and no draw in any arm reaches 0.05. The median
-%    observed exceedance total sits ABOVE its null expectation in every arm, the direction
-%    against the attack. (The shared-NLI total dips just under expectation in the most
-%    attack-favourable draws; that is where its p bottoms out at 0.229.) Keep the clause.
-%    Do NOT restore any "under way", "is running", "pending" or "should the effect survive"
-%    wording anywhere in the paper; six such sites across five files were cleared on
-%    2026-08-29 and the whole point of listing this here is that a comment does not merely
-%    record an error, it schedules one.
+%    medians over 101 tie-break draws. Keep the clause. Do NOT restore any "under way", "is
+%    running", "pending" or "should the effect survive" wording anywhere in the paper; six
+%    such sites across five files were cleared on 2026-08-29 and the whole point of listing
+%    this here is that a comment does not merely record an error, it schedules one.
+%
+%    WHY THE NON-REJECTION SURVIVES, AND WHY IT IS NOT THE REASON THIS COMMENT USED TO
+%    GIVE. Until 2026-08-30 this bullet asserted that "the median observed exceedance total
+%    sits ABOVE its null expectation in every arm, the direction against the attack", and
+%    that "no draw in any arm reaches 0.05". BOTH ARE CONDITIONAL ON A = 181 AND NEITHER
+%    MAY BE RESTORED. A is the search budget the null prices in, and the adjudication of
+%    2026-08-30 (section 2) established from src/se/attacks/optimizer.py that the maximum
+%    ranges over the FEASIBLE candidates only, that the feasibility gate is applied lazily
+%    so just 4703 of 14,400 scored children were ever checked, and that A is therefore NOT
+%    IDENTIFIED from anything the run recorded. Over the admissible range the NLI arm's
+%    median p runs from below 0.001 to 0.92 and crosses 0.05 at about A = 92, which is
+%    inside that range. The exceedance-direction claim is false for NLI at the low end.
+%    What carries the headline instead is that the PRE-REGISTERED ADJUDICATOR ARM IS
+%    INVARIANT: the judge's median p is 1.000 at every A from 41 to 181, and so is exact
+%    match's. That is the defence the paper now makes, at introduction.tex and
+%    conclusion.tex. The Abstract states the non-rejection without printing a p-value or a
+%    draw count, so it needs no repair; do not add one back to buy emphasis.
 %  - The literal "($0/200$, at most $1.9\%$)" is pinned by
 %    scripts/derived_paper_quantities.py, and the population labels "1424 clean correct"
 %    and "the fair pool's 200 correct answers" by scripts/check_population_labels.py.
@@ -214,13 +264,13 @@ phrasing-invariant uncertainty. We tried to break it with meaning-preserving par
 found the binding constraint falls on the operator, not the attacker. The \emph{discrete}
 estimator we study weights meaning clusters by sample counts, so it is the entropy of a
 partition of $N$: at the standard $N{=}10$ it takes $39$ values, with an atom at the maximum.
-Every threshold above the maximum flags nothing, so while the atom carries mass the lowest
+No threshold above the maximum fires, so while the atom carries mass the lowest
 false-alarm rate a firing threshold can have \emph{is} the chance a clean correct answer
-yields $N$ mutually distinct meanings. That is $10.5\%$ [$9.0$, $12.2$] on $1424$ clean
-correct answers. At that standard $N{=}10$ an operator cannot have a $5\%$ false-alarm
-budget, however well the score ranks; the qualifier is load-bearing. At $N{=}40$ none of the
-fair pool's $200$ correct answers reaches $\ln 40$ ($0/200$, at most $1.9\%$). The atom is
-empty, and the obstruction goes with it. What $200$ answers cannot then do is locate the
+yields $N$ mutually distinct meanings. Under NLI clustering that is $10.5\%$ [$9.0$, $12.2$]
+on $1424$ clean correct answers. At that standard $N{=}10$ an operator cannot have a $5\%$
+false-alarm budget, however well the score ranks; the qualifier is load-bearing. At $N{=}40$
+none of the fair pool's $200$ correct answers reaches $\ln 40$ ($0/200$, at most $1.9\%$). The
+atom is empty, and the obstruction with it. What $200$ answers cannot do is locate the
 floor: their cheapest alarm costs $2.0\%$, but that is the population's floor only if it can
 never yield $39$ distinct meanings in $40$, a question $200$ answers cannot settle, so we
 quote no interval. The threshold honouring a $5\%$ budget achieves
