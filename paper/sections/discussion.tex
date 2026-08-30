@@ -99,20 +99,15 @@ $9.5\%$ to $21.5\%$ false alarms in one jump. This is what the coarseness of the
 the top of the range amounts to operationally: the two largest of the estimator's $39$
 attainable values are not a small slice of the scale but two indivisible blocks of
 population, and an operator's entire low-false-alarm menu is to take neither, one, or both.
+The entries of that menu are \emph{points}, not a curve, and the finite achievable set they
+form grows with the sample.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{fig_achievable_roc}
-\caption{Every operating point a deterministic threshold rule on discrete semantic entropy
-can occupy at $N{=}10$, with the false-positive rate measured on the fair pool's correct
-stratum ($n{=}200$) and the true-positive rate on its $200$ hallucinating answers. They are
-\emph{points}, not a curve, and the finite achievable set they form grows with the sample.
-The dashed line is the upper convex hull, reachable only by a rule that
-randomises. Below the floor of $9.5\%$ that hull is a single chord out of the
-origin, so a randomised rule buys sub-floor false-alarm rates only by paying the average of
-an indivisible block (a $5\%$ budget costs a true-positive rate of $14.5\%$ against the
-$27.5\%$ available at this fair pool floor). No deterministic threshold exists anywhere in
-the shaded region.}
+\caption{Every operating point a deterministic threshold on discrete semantic entropy can
+occupy at $N{=}10$, on the fair pool's $200$ correct and $200$ hallucinating answers.
+Dashed: the upper convex hull. No deterministic threshold exists in the shaded region.}
 \label{fig:achievable-roc}
 \end{figure}
 
@@ -122,7 +117,9 @@ reader has to. A \emph{randomised} rule flags a ceiling item with probability $p
 otherwise never fires. Such a rule reaches any point on the chord between two adjacent
 achievable points,
 so a $5\%$ false-alarm rate is attainable at $p{=}0.526$, for a true-positive rate of
-$14.5\%$. Three things survive that concession. Every \emph{deterministic} operating point,
+$14.5\%$ against the $27.5\%$ available at the fair pool's own $9.5\%$ floor. A randomised
+rule therefore buys sub-floor false-alarm rates only by paying the average of an indivisible
+block. Three things survive that concession. Every \emph{deterministic} operating point,
 which is the only kind a deployment can be audited against and the only kind under which the
 same input reliably gets the same decision, is one of them (Figure~\ref{fig:achievable-roc}).
 On the chord the operator pays the \emph{average} of an indivisible block rather than
@@ -169,7 +166,9 @@ together. The first two entries are replays of the
 $N{=}40$ run's recorded verdicts on random subsets, which is why they are quoted from that
 run rather than from the direct Week-4 cache the rest of this paper uses, where the same
 $N{=}10$ floor over the fair pool's $200$ correct answers is $9.5\%$ [$6.2$, $14.4$]; the two
-paragraphs below are about that difference. Which interval a row takes is decided by the
+paragraphs below are about that difference. The figure shows that direct point separately,
+and joins it to nothing, because the June cache it comes from is a different generation run.
+Which interval a row takes is decided by the
 estimator and not by whether the row was replayed. Wilson prices a count of independent
 indicators at a threshold fixed \emph{before} the data, so it belongs to the two rows that
 are counts of exactly that kind. Those two rows are the direct $N{=}10$ floor, $19$ of
@@ -180,7 +179,7 @@ resample a draw of questions and nothing else; the paragraph below is about why
 the replayed rows may not also resample the subset. The measured $N{=}40$ floor takes
 neither, for the reason below. What changes qualitatively at the top budget is that the floor stops
 being the ceiling atom: no clean correct answer reaches $\ln 40$ at all, so the at-cap mass is
-$0.0\%$ [$0.0$, $1.9$] and the floor becomes an ordinary order statistic. That statistic is
+$0/200$, or $0.0\%$ [$0.0$, $1.9$], and the floor becomes an ordinary order statistic. That statistic is
 the four
 highest-scoring clean answers, $2.0\%$ of the fair pool's correct stratum, at a threshold that
 catches $6.0\%$ [$3.5$, $10.2$] of that pool's $200$ hallucinating answers. That is also
@@ -206,15 +205,8 @@ costs $2.0\%$.
 \centering
 \includegraphics[width=\linewidth]{fig_floor_budget}
 \caption{The achievable false-alarm floor on the fair pool's $200$ correct answers against
-the sample budget, every budget read off the one $N{=}40$ pairwise-verdict checkpoint so that
-no step in the sequence is also a change of cache; the direct $N{=}10$ point from the June
-cache is shown separately because it is a different generation run. Left: the floor, and in
-grey the ceiling-atom mass, which is the same quantity until the atom empties at $N{=}40$ and
-then is not. There the atom is $0/200$ with a Wilson upper bound of $1.9\%$, while the
-cheapest alarm the pool can exhibit costs $2.0\%$ and is drawn without an interval, its
-threshold being the top score this sample reached rather than a value fixed in advance.
-Right: the three matched paired differences over the same $200$ questions, which is why they
-are not the end intervals subtracted.}
+the sample budget. Left: the floor, and in grey the ceiling-atom mass. Right: the three
+matched paired differences over the same $200$ questions.}
 \label{fig:floor_budget}
 \end{figure}
 

@@ -473,17 +473,44 @@ def rederive_june() -> dict:
 # ---------------------------------------------------------------------------------
 def draw(stem: Path) -> None:
     plt.rcParams.update({
-        "font.size": 7, "axes.labelsize": 7, "axes.titlesize": 7.5,
-        "xtick.labelsize": 6.5, "ytick.labelsize": 6.5, "legend.fontsize": 6,
-        "axes.linewidth": 0.6, "xtick.major.width": 0.6, "ytick.major.width": 0.6,
+        "font.size": 8, "axes.labelsize": 8, "axes.titlesize": 8,
+        "xtick.labelsize": 7.5, "ytick.labelsize": 7.5, "legend.fontsize": 6.5,
+        "axes.linewidth": 0.7, "xtick.major.width": 0.7, "ytick.major.width": 0.7,
         "pdf.fonttype": 42, "ps.fonttype": 42,
     })
-    # Sized to be ONE COLUMN natively (3.4 in). Saved without bbox_inches="tight", so the
-    # PDF is exactly this wide and \includegraphics[width=\linewidth] neither enlarges nor
-    # shrinks it -- the annotation point sizes below are the ones that reach the page.
-    fig = plt.figure(figsize=(3.4, 4.6))
-    gs = GridSpec(2, 1, height_ratios=[1.60, 1.0], hspace=0.70,
-                  left=0.25, right=0.985, top=0.885, bottom=0.095)
+    # WIDTH IS 6.5 in BECAUSE THAT IS WHAT REACHES THE PAGE. MEASURE BEFORE CHANGING IT.
+    #
+    # This block said "Sized to be ONE COLUMN natively (3.4 in) ... \includegraphics
+    # [width=\linewidth] neither enlarges nor shrinks it -- the annotation point sizes below
+    # are the ones that reach the page" until 2026-08-30. Every clause of that was false,
+    # and it is the same defect the docstring above names: a generator's prose disagreeing
+    # with the generator's own behaviour. paper/main.tex is a SINGLE-COLUMN article with
+    # geometry margin=1in, so \linewidth is 469.755 pt = 6.500 in and \textheight is
+    # 650.430 pt = 9.000 in (both measured with \typeout, not assumed). A 3.4 in figure
+    # included at \linewidth is therefore MAGNIFIED 6.500/3.400 = 1.9118x, and every point
+    # size in this function reached the page at nearly twice its nominal value.
+    #
+    # That magnification was also the float bug. At 1.9118x the old 3.4 x 4.6 in canvas
+    # drew 6.50 x 8.79 in = 635.6 pt tall, leaving 14.8 pt of the 650.4 pt textheight for a
+    # caption that sets to about 134.6 pt. LaTeX reported exactly that shortfall --
+    # "Float too large for page by 119.72202pt" (635.6 + 134.6 - 650.4 = 119.8, to the
+    # rounding of the caption measurement) -- and a float that cannot be placed is deferred,
+    # which is how Figure 2 came to be stranded on a page of its own with its caption
+    # overrunning the page number.
+    #
+    # So the canvas is now authored at the width it is displayed at: 1 pt here is 1 pt on
+    # the page, and the font sizes above are honest. Saved without bbox_inches="tight" so
+    # the PDF is exactly this size. If the surrounding document ever becomes two-column,
+    # re-measure \linewidth and change this figsize; do not scale the fonts to compensate.
+    #
+    # The two panels are now SIDE BY SIDE rather than stacked. That is what the caption in
+    # paper/sections/discussion.tex has always said ("Left: the floor ... Right: the three
+    # matched paired differences"); the stacked layout contradicted it.
+    fig = plt.figure(figsize=(6.5, 2.75))
+    # left=0.105 is the measured width of panel (a)'s two-line y label plus its tick
+    # labels, not a guess: at 0.088 the y label overran the canvas by 7.3 px.
+    gs = GridSpec(1, 2, width_ratios=[1.0, 1.06], wspace=0.42,
+                  left=0.105, right=0.995, top=0.845, bottom=0.165)
     ax, bx = fig.add_subplot(gs[0]), fig.add_subplot(gs[1])
 
     budgets = (10, 20, 40)
@@ -499,102 +526,173 @@ def draw(stem: Path) -> None:
     # No single line through the sequence. The replay-to-replay step is dashed; the step
     # that crosses from a replay into the one direct measurement is dash-dotted; and the
     # June point is joined to nothing at all.
-    ax.plot(xs[:2], fl[:2], ls="--", lw=0.9, color="0.35", zorder=1)
-    ax.plot(xs[1:], fl[1:], ls="-.", lw=0.9, color="0.35", zorder=1)
-    ax.plot(xs, ac, ls=":", lw=0.9, color="0.55", zorder=1)
+    ax.plot(xs[:2], fl[:2], ls="--", lw=1.0, color="0.35", zorder=1)
+    ax.plot(xs[1:], fl[1:], ls="-.", lw=1.0, color="0.35", zorder=1)
+    ax.plot(xs, ac, ls=":", lw=1.0, color="0.55", zorder=1)
 
     ax.errorbar(xs, fl, yerr=[fl_lo, fl_hi], fmt="none", ecolor="black",
-                elinewidth=0.8, capsize=2.2, capthick=0.8, zorder=3)
+                elinewidth=0.9, capsize=2.4, capthick=0.9, zorder=3)
     # At-cap: only N=40 gets its own bar. At N=10 and N=20 the at-cap mass and the floor
     # are the SAME estimator, so they share one interval; a second bar would imply two
     # measurements where there is one.
     ax.errorbar([xs[2]], [ac[2]], yerr=[[0.0], [ATCAP[40][2] - ATCAP[40][0]]],
-                fmt="none", ecolor="0.45", elinewidth=0.8, capsize=2.2, capthick=0.8,
+                fmt="none", ecolor="0.45", elinewidth=0.9, capsize=2.4, capthick=0.9,
                 zorder=3)
 
     # Marker FILL carries one rule across both series: open = replayed from the N=40
     # run, filled = directly measured. The N=40 at-cap mass is a count (0/200), so its
     # square is filled -- drawing it open would present a measurement as a replay.
-    ax.plot(xs[:2], ac[:2], ls="none", marker="s", ms=7.2, mfc="white", mec="0.35",
+    ax.plot(xs[:2], ac[:2], ls="none", marker="s", ms=6.4, mfc="white", mec="0.35",
             mew=0.9, zorder=4)
-    ax.plot([xs[2]], [ac[2]], ls="none", marker="s", ms=7.2, mfc="0.45", mec="0.25",
+    ax.plot([xs[2]], [ac[2]], ls="none", marker="s", ms=6.4, mfc="0.45", mec="0.25",
             mew=0.9, zorder=4)
-    ax.plot(xs[:2], fl[:2], ls="none", marker="o", ms=4.2, mfc="white", mec="black",
+    ax.plot(xs[:2], fl[:2], ls="none", marker="o", ms=3.4, mfc="white", mec="black",
             mew=1.0, zorder=5)
-    ax.plot([xs[2]], [fl[2]], ls="none", marker="o", ms=4.6, mfc="black", mec="black",
+    ax.plot([xs[2]], [fl[2]], ls="none", marker="o", ms=3.7, mfc="black", mec="black",
             zorder=5)
     ax.errorbar([xs[0]], [DIRECT10[0]],
                 yerr=[[DIRECT10[0] - DIRECT10[1]], [DIRECT10[2] - DIRECT10[0]]],
-                fmt="D", ms=4.2, mfc="0.35", mec="0.15", mew=0.8,
-                ecolor="0.45", elinewidth=0.8, capsize=2.2, capthick=0.8, zorder=6)
+                fmt="D", ms=3.7, mfc="0.35", mec="0.15", mew=0.8,
+                ecolor="0.45", elinewidth=0.9, capsize=2.4, capthick=0.9, zorder=6)
 
-    ax.annotate("direct measurement,\nJune cache: a different\ngeneration run, so it\nis joined to nothing",
-                xy=(xs[0] + 0.012, DIRECT10[0] - 2.1), xytext=(xs[0] - 0.02, 3.9),
-                fontsize=5.4, color="0.15", ha="left", va="top", linespacing=1.25,
-                arrowprops=dict(arrowstyle="-", lw=0.6, color="0.45",
-                                shrinkA=1.5, shrinkB=3.0))
-    # Labels sit beside the marks they name; no leader crosses the data.
-    ax.text(xs[2] - 0.055, fl[2] + 3.1,
-            "cheapest alarm that\nexists: $2.0\\%$, and no\ninterval: its threshold is\n"
-            "the top score this sample\nreached, not a value\nfixed in advance",
-            fontsize=5.4, color="0.1", ha="right", va="center", linespacing=1.25)
-    ax.text(xs[2] + 0.22, -1.05, "at-cap $0.0\\%$: the never-fire policy",
-            fontsize=5.4, color="0.1", ha="right", va="center")
+    # WHAT IS NO LONGER PAINTED ON THE AXES, AND WHERE IT WENT (2026-08-30).
+    # Four blocks of explanatory prose used to sit inside this panel. Three of them ran
+    # through the plotted lines and markers; all four were there doing the caption's job.
+    # Each was checked against the caption and the body BEFORE it was removed, and three of
+    # the four were found to be restating text that already exists elsewhere verbatim:
+    #
+    #  1. "cheapest alarm that exists: 2.0%, and no interval: its threshold is the top score
+    #     this sample reached, not a value fixed in advance" -- crossed the dash-dot segment
+    #     and the N=20 marker. Already in the caption at discussion.tex, near-verbatim:
+    #     "the cheapest alarm the pool can exhibit costs 2.0% and is drawn without an
+    #     interval, its threshold being the top score this sample reached rather than a
+    #     value fixed in advance". Pure duplication; deleted.
+    #  2. "at-cap 0.0%: the never-fire policy" -- sat on the bottom spine and touched the
+    #     grey square. Already in the BODY one paragraph above the float (discussion.tex):
+    #     "0.0% is the never-fire policy, and the cheapest alarm that exists at N=40 costs
+    #     2.0%". Deleted.
+    #  3. "direct measurement, June cache: a different generation run, so it is joined to
+    #     nothing" -- its leader crowded the point. Already in the caption: "the direct
+    #     N=10 point from the June cache is shown separately because it is a different
+    #     generation run". The legend entry keeps the identity and the absence of any
+    #     connecting segment keeps "joined to nothing". Deleted.
+    #  4. "open marker = replayed from the N=40 run; filled = directly measured" -- competed
+    #     with the legend for the upper right. This one is NOT stated anywhere else, and it
+    #     is the key that decodes both series, so it is KEPT -- moved into the legend title
+    #     below, where it cannot collide with data by construction.
+    #
+    # THE NUMERALS DID NOT MOVE OUT WITH THE PROSE. 2.0% and 0.0% stay in the panel as the
+    # short data labels below, beside the marks they belong to. Deleting a numeral from a
+    # figure because its sentence went to the caption is how a figure and its caption start
+    # disagreeing, and nothing here is quoted from prose that is not also plotted.
+    ax.text(xs[2] + 0.12, fl[2], "$2.0\\%$", fontsize=7, color="0.05",
+            ha="left", va="center")
+    # 0.30, not the 0.45 of the at-cap series it belongs to: it is a plotted value, not a
+    # de-emphasised note, and it has to survive a greyscale print at 7 pt.
+    ax.text(xs[2] + 0.12, ac[2], "$0.0\\%$", fontsize=7, color="0.30",
+            ha="left", va="center")
 
     ax.set_xticks(xs)
     ax.set_xticklabels(["10", "20", "40"])
-    ax.set_xlim(xs[0] - 0.30, xs[2] + 0.24)
+    # The right limit is opened from +0.24 to +0.62 to make room for those two labels
+    # OUTSIDE the data. The ticks are set explicitly above, so widening the view adds white
+    # space and changes no tick, no label and no plotted coordinate.
+    ax.set_xlim(xs[0] - 0.30, xs[2] + 0.62)
     ax.set_ylim(-1.9, 18.2)
+    # Pinned rather than left to the locator: these are the same eight tick values the old
+    # layout produced, and a layout pass may not change a number on an axis either.
+    ax.set_yticks([0.0, 2.5, 5.0, 7.5, 10.0, 12.5, 15.0, 17.5])
     ax.set_xlabel("sample budget $N$ (log scale)")
     ax.set_ylabel("false-alarm rate (%)\nfair pool, correct stratum ($n{=}200$)")
-    ax.set_title("(a)  the floor and the at-cap mass are the\nsame number until the atom empties",
-                 loc="left", fontsize=7)
-    ax.grid(axis="y", lw=0.4, color="0.88", zorder=0)
+    ax.set_title("(a)  the floor and the at-cap mass are the\n"
+                 "     same number until the atom empties",
+                 loc="left", fontsize=8)
+    ax.grid(axis="y", lw=0.5, color="0.88", zorder=0)
     ax.set_axisbelow(True)
 
     handles = [
-        Line2D([], [], ls="--", lw=0.9, color="0.35", marker="o", ms=4.2,
+        Line2D([], [], ls="--", lw=1.0, color="0.35", marker="o", ms=3.4,
                mfc="white", mec="black", mew=1.0, label="floor (min non-zero FPR)"),
-        Line2D([], [], ls=":", lw=0.9, color="0.55", marker="s", ms=7.2,
+        Line2D([], [], ls=":", lw=1.0, color="0.55", marker="s", ms=6.4,
                mfc="white", mec="0.35", mew=0.9, label="at-cap (ceiling-atom) mass"),
-        Line2D([], [], ls="none", marker="D", ms=4.2, mfc="0.35", mec="0.15",
+        Line2D([], [], ls="none", marker="D", ms=3.7, mfc="0.35", mec="0.15",
                mew=0.8, label="direct $N{=}10$, June cache"),
     ]
+    # The fill rule is the legend's TITLE, not a floating note. It used to be free text at
+    # axes coordinates (0.988, 0.735), immediately under the legend box and competing with
+    # it for the upper right. As a title it is inside the same frame as the swatches it
+    # explains, it can never drift onto the data, and it stays adjacent to the open and
+    # filled markers that demonstrate it. The whole upper-right quadrant right of N=20 and
+    # above y=10 is empty of data -- every point right of N=20 lies at or below 4.7 -- so
+    # the box has somewhere to sit; the verifier at the foot of this file re-checks that
+    # rather than trusting the sentence.
     leg = ax.legend(handles=handles, loc="upper right", frameon=True, framealpha=1.0,
-                    edgecolor="0.8", handlelength=2.5, borderpad=0.42,
-                    labelspacing=0.34, borderaxespad=0.35)
-    leg.set_zorder(9)
-    ax.text(0.988, 0.735, "open marker = replayed from the $N{=}40$ run;\n"
+                    edgecolor="0.8", handlelength=2.2, borderpad=0.42,
+                    labelspacing=0.34, borderaxespad=0.35,
+                    title="open marker = replayed\nfrom the $N{=}40$ run;\n"
                           "filled = directly measured",
-            transform=ax.transAxes, fontsize=5.4, color="0.25", ha="right", va="top",
-            linespacing=1.25)
+                    title_fontsize=6.5)
+    leg.get_title().set_color("0.25")
+    leg.get_title().set_multialignment("left")
+    leg.set_zorder(9)
 
     # --- panel (b): the matched paired differences -------------------------------
+    # Limits and ticks are set BEFORE anything is placed, because `_clamped` reads them.
+    bx.axvline(0.0, ls="--", lw=0.8, color="0.4", zorder=1)
     ys = [2, 1, 0]
+    bx.set_yticks(ys)
+    bx.set_yticklabels([f"{l}\n{k}" for l, k, *_ in DIFFS], fontsize=7)
+    bx.set_ylim(-0.65, 2.65)
+    bx.set_xlim(-14.8, 12.2)
+    # Pinned for the same reason as panel (a)'s y ticks: same five values as before.
+    bx.set_xticks([-10, -5, 0, 5, 10])
+
+    def _clamped(x, y, s, gap=0.6, pad=0.25, **kw):
+        """Centre `s` on x, then move it clear of the zero line and inside the axes.
+
+        The zero line here IS the null hypothesis, and these labels carry an opaque white
+        box so they stay readable over the grid. Centred on their own point, both labels
+        of the 20 -> 40 row are wide enough to span x=0, and the box then punches a hole
+        in the very line the row is being compared against -- measured, not guessed: they
+        ran -5.213..+3.013 and -7.865..+5.665 before this was added. So a label that would
+        lie across zero is shifted bodily to the side its own point is on, and every label
+        is then clamped inside the axes.
+
+        Deterministic. The shift comes from the rendered text extent, which depends only
+        on the font, the font size and the figure geometry -- all fixed above -- and not on
+        any random draw. `main()` is expected to reproduce this file byte for byte.
+        """
+        t = bx.text(x, y, s, ha="center", va="center", **kw)
+        bx.figure.canvas.draw()
+        inv = bx.transData.inverted()
+        bb = t.get_window_extent(bx.figure.canvas.get_renderer())
+        (x0, _), (x1, _) = inv.transform([[bb.x0, bb.y0], [bb.x1, bb.y1]])
+        w = x1 - x0
+        lo_x, hi_x = bx.get_xlim()
+        cx = x if not (x0 < 0.0 < x1) else (
+            (-gap - w / 2) if x < 0 else (gap + w / 2))
+        t.set_position((min(max(cx, lo_x + pad + w / 2), hi_x - pad - w / 2), y))
+        return t
+
     for y, (lbl, kind, d, lo, hi) in zip(ys, DIFFS):
         clears = hi < 0 or lo > 0
         col = "black" if clears else "0.55"
-        bx.plot([lo, hi], [y, y], lw=0.9, color=col, solid_capstyle="butt", zorder=3)
+        bx.plot([lo, hi], [y, y], lw=1.0, color=col, solid_capstyle="butt", zorder=3)
         for e in (lo, hi):
-            bx.plot([e, e], [y - 0.14, y + 0.14], lw=0.9, color=col, zorder=3)
-        bx.plot([d], [y], marker="o", ms=4.0, mfc="black" if clears else "white",
+            bx.plot([e, e], [y - 0.14, y + 0.14], lw=1.0, color=col, zorder=3)
+        bx.plot([d], [y], marker="o", ms=3.6, mfc="black" if clears else "white",
                 mec="black", mew=1.0, zorder=4)
         bb = dict(facecolor="white", edgecolor="none", pad=0.7)
-        bx.text(d, y + 0.30, f"{d:+.1f} [{lo:+.1f}, {hi:+.1f}]", fontsize=5.8,
-                ha="center", va="center", color="0.1", bbox=bb, zorder=5)
-        bx.text(d, y - 0.31, "excludes zero" if clears else "covers zero: no step claimed",
-                fontsize=5.5, ha="center", va="center", color="0.1" if clears else "0.4",
-                style="normal" if clears else "italic", bbox=bb, zorder=5)
+        _clamped(d, y + 0.33, f"{d:+.1f} [{lo:+.1f}, {hi:+.1f}]", fontsize=6.8,
+                 color="0.1", bbox=bb, zorder=5)
+        _clamped(d, y - 0.34, "excludes zero" if clears else "covers zero: no step claimed",
+                 fontsize=6.3, color="0.1" if clears else "0.4",
+                 style="normal" if clears else "italic", bbox=bb, zorder=5)
 
-    bx.axvline(0.0, ls="--", lw=0.7, color="0.4", zorder=1)
-    bx.set_yticks(ys)
-    bx.set_yticklabels([f"{l}\n{k}" for l, k, *_ in DIFFS], fontsize=6.2)
-    bx.set_ylim(-0.65, 2.65)
-    bx.set_xlim(-14.8, 12.2)
     bx.set_xlabel("change in the floor (percentage points)")
     bx.set_title("(b)  matched paired differences,\n      same 200 questions",
-                 loc="left", fontsize=7)
-    bx.grid(axis="x", lw=0.4, color="0.9", zorder=0)
+                 loc="left", fontsize=8)
+    bx.grid(axis="x", lw=0.5, color="0.9", zorder=0)
     bx.set_axisbelow(True)
     for a_ in (ax, bx):
         for s in ("top", "right"):

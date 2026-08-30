@@ -14,13 +14,13 @@ are taken at check time so a miss can be re-checked against the same bytes.
 
 | paper file | bytes | sha256[:12] |
 |---|---|---|
-| `paper/main.tex` | 8847 | `10c62b67a739` |
-| `paper/sections/conclusion.tex` | 6460 | `18f2b605def4` |
-| `paper/sections/discussion.tex` | 36751 | `72590da8d0c5` |
-| `paper/sections/experiments.tex` | 14520 | `64b7af8cc65b` |
-| `paper/sections/introduction.tex` | 16185 | `53b492992568` |
-| `paper/sections/limitations.tex` | 17982 | `76884f6f3306` |
-| `paper/sections/methods.tex` | 29032 | `5e980c3a2c76` |
+| `paper/main.tex` | 16636 | `892d52974003` |
+| `paper/sections/conclusion.tex` | 7149 | `0e4aa252d140` |
+| `paper/sections/discussion.tex` | 41178 | `d9398beab64d` |
+| `paper/sections/experiments.tex` | 33820 | `933226f99fa6` |
+| `paper/sections/introduction.tex` | 17242 | `7f5242d85baa` |
+| `paper/sections/limitations.tex` | 19704 | `9aca28572e73` |
+| `paper/sections/methods.tex` | 31238 | `a26c6ffb534b` |
 
 ## Inputs, and where they come from
 
@@ -32,7 +32,7 @@ are taken at check time so a miss can be re-checked against the same bytes.
 | hallucinating answers at the ceiling, fair pool | 0.275 | `results/achievable_fpr_grid.md` | `55/200 = 27.5%` | - |
 | correct answers at the ceiling, fair pool | 0.095 | `results/achievable_fpr_grid.md` | `19/200 = 9.5%` | - |
 | clean fair-pool AUROC and CI | 0.704 | `results/fair_pool_report.md` | `0.704 [0.653, 0.753]` | - |
-| null-control benign draws per target (K) | 5 | `results/null_control_report.md` | `K=5 benign` | - |
+| null-control benign draws per target (K) | 5 | `results/null_control_3arm_judge_n6.md` | `K=5 benign` | - |
 | greedy-correct count, SUBSTRING oracle | 1440 | `results/relabel_report.md` | `old correct rate: 1440/2000` | - |
 | greedy-correct count, SPAN oracle | 1424 | `results/relabel_report.md` | `new correct rate: 1424/2000` | - |
 | judge evaluations per target at K=180 | 185 | `results/operational_number_audit.md` | `185 evaluations/target` | - |

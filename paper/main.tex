@@ -1,28 +1,99 @@
-% Red-Teaming Semantic Entropy. An arXiv preprint scaffold.
-% Generic arXiv-friendly preamble (swap in neurips/iclr style before submission).
-\documentclass[11pt]{article}
+% Red-Teaming Semantic Entropy. An arXiv preprint.
+%
+% TYPOGRAPHY, chosen by measuring the two nearest papers in this literature rather than
+% by taste. Both were downloaded and measured on 2026-08-30:
+%   Kuhn et al.   (arXiv 2302.09664v3, 19pp): text block 396pt = 5.50in, side margins
+%                 108/108pt, body face Nimbus Roman (Times) at 9.96pt, leading ~11pt.
+%   Kossen et al. (arXiv 2406.15927v1, 22pp): text block 398pt = 5.53in, side margins
+%                 107/106pt, body face Nimbus Roman (Times) at 9.96pt, leading ~11pt.
+% Both are the single-column NeurIPS/ICLR preprint measure. We adopt it.
+%
+% WHY THE FONT AND THE MEASURE MOVED TOGETHER. Measured characters per full line:
+% Kuhn 97, Kossen 98, and this paper 96 at its old 6.5in/11pt Computer Modern setting.
+% The old measure was therefore NOT over-long in characters, which is the quantity that
+% governs reading comfort. Narrowing to 5.5in while keeping 11pt Computer Modern would
+% have driven it DOWN to about 81 and made the paper look unlike its neighbours in the
+% other direction. Times is a narrower face, which is exactly how Kuhn and Kossen fit
+% 97 characters into 5.5in. Changing one without the other misses on either side.
+\documentclass[10pt,letterpaper]{article}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+
+% BODY FACE. Times for text, Computer Modern for math: this is what both reference papers
+% do (their font tables carry NimbusRomNo9L for text alongside CMMI/CMSY/CMEX for math).
+% It also fixes a real defect. Under [T1]{fontenc} with Computer Modern and no cm-super
+% installed in this TeX Live, every body glyph was shipped as a Type 3 BITMAP: the old
+% main.pdf carried 17 Type 3 fonts and rendered fuzzy at any zoom. Times (ptm) has genuine
+% Type 1 outlines in T1, so the body text is now vector.
+\usepackage{times}
+% times.sty would also route \texttt to Courier, which is very wide. Latin Modern Mono has
+% real T1 Type 1 outlines and is narrower, so \texttt stays vector without the Courier bulk.
+\renewcommand{\ttdefault}{lmtt}
+
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 % figures/ lives at the repo root; accept a build launched from either the root or paper/.
 \graphicspath{{../figures/}{figures/}}
 \usepackage{booktabs}
-\usepackage{hyperref}
-\usepackage[numbers]{natbib}
-\usepackage[margin=1in]{geometry}
+
+% Caption label in bold, as in both reference papers. Deliberately NO font= option: the
+% table environments in sections/ set \footnotesize BEFORE \caption, so the captions
+% already inherit a reduced size, and naming a size here would silently ENLARGE them.
+\usepackage[labelfont=bf,skip=6pt]{caption}
+% Figure captions at \small, as in both reference papers. Scoped to [figure] on purpose:
+% the FIGURE captions in sections/ render at full body size and are long (about 960 and
+% 1050 characters), whereas the TABLE captions already sit inside a ootnotesize group, so
+% an unscoped font= would have ENLARGED them. This also buys the vertical room that lets
+% fig_floor_budget be placed at all: at 10pt it overshot the column by 1.41pt and was
+% therefore deferred to the end of the document.
+\captionsetup[figure]{font=small}
+
+\usepackage[letterpaper,left=1.5in,right=1.5in,top=1in,bottom=1in]{geometry}
+
+% FLOAT PLACEMENT. Every float in this paper is declared [t]. LaTeX's default \topfraction
+% of 0.7 forbids a top float taller than 70% of the column, so the large ones could never
+% be placed and were deferred to the end of the document, which is the "tables stranded on
+% their own pages" the author reported. These are the standard relaxations.
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.75}
+
+% sort&compress so that a multiple citation prints as [5, 10] rather than [10, 5],
+% and collapses runs to [5-7].
+\usepackage[numbers,sort&compress]{natbib}
+
+\usepackage{xcolor}
+\definecolor{refblue}{RGB}{0,64,128}
+\definecolor{citeblue}{RGB}{0,96,112}
+\usepackage[colorlinks=true,linkcolor=refblue,citecolor=citeblue,urlcolor=refblue,
+            breaklinks=true]{hyperref}
+
+% microtype: verified present at
+% /usr/share/texlive/texmf-dist/tex/latex/microtype/microtype.sty. Character protrusion and
+% font expansion are what stop justified Times from gaping at this measure.
+\usepackage[protrusion=true,expansion=true,final]{microtype}
 
 % Working title. It avoids collision with "Adversarial Paraphrasing" (2506.07001).
 % PROPOSED Option-B title (protocol-led); the attack-led original is kept below, commented.
-\title{Crying Wolf, Carefully: What It Takes to Evaluate Paraphrase Attacks on
+\title{\bfseries Crying Wolf, Carefully: What It Takes to Evaluate Paraphrase Attacks on
 Sampling-Based Hallucination Detectors}
 % \title{Crying Wolf: Meaning-Preserving Paraphrases Break Sampling-Based
 % Hallucination Detectors in Both Directions}   % attack-led (Option A) original
-% affiliation intentionally omitted for the preprint; fill before any external posting.
-\author{ScriptSampler}
-\date{\today}
 
+% AUTHOR AND DATE BLOCK.
+% Affiliation is still intentionally omitted for the preprint; fill before any external
+% posting. It is deliberately NOT invented here, and no contact address is printed.
+% \date{\today} used to stamp the compile date into the paper, so the PDF claimed whatever
+% day it happened to be built. arXiv applies its own datestamp, so no date is typeset;
+% the slot carries the document's status instead, which is what keeps the block from
+% reading as unfinished.
+\author{ScriptSampler}
+\date{\normalsize Preprint}
 \begin{document}
 \maketitle
 

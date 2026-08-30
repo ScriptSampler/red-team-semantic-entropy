@@ -64,6 +64,13 @@ sampling configuration is under-recorded and against which the later $N{=}40$ ru
 measured generation drift; neither has been bounded for this number.
 
 \paragraph{Reading the null control.}
+Every cell of Table~\ref{tab:nullcontrol} is measured on the \emph{false-alarm stratum of the
+attacked pool}, the $80$ score-independently selected correct-answer targets the optimiser was
+run on. No cell is measured on the fair pool used to characterise the clean detector
+(Section~\ref{sec:methods}). The two are nested: these targets are a prefix of the fair pool's
+$200$ correct answers. The distinction is therefore not between disjoint question sets but one
+of scope, a single correctness stratum under the optimiser's own selection. No number is
+carried between them.
 Table~\ref{tab:nullcontrol} places the optimised attack against two null bands, under each
 clustering relation the campaign instantiates. The first band is a same-question
 \emph{seed-noise} floor. The second is a \emph{benign-paraphrase} floor of $m{=}50$
@@ -87,6 +94,52 @@ one. The LLM-judge (Qwen2.5-7B-Instruct) is the \textbf{adjudicator} for the fal
 direction, under the disclosed re-scoped gate (Methods). It is victim- and NLI-independent,
 and it is validated to $0.93$ [$0.90$, $0.96$] ($n{=}300$) on domain-matched gold-alias hard
 negatives, which are a proxy for the deployed clustering decision.
+
+The bands themselves are the mean intended move (nats) with a $95\%$ paired bootstrap over
+targets, and they are descriptive only: the band ordering is not the test. The test is the
+randomised-tie exceedance statistic developed next, and ceiling saturation is reported beside
+that statistic because saturation governs how far the nats bands can be trusted.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\caption{Null-controlled attack effect, SE / false-alarm direction, per clustering relation,
+on the false-alarm stratum of the attacked pool. Denominators differ by block; see the text,
+which also says why the embedding relation has no column.}
+\label{tab:nullcontrol}
+\begin{tabular}{lccc}
+\toprule
+ & Shared NLI & Exact-match & LLM-judge \\
+ & (confounded UB) & (strict LB) & (adjudicator) \\
+\midrule
+\multicolumn{4}{l}{\emph{Bands: mean intended move (nats) [$95\%$ paired bootstrap over targets]}} \\
+Attack ($n{=}80$)                        & $+0.526$ [$+0.414$, $+0.642$] & $+0.213$ [$+0.127$, $+0.311$] & $+0.291$ [$+0.152$, $+0.440$] \\
+Seed-noise floor ($n{=}80$)              & $-0.015$ [$-0.097$, $+0.070$] & $+0.026$ [$-0.020$, $+0.074$] & $-0.074$ [$-0.151$, $+0.004$] \\
+Benign floor, mean draw ($n{=}77$)       & $-0.049$ [$-0.166$, $+0.066$] & $+0.002$ [$-0.096$, $+0.097$] & $-0.071$ [$-0.172$, $+0.028$] \\
+Benign floor, best of $m$ ($n{=}77$)     & $+0.363$ [$+0.232$, $+0.490$] & $+0.213$ [$+0.117$, $+0.313$] & $+0.422$ [$+0.299$, $+0.546$] \\
+\midrule
+\multicolumn{4}{l}{\emph{Claim statistic: randomised-tie exceedance test, $n{=}77$, $A{=}181$ scored candidates per target}} \\
+\textbf{Exceedance $p$, median of $101$ tie draws} & $\mathbf{0.939}$ & $\mathbf{1.000}$ & $\mathbf{1.000}$ \\
+\quad range over those $101$ draws       & [$0.229$, $1.000$] & [$1.000$, $1.000$] & [$1.000$, $1.000$] \\
+\quad draws reaching $p{\leq}0.05$       & $0/101$ & $0/101$ & $0/101$ \\
+Exceedances $S$, seed-$0$ draw / expected & $30$ / $20.4$ & $383$ / $20.4$ & $636$ / $20.4$ \\
+\quad median $S$ over those $101$ draws  & $28$ & $383$ & $652$ \\
+\textbf{Effective benign budget $n_{\mathrm{eff}}$} & $\mathbf{122.5}$ & $\mathbf{8.7}$ & $\mathbf{4.8}$ \\
+\midrule
+\multicolumn{4}{l}{\emph{Ceiling saturation over the false-alarm targets, and the two inadmissible tie rules}} \\
+Saturation at $\log N$: clean / attacked  & $10.0\%$ / $52.5\%$ & $46.2\%$ / $70.0\%$ & $1.2\%$ / $10.0\%$ \\
+Diagnostic: strict-tie $p$               & $<0.001$ & $1.000$ & $1.000$ \\
+Diagnostic: conservative-tie $p$         & $1.000$ & $1.000$ & $1.000$ \\
+\midrule
+\multicolumn{4}{l}{\emph{Supplementary: paired net under convention~(d), $n{=}77$, against three comparators}} \\
+vs.\ best of $m$ \emph{on this arm}      & $+0.110$ [$+0.063$, $+0.161$] & $-0.027$ [$-0.064$, $+0.015$] & $-0.173$ [$-0.302$, $-0.039$] \\
+vs.\ the NLI-selected benign candidate   & $+0.110$ [$+0.063$, $+0.161$] & $+0.018$ [$-0.021$, $+0.064$] & $+0.016$ [$-0.112$, $+0.150$] \\
+vs.\ the mean benign draw                & $+0.381$ [$+0.303$, $+0.464$] & $+0.101$ [$+0.050$, $+0.159$] & $+0.175$ [$+0.045$, $+0.312$] \\
+Attack's mid-rank percentile in benign   & $0.931$ [$0.903$, $0.955$] & $0.736$ [$0.686$, $0.785$] & $0.700$ [$0.637$, $0.761$] \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \paragraph{The claim statistic, and why the obvious ones fail.}
 The attack reports the \emph{maximum} over the $\sim$181 objective evaluations it spends
@@ -150,94 +203,14 @@ rather than attack strength, is driving a comparison. Note that $b$ must be \emp
 rather than estimated, since it is precisely where attack strength appears once the ceiling
 pins the maximum's value; our optimiser records it per target.
 
-\begin{table}[t]
-\centering
-\footnotesize
-\setlength{\tabcolsep}{4pt}
-\caption{Null-controlled attack effect, SE / false-alarm direction, per clustering
-relation. Every cell is measured on the \emph{false-alarm stratum of the attacked pool}, the
-$80$ score-independently selected correct-answer targets the optimiser was run on. No cell is
-measured on the fair pool used to characterise the clean detector (Section~\ref{sec:methods}).
-The two are nested: these targets are a prefix of the fair pool's $200$ correct answers. The
-distinction is therefore not between disjoint question sets but one of scope, a single
-correctness stratum under the optimiser's own selection. No number is carried between them.
-\textbf{Three different denominators appear and they are not interchangeable}: the bands over
-all $80$ attacked targets; every benign-referenced row over the $77$ with a non-empty benign
-arm; and the convention~(c) row of Table~\ref{tab:nullconventions} over $69$. Three targets
-(\texttt{qb\_565}, \texttt{qz\_3393}, \texttt{qb\_2689}) have \emph{no} benign arm, because the
-feasibility gate rejected all $250$ attempts, and they are excluded rather than absorbed. They are
-also targets for which the optimiser found no feasible paraphrase, but they are not the only
-ones: $11$ of the $80$ have no feasible paraphrase at the optimiser's best, and these three are
-the subset of those $11$ on which the benign sampler failed as well. Bands are mean intended
-move (nats) with a $95\%$ paired bootstrap over targets and are descriptive only: the band
-ordering is not the test. The test is the randomised-tie exceedance statistic. Saturation is
-reported beside it because it governs how much the nats bands can be trusted, and the two
-inadmissible tie rules are shown so that any disagreement between them is visible. The
-paired net is \textbf{supplementary}, is shown under the pre-registered convention~(d)
-(Table~\ref{tab:nullconventions}), and is shown against three comparators because its sign
-depends on which one is used. The $m{=}50$ benign budget was reached on $71$ of the $77$.
-Six arms are short ($m$ of $1$, $26$, $27$, $27$, $35$, $38$), which inflates the net by a
-measured $+0.006$ nats as-is and $+0.001$ under~(d). We disclose that inflation rather than
-correct for it. The
-embedding relation was not instantiated in this run and has no column; see the text.}
-\label{tab:nullcontrol}
-\begin{tabular}{lccc}
-\toprule
- & Shared NLI & Exact-match & LLM-judge \\
- & (confounded UB) & (strict LB) & (adjudicator) \\
-\midrule
-\multicolumn{4}{l}{\emph{Bands: mean intended move (nats) [$95\%$ paired bootstrap over targets]}} \\
-Attack ($n{=}80$)                        & $+0.526$ [$+0.414$, $+0.642$] & $+0.213$ [$+0.127$, $+0.311$] & $+0.291$ [$+0.152$, $+0.440$] \\
-Seed-noise floor ($n{=}80$)              & $-0.015$ [$-0.097$, $+0.070$] & $+0.026$ [$-0.020$, $+0.074$] & $-0.074$ [$-0.151$, $+0.004$] \\
-Benign floor, mean draw ($n{=}77$)       & $-0.049$ [$-0.166$, $+0.066$] & $+0.002$ [$-0.096$, $+0.097$] & $-0.071$ [$-0.172$, $+0.028$] \\
-Benign floor, best of $m$ ($n{=}77$)     & $+0.363$ [$+0.232$, $+0.490$] & $+0.213$ [$+0.117$, $+0.313$] & $+0.422$ [$+0.299$, $+0.546$] \\
-\midrule
-\multicolumn{4}{l}{\emph{Claim statistic: randomised-tie exceedance test, $n{=}77$, $A{=}181$ scored candidates per target}} \\
-\textbf{Exceedance $p$, median of $101$ tie draws} & $\mathbf{0.939}$ & $\mathbf{1.000}$ & $\mathbf{1.000}$ \\
-\quad range over those $101$ draws       & [$0.229$, $1.000$] & [$1.000$, $1.000$] & [$1.000$, $1.000$] \\
-\quad draws reaching $p{\leq}0.05$       & $0/101$ & $0/101$ & $0/101$ \\
-Exceedances $S$, seed-$0$ draw / expected & $30$ / $20.4$ & $383$ / $20.4$ & $636$ / $20.4$ \\
-\quad median $S$ over those $101$ draws  & $28$ & $383$ & $652$ \\
-\textbf{Effective benign budget $n_{\mathrm{eff}}$} & $\mathbf{122.5}$ & $\mathbf{8.7}$ & $\mathbf{4.8}$ \\
-\midrule
-\multicolumn{4}{l}{\emph{Ceiling saturation over the false-alarm targets, and the two inadmissible tie rules}} \\
-Saturation at $\log N$: clean / attacked  & $10.0\%$ / $52.5\%$ & $46.2\%$ / $70.0\%$ & $1.2\%$ / $10.0\%$ \\
-Diagnostic: strict-tie $p$               & $<0.001$ & $1.000$ & $1.000$ \\
-Diagnostic: conservative-tie $p$         & $1.000$ & $1.000$ & $1.000$ \\
-\midrule
-\multicolumn{4}{l}{\emph{Supplementary: paired net under convention~(d), $n{=}77$, against three comparators}} \\
-vs.\ best of $m$ \emph{on this arm}      & $+0.110$ [$+0.063$, $+0.161$] & $-0.027$ [$-0.064$, $+0.015$] & $-0.173$ [$-0.302$, $-0.039$] \\
-vs.\ the NLI-selected benign candidate   & $+0.110$ [$+0.063$, $+0.161$] & $+0.018$ [$-0.021$, $+0.064$] & $+0.016$ [$-0.112$, $+0.150$] \\
-vs.\ the mean benign draw                & $+0.381$ [$+0.303$, $+0.464$] & $+0.101$ [$+0.050$, $+0.159$] & $+0.175$ [$+0.045$, $+0.312$] \\
-Attack's mid-rank percentile in benign   & $0.931$ [$0.903$, $0.955$] & $0.736$ [$0.686$, $0.785$] & $0.700$ [$0.637$, $0.761$] \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 \begin{table}[t]
 \centering
 \footnotesize
 \setlength{\tabcolsep}{4pt}
 \caption{Convention sensitivity of the supplementary paired net (nats, $95\%$ paired
-bootstrap, $20{,}000$ resamples), on the same false-alarm stratum of the attacked pool.
-The optimiser returns the original question when nothing beats it, so the attack's move is
-exactly $0$ on the $11$ \emph{no-op} targets and, in the NLI arm it was optimised against, is
-bounded below by $0$ everywhere (measured minimum $+0.0000$ over all $80$); the feasibility
-gate forbids the benign arm from drawing the no-op, so its maximum is unconstrained and is
-negative on $10$ of $77$ targets under NLI. \emph{Convention~(c) drops eight rows, not
-eleven, and the arithmetic is worth spelling out because $77{-}11$ is not $69$}: three of the
-$11$ no-op targets are the three with an empty benign arm, and those three are already outside
-the $77$, so only the remaining eight are excluded here. The paired net therefore credits the attack with
-the null's losses unless a convention intervenes. \textbf{Convention~(d) was locked in advance
-of the last $12$ targets, in a pre-registration written with $68$ of $80$ visible and after
-the effect of every candidate convention had been computed. It was not blind, and we do not
-describe it as though it were.} It is reported here with all four alternatives, as that
-document requires. (d) is the least favourable to our own attack in all three arms, which is
-the direction that makes a post-hoc choice non-self-serving; (a) is indefensible on principle
-and (c) changes the denominator. Read with Table~\ref{tab:nullcontrol}: under \emph{every}
-convention, the judge column is measured against a benign maximum selected on the judge while
-the attack's judge score is unselected. That asymmetry is what puts the judge column below
-zero, and the convention is not.}
+bootstrap, $20{,}000$ resamples), on the same false-alarm stratum of the attacked pool. The
+text gives each convention, the arithmetic behind each $n$, and why (d) is the locked one.}
 \label{tab:nullconventions}
 \begin{tabular}{llccc}
 \toprule
@@ -333,7 +306,11 @@ Four different $n$ appear above, all of them inside the false-alarm stratum of t
 pool, and none of them may be substituted for another. The campaign
 is $80$; every benign-referenced statistic runs
 on $77$, because three targets have no benign arm at all; convention~(c) runs on $69$; and the
-full $m{=}50$ budget was achieved on $71$. The exceedance test and the paired net are both
+full $m{=}50$ budget was achieved on $71$. Three of those four are row denominators in
+Table~\ref{tab:nullcontrol}, and the table is read block by block: the bands run over all $80$
+attacked targets, every benign-referenced row over the $77$ with a non-empty benign arm, and
+the convention~(c) row of Table~\ref{tab:nullconventions} over $69$.
+The exceedance test and the paired net are both
 benign-referenced, so both run on $77$. The three empty arms
 (\texttt{qb\_565}, \texttt{qz\_3393}, \texttt{qb\_2689}) are the targets whose every one of
 $250$ feasibility attempts was rejected, and on each of them the optimiser also found no
@@ -345,8 +322,19 @@ optimiser's best, identically identified by three independent criteria (the retu
 equals the original, the optimiser records no improvement, and its feasible-at-best count is
 zero). What singles out these three is that the benign sampler failed on them too, and it is
 the empty benign arm, not the optimiser's no-op, that removes a target from the denominator.
-They are excluded and stated, never absorbed into a denominator of $80$. Six further arms are
-short. The resulting inflation of the
+They are excluded and stated, never absorbed into a denominator of $80$.
+Convention~(c) of Table~\ref{tab:nullconventions} drops eight rows, not eleven, and the
+arithmetic is worth spelling out because $77{-}11$ is not $69$: three of the $11$ no-op targets
+are the three with an empty benign arm, and those three are already outside the $77$, so only
+the remaining eight are excluded there. Those no-op targets bear on the paired net for a reason
+that is structural rather than statistical. The optimiser returns the original question when
+nothing beats it, so the attack's move is exactly $0$ on the $11$ and, in the NLI arm it was
+optimised against, is bounded below by $0$ everywhere (measured minimum $+0.0000$ over all
+$80$). The feasibility gate forbids the benign arm from drawing the no-op, so its maximum is
+unconstrained and is negative on $10$ of $77$ targets under NLI. The paired net therefore
+credits the attack with the null's losses unless a convention intervenes.
+Six further arms are
+short, at $m$ of $1$, $26$, $27$, $27$, $35$ and $38$. The resulting inflation of the
 net is $+0.006$ nats as-is and $+0.001$ under the locked convention, because the benign score
 distributions are lumpy: the discrete estimator has only $39$ attainable values at $N{=}10$,
 and $29\%$ of a target's benign NLI draws already sit at that target's own maximum, so a maximum over
@@ -354,11 +342,14 @@ $26$ draws almost always equals the maximum over $50$. That is a disclosure, not
 The two disclosures pull the same way and neither is large enough to move a conclusion: the
 short arms inflate the net, and the locked convention deflates it. Finally, and non-negotiably:
 convention~(d) of Table~\ref{tab:nullconventions} was fixed in a pre-registration written when
-$68$ of the $80$ targets were visible and after the effect of every candidate convention on
+$68$ of the $80$ targets were visible, which locked it in advance of the last $12$ and after
+the effect of every candidate convention on
 every arm had been computed. It is not a blind pre-registration and must not be read as one.
 What can be said for it is stated in that document and repeated here: it is the convention least
-favourable to our own attack in all three arms, and all four are reported so that a reader can
-price the choice rather than take it on trust.
+favourable to our own attack in all three arms, which is the direction that makes a post-hoc
+choice non-self-serving, and all four are reported, as that document requires, so that a reader
+can price the choice rather than take it on trust. Of the alternatives, (a) is indefensible on
+principle and (c) changes the denominator.
 
 \paragraph{Where the exceedance null is, and is not, correctly specified.}
 The attack's objective is the shared-NLI entropy and nothing else, so the query it reports is an
@@ -397,6 +388,12 @@ quantity. The index-matched row of Table~\ref{tab:nullcontrol} sidesteps the nee
 by holding the selection rule fixed across both sides, and it covers zero.
 
 \paragraph{What the judge arm does and does not say.}
+The paired net is \textbf{supplementary} to the exceedance test. Table~\ref{tab:nullcontrol}
+reports it under the pre-registered convention~(d) (Table~\ref{tab:nullconventions}) and
+against three comparators, because its sign depends on which one is used. Under \emph{every}
+convention the judge column is measured against a benign maximum selected on the judge while
+the attack's judge score is unselected; that asymmetry is what puts the judge column below
+zero, and the convention is not.
 Under the locked convention the paired net in the adjudicator arm is
 $-0.173$ [$-0.302$, $-0.039$] nats, an interval lying entirely below zero, and we state the
 sign plainly: measured this way, the optimised attack moves the adjudicator's semantic entropy
