@@ -118,20 +118,15 @@ ADJUDICATED: dict[str, tuple[str, str, str]] = {
         "already contains both components. It would double-count, and would print an "
         "interval at N=40 where n40_floor_estimator_ruling.md says none is admissible."),
     "dreamy-williamson-8cace1": (
-        "OPEN", "2026-08-31",
-        "Reviewed 2026-08-31 by the owner. The substance is ONE provenance citation "
-        "(scripts/power_sim_deployed.py + results/power_deployed_vs_oracle.md), which main "
-        "genuinely lacks and which is worth having. Two reasons it is not landed yet, both "
-        "concrete rather than a shrug. (1) DO NOT APPLY THIS HUNK AS A PATCH: it predates "
-        "the em-dash removal, so its reflow would reintroduce '---' into a file that is "
-        "now pure ASCII. Only the parenthetical clause should ever be taken. (2) The cited "
-        "script is being rewritten right now because it encoded a refuted claim (that the "
-        "realized design is stronger at a fixed cut; it is not, the cut compares levels "
-        "0.0793 against 0.0437), and the cited report covers only the planned n=80 uniform "
-        "design with no realized column. UNBLOCKS WHEN: the power rewrite lands and "
-        "power_deployed_vs_oracle.md is regenerated from it. Then land the citation and "
-        "close this LANDED. The report itself is sound and was right early: it flagged the "
-        "deployed level as 0.041 against the paper's then-claimed 0.053."),
+        "LANDED", "2026-08-31",
+        "The substance was one provenance citation (scripts/power_sim_deployed.py + "
+        "results/power_deployed_vs_oracle.md). Landed by hand into experiments.tex beside the "
+        "deployed-versus-oracle comparison, in the idiom limitations.tex already uses. NOT "
+        "applied as a patch: the hunk predates the em-dash removal and its reflow would have "
+        "reintroduced '---' into a now-ASCII file, and its anchor sentence no longer existed. "
+        "Held until the cited script was rewritten (7e52a65, it had encoded the refuted "
+        "fixed-cut claim) and the report regenerated from it. The report was right early: it "
+        "flagged the deployed level as 0.041 against the paper's then-claimed 0.053."),
     "elated-clarke-3085b8": (
         "SUPERSEDED", "2026-08-31",
         "Both changes are dead. The K=5 provenance pointer it moves to "

@@ -149,7 +149,7 @@ Exceedances $S$, seed-$0$ draw / expected & $30$ / $20.4$ & $383$ / $20.4$ & $63
 \quad median $S$ over those $101$ draws  & $28$ & $383$ & $652$ \\
 \textbf{Effective benign budget $n_{\mathrm{eff}}$} & $\mathbf{122.5}$ & $\mathbf{8.7}$ & $\mathbf{4.8}$ \\
 \midrule
-\multicolumn{4}{l}{\emph{Ceiling saturation over the false-alarm targets, and the two inadmissible tie rules}} \\
+\multicolumn{4}{l}{\emph{Ceiling saturation over the false-alarm targets, and the two inadmissible tie rules; power and $p$ at $A{=}181$}} \\
 Saturation at $\log N$: clean / attacked  & $10.0\%$ / $52.5\%$ & $46.2\%$ / $70.0\%$ & $1.2\%$ / $10.0\%$ \\
 Power against a ceiling-saturating attack & $0.56$ & $\mathbf{0.00}$ & $1.00$ \\
 Diagnostic: strict-tie $p$               & $<0.001$ & $1.000$ & $1.000$ \\
@@ -202,6 +202,15 @@ measured-$b$ figure is the one that bears on the deployed test, because $b$ is m
 deployment; redrawing it runs $b$ about one higher, which shrinks the $1/(b{+}1)$ tie credit
 and pushes the level up.
 
+Every power, level and cut in what follows is computed at the budget upper bound
+$A{=}181$, the same scope the claim-statistic block of Table~\ref{tab:nullcontrol} carries
+and the one the budget paragraph below sets out; none of them is a statement about the whole
+admissible range. The null takes $A$ as an argument, and the cut moves a long way down that
+range: at $A{=}181$, $121$ and $41$ the planned design cuts at $S{\leq}13$, $S{\leq}21$ and
+$S{\leq}72$, and the design that ran at $S{\leq}11$, $S{\leq}19$ and $S{\leq}66$. We have
+not re-simulated the power at the lower budgets and report none, so every figure in this
+passage is conditional on a budget the run bounded rather than measured.
+
 Under the empirical $n{=}80$ headroom distribution, the randomised rule against that
 analytic null reaches power $0.51$ at an achieved level of $0.025$ for $m{=}30$, and $0.77$
 at $0.041$ for the pre-registered $m{=}50$; levels and powers are paired on the same
@@ -227,8 +236,12 @@ $S{\leq}12$ at $0.0501$ and so drops the design's $13$ to $11$; but a material p
 the three targets the run could not test and the six short arms, and we do not attribute that
 part away. Decomposing the fall from $0.77$ to $0.67$ into a level effect and a design effect,
 and averaging the two orders in which the decomposition can be taken, puts about $0.07$ on
-granularity and about $0.03$ on the design, roughly a third of the total; read separately at a
-common level the three untested targets cost about $0.02$ and the short arms about $0.02$.
+granularity and about $0.03$ on the design, roughly a third of the total. That design term
+divides again between the two causes just named, and we give the division in words rather
+than in digits. What is stable is that both are positive at
+every level at which the two designs can be matched, and that neither is the whole of the term.
+What is not stable is their relative size: it moves with the matched level and with the
+simulation seed, and we decline to print a pair of figures our own re-runs do not reproduce.
 Two readings that would reverse this are not available and we name them, because the first is
 tempting. At a \emph{fixed cut} the realized design does score higher, but a fixed cut is not
 a fixed level: at $S{\leq}13$ its analytic tail is $0.0793$ against the other's $0.0437$, so
@@ -239,7 +252,9 @@ that is less data, not more power.
 
 On the same draws, a critical value calibrated
 against the true simulated null reaches $0.66$
-at level $0.056$ and $0.84$ at $0.064$ for those two cells. Such a calibration is an oracle
+at level $0.056$ and $0.84$ at $0.064$ for those two cells
+(	exttt{scripts/power\_sim\_deployed.py}, tabulated with the remaining $m$ in
+	exttt{results/power\_deployed\_vs\_oracle.md}). Such a calibration is an oracle
 the deployed test does not have. The difference between the two
 columns is a level, not a statistic: at a common $m$ the analytic $p$-value is strictly
 increasing in the exceedance total alone, so the deployed and oracle tests are the same cut
@@ -351,8 +366,8 @@ is unchanged and we do not re-choose $m$ after the fact, but the design rejects 
 readily than the number we picked it on, and
 a non-rejection must be read against neither of those figures. Both are computed at $n{=}80$
 with a uniform $m$, and the run delivered $n{=}77$ with six short arms; at the realized arm
-lengths the deployed power against a two-fold effect is $0.67$, and that is the number a
-non-rejection here has to be read against. We state the awkward part rather than let a
+lengths the deployed power against a two-fold effect is $0.67$ at $A{=}181$, and that is the
+number a non-rejection here has to be read against. We state the awkward part rather than let a
 reader find it: $0.67$ is also, to two decimals, the oracle power at the design-time settings
 of the cheaper $m{=}30$ design this paragraph says was passed over as too weak. The two
 quantities are not the same one, the first being the deployed power of the design that ran
@@ -446,8 +461,8 @@ Doubling the measured tie multiplicity, the one perturbation that moves $p$ down
 the NLI arm at $0.229$ and the other two at $1.000$.
 
 A non-rejection is not a measurement of zero, and we do not report it as one. At the deployed
-operating point the design that ran, $n{=}77$ with six short arms, has power $0.67$ against a
-two-fold effect, so the
+operating point, and at the budget upper bound $A{=}181$, the design that ran, $n{=}77$ with
+six short arms, has power $0.67$ against a two-fold effect, so the
 correct reading is that an effect of that size is \emph{not detectable at this $n$ on this
 population}, not that none exists. The same discipline governs every supplementary interval in
 this section, and we state it once as a rule so that it can be checked against every later

@@ -101,6 +101,12 @@ three targets with no benign arm and the six short ones. A fixed cut is not a fi
 does not overturn this: at `S<=13` the realized design's analytic tail is 0.0793 against the
 planned design's 0.0437, so it scores higher there only by running at 1.8x the type-I error.
 
+**Every power, level and cut in the paragraph above is at the upper bound `A=181`**, the same
+scope as the three p-values, and none of them is a statement about the whole range. The cut
+moves a long way down it: the design that ran cuts at `S<=11`, `S<=19` and `S<=66` at `A=181`,
+`A=121` and `A=41`, and the planned design at `S<=13`, `S<=21` and `S<=72`. No power is
+re-simulated at the lower budgets and none is reported there.
+
 ### 3. What the controls cost, which is the reusable part
 
 - **Selection inflation.** Re-scoring each *selected* paraphrase on an independent sample retains

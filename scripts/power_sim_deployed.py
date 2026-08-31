@@ -219,12 +219,24 @@ DESIGN_CLAIMS = {
     "decomposition": {"total": 0.098, "granularity": 0.071, "design": 0.027},
     # And the design term split again, at a matched level, by an intermediate design of 77
     # targets at a uniform m=50, averaged over `LEVEL_GRID`. These are what this script
-    # measures at 60,000 trials per cell, not what the paper states: experiments.tex says
-    # "the three untested targets cost about 0.02 and the short arms about 0.02", whose sum
-    # of 0.04 is larger than the level-matched gap it decomposes (0.030 at level 0.025 by
-    # the paper's own figures, 0.025 by this script's). The two sub-terms must sum to that
-    # gap, and here they do. A disagreement with the paper is reported, not reconciled, so
-    # the measured pair is pinned and the paper's is named in this comment.
+    # measures at 60,000 trials per cell.
+    #
+    # THE PAPER DELIBERATELY STATES NO NUMBER HERE, and this pin must not be read as one it
+    # owes. experiments.tex used to say "the three untested targets cost about 0.02 and the
+    # short arms about 0.02", whose sum of 0.04 exceeded the gap it decomposed; that sentence
+    # was removed on 2026-08-31 rather than corrected, because four independent measurements
+    # of this split disagree by more than the split itself:
+    #
+    #     0.02  / 0.02   the removed sentence (impossible: sums above the gap)
+    #     0.012 / 0.014  the agent that found the defect
+    #     0.010 / 0.015  this script, pinned below
+    #     0.014 / 0.021  the agent that removed it, at 240,000 trials per cell
+    #
+    # The paper now makes the claim in words only: both causes are positive, neither is the
+    # whole design term, and their relative size moves with the matched level and the seed.
+    # That is what the evidence supports. Do not "restore" digits to experiments.tex from
+    # this pin: a fifth number would be the fifth answer, not a correction.
+    #
     # Each term is individually noisy - the per-level spread runs 0.006 to 0.020 - so the
     # robust facts, checked separately below, are that BOTH are positive and that they sum
     # to the level-matched gap.
