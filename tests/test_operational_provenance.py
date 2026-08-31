@@ -407,8 +407,20 @@ KNOWN_SITES: dict[tuple[str, str, str], int] = {
     # file it was correcting, three sections further down, to conclude that the judge is
     # 88% of a clustering. Measured, it is at most 46%.
     ("results/null_control_cost_options.md", "dead-anchor", "2.8 s per SE eval"): 1,
-    ("results/null_objective_ablation_plan.md", "dead-anchor", "2.8 s per SE eval"): 3,
-    ("results/null_objective_ablation_plan.md", "dead-anchor", "~67 GPU-h null control"): 2,
+    # RETIRED 2026-08-31, all five sites, and this is the second entry retired by a fix rather
+    # than by a deletion. Section 6 of null_objective_ablation_plan.md was rebuilt on the
+    # measured 13.0 s SE-eval unit, so the three `2.8 s` restatements are gone and the two
+    # `~67 GPU-h` ones went with them: the null control is complete, so the row that quoted its
+    # modelled remaining cost had no live job to price and was removed rather than restated.
+    # The `2.8 s` literal still appears in that file exactly twice, both times inside a
+    # paragraph that refutes it -- which is the behaviour the paragraph window is for, and it
+    # is checked here site by site rather than inferred from the file's finding count.
+    #
+    # WHERE THE FIX HAD BEEN. Not missing: written on 2026-08-13 in a gitignored worktree
+    # under .claude/worktrees/ whose branch was never merged. It sat there for eighteen days
+    # while `operational_number_audit.md` independently refuted the same constant and the
+    # schedule went on quoting a price derived from it. That is the loss mode
+    # `scripts/check_worktree_debt.py` now surfaces.
     ("results/power_under_ceiling.md", "dead-anchor", "228 GPU-h"): 1,
     ("scripts/overnight_2026_08_13.sh", "dead-anchor", "~60 GPU-h null control"): 2,
 }

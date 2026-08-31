@@ -181,9 +181,12 @@ coupling is silent about it. Silent, and not merely cautious. Give a question ty
 on ten meanings and a perfect clusterer, and the atom is empty at $N{=}11$, where the floor
 stands more than five times higher than at $N{=}10$: no sample of eleven can be all-distinct,
 so the cheapest alarm is the crowded partition one rung below. Past the atom, monotonicity is
-an empirical question rather than a proved one, and the ladder measured below answers it
-affirmatively at $N{=}10$, $N{=}20$ and $N{=}40$, on the terms set out there, and settles
-nothing beyond $N{=}40$. What the floor is does not change with the budget: it is a fact about
+an empirical question rather than a proved one, and the ladder measured below does not answer
+it. The atom carries mass at $N{=}10$ and at $N{=}20$ and is empty at $N{=}40$, so the only leg
+of that ladder lying past the atom is $N{=}20$ to $N{=}40$; that leg falls, but its interval
+covers zero, and the leg below it lies inside the regime the coupling already settles, so it
+bears on the question not at all. Nothing here settles it beyond $N{=}40$ either.
+What the floor is does not change with the budget: it is a fact about
 how often the model answers a question in $N$ ways the clusterer holds apart. That frequency
 is a property of the model, the question distribution and the equivalence relation jointly, not of
 the estimator's arithmetic. Not settled that way: whether the grid becomes usably
@@ -202,8 +205,9 @@ $3.1\%$ [$1.8$, $4.7$] at $N{=}20$ to a measured $2.0\%$ at $N{=}40$, a fall of
 $10.0$ points [$7.2$, $12.9$] that excludes zero. That last interval is a paired bootstrap
 over the questions and not the two end intervals subtracted, because the two floors are read
 off the same $200$ questions and, at $N{=}40$, off a top score that can move to a different
-question when those questions are resampled. The ladder is monotone but it is not detectable
-at every rung, and we say so rather than let the sequence imply that it is. Taken
+question when those questions are resampled. The ladder's point estimates fall at every rung,
+but the fall is not resolved at every rung, and we say so rather than let the sequence imply
+that it is. Taken
 leg by leg on the same paired bootstrap, the $N{=}10$ to $N{=}20$ leg is a fall of $8.9$
 points [$6.8$, $11.1$], which excludes zero; the $N{=}20$ to $N{=}40$ leg is a fall of $1.1$
 points [$-0.2$, $2.4$], which \emph{covers} it. The end-to-end fall is real and its final
@@ -497,8 +501,10 @@ answers, and sentence embedders are near-chance on the adversarial, word-preserv
 (Methods). A victim- and NLI-independent LLM-judge, validated to $0.93$ accuracy on
 the gold-alias hard negatives that proxy that adversarial discrimination (where the
 embedder scores $0.51$), can settle it for the false-alarm direction, under the disclosed
-re-scoped gate (Methods). Under it, the structural question now has an answer for one
-direction of one detector, and the answer is negative. An earlier $n{=}6$
+re-scoped gate (Methods). Under it, the structural question has now been put to that test
+for one direction of one detector, and the effect does not survive it. That is a failure to
+establish the effect and not a demonstration of its absence, and we hold it to that below.
+An earlier $n{=}6$
 machinery-validation sample is evidence about the pipeline rather than about the mechanism:
 its interval includes zero, and its per-target diagnostics are too coarse at that sample size
 to order the clusterer arms (Methods), so we quote no point estimate from it and draw no
@@ -506,12 +512,18 @@ reading either way. The confirmatory run has since completed on all $80$ false-a
 targets, and the adjudicator's pre-registered exceedance test does not reject
 (Section~\ref{sec:experiments}): with the attacker's own search budget priced into the null,
 the optimised search does not beat a budget-matched benign one under an equivalence oracle
-the detector does not supply. We report that as the gate said we would, and we decline the
+the detector does not supply. The attack ran on every one of the $80$; the test runs on the
+$77$ of them that have a benign arm at all, three having none, and that is the whole of the
+difference between the two counts here and in Section~\ref{sec:experiments}. We report that as
+the gate said we would, and we decline the
 stronger form of it. A non-rejection by a design with power $0.67$ against a two-fold effect
 bounds what we could have seen, not what exists. That figure is the design that ran and not the
-one that was planned, and what costs it is the analytic null's integer granularity, which admits
-no cut between $0.0296$ and $0.0501$, rather than the targets the run lost: at a fixed cut the
-realized design is the stronger of the two. The non-rejection is confined to the false-alarm direction
+one that was planned, and the design that ran is the weaker of the two at every level at which
+both can be read. Most of what costs it is the analytic null's integer granularity, which admits
+no cut between $0.0296$ and $0.0501$; about a third of it is the three targets with no benign
+arm and the six short ones, which we count rather than attribute away. At a fixed cut the
+realized design scores higher, but a fixed cut is not a fixed level and that reading is the one
+Section~\ref{sec:experiments} declines. The non-rejection is confined to the false-alarm direction
 of the SE detector on those $80$ targets, and it leaves the hide direction and SRE untested.
 What the run removes is the licence to claim the effect, not the possibility of one. A single
 validated judge, however independent, is in any case not the

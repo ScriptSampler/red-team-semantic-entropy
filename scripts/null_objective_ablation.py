@@ -47,8 +47,13 @@ THE GATE (critique_log 23, pre-committed before any ablation data):
 
 SCOPE. Scored under the NLI clusterer: the attack optimises the NLI-entropy objective, so
 the H0 selection concern lives in NLI-objective space; clusterer attribution is a separate
-question (the 4-arm null control). ~2.5-4.5 min/target (the objective is free, so this is
-~4x cheaper per target than the real attack); per-target checkpoint JSONL makes it resumable.
+question (the 4-arm null control). ~9.6-17.4 min/target; per-target checkpoint JSONL makes it
+resumable. CORRECTED 2026-08-31: this line read "~2.5-4.5 min/target (the objective is free, so
+this is ~4x cheaper per target than the real attack)". Both halves were wrong from one refuted
+constant, an SE evaluation priced by pro-rata token split rather than measured. A free objective
+does NOT make this cheap: the ablation still pays 180 proposer calls in full and still evaluates
+every distinct FEASIBLE candidate, so it costs about the same as re-running the real attack, not
+a quarter of it. See results/null_objective_ablation_plan.md section 6.
 
   ./.venv-wsl/bin/python scripts/null_objective_ablation.py --tag _defb --n_targets 80 \
       --m 50 --benign_from results/diag_defb.json

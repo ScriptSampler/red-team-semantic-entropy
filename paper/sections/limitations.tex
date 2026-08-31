@@ -175,8 +175,10 @@ exclude the budget in question.
 
 \paragraph{Equivalence is certified automatically, not by humans.}
 Feasibility is a judgement of bidirectional entailment. Our answer-flip subcategory is defined
-to collect the successful attacks in which the model's correctness flips under $q'$, and it
-would be a \emph{lower} bound on how often the gate admits a non-equivalent paraphrase, since a
+to collect the \emph{would-be} successes that condition~(iii) voids because the model's
+correctness flips under $q'$, and a flip is the failure of that condition, so these are
+precisely not successes. It would be a \emph{lower} bound on how often the gate admits a
+non-equivalent paraphrase, since a
 $q'$ can shift scope or presupposition while leaving the greedy answer unchanged. We report no
 count for it, so the residual fidelity of the equivalence gate is not measured anywhere here.
 We do not yet report a human (or disclosed strong-LLM-judge) equivalence audit of a random sample of

@@ -297,7 +297,16 @@ KNOWN_OPEN: dict[str, int] = {
     "results/judge_owed_conditions.md": 12,
     "results/n_scaling_plan.md": 40,
     "results/null_control_cost_options.md": 24,
-    "results/null_objective_ablation_plan.md": 11,
+    # 11 -> 0 on 2026-08-31, and this one is worth recording because of WHERE the work was
+    # sitting. Section 6 of that file was rewritten to replace the refuted `2.8 s` SE-eval
+    # unit with the measured 13.0 s, which also cleared its five dead-anchor sites. The
+    # rewrite was not new analysis: it had been done on 2026-08-13 in a gitignored agent
+    # worktree (`.claude/worktrees/ecstatic-mahavira-1d0279`) whose branch was never merged,
+    # so it was invisible to `git status`, to two critic panels and to an external reviewer
+    # for eighteen days while the schedule kept spending against the number it corrected.
+    # Every figure in the new section is tagged and every MODELLED one names its anchor, so
+    # the baseline is 0 rather than a smaller non-zero: debt PAID, not reclassified.
+    "results/null_objective_ablation_plan.md": 0,
     "results/power_under_ceiling.md": 1,
     "scripts/overnight_2026_08_13.sh": 2,
     "scripts/overnight_queue.sh": 5,

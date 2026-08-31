@@ -232,43 +232,224 @@ and no more.
 
 ## 6. Cost
 
-Measured anchors: the live hide cell is running at **568–607 s/target** (`/tmp/defb_chain.log`:
-5/41 in 2842 s, 10/41 in 6070 s), consistent with the `_defb` FA re-run's ~13 GPU-h / 80 and
-with `definitive_run_plan.md`'s ~875 s at the older settings. At 181 objective calls that is
-**3.26 s per objective call**. Splitting it by generated tokens (SE eval = 10 × 48 = 480 new
-tokens; proposer = 64; NLI gate = 2 short forward passes): **s_SE ≈ 2.8 s, s_proposer ≈ 0.37 s,
-s_NLI ≈ 0.15 s**.
+**CORRECTED 2026-08-31, and the correction runs against this plan's own interest.** This
+section used to derive `s_SE ≈ 2.8 s` per N=10 semantic-entropy evaluation by dividing a
+per-target wall clock by 181 objective calls and splitting the quotient pro-rata by
+generated-token count. That constant is refuted. It is wrong by 4.6x and it was wrong in the
+cheap direction, so the ablation is **more** expensive than this section claimed, not less.
+§6.3 records what broke and why the wall clock it was derived from is nevertheless still
+correct. `results/operational_number_audit.md` §2.1 and §2.6 refuted the same constant
+independently and arrived at a different total; §6.5 reconciles the two and says which is
+right.
 
-**The ablation's objective is free** — that is the whole saving. Per target:
+### 6.1 The constants, each measured directly
+
+| constant | value | provenance |
+|---|---|---|
+| `s_SE` — one N=10 SE evaluation | **13.0 s** | MEASURED, 11.2 s generation + 1.8 s NLI. MEASURED generation, from `results/run_all.log`: `wk4_sample.py` sustained 12.51–12.80 s/Q over 1907 questions doing one greedy plus one N=10 batch of 48 new tokens, less the 1.49 s greedy mean of `results/pipeline_check.md`. MEASURED NLI, from `results/run_all_status.txt`: `wk4_cluster.py` clustered 2000 questions in 3509 s = 1.75 s/Q (90 forward passes at N=10), cross-checked at 1.84 s/Q in `results/wk3_fri_entropy.md`. |
+| `s_prop` — one `proposer.propose` | **1.5 s** [1.0–2.0] | One greedy `M.generate_one`, batch of 1, `max_new_tokens=64`, stopping at EOS (`src/se/attacks/proposer.py`). Anchored on the 1.49 s greedy mean (n=10) in `pipeline_check.md`. **The least well-measured constant here, and at 180 calls per target the second-largest line — see §6.4 and §6.5.** |
+| `s_gate` — one `feasibility.check` | **0.05 s** | `nli.bidirectional_equivalent` is ONE DeBERTa batch of 2 pairs, not 2 sequential passes. The N=10 clusterer does 90 passes in 1.8 s = 0.02 s per pass; the balance is fixed per-call overhead. Immaterial at any value below 0.15 s. |
+
+`s_SE = 13.0 s` is if anything optimistic: `pipeline_check.md` timed the N=10 batch *alone* at
+14.27 s per question over 100 questions in Week 2 [MEASURED]. 13.0 s is the Week-4 figure,
+and it is the same constant `results/n_scaling_plan.md` §2 uses, so the two files now agree.
+
+### 6.2 The ablation, per target
+
+**The objective being free saves less than it looks like it should**, because the ablation
+pays for SE evaluations on a *different* set than the attack does. The attack scores every
+distinct candidate (the objective IS the SE eval); the ablation scores only the distinct
+candidates that pass the gate (`scripts/null_objective_ablation.py` gates `beam_uniq` first,
+then `score()` runs behind `ent_cache`). The saving is the distinct-but-infeasible strings —
+and nothing more.
 
 | component | count | unit | subtotal |
 |---|---|---|---|
-| beam proposer calls | 181 | 0.37 s | 67 s |
-| in-optimiser gates (records under a continuous hash ≈ H₁₈₁ ≈ 5.8) | ~6 | 0.15 s | 1 s |
-| gate over DISTINCT beam strings | 73–145 | 0.15 s | 11–22 s |
-| SE evals over DISTINCT feasible strings | 22–58 | 2.8 s | 62–163 s |
-| baseline SE eval | 1 | 2.8 s | 3 s |
-| **attack arm, per target** | | | **144–256 s (~2.5–4.3 min)** |
-| benign arm if re-drawn (≤250 proposals, ≤50 SE evals) | | | +90–200 s |
+| baseline SE eval | 1 | 13.0 s | 13 s |
+| beam proposer calls | 180 | 1.5 s | **270 s** |
+| in-optimiser gates (running-max records under a continuous hash; above H₁₈₁ ≈ 5.8, because the threshold rises only on gate-passing candidates) | ~6–20 | 0.05 s | under 1 s |
+| gate over DISTINCT beam strings | 73–145 | 0.05 s | 4–7 s |
+| SE evals over DISTINCT FEASIBLE strings | 22–58 | 13.0 s | **286–754 s** |
+| **attack arm, per target** | | | **573–1045 s (9.6–17.4 min)** |
+| benign arm if re-drawn (up to 250 proposals, up to 50 SE evals) | | | +470–880 s |
+
+The `73–145` and `22–58` brackets are unchanged and are **not** symmetric evidence: 73
+distinct strings and 22 distinct-feasible are *measured*, on target `dpql_1059` in
+`results/null_objective_ablation_ckpt_def.jsonl`; 145 and 58 are a hypothetical upper bracket.
+
+**A floor that needs neither bracket.** 180 proposer calls plus one baseline eval is
+**283 s/target = 6.3 GPU-h at n=80** [MODELLED from `s_prop` and `s_SE` in §6.1, both measured
+there] even if every candidate were a duplicate and none were feasible. That floor alone
+exceeds the whole 3.2–5.7 GPU-h range this section used to quote [MODELLED from the refuted
+pro-rata token split], which is superseded.
 
 | configuration | n=80 |
 |---|---|
-| attack arm only, `--benign_from results/diag_defb.json` (**recommended**) | **3.2–5.7 GPU-h, central ≈ 4** |
-| with the benign arm re-drawn | 5–10 GPU-h |
-| *(reference)* the real attack, same n | 13.1 GPU-h |
-| *(reference)* the definitive null control | ~67 GPU-h |
+| attack arm only, `--benign_from results/diag_defb.json` (**recommended**) | **12.7–23.2 GPU-h; plan on ≈ 18** [MODELLED from §6.1's measured units] |
+| with the benign arm re-drawn | 23–43 GPU-h [MODELLED from the same units] |
+| *(reference)* the real attack, same n | 13.1 GPU-h [MEASURED from the `_defb` re-run's wall clock] |
 
-The dominant uncertainty is the distinct-string rate, which the run measures for itself.
+Plan on ≈18 GPU-h [MODELLED from §6.1's measured units], not on the 12.7 low end: the low
+end assumes the *measured* target's distinct rate holds everywhere, and that target is n=1.
 
-**Against the queue.** Hide cell: 52/80 done, **28 targets ≈ 4.7 GPU-h left**. Then the null
-control, **~67 GPU-h**. Queue ≈ 72 GPU-h ≈ 3.0 days; the gate adds **≈ 6 %**. 33 days remain
-to the 2026-09-15 target.
+### 6.3 What broke, and why the wall clock it was derived from is still right
 
-**Ordering: run it AFTER the null control, before Table 1 is filled.** It needs
-`results/diag_defb.json` for `--benign_from`, and a gate evaluated against a *different*
-benign arm than the claim uses is worth much less. Running it first would cost the extra
-benign arm (+2–4.5 GPU-h) and buy nothing: a FAIL does not invalidate the null control's
-data, because the pre-registered fallback (§7) consumes the same benign lists.
+The old derivation made two errors that compound.
+
+**E1 — 181 objective calls are not 181 SE evaluations.** `objectives.make_objective` builds a
+per-target `cache: dict[str, float]` and `entropy()` consults it before evaluating
+(`src/se/attacks/objectives.py`), so an objective call on a repeated candidate string is a
+dict lookup. The proposer decodes greedily (§4), so repeats are the common case, not the
+exception. Dividing a target's wall clock by 181 therefore yields an amortised **per-call**
+rate, which is the per-eval rate divided by the duplication factor.
+
+**E2 — a per-call average cannot be split by generated-token count.** That split assumes every
+component runs on every call. The proposer does (180 of 181); the SE eval runs only on
+distinct strings; the gate only on the calls that clear `>= best_obj`.
+
+Corrected, the identity for the deployed hide cell is
+
+```
+T  =  U·s_SE  +  180·s_prop  +  C·s_gate  +  r·(s_SE + s_greedy)
+```
+
+with `U` = distinct candidate strings, `C = 53.9` (mean `n_feasibility_checks` over the 80
+`_defb` hide targets), `r = 59/80 = 0.74` (the fraction firing the B2 re-check in
+`src/se/attacks/harness.py`, one extra SE eval plus a greedy) and `s_greedy = 1.5 s`. Both `C`
+and `r` are re-derived here from the COMPLETED 80-target hide cell rather than the 52-record
+snapshot this file was first written against: `C = 53.91`, `r = 59/80` exactly. At
+T = 568–607 s/target [MEASURED from the hide cell's own wall clock] this gives **U ≈ 22–25
+distinct strings of 181**, a 12–14 % distinct rate over that target's 181 objective calls.
+Even setting `s_prop = 0`, which is impossible, gives a hard bound of **U ≤ 46**.
+
+So the total is fine. Both MEASURED: 568–607 s/target on the hide cell and the ~13 GPU-h over
+80 targets of the `_defb` FA re-run, and the hide cell's own remaining-time estimate stands
+with them. Only the **decomposition** was wrong. That is exactly the part the ablation's cost
+table is built from, because the ablation changes the mix: it pays the proposer in full and
+the objective not at all.
+
+### 6.4 What the remaining uncertainty actually is
+
+The dominant term is no longer `s_SE`. It is the **distinct-feasible-string count `F`**, worth
+286–754 s per target [MODELLED from §6.1], with `180·s_prop = 270 s` second. Both are measured by the run itself
+from target 1 (`n_beam_unique`, `n_beam_feasible_unique`), so the first checkpoint line settles
+the budget — check it before committing the remaining 79 targets.
+
+Two notes on the benign row: the ablation's `ent_cache` is shared between the arms and the
+baseline, so a benign candidate that also appeared in the beam is scored once and the
++470–880 s row is an upper bound; and the row spans a wide range because the measured yield
+was poor (6 feasible from 73 tries on `dpql_1059`), so the arm may hit the 5m-try cap having
+bought few evals.
+
+### 6.5 Reconciliation with `operational_number_audit.md` §2.6 — read this before quoting either
+
+Two documents in this repo now correct the same dead constant and land on different totals,
+and the difference is not a disagreement about the measurement. It is a disagreement about how
+much of the old derivation to throw away.
+
+| | audit §2.6 | this section |
+|---|---|---|
+| `s_SE` | 12.87 s [MEASURED from the deployed null control's clustering] | 13.0 s [MEASURED per §6.1] |
+| `s_prop` | 0.37 s, carried over unchanged | 1.5 s, re-anchored on a measured greedy |
+| `s_gate` | 0.15 s, carried over unchanged | 0.05 s, re-derived from the batch shape |
+| attack arm, per target | 375–849 s | 573–1045 s |
+| **n=80, attack arm only** | **8.3–18.9 GPU-h** (central 13.5) | **12.7–23.2 GPU-h** (plan ≈ 18) — both MODELLED from the unit rows above |
+
+The two `s_SE` values agree to 1 %. **The entire gap is the proposer term**: 180 calls times
+(1.5 − 0.37) s is 203 s per target, which is 4.5 GPU-h at n=80 [MODELLED from §6.1], and
+8.3 + 4.5 = 12.8 against 23.2 at the top. Nothing else moves.
+
+**This section's figure is the one to use, and the reason is provenance, not preference.** The
+audit says explicitly that it substituted the measured `s_SE` while "leaving every other line
+of that table untouched". But `s_proposer = 0.37 s` and `s_NLI = 0.15 s` are not independent
+measurements that happened to survive: they are the *other two outputs of the very pro-rata
+token split that produced the refuted 2.8 s*. Rejecting the split for one of its three outputs
+and keeping the other two is not available. §6.1 re-anchors both on things that were measured
+directly — a greedy `generate_one` at 1.49 s and a 2-pair DeBERTa batch — and the proposer
+term is the larger of the two by two orders of magnitude.
+
+**Consequence, flagged and not edited here.** `results/schedule_2026_08_26.md` item 7 and Cut 5
+carry the audit's figure and not this one. If this section is right they under-price the gate
+by exactly the proposer term isolated above, and Cut 5 saves correspondingly more. Both files
+are owned elsewhere; this is a pointer, not a change.
+
+### 6.6 Two consequences outside this section — flagged, not fixed here
+
+1. **`scripts/null_objective_ablation.py`'s module docstring** carried the superseded figure
+   [superseded, MODELLED from the refuted token split] *"~2.5-4.5 min/target (the objective
+   is free, so this is ~4x cheaper per target than the real attack)"*. Both halves were wrong
+   from the same root cause — 9.6–17.4 min, and
+   comparable to the real attack rather than four times cheaper. Corrected in place on
+   2026-08-31; recorded here because a fixed number that is only fixed in one file regresses.
+2. **§4's duplication table may be read at the wrong row.** Its level and contamination figures
+   are quoted at *"73 (measured) | 6 (measured)"*, using the hash-objective ablation target's
+   distinct count as a stand-in for the **deployed attack's**. §6.3 bounds the deployed attack
+   at `U ≤ 46` distinct strings of 181 and centres it at 22–25 — nearer §4's `30 | 6` row (H0
+   level 0.004, ratio 3.92) than its `73 | 6` row (0.028, ratio 1.39). If that holds, the
+   deployed test is *more* conservative than §4 states and the gate's duplication offset is
+   larger. It does not change §4's directional conclusions (attack-arm duplication is
+   conservative; do not pass `A_eff`), and it does not change the gate itself, which is read
+   against the **null arm's** own measured rate. Left for the §4 owner, with the note that the
+   ablation measures both rates directly and settles it.
+
+### 6.7 Against the queue, as the queue stands now
+
+The blocking runs this section was written against have finished. The `_defb` hide cell is
+complete at 80/80 (`data/cache/attacks/wk9_defb_snap` plus the live cache), and the
+confirmatory null control is complete at 80/80 (`results/null_control_report_defb.md`). The
+gate is therefore no longer a ~6 % surcharge on a running queue — that framing is superseded
+along with the constant that produced it. It is a standalone buy of roughly 18 GPU-h [MODELLED from §6.1] against
+whatever calendar remains, which is between a half and a full day of device time.
+
+**Ordering, if it is run at all.** It needs `results/diag_defb.json` for `--benign_from`, and
+that file now exists, so the extra benign arm (a further 10–20 GPU-h [MODELLED from §6.1]) is
+avoidable and should be avoided. A gate evaluated against a *different* benign arm than the
+claim uses is worth much less, and at the corrected price the `--benign_from` route is not a
+preference — it is most of the reason the gate is affordable at all. **But see §6.8: the
+question is now whether to run it, not when.**
+
+### 6.8 Is this gate still owed? — assessment added 2026-08-31
+
+Recorded here because a line item of this size should not stay on a schedule by inertia. The
+assessment is that **it is no longer owed as a validity gate**, on four grounds, and the fourth
+is the one that decides it.
+
+1. **The decision it was to gate has already been taken and disclosed.** The gate existed to
+   decide whether the exceedance test could be primary. `paper/sections/experiments.tex` now
+   discloses the omission as the fifth pre-registration deviation, in the paper's own words:
+   the ablation was never run, the exact test was used as primary anyway, and no trigger
+   licenses that. Running the ablation now cannot un-take the decision.
+2. **Running it after the outcome is known is worse than the disclosure already shipped.** The
+   confirmatory result is in and the paper reports a non-rejection in every arm. A
+   pre-registered conditional gate evaluated after the outcome is exactly what the surrounding
+   paragraph invites the reader to check for.
+3. **The claim is a non-rejection, so the asymmetry cannot manufacture it.** The
+   mis-specification the gate would price runs in an unknown direction; the anti-conservative
+   branch pushes toward rejection, and the test did not reject. The paper states the bound it
+   does have — the adjudicator's total stands above its null expectation at every budget in
+   [41,181], at worst by a factor of 1.9.
+4. **The gate is known to be insensitive to the violation that is actually present.** This is
+   decisive. The arms duplicate at wildly different rates (73 distinct of 181 attack calls
+   against 6 distinct benign), which contaminates the gate ratio *in the direction that hides
+   drift*: a true null with zero drift already reads 1.39, so a genuine 0.7 ratio would be
+   observed at about 0.97 — dead centre of the [0.5, 2.0] acceptance band. The gate as
+   pre-registered would PASS a violated assumption. Buying an uninformative PASS at §6.2's price
+   is not a defensible spend.
+
+**What is lost by cutting it**, stated so the cut is not sold as free: the ablation is the only
+instrument that would *measure* the net sign of the multi-hop asymmetry rather than bound it,
+and the paper currently says the sign is unknown. A referee who demands a measurement rather
+than a bound is not answered by this section. Per point 4, however, they would not be answered
+by the gate as designed either — the duplication contamination would have to be corrected
+first, which is a redesign and not a run.
+
+**Recommendation: take Cut 5 in `results/schedule_2026_08_26.md` now, on the argument above,
+rather than waiting for its 2026-09-15 date trigger.** The pre-committed fallback in §7 is
+free and already satisfied: `trajectory_best_obj` is on disk for all 80 targets. Note that this
+recommendation only became available at the corrected price. At the superseded price the §7
+pre-commitment below reads as an argument *against* cutting, because when the gate is that
+cheap "no time" really is the only objection available. At §6.2's price, for a PASS that cannot
+fail, the objection is no longer time.
 
 ---
 
@@ -318,8 +499,14 @@ Pre-committed now so it cannot be decided later: **the exceedance test must not 
 as the primary statistic on an untested assumption.** Lead with the prefix statistic (free,
 §7 FAIL-LOW), report the exceedance test as a labelled companion, and state the exposure from
 §3 — 91.8 % of the tie multiplicity is provably multi-hop — as the reason the untested
-assumption matters. The gate is ~4 GPU-h against a 72-GPU-h queue and 33 days; "no time" will
-not be a defensible reason.
+assumption matters. The gate is **12.7–23.2 GPU-h** [MODELLED from the measured units in §6.1],
+re-derived on 2026-08-31 from a mis-derived ~4 that is now superseded. The pre-commitment above
+is unchanged and this is the sentence it turns on: at the old price "no time" was the only
+objection available, so the pre-commitment was written to refuse it. At the corrected price the
+objection is no longer time — it is §6.8, which finds the gate insensitive to the violation
+actually present and recommends cutting it on that ground rather than on cost. **A cut taken on
+§6.8's argument satisfies this pre-commitment; a cut taken because the queue got busy does
+not.**
 
 ---
 

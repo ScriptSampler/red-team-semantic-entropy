@@ -93,9 +93,13 @@ shared-NLI arm, is what the non-rejection rests on.
 **The paper therefore claims no attack effect.** The design *that ran* — 77 targets, six of them
 with short benign arms — has power **0.67** against a two-fold effect, so this bounds what could
 have been seen rather than measuring a zero. The design that was *planned* (80 targets, a uniform
-50 benign draws each) had 0.77. What costs the difference is the analytic null's integer
-granularity, which admits no cut between 0.0296 and 0.0501, and not the targets the run lost: at a
-fixed cut the realized design is the stronger of the two.
+50 benign draws each) had 0.77, and it is the stronger of the two at every level at which both
+can be read: 0.699 against 0.669 at a common achieved level of 0.025, and 0.809 against 0.783
+at 0.050. Most of the difference is the analytic null's integer granularity, which admits no cut
+between 0.0296 and 0.0501 and so forces the cut from 13 down to 11; about a third of it is the
+three targets with no benign arm and the six short ones. A fixed cut is not a fixed level and
+does not overturn this: at `S<=13` the realized design's analytic tail is 0.0793 against the
+planned design's 0.0437, so it scores higher there only by running at 1.8x the type-I error.
 
 ### 3. What the controls cost, which is the reusable part
 
@@ -218,6 +222,24 @@ to a known-open debt would read as validation of it.
 
 `check_operational_provenance.py` is **red by design**: it reports open sites across the repo.
 That is a debt ledger, not a failing grade.
+
+**One checker that does not run against tracked files, and has to not:**
+
+```powershell
+.venv\Scripts\python.exe scripts\check_worktree_debt.py           # work stranded in an ignored worktree
+.venv\Scripts\python.exe scripts\check_worktree_debt.py --list    # state only, always exit 0
+```
+
+`.claude/worktrees/` is gitignored, so an agent that edits files there and stops before
+committing leaves work that `git status`, `git log main..`, `git diff` and every other checker
+here are all blind to. That is not hypothetical: on 2026-08-31 six of seven worktrees held
+uncommitted changes, two of them unlanded and one of those a cost constant that was wrong by
+4.6x in the cheap direction and had been sitting unread for eighteen days, through two critic
+panels and an external review. This checker enumerates the worktrees, classifies the dangerous
+shape (**uncommitted AND no commits** -- nothing anywhere refers to it), and requires each one
+carrying work to have a recorded verdict in `ADJUDICATED`. It is also red by design while any
+verdict is `OPEN`. `tests/test_worktree_debt.py` fails if a worktree has never been read at
+all, which is the tripwire; the script is the ledger.
 
 ### Without a GPU, but *not* from a bare clone
 

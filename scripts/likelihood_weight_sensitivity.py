@@ -2,15 +2,23 @@
 
 WHY THIS EXISTS
 ---------------
-`paper/sections/limitations.tex` states that the empirical pile-up near the log N ceiling
-"reproduces ... when the spread of within-cluster likelihoods is small and dissolves ...
-when the spread is large, with the crossover falling inside the range we consider
+`paper/sections/limitations.tex` USED TO state that the empirical pile-up near the log N
+ceiling "reproduces ... when the spread of within-cluster likelihoods is small and dissolves
+... when the spread is large, with the crossover falling inside the range we consider
 plausible", and `scripts/rescore_likelihoods.py` twice attributed that result to
 `scripts/duplication_level_sim.py`. That attribution was WRONG -- `duplication_level_sim.py`
 simulates the exceedance test's H0 level under asymmetric arm duplication and does no
 likelihood re-weighting of any kind. The producing code was never committed. This file is
 the reconstruction, and it is deliberately reported in a way that lets the reader see the
-bracketing claim is weaker than the paper's sentence implies. See "WHAT THIS SHOWS" below.
+bracketing claim was weaker than that sentence implied. See "WHAT THIS SHOWS" below.
+
+UPDATED 2026-08-31. That paragraph has since been rewritten to match what is measured here:
+the atom dies outright ("the floor collapses to $1/n$ ... no choice of $s$ rescues it") and
+only the near-cap CROWDING is bracketed and decays smoothly. The paper now reports the curve
+and DECLINES to claim the crossover falls in a plausible range. So the quotation above is
+history, not a live target -- kept because a reconstruction has to say which sentence it was
+reconstructing, and deleting it would make this file read as though the paper had always
+said the right thing.
 
 THE SUBSTITUTION
 ----------------
@@ -37,8 +45,11 @@ stratum, and every rate here is a rate over negatives.
                    n=1424 (`relabeled.jsonl`). The fair pool is a strict subset.
   * provenance  -- full Week-4 pool, correct stratum under the SUPERSEDED SUBSTRING oracle,
                    n=1440 (`entropy.jsonl`'s own `greedy_correct`). Reported ONLY because
-                   the uncommitted original ran on this stratum, and the Limitations
-                   paragraph mislabels it as the 1424 span-oracle stratum. Do not cite it.
+                   the uncommitted original ran on this stratum, which the Limitations
+                   paragraph then mislabelled as the 1424 span-oracle stratum. The paper now
+                   names 1424 and attributes it, and the two strata agree anyway (at-cap
+                   10.53% on 1424 vs 10.49% on 1440, both Wilson [9.0%, 12.2%]), so this row
+                   is kept to show the correction cost nothing. Do not cite it.
 
 WHAT IS MEASURED
 ----------------

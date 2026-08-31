@@ -217,12 +217,25 @@ short arms, hence $3{,}704$ benign draws and a cut of $S{\leq}11$ at a nominal $
 which this section computes for itself below and which we join to the power figure here
 rather than leave to the reader. Re-simulating the same rule on the realized arm lengths, at
 $8{,}000$ trials per cell and three seeds, gives power $0.67$ against a two-fold effect and
-$0.95$ against a three-fold one, at an achieved level of $0.026$. The realized design is not
-the weaker design, and the shortfall is not the three missing targets or the six short arms. Its
-null expects $20.4$ exceedances against the other's $22.0$, and at the other's own cut of
-$S{\leq}13$ it is the more powerful of the two. The shortfall is the analytic null's integer granularity,
-which admits no cut between $S{\leq}11$ at $0.0296$ and $S{\leq}12$ at $0.0501$ and so drops
-the design's $13$ to $11$.
+$0.95$ against a three-fold one, at an achieved level of $0.026$. The realized design is the
+weaker of the two, and it is weaker wherever the two can be compared at all, which is at a
+common level and not at a common cut: read at a common achieved level its power is $0.669$
+against the other's $0.699$ at $0.025$, and $0.783$ against $0.809$ at $0.050$, and the sign
+is the same at every level we sweep from $0.005$ to $0.20$. Most of the shortfall is the analytic
+null's integer granularity, which admits no cut between $S{\leq}11$ at $0.0296$ and
+$S{\leq}12$ at $0.0501$ and so drops the design's $13$ to $11$; but a material part of it is
+the three targets the run could not test and the six short arms, and we do not attribute that
+part away. Decomposing the fall from $0.77$ to $0.67$ into a level effect and a design effect,
+and averaging the two orders in which the decomposition can be taken, puts about $0.07$ on
+granularity and about $0.03$ on the design, roughly a third of the total; read separately at a
+common level the three untested targets cost about $0.02$ and the short arms about $0.02$.
+Two readings that would reverse this are not available and we name them, because the first is
+tempting. At a \emph{fixed cut} the realized design does score higher, but a fixed cut is not
+a fixed level: at $S{\leq}13$ its analytic tail is $0.0793$ against the other's $0.0437$, so
+it buys that score with $1.8$ times the type-I error, which is exactly the comparison the next
+paragraph refuses to make. And its null expectation is the lower of the two, $20.4$
+exceedances against $22.0$, only because $3{,}704$ benign draws are fewer than $4{,}000$:
+that is less data, not more power.
 
 On the same draws, a critical value calibrated
 against the true simulated null reaches $0.66$

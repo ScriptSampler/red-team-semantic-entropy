@@ -194,8 +194,10 @@ detector score; consequently the SE and SRE campaigns operate on the
 cross-detector comparison well-defined. This is a deliberate departure from
 selecting targets at extreme clean entropy. Extreme selection inflates the clean
 detector AUROC toward $1.0$ by construction, because such an AUROC is the selection rule
-reflected back, and it would overstate any measured degradation. We therefore report
-degradation against the clean AUROC of the \emph{fair} pool, not the extreme one.
+reflected back, and it would overstate any measured degradation. The baseline for any such
+degradation would therefore be the clean AUROC of the \emph{fair} pool and not the extreme
+one; we report no degradation figure anywhere in this paper, so no such baseline is used
+here.
 
 \paragraph{Measurement headroom, and why the two directions are not comparable in nats.}
 Discrete semantic entropy over $N$ sampled answers is bounded on both sides,
@@ -285,7 +287,8 @@ attack success rate appears anywhere in this paper.
 usable $\delta$.}
 Condition~(ii) interacts with the discreteness of the score in a way we disclose here, where
 the criterion is defined. The interaction does not merely make some targets hard. It makes
-them impossible, while leaving them in the denominator of every rate we report. At $N{=}10$ the
+them impossible, while leaving them in the denominator that any attack success rate would
+have to be computed over. At $N{=}10$ the
 discrete plug-in entropy is not just bounded by $\ln 10$; it is confined to the $39$ values obtainable
 as the Shannon entropy of an integer partition of $10$ into cluster sizes, and the top two of
 those, $2.164$ and $\ln 10 = 2.303$, lie $0.139$ nats apart. A target whose clean score is
@@ -334,9 +337,10 @@ non-equivalent paraphrase, which is an
 (Section~\ref{sec:limitations} states it the same way); we report no count for it. Both detectors are evaluated
 with a fixed sampling seed, so per-question entropy is reproducible and the
 SE--SRE comparison is like-for-like rather than one deterministic detector against
-one stochastic one. The operating-point FPR sweep is an exploratory sensitivity analysis, not
-an independent hypothesis test, and the entropy-cutoff curve that would sit beside it is not
-reported here. The confirmatory comparisons are stated in advance, and no AUROC degradation
+one stochastic one. The operating-point FPR sweep is defined above as a count of those flips
+and no flip count is reported, so the sweep does not appear here either, nor does the
+entropy-cutoff curve that would have sat beside it. The confirmatory comparisons are stated
+in advance, and no AUROC degradation
 under attack is among them, so the paired bootstrap confidence interval resampling questions
 jointly that such a comparison would need does not appear either.
 
