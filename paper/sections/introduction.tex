@@ -29,6 +29,35 @@
 % sensitivity rows and the arithmetic; this file states the consequence only, which is that
 % the non-rejection is rested on the pre-registered adjudicator arm because that arm is the
 % one invariant to the unidentified budget.
+%
+% "THE SAME POPULATION YIELDS 28 AT n=200 AND 35 AT n=2000" WAS TWO POPULATIONS CALLED ONE,
+% and it was corrected on 2026-08-31 (results/heavy_review_2026_08_30.md F10,
+% results/gemini_adjudication_2026_08_30.md M8). From results/fair_pool_granularity.md:
+% 28 is the FAIR POOL'S CORRECT STRATUM at n=200 (its section 2 table), and 35 is the FULL
+% LABELLED POOL at n=2000, correct and hallucinating together. "The same population" was
+% the phrase doing the argumentative work, because the point is that the count is monotone
+% in n FOR A FIXED POPULATION and so measures the sample rather than the estimator; a
+% checker who looked the two numbers up found different populations and the argument lost
+% its force. The repair keeps the argument by making the within-population pair explicit
+% instead of asserting it: the 22 realised by the attacked 80 sits at the 37th percentile
+% of a random 80 DRAWN FROM THAT SAME CORRECT STRATUM (E[distinct] = 23.0, MC sd 1.59,
+% granularity section 5), which then yields 28 at n=200; the n=2000 figure is attributed to
+% the pool it came from and carries the monotonicity no further than it can. Do NOT restore
+% "the same population": it is false of the pair it spanned, and the guard
+% scripts/check_population_labels.py does not cover this sentence, so nothing but this note
+% stands between it and a third printing.
+%
+% CONTRIBUTION (1) WAS ONE UNBROKEN PARAGRAPH AND IS NOW SIX. It ran about 58 typeset lines
+% across two pages while carrying the headline plus six separable sub-arguments, and it is
+% the first substantive thing a referee reads. The break is TYPOGRAPHY ONLY: five blank
+% lines were inserted at sentence boundaries on 2026-08-31 and not one word, number,
+% interval, qualifier, citation or ref was added, removed or moved across a seam. The seams
+% follow the sub-arguments: (a) which estimator and which half of the result transfers,
+% (b) the lattice and the operator constraint it implies, (c) why the floor is an identity
+% and where it stops binding in N, (d) the floor's value and its dependence on the
+% clusterer, (e) deterministic rules and what does not rest on a distinct-value count,
+% (f) the same crowding as the originating work reports it. Items (2) to (5) are
+% deliberately untouched and still run on from (f); breaking those out is a separate edit.
 
 Large language models are increasingly paired with \emph{hallucination detectors}
 that estimate whether a generated answer can be trusted. A prominent family is
@@ -128,7 +157,9 @@ That half is shared with the likelihood-weighted Eq.~(5), which normalises to a 
 distribution over the same clusters and so inherits the same ceiling. It is not shared with
 Kuhn's unnormalised Eq.~(4), which has no such bound, so the ceiling is not a property of
 ``semantic entropy'' unqualified. The lattice half below is discrete-specific and does not
-transfer. At the standard $N{=}10$ the
+transfer.
+
+At the standard $N{=}10$ the
 estimator is confined to a lattice of $39$ attainable values with an atom at the maximum
 $\ln 10$, and the consequence we measure is a constraint on the \emph{operator} rather than on
 the attacker: a detector that flags when the score reaches a threshold can only change its
@@ -142,6 +173,7 @@ ceiling atom and buys the missing operating point, so a $5\%$ budget is honoured
 achieved $5.0\%$ [$2.7$, $9.0$]. We therefore scope the claim to $N{=}10$, and to the
 detector's own bidirectional DeBERTa-large-MNLI clustering, wherever we make it
 (Section~\ref{sec:discussion}).
+
 That floor is an identity, not a measurement we happened to make: every threshold above
 $\ln N$ flags nothing, so the smallest false-positive rate a firing threshold can have
 \emph{is} the probability that a clean correct answer yields $N$ mutually distinct meanings.
@@ -155,6 +187,7 @@ $N{=}40$ the identity does not bind: no clean correct answer reaches $\ln 40$, t
 mass is $0.0\%$ [$0.0$, $1.9$], the floor reverts to an ordinary order statistic, and the
 cheapest threshold that fires at all costs $2.0\%$ rather than nothing. We attach no
 interval to that $2.0\%$; Section~\ref{sec:discussion} says why.
+
 We put that probability at $9.5\%$ on the fair pool's correct stratum and, on the
 $1424$-answer superset that stratum is a subset of, at $10.5\%$ [$9.0$, $12.2$], whose lower
 bound closes off a $5\%$
@@ -169,19 +202,22 @@ detector actually ships and claim its oracle-dependence, rather than a floor tha
 whatever relation a deployment happens to cluster with; the looser oracle we validate puts
 too little mass at the cap to be distinguished from $5\%$ in its own right, which is a reason
 to scope the claim and not a reason to weaken it.
+
 The claim is about \emph{deterministic} rules, which is what a deployment can be audited
 against: a randomised rule that flags a ceiling item with some probability does reach the
 chords between these points, at the price of paying an indivisible block's average, and below
 the floor the reachable frontier is a single chord out of the origin. Nothing here rests on a count of
 distinct values realised: that quantity is monotone in the number of targets scored (the
-same population yields $28$ at $n{=}200$ and $35$ at $n{=}2000$, and $22$ sits at the $37$th
-percentile of what a random $80$ produces), so it measures the sample, not the estimator, and
+fair pool's correct stratum yields $28$ at $n{=}200$ and the full labelled pool $35$ at
+$n{=}2000$, and $22$ sits at the $37$th percentile of what a random $80$ drawn from that
+correct stratum produces), so it measures the sample, not the estimator, and
 the total number of operating points inherits the same defect. What does not move with the
 sample is the lattice size, and at the low end the floor. The general argument has been made
 and named for black-box LLM classification~\citep{sun2026granularity}: a score's
 distinct-value count caps what an operator can do with it, however well it ranks. We
 instantiate that argument for a sampling-based generative detector, where the granularity
 limit is imposed by the sample budget itself.
+
 The originating work sees the same crowding from the other side, reporting
 that clusters are few and grow little with $N$, and reads it as a computational
 saving~\citep{kuhn2023semantic, farquhar2024detecting}. Read instead as a measurement

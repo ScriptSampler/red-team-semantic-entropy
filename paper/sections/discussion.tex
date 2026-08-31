@@ -52,7 +52,7 @@ points at or below $1\%$, $5\%$, $10\%$ and $20\%$ false alarms is $0$, $0$, $1$
 count against a budget rather than reporting how many operating points exist in total. More
 negatives realise more of the lattice, so the total is a property of the sample, while the
 low end is not. \citet{sun2026granularity} argue that a score can rank acceptably and still
-leave an operator only a handful of usable thresholds. We count that argument out for
+leave an operator only a handful of usable thresholds. We instantiate that argument for
 a sampling-based detector, where the
 thresholds available are fixed by the sample budget rather than by a model's verbal habits.
 
@@ -552,8 +552,9 @@ Averaging the detector score over several reformulations of whatever input is re
 should dilute a single adversarial
 phrasing, and that averaging is the mechanism SRE already builds in.
 We state that expectation as a prediction the experiment can refute. Because the
-attacked paraphrase was selected as a maximum over $\sim$$181$ noisy estimates, merely
-re-scoring it on fresh samples shrinks the effect by roughly half with no defence of any
+attacked paraphrase was selected as a maximum over the feasible candidates of a
+$\sim$$181$-evaluation search, merely re-scoring it on fresh samples shrinks the effect by
+roughly half with no defence of any
 kind, so the defended arm has to be measured against a \emph{cost-matched} control that pays
 exactly that re-sampling cost and nothing else. That control is a $d{=}1$ fresh redraw of
 the same two

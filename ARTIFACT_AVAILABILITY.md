@@ -405,15 +405,24 @@ the tree, and are excluded by a rule whose stated purpose was protecting them fr
 
 ---
 
-## 7. `results/equivalence_audit_key.csv` -- do not publish it yet
+## 7. `results/equivalence_audit_key.csv`: sequester it now, publish it with the labels
 
-**Measured.** The key is 63,224 B, **tracked**, and holds 160 rows: 123 from round 1 and 37
-from round 2, across strata `win` (94), `subthreshold` (39), `flip` (17) and `catch` (10).
-Its columns include `question_id`, `source_file`, `attack`, `detector`, `success`,
-`status_held`, `entropy_before`, `entropy_after` and `delta` -- that is, the complete outcome
-of every pair, alongside the questions themselves.
+### 7.1 Measured at commit `59b5003`, 2026-08-31, CPU only
 
-It is tracked deliberately. `.gitignore` carries an explicit negation with a rationale:
+| claim | measured |
+|---|---|
+| tracked | Yes. `git ls-files` lists it. Blob 63,063 B in commit `6d65384` (2026-08-13); working tree 63,224 B (the 161 B gap is CRLF in the checkout against LF in the object). |
+| rows | **160 data rows in 171 physical lines.** Ten rows carry a newline inside a quoted field. It is not 171 rows; a line count overstates it by eleven. |
+| distinct pairs | **123.** Round 1 is 123 pairs; round 2 is 37 re-presentations of round-1 pairs. 123 + 37 = 160. |
+| columns | 20: `pair_id, round, stratum, orientation, round1_pair_id, question_id, source_file, attack, detector, question, best_query, success, entropy_and_feasible, status_held, correct_under_q_prime, frac_correct_under_q_prime, answer_under_q_prime, entropy_before, entropy_after, delta` |
+| strata, round 1 | win 72, subthreshold 30, flip 13, catch 8. Reproduces the design manifest exactly. |
+| strata, round 2 | win 22, subthreshold 9, flip 4, catch 2 |
+| pool hashes | Both snapshot inputs re-hash to the sha256 recorded in `equivalence_audit_design.md`. The sheets are regenerable from the frozen snapshot. |
+| blinded sheet | 7 columns: `pair_id, question_A, question_B` plus four empty annotation fields. **No outcome column, no stratum, no orientation.** Genuinely blind to outcome. |
+| orientation randomised | Yes. 76 `q_first`, 84 `qprime_first`, and all 160 rows agree with the sheet. |
+| annotated | **0 of 123 and 0 of 37**, in this tree and in all seven `.claude/worktrees` copies. `equivalence_audit_protocol.md` section 9 carries one log entry, the 2026-08-13 pre-registration, and no session rows. |
+
+The tracking is deliberate. `.gitignore` carried an explicit negation with a rationale:
 
 ```
 # the equivalence-audit sheet, key and labels are EVIDENCE, not derived output.
@@ -422,56 +431,202 @@ It is tracked deliberately. `.gitignore` carries an explicit negation with a rat
 !results/equivalence_audit*.csv
 ```
 
-That argument is correct *at the end of the audit*. It is being applied at the wrong time.
+The argument is correct. It is being applied at the wrong time. Protocol section 7d asks for
+"the protocol, the blinded sheet, the key, **and the filled labels**" in one release, and
+there are no filled labels.
 
-**The problem.** `results/equivalence_audit_protocol.md` says two things that are currently
-both violated:
+### 7.2 The key is not adjacent to the sheet, it is the sheet's answer
 
-- Its file table, before section 1: "`results/equivalence_audit_key.csv` | un-blinding key.
-  **Move it out of the working directory now**, before section 1." It is instead in the
-  working directory *and* in version control, three lines below the blinded sheet in `ls`.
-- Section 7d: "Publish the protocol, the blinded sheet, the key, and the filled labels
-  together, so a reader can re-judge any pair themselves." **There are no filled labels.**
-  Both sheets are empty -- 0 of 123 round-1 rows and 0 of 37 round-2 rows have anything in
-  `equivalent_yes_no_unsure`. The paper agrees the audit is outstanding:
-  `paper/sections/conclusion.tex:75` and `paper/sections/limitations.tex:96,139,160,167` all
-  say a human equivalence audit is owed.
+Three columns do specific, measurable damage, and each disables a named defence in the
+protocol rather than merely leaking outcome.
 
-The protocol also records, in its own limitations, that "blinding is self-imposed. One person
-owns the repository, the key, and the sheet. The file layout makes the honest path the easy
-one; it cannot enforce it," and that "the annotator is the paper's author and is not
-disinterested."
+1. **`stratum` names the catch trials.** Ten rows carry `stratum = catch`, and they are
+   additionally the only ten rows with `attack`, `detector` and `success` blank, so the
+   filter is trivial. Protocol section 7b calls the catch trials "the only part of the design
+   that can detect a rubber-stamping annotator, which is precisely the failure test-retest
+   cannot see." Section 5's first scoring rule makes them a validity gate: any catch trial
+   not marked `no` voids its session. A key that names them removes the design's only
+   defence against the one failure mode its other defences are blind to.
 
-Put those together: the only annotator has not yet annotated; the blind is self-imposed and
-depends entirely on that annotator not opening one file; and that file is committed to a
-repository about to be made public. Publishing it now does not merely risk the blind -- it
-makes the blind **unrecoverable**, because a public git object cannot be unseen, and no
-reader will afterwards be able to distinguish an audit done blind from one done after the key
-was public. The protocol's transparency-instead-of-kappa substitution is precisely what
-collapses if that distinction is lost.
+2. **`round1_pair_id` undoes the test-retest.** Protocol section 7a defends the retest with
+   "new pair ids, an independent shuffle, and the A/B orientation flipped, so a pair cannot
+   be recognised by its id, its position, or which column the original sat in", backed by a
+   seven-day washout. Measured: all 37 round-2 rows carry a populated `round1_pair_id`, and
+   all 37 have the orientation flipped relative to their twin. That column is a complete
+   inverse of the three defences plus the washout, available in one join. Test-retest
+   reliability is the protocol's **headline agreement number** in the absence of a kappa.
 
-**Recommendation.**
+3. **`success`, `status_held` and `entropy_and_feasible` give the outcome outright.** The
+   cross-tab is exact and deterministic: `win` is `success=True`; `flip` is
+   `entropy_and_feasible=True, status_held=False`; `subthreshold` is
+   `entropy_and_feasible=False`. Nothing needs to be inferred, and every headline quantity in
+   protocol section 5 (`p_win`, `p_flip`, `p_subthreshold`, the invisible-to-automation cell)
+   is a group-by away.
 
-1. **Do not include `equivalence_audit_key.csv` in the public artifact release.** Not the
-   repository, not the release asset, not the data host.
-2. **Move it out of the working tree now**, as the protocol's own first instruction says, and
-   `git rm --cached` it. Note that it has already been committed, so it is in the history of
-   the private repository -- if that history is what gets published, the key is public
-   whatever the current tree says. If preserving the blind matters, publish from a fresh or
-   squashed history.
-3. **Keep the blinded sheets and the protocol tracked**: `equivalence_audit.csv`,
-   `equivalence_audit_round2.csv`, `equivalence_audit_protocol.md`,
-   `equivalence_audit_design.md`. Publishing the instrument and the empty sheets *before* the
-   audit is exactly right -- it pre-registers the decision rule, and none of those four files
-   un-blinds anything.
-4. **Publish the key together with the filled labels, in the same release, once the audit is
-   done.** That is what section 7d actually asks for, and it is the only form in which the
-   substitution of transparency for agreement statistics does any work.
-5. Until then, the paper should say the audit is owed **and** that the key is deliberately
-   withheld until it is discharged. Silence on the second half invites the reading that it was
-   withheld because the result was unwelcome.
+The sheets themselves are clean. Nothing here is a criticism of `equivalence_audit.csv` or
+`equivalence_audit_round2.csv`, which should ship exactly as they are.
 
-This is the one item in this document where the honest answer is: ship less, not more.
+### 7.3 One blinding leak the key is not responsible for
+
+The protocol's recommended paper wording claims the audit was run "blind to stratum and to
+attack direction". Blind to stratum: measured true, the sheet carries no stratum. Blind to
+attack direction: only weakly. Attacked queries run longer than the originals, so the naive
+rule "the longer of the two is the paraphrase" identifies q' in **81 of 112** non-catch
+round-1 pairs whose two sides differ in length, or **72.3%**, Wilson 95% [63.4%, 79.8%],
+against a 50% chance baseline.
+
+That is not fatal. Knowing which side is the paraphrase does not tell the annotator whether
+the pair is equivalent, and the substitution test in protocol section 2 asks a question about
+answer sets that does not depend on direction. But the claim as worded is stronger than the
+instrument supports. Either soften it to "blind to stratum and to outcome", which is exactly
+true, or report the 72.3% as a disclosed residual. This is a defect in
+`results/equivalence_audit_protocol.md`, which this document does not own.
+
+### 7.4 There are eight copies of the key inside the repository, not one
+
+The protocol's first instruction, in the file table before section 1, is: "**Move it out of
+the working directory now**, before section 1." Measured 2026-08-31, the working directory
+holds eight copies:
+
+| location | copies | bytes each |
+|---|---|---|
+| `results/equivalence_audit_key.csv` | 1 | 63,224 |
+| `.claude/worktrees/*/results/equivalence_audit_key.csv` | 7 | 63,234 |
+
+The seven worktrees total 31 MB and were held out of version control only by
+`.git/info/exclude`, which is local to one clone and travels with nothing: not a push, not a
+clone, not a release tarball. `git rm --cached` on the tracked copy touches none of the other
+seven. The `.gitignore` edit accompanying this document moves those patterns into the
+versioned file so the exclusion survives a clone. It does not delete the copies; that is a
+manual step.
+
+### 7.5 The pool the key describes is already stale, and a top-up is owed
+
+Protocol section 8 item 2 recorded that "the hide cell was incomplete at snapshot time, 52 of
+80 targets". That run has since finished. Measured on the live campaign file, read only, no
+GPU:
+
+| file | records | successes |
+|---|---|---|
+| snapshot `triviaqa_se_false_alarm.jsonl` | 80 | 44 |
+| snapshot `triviaqa_se_hide.jsonl` | 52 | 28 |
+| live `triviaqa_se_hide.jsonl` (2026-08-13 07:21) | 80 | 44 |
+
+The 28 hide records added since the snapshot contain **16 further wins**. The finished
+campaign therefore holds 88 wins, of which the audit's win stratum censuses 72. Protocol
+section 6 rests real weight on that census: "the win stratum is censused (all of them), so
+for the claim *of the wins in this paper, k were not meaning-preserving* there is **no
+sampling error at all**." That is true of the 2026-08-13 snapshot and no longer true of the
+campaign. As drawn, the audit covers 72 of 88 wins, 81.8%. Restoring the census claim needs
+either the top-up batch of protocol section 8 item 2
+(`--exclude_audited results/equivalence_audit_key.csv`, which is disjoint and does not
+re-draw round 1) or a restatement of the population as the snapshot rather than the campaign.
+
+This matters for the decision below, because it means the sheets have to be **touched again
+before annotation starts anyway**. That regeneration is the natural and cheapest moment to
+fix the key's location.
+
+### 7.6 The options, and what each one costs
+
+The key cannot be deleted: scoring the audit is a join on `pair_id`, and every quantity in
+protocol section 5 comes out of its columns. The question is only where it lives, and when it
+becomes public.
+
+| option | what it does | what it costs |
+|---|---|---|
+| **A. Leave it, disclose it** | Ship the key with the paper. Add a Limitations sentence saying the key was in the working tree and in version control throughout. | Cheapest, and honest. But it converts the audit from blind to unverifiable, permanently. A reader cannot distinguish an audit done blind from one done with the answers open, and protocol section 7d's substitution of transparency for a kappa is precisely what collapses, because that substitution needs the reader to believe the labels were produced under the stated rule. |
+| **B. Move it out of adjacency, keep tracking** | `git mv` it to, say, `results/private/`. | Cosmetic. Still in the working tree, still tracked, still published, still one `ls` away. It buys nothing, and it looks like it was meant to. Not viable alone. |
+| **C. Untrack it now** | `git rm --cached`, move the file outside the repository, delete the seven worktree copies. | Correct, and incomplete on its own. The blob is in commit `6d65384` and reachable from every later commit, so publishing this history publishes the key whatever the tip says. |
+| **D. C, plus publish a snapshot rather than the history** | Release the working tree at submission (arXiv ancillary files, a Zenodo tarball, or a fresh-history repository) instead of pushing the existing eleven-week history. | Makes C actually effective. Costs the public commit history, which for a solo preprint is a small loss and arguably a gain in legibility. Decide before the first public push; it is irreversible afterwards. |
+| **E. Do the audit before submission** | 123 pairs at 60 to 90 s each is about 4 sessions and 3 to 4 hours, plus a 7-day washout, plus 37 retest pairs. | Dissolves the problem instead of managing it. With filled labels, protocol section 7d becomes correct as written and the key ships as evidence rather than as a hazard. 31 days remain to 2026-10-01 and the washout fits inside them. The top-up in 7.5 is owed regardless, so the sheets are being regenerated either way. |
+
+### 7.7 Recommendation
+
+**Take E, with D as the fallback, and disclose either way.**
+
+1. **Regenerate the sheets with the top-up batch first** (7.5). The hide cell is complete, 16
+   wins were never eligible for the draw, and the census claim depends on them. Use
+   `--exclude_audited results/equivalence_audit_key.csv` so the second batch is disjoint and
+   round 1 is not re-drawn.
+2. **Move every copy of the key out of the repository before the first pair is read**: the
+   tracked one and the seven in `.claude/worktrees`. Then `git rm --cached
+   results/equivalence_audit_key.csv`. `.gitignore` has been amended so the file is ignored
+   once untracked, which also protects it from `git clean -fd` if it is left on disk. The
+   amendment is inert until the untrack is run, and its comment says so.
+3. **Run the audit.** Log every session in protocol section 9 with timestamps and pair
+   ranges, as protocol section 4 requires. That log is the only artefact that will let a
+   reader date the annotation against the key's removal.
+4. **Publish the key together with the filled labels** in one release, as protocol section 7d
+   asks. At that point restore the plain negation in `.gitignore` and delete the re-ignore
+   line; the comment there says so.
+5. **If the audit does not happen before submission**, take D: do not push this history
+   publicly. Publish a snapshot with the key withheld, and use disclosure (b) below.
+6. **Disclose on every path.** Under E the disclosure is short and favourable. Under A or D
+   it is the load-bearing sentence. Silence is the one option not available: the key's
+   presence is recoverable from the repository by anyone who looks, and a reviewer who finds
+   it unaided will read it as concealment rather than as the ordinary consequence of a
+   one-person workflow.
+
+What this does not fix, and what no option fixes: the annotator is the paper's author, the
+blind is self-imposed, and the key has been in the working tree since 2026-08-13. Protocol
+section 8 items 3 and 4 already say so. The recommendation reduces the exposure from
+unbounded and public to bounded, dated and disclosed. It does not manufacture an
+independence that never existed.
+
+### 7.8 Disclosure text for the paper, ready to paste
+
+Not applied. `paper/` is out of scope for this document. Both variants are pure ASCII, with
+no em dashes and no `--`, to match the source tree. Insert after the Limitations paragraph
+beginning "Equivalence is certified automatically, not by humans"
+(`paper/sections/limitations.tex`), and pick one.
+
+**(a) If the audit is completed before submission (recommended).** An addition, once labels
+exist; it replaces nothing.
+
+> The audit instrument was pre-registered before any pair was read: the decision rule, the
+> sampling design, the blinded sheets and the un-blinding key were generated together and are
+> released with this paper. Because a single annotator, who is also the author, produced the
+> labels, the key was moved outside the repository before annotation began and restored only
+> for scoring; session timestamps and pair ranges are logged in the protocol. We report
+> intra-annotator test-retest reliability on a re-presented subsample in place of an
+> inter-annotator agreement statistic, and we note that test-retest bounds self-consistency
+> rather than correctness. A reader who wishes to re-judge any pair can do so from the
+> released sheet and key.
+
+**(b) If the key remains adjacent, or the audit is still outstanding at submission.** This is
+the disclosure the paper needs if anything is left as it stands.
+
+> The equivalence audit reported as owed above has been designed and pre-registered but not
+> yet performed: both blinded sheets are released unannotated. Two limitations of that design
+> should be stated plainly. First, the blind is self-imposed. A single annotator, who is also
+> the author, owns the repository, the blinded sheet and the un-blinding key, and the key was
+> version-controlled in the same directory as the sheet from the moment the instrument was
+> generated. The protocol instructs the annotator to move it out of the working directory
+> before reading any pair, but nothing in the design can enforce or evidence that, so a reader
+> should treat the audit's blinding as a stated intention rather than as a verified property.
+> Second, the key carries the stratum label, the per-pair outcome, and the mapping from each
+> re-presented pair back to its original, so an annotator with the key in view would have
+> access to the catch trials and to the test-retest linkage that the design relies on to
+> substitute for an inter-annotator agreement statistic. We disclose this because the audit's
+> evidential value rests on transparency in place of that statistic, and transparency about
+> the instrument's own weaknesses is part of what is being substituted.
+
+If (b) is used and the key is withheld from the release rather than published, append one
+sentence:
+
+> The un-blinding key is withheld from the artifact release until the audit is performed, and
+> will be published together with the completed labels.
+
+**(c) A rider for the Data and Code Availability section.** The section added to
+`paper/main.tex` on 2026-08-31 is careful about what a clone can and cannot rebuild, and says
+nothing about the audit artefacts. Whichever of (a) or (b) is used in Limitations, one
+sentence belongs here too, because this is where a reader looks to find out what actually
+ships:
+
+> The pre-registered equivalence-audit protocol, its sampling design, and both blinded
+> annotation sheets are in the repository; the un-blinding key that scores them is
+> [released alongside the completed labels / withheld until the audit reported as owed in
+> Section~ef{sec:limitations} is complete].
 
 ---
 
@@ -502,16 +657,24 @@ Reported, not changed.
 
 | where | what |
 |---|---|
-| `paper/` (all) | **No data-, code- or artifact-availability statement anywhere in 34 pages.** The primary defect this document responds to. |
+| `paper/` (all) | Was: no data-, code- or artifact-availability statement anywhere. **Closed in flight**: a `Data and Code Availability` section was added to `paper/main.tex` on 2026-08-31. It says nothing about the equivalence-audit artefacts; see section 7.8 (c). |
 | `results/figures/headline_auroc.json`, `.png` | Superseded pre-B1 numbers (clean SE AUROC 1.000, n=30) tracked with no SUPERSEDED banner, contradicting the 0.704 of record. |
-| repo root | No `LICENSE` when this was written; one has since been added concurrently but is **untracked**, and it covers the code, not the data bundle. |
-| `README.md` | Was eleven weeks stale (deadline, Status, "sample sets"); **rewritten concurrently**, uncommitted. Its new Limitations section omits the cache's size, which is the number that makes the problem look solvable. |
+| repo root | No `LICENSE` when this was written. **Closed in flight**: `LICENSE` is now tracked (1,070 B, MIT). It still covers the code, not the data bundle; section 6 item 3 stands. |
+| `README.md` | Was eleven weeks stale (deadline, Status, "sample sets"); rewritten and **now committed**. Its Limitations section still omits the cache's size, which is the number that makes the problem look solvable. |
 | `src/se/cache_check.py` docstring | Asserts a "2026-07-02 loss of `~/.cache/se-research`" that `docs/critique_log.md` entry 8 retracts as a false alarm. |
 | `src/se/sampling.py` | `DEFAULT_SAMPLES_DIR` has no env-var override, leaving twelve of fourteen consumer scripts unable to read a relocated cache. |
 | `.gitignore` | Excludes all three inputs named in `results/null_control_report_defb.md`'s own provenance table, while three superseded `_def` siblings remain tracked. |
 | `wk4_full_2000q/manifest.json` (cache) | Describes a 1907-question run for a 2000-row directory (the resume is unrecorded), and omits the `gen` block that the current `_write_manifest` would write. |
+| `paper/sections/limitations.tex:175` | Says the answer-flip subcategory "collects the successful attacks in which the model's correctness flips under $q'$". `paper/sections/methods.tex:327` says the opposite and matches the data: they are "would-be successes **voided** by condition (iii) because the model's answer flipped". Measured in the audit key, `flip` is exactly `success=False, status_held=False, entropy_and_feasible=True`, disjoint from `win`. One of the two sentences is wrong. |
+| `results/equivalence_audit_protocol.md` (section 7, recommended wording) | Claims the audit is "blind to stratum and to attack direction". Blind to stratum: true. Blind to direction: the longer-of-the-two rule picks $q'$ in 81 of 112 pairs, 72.3% [63.4%, 79.8%]. See section 7.3. |
+| `results/equivalence_audit_protocol.md` section 6, `results/equivalence_audit_design.md` | The "census of all 72 wins, no sampling error at all" claim was true of the 2026-08-13 snapshot. The hide cell has since finished at 80 records and 44 wins, so the campaign holds 88 wins and the drawn census covers 72 of them, 81.8%. See section 7.5. |
+| `.gitattributes` | Does not normalise `*.csv`, so the audit sheets' bytes depend on the cloner's `core.autocrlf`. Protocol section 8 item 5 requires the stimulus to stay byte-identical; the eight in-tree copies of the key already differ by 10 B for exactly this reason. |
+| `.git/info/exclude` | Held 31 MB of `.claude/worktrees` out of the repository using a file that is local to one clone. Moved into `.gitignore` by this document. |
 
 ---
 
-*Every measurement in this document was taken on 2026-08-30 at commit `fab9df1`, on CPU, in
-`Ubuntu-24.04` and the Windows `.venv`. No GPU work was run. Nothing was committed or pushed.*
+*Sections 1 to 6 and 8 were measured on 2026-08-30 at commit `fab9df1`. Section 7 and the
+section 9 rows marked "in flight" were re-measured on 2026-08-31 at commit `59b5003`. All on
+CPU, in `Ubuntu-24.04` and the Windows `.venv`. No GPU work was run. Nothing was committed or
+pushed. The only files changed are `ARTIFACT_AVAILABILITY.md` and `.gitignore`; the
+`git rm --cached` that section 7.7 item 2 calls for is proposed, not executed.*

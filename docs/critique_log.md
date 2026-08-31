@@ -2602,3 +2602,252 @@ CPU arithmetic and file reads. **No STOP file of any spelling was created in eit
 location.**
 
 ---
+
+## 39. 2026-08-31 (`fab9df1..59b5003`) : the largest review this project has run, and the number both reviewers argued about was never identified
+
+This ledger's previous entry predates the completed null control (80/80), twenty-three internal
+critic agents across ten lenses, an independent Gemini 3.1 Pro review of the PDF alone, and a
+five-agent adjudication that corrected both. 44 findings raised, 22 material, 13 talked down by a
+defence round whose job was to talk them down, 9 surviving. Reports:
+`results/heavy_review_2026_08_30.md`, `results/gemini_adjudication_2026_08_30.md`. **Nothing here
+is a withdrawal of the headline.** The withdrawals are a defence, a scope, and one clause that the
+correction round itself created.
+
+### 1. The headline held, and the precise value of two reviewers agreeing
+
+An adversary lens was told to destroy the measurement-validity result and attacked it from six
+directions: the 39-value lattice, the `floor = mass of the ceiling atom` identity and its
+"for as long as the ceiling carries mass" conditioning, the randomised-rule concession, the
+nesting of the attacked pool inside the fair pool, the superset argument. All six survived. Four
+lenses re-derived the spine from the raw caches with their own code and it reproduces exactly:
+1424 correct, 150 at `ln 10`, 10.5% [9.0, 12.2]; 42 partitions to 39 distinct entropies with 2 in
+the top decile; 0/200 at `ln 40`, the cheapest firing threshold at 4/200 and the 5% budget landing
+at exactly 10/200. Gemini, reading the PDF cold with no source, no checkpoints and no knowledge of
+this project's retractions, reached the same verdict independently.
+
+**What the agreement buys.** The two reviews have close to disjoint access. Gemini could not be
+led by the repository's framing because it could not see the repository; the panel could check
+arithmetic Gemini could not see, but shares the author's model family and the repo's own
+vocabulary. An error surviving both would have to be simultaneously invisible in the PDF's
+presentation and absent from the code and the data. That intersection is genuinely small, and this
+is the strongest correctness evidence the project has produced about anything.
+
+**What it does not buy, and the sentence is deliberately flat.** *Neither reviewer ran an
+experiment from scratch.* Both re-derived from checkpoints the original pipeline produced. A bug
+upstream of `null_control_ckpt_defb.jsonl` or of the Week-4 relabelling is inherited by every
+re-derivation in both reviews and by every number in this entry. Nothing here is a replication.
+Both reviewers are also language models trained on overlapping literature, so the complementarity
+argued above is plausible and unmeasured; and no human referee has read the paper. Convergence
+between two readings of one set of outputs is evidence about the reading, not about the run.
+
+### 2. The disagreement, which is the most valuable thing the review produced
+
+Gemini listed the exceedance test under "came out clean" and endorsed the search budget `A = 181`.
+The panel called it a major defect: the benign `m = 50` are counted post-feasibility-gate while
+`A` was counted pre-gate. **The adjudication found the panel right about the structure and both
+wrong about the size.**
+
+Structure, verified from source: `src/se/attacks/optimizer.py` nests the `best_obj` / `best_query`
+update inside `if fr.feasible:`, and `entropy_after == max(feasible_objs)` on all 69 targets with
+feasible candidates, bit-identical. The maximum ranges over the feasible subset, so `A = 181` is an
+upper bound on the budget and not a measurement of it.
+
+Size, which is the part that matters: **the gate is applied lazily.** Only candidates clearing the
+`c.obj >= best_obj` pre-filter are ever submitted to it, so only **4,703 of 14,400 scored children
+(32.7%)** were feasibility-checked at all, and those were the high-objective ones, which are
+plausibly the least likely to pass. The ungated candidate strings are not persisted anywhere;
+`feasible_objs` stores floats and only `best_query` survives as text. **`A` is not point-identified
+from anything we recorded, and no CPU re-analysis can identify it.** The hard lower bound is the
+case where no never-gated candidate would have passed, a mean of 41 over the 77 targets the test
+runs on; the extrapolated point estimate is 118 to 121; the upper bound is 181.
+
+The panel's own Section 7.1 wrote the range as `[118, 181]`. The NLI arm's median *p* crosses the
+5% cut near `A = 90`.
+
+| A | NLI median *p* | judge median *p* |
+|---|---|---|
+| 181 (as shipped) | 0.939 | 1.000 |
+| 121 (panel's point estimate) | 0.343 | 1.000 |
+| 90 | 0.037 | 1.000 |
+| 41 (hard lower bound) | <0.001 | 1.000 |
+
+> **Before arguing about the value of a parameter, establish that the artifacts identify it. If
+> they do not, the argument has no resolution, and the fix is not a better point estimate; it is a
+> conclusion that does not depend on the parameter.** Both reviewers skipped that question. One
+> defended 181 and one attacked it, and neither asked whether the number was estimable, because the
+> paper printed it as though it were.
+
+> **A sensitivity range proposed by the party holding the conclusion must be checked for the point
+> at which the conclusion flips. A range that does not contain that point is not a sensitivity
+> analysis, it is the conclusion restated in interval form.** The panel raised the finding, was
+> right about it, and still bounded it below at 118 when its own mechanism reaches 41. The error was
+> not in the direction of the finding; it was in stopping the finding where the verdict was still
+> safe.
+
+### 3. The defence changed and the verdict did not, and that is a narrower base held more firmly
+
+The paper used to rest the non-rejection on the shipped statistic having room to spare: *p* =
+0.939, no realisation near the cut, the total above its null expectation in all three arms. At the
+measured feasible budget none of that is true, and the three sentences saying so are deleted.
+
+What the non-rejection now rests on is the arm the decision rule was pre-registered on. **The
+adjudicator's median *p* is 1.000 at every `A` in [41, 181] and at every one of the 101 tie draws.**
+The verdict is invariant to the one parameter we cannot pin down, which is a stronger property than
+the one it replaced, because it does not require the parameter to be known.
+
+The NLI arm's *p* is now reported as **not identified**, with the range and the crossing point,
+rather than quoted at 0.939 as though the budget behind it had been measured. Quoting the end of a
+range most favourable to your own conclusion is the same act whether or not you know the range
+exists; discovering the range obliges you to say so.
+
+> **A defence that survives on an invariance is worth more than one that survives on headroom, and
+> it covers strictly less territory. Say which arm carries the claim, and stop claiming the others
+> corroborate it.** The exact-match arm's *p* = 1.000 is a structural certainty and not a
+> measurement: 1461 of its 3704 benign draws sit at their own `ln 10` ceiling, so under an attack
+> pinned at the ceiling on every target its exceedance total still cannot fall to the rejection
+> region. Three concordant non-rejections were two.
+
+### 4. An outside model found what twenty-three same-model agents did not, and the finding contains no error
+
+Gemini's prevalence finding is the case for external review stated as a measurement rather than as
+a platitude. `discussion.tex`'s operator row prints 148 alerts per thousand, 49.2% precision and
+216 missed. **All three integers are exact and mutually consistent**, computed on one population at
+one threshold: 150/1424 and 145/576 at `tau = ln 10`, prevalence 576/2000. There is nothing to
+correct in the arithmetic, and every internal agent that checked the arithmetic found it correct.
+
+The defect is that the three numbers the row is *computed from* appeared nowhere in the paper.
+`25.2` had 0 hits across `main.tex` and all seven section files; `28.8` had 0; `576` had 0. The FPR
+half is one paragraph away; the TPR half was unreachable. A referee who rebuilds the row from the
+rates the section had just spent two paragraphs establishing (the fair pool's 9.5% and 27.5%) gets
+55.1% precision and 149 alerts, **outside the paper's own quoted [43.5, 54.8]**; the other natural
+route gives 53.9% and 209 missed, a third distinct triple with a visibly wrong integer. All three
+routes reproduced.
+
+> **A reviewer with the repository checks that a number is right. Only a reviewer without it
+> checks whether the document contains enough to rebuild the number.** Twenty-three agents read
+> that row and supplied the missing 25.2% from the artifacts without noticing they were supplying
+> it. Familiarity did not bias them; it substituted for the omission, which is worse, because a
+> substitution leaves no trace in the review. The cheapest available proxy for a cold reader is to
+> re-derive a printed quantity using only what is printed, and any quantity that fails that test is
+> missing an input regardless of whether it is correct.
+
+Fixed: the row now carries TPR 25.2% [21.8, 28.9] = 145/576, the prevalence 28.8% (576/2000), and
+the explicit note that the fair pool cannot supply it, being 50% hallucinating by construction.
+
+### 5. The oracle scoping: the refutation was three cells of our own Table 1
+
+The floor is a fact about how often the model answers a question in `N` ways *the clusterer holds
+apart*, so it depends on three inputs and not two. Two sentences enumerated the determinants and
+positively excluded the third, calling it "a property of the model and the question distribution,
+not of the estimator's arithmetic", and the unqualified claim ran in five places including the
+Abstract.
+
+Table 1 already printed the refutation: the same estimand, on the same 80 targets, with only the
+equivalence relation varying. Clean ceiling saturation **46.2% (exact) / 10.0% (NLI) / 1.2%
+(judge)**, verified as 37/80, 8/80 and 1/80. Wilson [35.7, 57.1] against [5.2, 18.5]:
+**non-overlapping**, and the judge's point estimate sits below the 5% line the Abstract called
+unreachable. No new measurement was required to find this, no source access, and no arithmetic
+beyond two Wilson intervals on numbers the paper itself prints one section from the sentence they
+refute.
+
+Entry 33's through-line was that the bottleneck is not measurement but that nobody makes the
+artifacts argue with each other. This is that failure with the distance reduced to zero: the
+artifact holding the counterexample was the paper.
+
+> **A scope list is a claim about determinants and it is falsifiable by your own results section.
+> Before writing "a property of X and Y", enumerate the inputs the quantity actually consumes and
+> check the enumeration against the tables you printed, not against the design you remember.** Every
+> other axis in this paper is scoped meticulously, which is exactly why a reader takes the omitted
+> one as considered and excluded.
+
+Honest bound kept in the fix: the judge rate is 1/80, Wilson [0.22, 6.75], which does not exclude
+5%. The claim scoped into the paper is oracle-dependence, which Table 1 proves, not "a 5% budget is
+feasible under the judge", which 80 targets cannot support.
+
+### 6. A false clause entered inside the sentence carrying the new defence, and it ran in our favour
+
+`experiments.tex:261`, in the paragraph written to *replace* the retracted defence:
+
+> their exceedance totals, $652$ and $383$ at $A{=}181$ **and larger still at lower budgets**, stand
+> more than fourfold above the null expectation even at $A{=}41$
+
+`A` enters the BetaBinomial null and nothing else. The observed total `S` is the count of benign
+draws the attack exceeds plus randomised tie credit at `1/(b_j+1)`, with `b_j` measured from
+`n_feasible_at_best`; it is a function of the data and the tie-break stream only. **`S` is
+A-invariant by construction, and what rises at lower budgets is the expectation it is compared
+against** (3704/182 = 20.4 at 181, 3704/42 = 88.2 at 41). I recomputed the totals with my own
+implementation at both ends: judge 634 and exact 381 at `A = 181`, identical at `A = 41`, to the
+unit. Over 101 tie draws my medians are judge 650 and exact 381 against the paper's 652 and 383,
+which is the RNG stream and not a discrepancy; strict-only totals 470 and 220 reproduce the panel's
+exactly.
+
+One real subtlety, checked rather than assumed, in the spirit of entry 38 section 6. The shipped
+`exceedance_counts_randomized` clamps `b_j` to the scalar `n_attack_candidates`, and max `b_j` =
+131, so at `A = 41` the clamp does bite and `S` does move. It moves judge 634 to 636 and exact 381
+to 389 in my seed-0 run; the paper's own new footnote, landed independently while this entry was
+being written, puts the drift across the range at 2 and 7 and records that the clamp fires on 22 of
+77 targets at `A = 41`. The clause is not rescued by that. A drift of single-digit units in totals
+standing fourfold above their null is not "larger still"; the clamp is a guard against inconsistent
+inputs rather than part of the statistic's definition; and the movement it does produce runs in the
+same self-favouring direction the clause asserted, which is a reason to name it rather than to lean
+on it.
+
+The clause was wrong, and it was wrong in the direction that made our own conclusion look sturdier.
+Entry 36 records a round in which two of three corrections were themselves wrong; entry 38 section
+3 records the rule that a correction's *new* values are pinned by nothing and that the moment of
+maximum risk for a number is the hour it is created. This is the same class, one notch sharper, and
+the notch is what is new:
+
+> **The sentence carrying a correction is the least-audited sentence in the document.** It arrives
+> with the authority of the fix, it is read as the answer to the finding rather than as a new claim,
+> and no guard covers it because it did not exist when the guards were written. Audit the
+> replacement text with the same hostility as the text it replaced, and check its direction: a
+> correction that errs in the author's favour has passed through a filter, not a mistake.
+
+> **When a sensitivity analysis varies a parameter, name which side of the comparison the parameter
+> enters.** Here it enters the reference distribution and not the statistic. A sentence asserting
+> that both move has confused the null with the data, which is the confusion the exceedance test
+> exists to prevent.
+
+Still present at `experiments.tex:261` as this entry is written; the closing round owns that file
+and is repairing it. Logged here rather than after the fix, because a defect that is about to be
+repaired is exactly the kind this log has lost before.
+
+### 7. What I checked myself, and what I took on trust
+
+Checked, from the raw artifacts with my own code, importing no project module:
+
+- **The oracle spread and its intervals**: 37/80 = 46.2% [35.75, 57.10], 8/80 = 10.0%
+  [5.15, 18.51], 1/80 = 1.25% [0.22, 6.75]. Non-overlap of the first two confirmed.
+- **The prevalence row and all three reconstruction routes**: 150/1424 = 10.5337%, 145/576 =
+  25.1736% [21.80, 28.87], 576/2000 = 28.8%, alerts 147.5, precision 145/295 = 49.1525%, missed
+  215.5; fair-pool route 148.6 alerts and 55.12% precision; mixed route 146.8, 53.93%, 209.
+- **The budget accounting**, from the campaign file: `n_objective_calls` 181 on every target
+  (14,480 summed, so 14,400 scored children), `n_feasibility_checks` 4,703, `n_feasibility_passed`
+  3,058, pooled pass 0.65022, mean feasible-plus-one over the 77 test targets 40.71, and
+  `1 + 180 x 0.6502 = 118.0`.
+- **A-invariance of `S`**, and the clamp exception, as in section 6. Also `max b_j = 131`, which is
+  what makes the clamp reachable at the low end of the range and is the only reason that check was
+  worth running.
+- **The null control is complete**: `results/null_control_ckpt_defb.jsonl`, 80 rows, 80 unique ids.
+- **The prevalence fix has landed**: `25.2`, `28.8` and `576` now appear in `discussion.tex`, and
+  the oracle scoping now names the equivalence relation in both previously-denying sentences.
+
+Taken on trust, named so the boundary is visible:
+
+- Everything upstream of the checkpoints, as in section 1. The span oracle behind `greedy_correct`
+  that defines the 1424, the DeBERTa verdict bits, the judge's clustering of sampled answers. The
+  judge is now the load-bearing arm and it is validated on clean gold-alias pairs while
+  under-splitting on real samples; the human equivalence audit remains owed and is the largest open
+  risk in the secondary contribution.
+- The panel's citation audit against live sources, its three-clone reproduction runs, and its pytest
+  counts. The 20,000-draw power simulations behind the exact-match arm's empty rejection region; I
+  checked its mechanism and its strict-exceedance totals, not its Monte Carlo.
+- The adjudication's per-target `A_j` crossing point of 89 to 90. I reproduced the scalar-`A`
+  behaviour at both ends of the range, not the crossing itself.
+
+**Nothing in this entry ran on the GPU**; every recomputation is CPU arithmetic over JSONL. No
+`STOP` file of any spelling was created in either watched location. I edited no file other than
+this one.
+
+---

@@ -114,7 +114,14 @@ on the false-alarm stratum of the attacked pool. Denominators differ by block; s
 which also says why the embedding relation has no column. The bound labels in the column
 heads describe the attack's own mean intended move and no other row: every comparison below
 it subtracts an arm-specific benign comparator, and the bracket does not survive that
-subtraction (Section~\ref{sec:methods}).}
+subtraction (Section~\ref{sec:methods}).
+$^{\ast}$The test clamps each target's measured tie multiplicity $b_j$ to $A$, since $b_j$
+counts attack candidates at the maximum. The clamp fires on no target at $A{=}181$, on $2$
+at $A{=}121$ and on $22$ of the $77$ ($29\%$) at $A{=}41$, so that last row overwrites the
+measured multiplicity on $29\%$ of them. Clamping $b_j$ down enlarges each tied benign
+draw's credit $1/(b_j{+}1)$ and so raises $p$: the direction is conservative, and it is the
+only reason the exact-match and adjudicator totals drift up, by $7$ and $2$, across the
+range.}
 \label{tab:nullcontrol}
 \begin{tabular}{lccc}
 \toprule
@@ -127,15 +134,15 @@ Seed-noise floor ($n{=}80$)              & $-0.015$ [$-0.097$, $+0.070$] & $+0.0
 Benign floor, mean draw ($n{=}77$)       & $-0.049$ [$-0.166$, $+0.066$] & $+0.002$ [$-0.096$, $+0.097$] & $-0.071$ [$-0.172$, $+0.028$] \\
 Benign floor, best of $m$ ($n{=}77$)     & $+0.363$ [$+0.232$, $+0.490$] & $+0.213$ [$+0.117$, $+0.313$] & $+0.422$ [$+0.299$, $+0.546$] \\
 \midrule
-\multicolumn{4}{l}{\emph{Claim statistic: randomised-tie exceedance test, $n{=}77$, at $A{=}181$ (a budget upper bound)}} \\
+\multicolumn{4}{l}{\emph{Claim statistic: randomised-tie exceedance test, $n{=}77$, at the budget upper bound $A{=}181$ unless a row says otherwise}} \\
 \textbf{Exceedance $p$, median of $101$ tie draws} & $\mathbf{0.939}$ & $\mathbf{1.000}$ & $\mathbf{1.000}$ \\
 \quad range over those $101$ draws       & [$0.229$, $1.000$] & [$1.000$, $1.000$] & [$1.000$, $1.000$] \\
 \quad draws reaching $p{\leq}0.05$       & $0/101$ & $0/101$ & $0/101$ \\
+\quad median $p$ at $A{=}121$ (point estimate) & $0.403$ & $1.000$ & $1.000$ \\
+\quad median $p$ at $A{=}41$ (lower bound)$^{\ast}$ & $<0.001$ & $1.000$ & $1.000$ \\
 Exceedances $S$, seed-$0$ draw / expected & $30$ / $20.4$ & $383$ / $20.4$ & $636$ / $20.4$ \\
 \quad median $S$ over those $101$ draws  & $28$ & $383$ & $652$ \\
 \textbf{Effective benign budget $n_{\mathrm{eff}}$} & $\mathbf{122.5}$ & $\mathbf{8.7}$ & $\mathbf{4.8}$ \\
-\quad median $p$ at $A{=}121$, the budget point estimate & $0.403$ & $1.000$ & $1.000$ \\
-\quad median $p$ at $A{=}41$, its hard lower bound & $<0.001$ & $1.000$ & $1.000$ \\
 \midrule
 \multicolumn{4}{l}{\emph{Ceiling saturation over the false-alarm targets, and the two inadmissible tie rules}} \\
 Saturation at $\log N$: clean / attacked  & $10.0\%$ / $52.5\%$ & $46.2\%$ / $70.0\%$ & $1.2\%$ / $10.0\%$ \\
@@ -256,11 +263,17 @@ What that range does to the three arms is not symmetric, and it is why the defen
 this way. The shared-NLI arm's $p$-value is \emph{not identified}: its median over $101$ tie
 draws runs from $0.939$ at $A{=}181$ to below $0.001$ at $A{=}41$, and it crosses the $5\%$
 cut near $A{=}90$. Nothing we recorded rules that region out. The two re-scored arms do not
-move at all. The adjudicator's median $p$ is $1.000$ at every $A$ in $[41,181]$ and at every
-one of the $101$ tie draws, and so is the exact-match arm's; their exceedance totals, $652$
-and $383$ at $A{=}181$ and larger still at lower budgets, stand more than fourfold above the
-null expectation even at $A{=}41$, where that expectation rises to $88.2$ from the $20.4$ of
-$A{=}181$.
+move at all, and the reason is not that they are insensitive: $A$ enters this test through
+the null and almost nowhere else. The exceedance total $S$ is built from the benign draws,
+the attack's maximum and the measured tie multiplicity, so apart from the one clamp on that
+multiplicity disclosed in Table~\ref{tab:nullcontrol}'s caption it is the same statistic at
+every budget, and what the range moves is the expectation $S$ is weighed against. The
+adjudicator's median $p$ is $1.000$ at every $A$ in $[41,181]$ and at every one of the $101$
+tie draws, and so is the exact-match arm's; their medians are $652$ and $383$ at $A{=}181$,
+unchanged at $A{=}121$, and $654$ and $390$ at $A{=}41$ once the clamp has fired, against an
+expectation rising from $20.4$ to $30.4$ to $88.2$, so both stand more than fourfold above it
+at the hard lower bound. The shared-NLI median moves as little, from $28$ to $31$: its
+$p$-value moves because the expectation passes its total, not because the total does.
 \textbf{The decision rule was pre-registered on the adjudicator arm alone} (below), and that
 arm's verdict is invariant to the one parameter we cannot pin down. That invariance, and not
 any headroom in the shared-NLI arm, is what the non-rejection rests on. Reporting the NLI
@@ -341,7 +354,13 @@ the arm the optimiser actually searched, its search behaves like
 $n_{\mathrm{eff}}{\approx}122$ random feasible paraphrases. We do not read that as fewer than
 the budget it spent: $n_{\mathrm{eff}}$ is denominated in feasible paraphrases while the
 $181$ counts scored evaluations, and against the feasible budget's own point estimate of
-$121$ it falls short of nothing.
+$121$ it falls short of nothing. Off that arm the same effect size collapses:
+$n_{\mathrm{eff}}$ is $8.7$ under exact-match and $4.8$ under the pre-registered adjudicator,
+so a search costing $181$ evaluations ranks where the best of about five random benign
+paraphrases would. That is not a clean measure of the search's strength, since off the
+objective arm the attack's query is re-scored rather than selected and so inherits the
+mis-specification set out below, but it is the effect size the pre-registered arm returns and
+it points the same way as that arm's $p$.
 Doubling the measured tie multiplicity, the one perturbation that moves $p$ downward, leaves
 the NLI arm at $0.229$ and the other two at $1.000$.
 
@@ -417,6 +436,13 @@ has a consequence a reader should not have to derive: the exact-match and judge 
 are weaker evidence than the NLI one, and the NLI arm is the only place where this test is
 asking the question it was designed to ask. That holds even though the NLI arm is itself
 confounded as an effect estimate.
+That is not the same as resting the verdict on the weakest arm, and a reader who joins this
+paragraph to the budget argument above will otherwise conclude that it is. The verdict is the
+withholding of a claim rather than a claim, so a mis-specification that inflates $p$ can leave
+reframe~(a) unclaimed but can never manufacture it; what the adjudicator's invariance across
+$[41,181]$ buys is procedural, that the pre-registered rule returns one answer at every budget
+we cannot rule out, while the evidence \emph{about} the attack lives in the NLI arm, where the
+honest report is that the $p$-value is not identified.
 
 For one of the three arms that weakness is total, and we state it rather than let three
 reported $p$-values read as three confirmations. The deployed cut is $S{\leq}11$: exact

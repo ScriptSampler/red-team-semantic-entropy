@@ -14,13 +14,13 @@ are taken at check time so a miss can be re-checked against the same bytes.
 
 | paper file | bytes | sha256[:12] |
 |---|---|---|
-| `paper/main.tex` | 16636 | `892d52974003` |
-| `paper/sections/conclusion.tex` | 7149 | `0e4aa252d140` |
-| `paper/sections/discussion.tex` | 41178 | `d9398beab64d` |
-| `paper/sections/experiments.tex` | 33820 | `933226f99fa6` |
-| `paper/sections/introduction.tex` | 17242 | `7f5242d85baa` |
-| `paper/sections/limitations.tex` | 19704 | `9aca28572e73` |
-| `paper/sections/methods.tex` | 31238 | `a26c6ffb534b` |
+| `paper/main.tex` | 27394 | `dd8f5edb5379` |
+| `paper/sections/conclusion.tex` | 9951 | `4caf132bc5db` |
+| `paper/sections/discussion.tex` | 44556 | `0cb850faa45d` |
+| `paper/sections/experiments.tex` | 42008 | `48a927577e13` |
+| `paper/sections/introduction.tex` | 24360 | `7f5dd7bc34dc` |
+| `paper/sections/limitations.tex` | 20766 | `60102cd0b3db` |
+| `paper/sections/methods.tex` | 33233 | `bbc844e6fbd9` |
 
 ## Inputs, and where they come from
 
@@ -65,62 +65,76 @@ are taken at check time so a miss can be re-checked against the same bytes.
 
 ## What the paper prints, and where
 
-| claim | value | file | literal | must be | provenance |
-|---|---|---|---|---|---|
-| headroom_correct | 0.923 | `paper/sections/methods.tex` | `$0.923$ nats to the ceiling` | present | - |
-| headroom_next_lattice | 0.277 | `paper/sections/methods.tex` | `the next lattice point down, $2.025$, still leaves $0.277$ nats` | present | - |
-| arm_step | 0.03333333333333333 | `paper/sections/methods.tex` | `moves in steps of roughly $1/30$` | present | - |
-| pinned_pair_fraction | 0.026 | `paper/sections/discussion.tex` | `That is $0.275 \times 0.095 = 2.6\%$ of pairs,` | present | - |
-| bias_bound | 0.013 | `paper/sections/discussion.tex` | `bounding the downward bias at $0.013$` | present | - |
-| ci_half_width | 0.05 | `paper/sections/discussion.tex` | `a confidence half-width of $0.050$` | present | - |
-| counterfactual_ratio | 2.9 | `paper/sections/discussion.tex` | `$2.9\times$ as many pairs would be affected` | present | - |
-| gpu_hours_retired | 228 | `paper/sections/experiments.tex` | `$228$ GPU-hours` | present | MODELLED from the 55 s unit of `docs/critique_log.md` 22 at K=180, n=80; superseded; the paper names it only to correct it |
-| gpu_hours_repriced | 99 | `paper/sections/experiments.tex` | `about $99$ GPU-hours` | present | MEASURED, re-derived from the 24.0 s/clustering unit |
-| gpu_trigger_ratio | 2.3 | `paper/sections/experiments.tex` | `$2.3\times$ too large` | present | - |
-| gpu_days_retired_phrase | 0 | `paper/sections/experiments.tex` | `roughly nine GPU-days` | **absent** | - |
-| n40_atcap | 0.0 | `paper/sections/discussion.tex` | `$0.0\%$ [$0.0$, $1.9$]` | present | - |
-| n40_atcap_hi | 1.9 | `paper/sections/discussion.tex` | `$0.0\%$ [$0.0$, $1.9$]` | present | - |
-| n40_floor | 2.0 | `paper/sections/discussion.tex` | `a measured $2.0\%$ at $N{=}40$` | present | - |
-| n40_floor_wilson_retired_disc | 5.03 | `paper/sections/discussion.tex` | `[$0.78$, $5.03$]` | **absent** | - |
-| n40_floor_boot_retired_disc | 4.0 | `paper/sections/discussion.tex` | `[$0.5$, $4.0$]` | **absent** | - |
-| n40_floor_503_retired_disc | 5.03 | `paper/sections/discussion.tex` | `5.03` | **absent** | - |
-| n40_floor_wilson_retired_main | 5.03 | `paper/main.tex` | `[$0.8$, $5.03$]` | **absent** | - |
-| n40_floor_503_retired_main | 5.03 | `paper/main.tex` | `5.03` | **absent** | - |
-| n40_floor_wilson_retired_concl | 5.03 | `paper/sections/conclusion.tex` | `[$0.8$, $5.03$]` | **absent** | - |
-| n40_floor_503_retired_concl | 5.03 | `paper/sections/conclusion.tex` | `5.03` | **absent** | - |
-| n40_floor_rounded_retired_intro | 5.0 | `paper/sections/introduction.tex` | `[$0.8$, $5.0$]` | **absent** | - |
-| n40_atcap_hi_main | 1.9 | `paper/main.tex` | `($0/200$, at most $1.9\%$)` | present | - |
-| n40_atcap_intro | 0.0 | `paper/sections/introduction.tex` | `$0.0\%$ [$0.0$, $1.9$]` | present | - |
-| n40_atcap_concl | 0.0 | `paper/sections/conclusion.tex` | `$0.0\%$ [$0.0$, $1.9$]` | present | - |
-| n40_tpr | 6.0 | `paper/sections/discussion.tex` | `$6.0\%$ [$3.5$, $10.2$]` | present | - |
-| n40_tpr_lo | 3.5 | `paper/sections/discussion.tex` | `$6.0\%$ [$3.5$, $10.2$]` | present | - |
-| n40_tpr_hi | 10.2 | `paper/sections/discussion.tex` | `$6.0\%$ [$3.5$, $10.2$]` | present | - |
-| n40_achieved | 5.0 | `paper/sections/discussion.tex` | `an achieved $5.0\%$ [$2.7$, $9.0$]` | present | - |
-| n40_achieved_lo | 2.7 | `paper/sections/discussion.tex` | `an achieved $5.0\%$ [$2.7$, $9.0$]` | present | - |
-| n40_achieved_hi | 9.0 | `paper/sections/discussion.tex` | `an achieved $5.0\%$ [$2.7$, $9.0$]` | present | - |
-| replay10_floor | 12.0 | `paper/sections/discussion.tex` | `falls from a replayed $12.0\%$ [$8.9$, $15.3$] at $N{=}10$` | present | - |
-| fall_points | 10.0 | `paper/sections/discussion.tex` | `$10.0$ points [$7.2$, $12.9$]` | present | - |
-| leg_10_20_points | 8.9 | `paper/sections/discussion.tex` | `$8.9$ points [$6.8$, $11.1$]` | present | - |
-| leg_20_40_points | 1.1 | `paper/sections/discussion.tex` | `$1.1$ points [$-0.2$, $2.4$]` | present | - |
-| leg_10_20_mc_retired | 8.8 | `paper/sections/discussion.tex` | `8.8` | **absent** | - |
-| leg_10_20_mc_ci_retired | 11.0 | `paper/sections/discussion.tex` | `[$6.8$, $11.0$]` | **absent** | - |
-| fall_points_retired | 9.9 | `paper/sections/discussion.tex` | `9.9` | **absent** | - |
-| replay10_floor_retired | 11.9 | `paper/sections/discussion.tex` | `11.9` | **absent** | - |
-| replay20_floor_retired | 3.0 | `paper/sections/discussion.tex` | `3.0` | **absent** | - |
-| fall_ci_lo_retired | 15.5 | `paper/sections/discussion.tex` | `15.5` | **absent** | - |
-| sd20_subset | 0.98 | `paper/sections/discussion.tex` | `$0.98$ and $0.74$ points against a binomial $1.23$` | present | - |
-| sd20_question | 0.74 | `paper/sections/discussion.tex` | `$0.98$ and $0.74$ points against a binomial $1.23$` | present | - |
-| sd20_binomial | 1.23 | `paper/sections/discussion.tex` | `$0.98$ and $0.74$ points against a binomial $1.23$` | present | - |
-| sd10_subset | 1.61 | `paper/sections/discussion.tex` | `$1.61$ and $1.63$ against $2.30$` | present | - |
-| sd10_question | 1.63 | `paper/sections/discussion.tex` | `$1.61$ and $1.63$ against $2.30$` | present | - |
-| sd10_binomial | 2.3 | `paper/sections/discussion.tex` | `$1.61$ and $1.63$ against $2.30$` | present | - |
-| drift_chars | 3.6 | `paper/sections/discussion.tex` | `about $3.6$ characters` | present | - |
-| drift_z | 4.0 | `paper/sections/discussion.tex` | `($z{=}+4.0$)` | present | - |
-| drift_punct_points | 1.6 | `paper/sections/discussion.tex` | `$1.6$ points less often` | present | - |
-| poisson_binomial_p | 0.081 | `paper/sections/discussion.tex` | `$p{=}0.081$` | present | - |
-| chisq_p | 0.6 | `paper/sections/discussion.tex` | `$p{=}0.60$` | present | - |
-| span_oracle_count | 1424 | `paper/sections/limitations.tex` | `$1424$ greedy-correct questions` | present | - |
-| substring_oracle_count_absent | 1440 | `paper/sections/limitations.tex` | `1440` | **absent** | - |
+| claim | value | file | literal | must be | matched as | provenance |
+|---|---|---|---|---|---|---|
+| headroom_correct | 0.923 | `paper/sections/methods.tex` | `$0.923$ nats to the ceiling` | present | substring | - |
+| headroom_next_lattice | 0.277 | `paper/sections/methods.tex` | `the next lattice point down, $2.025$, still leaves $0.277$ nats` | present | substring | - |
+| arm_step | 0.03333333333333333 | `paper/sections/methods.tex` | `moves in steps of roughly $1/30$` | present | substring | - |
+| pinned_pair_fraction | 0.026 | `paper/sections/discussion.tex` | `That is $0.275 \times 0.095 = 2.6\%$ of pairs,` | present | substring | - |
+| bias_bound | 0.013 | `paper/sections/discussion.tex` | `bounding the downward bias at $0.013$` | present | substring | - |
+| ci_half_width | 0.05 | `paper/sections/discussion.tex` | `a confidence half-width of $0.050$` | present | substring | - |
+| counterfactual_ratio | 2.9 | `paper/sections/discussion.tex` | `$2.9\times$ as many pairs would be affected` | present | substring | - |
+| gpu_hours_retired | 228 | `paper/sections/experiments.tex` | `$228$ GPU-hours` | present | substring | MODELLED from the 55 s unit of `docs/critique_log.md` 22 at K=180, n=80; superseded; the paper names it only to correct it |
+| gpu_hours_repriced | 99 | `paper/sections/experiments.tex` | `about $99$ GPU-hours` | present | substring | MEASURED, re-derived from the 24.0 s/clustering unit |
+| gpu_trigger_ratio | 2.3 | `paper/sections/experiments.tex` | `$2.3\times$ too large` | present | substring | - |
+| gpu_days_retired_phrase | 0 | `paper/sections/experiments.tex` | `roughly nine GPU-days` | **absent** | substring | - |
+| n40_atcap | 0.0 | `paper/sections/discussion.tex` | `$0.0\%$ [$0.0$, $1.9$]` | present | substring | - |
+| n40_atcap_hi | 1.9 | `paper/sections/discussion.tex` | `$0.0\%$ [$0.0$, $1.9$]` | present | substring | - |
+| n40_floor | 2.0 | `paper/sections/discussion.tex` | `a measured $2.0\%$ at $N{=}40$` | present | substring | - |
+| n40_floor_wilson_retired_disc | 5.03 | `paper/sections/discussion.tex` | `[$0.78$, $5.03$]` | **absent** | substring | - |
+| n40_floor_boot_retired_disc | 4.0 | `paper/sections/discussion.tex` | `[$0.5$, $4.0$]` | **absent** | substring | - |
+| n40_floor_503_retired_disc | 5.03 | `paper/sections/discussion.tex` | `5.03` | **absent** | whole number | - |
+| n40_floor_wilson_retired_main | 5.03 | `paper/main.tex` | `[$0.8$, $5.03$]` | **absent** | substring | - |
+| n40_floor_503_retired_main | 5.03 | `paper/main.tex` | `5.03` | **absent** | whole number | - |
+| n40_floor_wilson_retired_concl | 5.03 | `paper/sections/conclusion.tex` | `[$0.8$, $5.03$]` | **absent** | substring | - |
+| n40_floor_503_retired_concl | 5.03 | `paper/sections/conclusion.tex` | `5.03` | **absent** | whole number | - |
+| n40_floor_rounded_retired_intro | 5.0 | `paper/sections/introduction.tex` | `[$0.8$, $5.0$]` | **absent** | substring | - |
+| n40_atcap_hi_main | 1.9 | `paper/main.tex` | `($0/200$, at most $1.9\%$)` | present | substring | - |
+| n40_atcap_intro | 0.0 | `paper/sections/introduction.tex` | `$0.0\%$ [$0.0$, $1.9$]` | present | substring | - |
+| n40_atcap_concl | 0.0 | `paper/sections/conclusion.tex` | `$0.0\%$ [$0.0$, $1.9$]` | present | substring | - |
+| n40_tpr | 6.0 | `paper/sections/discussion.tex` | `$6.0\%$ [$3.5$, $10.2$]` | present | substring | - |
+| n40_tpr_lo | 3.5 | `paper/sections/discussion.tex` | `$6.0\%$ [$3.5$, $10.2$]` | present | substring | - |
+| n40_tpr_hi | 10.2 | `paper/sections/discussion.tex` | `$6.0\%$ [$3.5$, $10.2$]` | present | substring | - |
+| n40_achieved | 5.0 | `paper/sections/discussion.tex` | `an achieved $5.0\%$ [$2.7$, $9.0$]` | present | substring | - |
+| n40_achieved_lo | 2.7 | `paper/sections/discussion.tex` | `an achieved $5.0\%$ [$2.7$, $9.0$]` | present | substring | - |
+| n40_achieved_hi | 9.0 | `paper/sections/discussion.tex` | `an achieved $5.0\%$ [$2.7$, $9.0$]` | present | substring | - |
+| replay10_floor | 12.0 | `paper/sections/discussion.tex` | `falls from a replayed $12.0\%$ [$8.9$, $15.3$] at $N{=}10$` | present | substring | - |
+| fall_points | 10.0 | `paper/sections/discussion.tex` | `$10.0$ points [$7.2$, $12.9$]` | present | substring | - |
+| leg_10_20_points | 8.9 | `paper/sections/discussion.tex` | `$8.9$ points [$6.8$, $11.1$]` | present | substring | - |
+| leg_20_40_points | 1.1 | `paper/sections/discussion.tex` | `$1.1$ points [$-0.2$, $2.4$]` | present | substring | - |
+| leg_10_20_mc_retired | 8.8 | `paper/sections/discussion.tex` | `8.8` | **absent** | whole number | - |
+| leg_10_20_mc_ci_retired | 11.0 | `paper/sections/discussion.tex` | `[$6.8$, $11.0$]` | **absent** | substring | - |
+| fall_points_retired | 9.9 | `paper/sections/discussion.tex` | `9.9` | **absent** | whole number | - |
+| replay10_floor_retired | 11.9 | `paper/sections/discussion.tex` | `11.9` | **absent** | whole number | - |
+| replay20_floor_retired | 3.0 | `paper/sections/discussion.tex` | `3.0` | **absent** | whole number | - |
+| fall_ci_lo_retired | 15.5 | `paper/sections/discussion.tex` | `15.5` | **absent** | whole number | - |
+| sd20_subset | 0.98 | `paper/sections/discussion.tex` | `$0.98$ and $0.74$ points against a binomial $1.23$` | present | substring | - |
+| sd20_question | 0.74 | `paper/sections/discussion.tex` | `$0.98$ and $0.74$ points against a binomial $1.23$` | present | substring | - |
+| sd20_binomial | 1.23 | `paper/sections/discussion.tex` | `$0.98$ and $0.74$ points against a binomial $1.23$` | present | substring | - |
+| sd10_subset | 1.61 | `paper/sections/discussion.tex` | `$1.61$ and $1.63$ against $2.30$` | present | substring | - |
+| sd10_question | 1.63 | `paper/sections/discussion.tex` | `$1.61$ and $1.63$ against $2.30$` | present | substring | - |
+| sd10_binomial | 2.3 | `paper/sections/discussion.tex` | `$1.61$ and $1.63$ against $2.30$` | present | substring | - |
+| drift_chars | 3.6 | `paper/sections/discussion.tex` | `about $3.6$ characters` | present | substring | - |
+| drift_z | 4.0 | `paper/sections/discussion.tex` | `($z{=}+4.0$)` | present | substring | - |
+| drift_punct_points | 1.6 | `paper/sections/discussion.tex` | `$1.6$ points less often` | present | substring | - |
+| poisson_binomial_p | 0.081 | `paper/sections/discussion.tex` | `$p{=}0.081$` | present | substring | - |
+| chisq_p | 0.6 | `paper/sections/discussion.tex` | `$p{=}0.60$` | present | substring | - |
+| span_oracle_count | 1424 | `paper/sections/limitations.tex` | `$1424$ greedy-correct questions` | present | substring | - |
+| substring_oracle_count_absent | 1440 | `paper/sections/limitations.tex` | `1440` | **absent** | whole number | - |
+
+**The `matched as` column, and why it is worth a column.** 9 of these
+are matched as whole numbers rather than as substrings, and all of them are retired
+values held down by ABSENCE. A short numeric literal checked by substring is a guard
+on a spelling and not on a value: `8.8` is inside `28.8`, `3.0` is inside `13.0`,
+and `1440` is inside `14400`. All three of those collisions were live. The first
+failed the suite on 2026-08-31 against the prevalence sentence's natural
+hallucination rate; the third sits one thousands-separator away from the 14,400
+scored children of the budget argument. The anchor is the pair of lookarounds
+`scripts/check_population_labels.py` settled on for its own numeric rules. It
+narrows nothing the paper could plausibly print: a standalone value still matches
+in every markup, `$8.8$`, `-8.8`, `8.8\%`, `\textbf{8.8}` and inside a bracketed
+pair. A claim listed as a substring here is one whose literal carries its own
+delimiters, so it cannot be a fragment of a longer number in the first place.
 
 Ceiling: log(10) = 2.302585 nats.
 

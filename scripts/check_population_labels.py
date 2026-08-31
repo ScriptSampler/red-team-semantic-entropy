@@ -349,11 +349,33 @@ SIXTEEN sites found by the 2026-08-26 sweep -- the ones that carry no digit -- w
 see the places the defect actually lives -- the same gap `docs/critique_log.md` line 2441
 and `results/morning_review_2026_08_19.md` line 316 both name in the same words: "the
 linter's scope is eight `.tex` files, so it cannot reach `tests/`". Checked, not recalled. Scope is now two tiers, and the split is
-MEASURED, not asserted. Every count below comes from `scope_census()` over the 228 tier-2
-files (234 reached by WIDE_GLOBS, 6 excluded by name) and is REPRODUCIBLE: run the script
+MEASURED, not asserted. Every count below comes from `scope_census()` over the 238 tier-2
+files (244 reached by WIDE_GLOBS, 6 excluded by name) and is REPRODUCIBLE: run the script
 with `--dry-run` and it prints the same table. Numbers that cannot be re-derived are how
 this project got here; a figure quoted from a session nobody can replay is a figure on
 trust, and this file has spent two rounds paying for that.
+
+RE-STRUCK 2026-08-31, and the re-striking is itself an entry in the ledger's history of
+hand-written counts going stale. Every family figure below moved, for two unrelated
+reasons that have to be told apart:
+  * ELEVEN NEW FILES entered tier 2 between 08196b9 and today -- run reports, an
+    adjudication, two sidecars and a generator, none of them touched by anyone working on
+    this guard. They carry +41 pool findings (29 of them in
+    results/heavy_review_2026_08_30.md alone), +7 growing and +19 retired-value. Three
+    tracked files also grew: scripts/derived_paper_quantities.py (+10 value),
+    tests/test_derived_paper_quantities.py (+3) and scripts/winners_curse_reeval.py (+3).
+    That is the SCOPED-OUT backlog getting larger, which strengthens the (a)/(b)/(c)
+    argument rather than weakening it.
+  * docs/START_HERE_overnight.md was REPAIRED, and it is the only reason the
+    retired-position row moved at all: -3 there, -3 in the census, 26 -> 23. It also lost
+    10 pool, 1 growing and 5 retired-value findings in the same rewrite.
+AND THE FIGURES WERE ALREADY WRONG WHEN THEY WERE WRITTEN, which is the part worth
+keeping. Run this file as it stood at 08196b9 against that commit's own tree and it prints
+735/51, 73/36, 273/38, 26/5 over 227 tier-2 files -- not the 736/52, 73/36, 274/39, 26/5
+over 228 that the same commit wrote into this docstring. One extra in-scope file was
+sitting uncommitted in the working tree when the census was read off. A count copied out
+of a live run is only reproducible if the tree it was run on is the tree that got
+committed; `--dry-run` on a clean tree is the check, and it was not done.
 
   TIER 1, `paper/*.tex` and `paper/sections/*.tex`: EVERY rule. Unchanged, byte for byte.
 
@@ -371,7 +393,7 @@ WHAT STAYS SCOPED TO .tex, AND WHY. Three families, three separate reasons, all 
 measured before they were decided:
 
   (a) THE POOL / ATTACHMENT RULES (`_check_pools`, 16 rules, 78 number patterns) --
-      736 findings in 52 files. NOT a backlog: a category error. These rules arbitrate
+      776 findings in 57 files. NOT a backlog: a category error. These rules arbitrate
       between a number's OWN label and a FOREIGN one by counting SENTENCE BOUNDARIES and
       characters. A markdown table row has no sentences (`_TERM_RE` needs `[.:;!?]` before
       whitespace, and `| 1e-05 | 1.380 | 9.50% |` has none), so a whole generated table is
@@ -386,7 +408,7 @@ measured before they were decided:
       file's 65 findings point at line 59 and 27 more at line 30. Running these outside
       .tex is the permissive-direction failure -- a guard nobody can keep green.
 
-  (b) THE GROWING-DENOMINATOR RULE (`_check_growing`) -- 73 findings in 36 files.
+  (b) THE GROWING-DENOMINATOR RULE (`_check_growing`) -- 80 findings in 43 files.
       Table-hostile for the same reason, plus a second: outside the paper the repo
       legitimately RECORDS open cells. `results/attack_matrix.md` (4) is a week-6 snapshot
       whose "15 hide" was true when written; `results/schedule_2026_08_19.md` (7) yields
@@ -394,8 +416,8 @@ measured before they were decided:
       matched by the `-target` noun. A dated snapshot of a filling cell is history; the
       rule exists to stop a filling cell being quoted FORWARD, and forward is `paper/`.
 
-  (c) THE RETIRED-VALUE HALF OF SUPERSEDED (29 of the 41 entries) -- 274 findings across
-      39 files, and this is the one worth reading twice, because the temptation is to
+  (c) THE RETIRED-VALUE HALF OF SUPERSEDED (29 of the 41 entries) -- 303 findings across
+      46 files, and this is the one worth reading twice, because the temptation is to
       widen it. A retired VALUE is a fact about a run, and outside `paper/` this repo
       legitimately restates one in three distinct ways, which are the top offenders in the
       census:
@@ -403,7 +425,7 @@ measured before they were decided:
           (18 findings) is the `_def` checkpoint's report. Its numbers are correct FOR
           THAT RUN. Flagging it is flagging a measurement for having been measured.
         - it PINS the value in order to assert its ABSENCE. `tests/
-          test_derived_paper_quantities.py` (11) carries the banned-literal list
+          test_derived_paper_quantities.py` (14) carries the banned-literal list
           `(r"2.0\\% [0.8, 5.0]", r"[0.78, 5.03]", ...)` -- the check that keeps those
           numbers out of the paper. Widening here means the guard flags the guard.
         - it RECORDS the correction. `results/morning_review_2026_08_19.md` (35),
@@ -435,12 +457,19 @@ GAINS one -- so the arriving backlog is PINNED rather than SILENCED, and any new
 still fails the build. That device is followed here rather than reinvented, down to the
 failure in the other direction: a file that drops BELOW its baseline also fails, because a
 register that can only be raised rots upward. The counts, and what each one is, are in
-KNOWN_OPEN below; there are 26 across 5 files -- 736 + 73 + 274 findings avoided by the
-scoping above, and 26 held. It was 32 across 7 on 2026-08-26; the six that left were false
+KNOWN_OPEN below; there are 23 across 4 files -- 776 + 80 + 303 findings avoided by the
+scoping above, and 23 held. It was 32 across 7 on 2026-08-26; the six that left were false
 positives on correct writing, cleared by rebuilding the disowning gate rather than by
-lowering a pin, and KNOWN_OPEN says so per file.
+lowering a pin, and KNOWN_OPEN says so per file. It was 26 across 5 until 2026-08-31, when
+docs/START_HERE_overnight.md's three went the OTHER honest way: the three sites were
+rewritten to name the branch each coverage figure was measured under, the file went to
+zero, and its entry left the register in the same commit. An entry pinned at 0 is not the
+same object as no entry -- `_ratchet` would accept one, but the live census in
+test_the_register_matches_the_repo_today drops zero-count files before comparing, so a 0
+pin can never match the repo. A file with nothing open does not belong on a register of
+what is open.
 
-WHAT A BASELINE IS NOT. It is not an opinion that the site is fine. Two of the five files
+WHAT A BASELINE IS NOT. It is not an opinion that the site is fine. Two of the four files
 carry a LIVE, uncorrected assertion of a position section 13 retracts, and the ratchet
 records exactly that rather than hiding it. The honest way to lower an entry is to fix the
 site and lower the number in the same commit. The dishonest way is to raise the number,
@@ -2101,16 +2130,18 @@ WIDE_SUPERSEDED: list[dict] = [item for item in SUPERSEDED if item.get("wide")]
 # If those four edits are ever reverted the ratchet breaches on four files, and that is the
 # correct behaviour, not a false alarm.
 KNOWN_OPEN: dict[str, int] = {
-    # 3, all `0.00%` with no branch named, all three in the post-mortem prose that
-    # describes the scheduling defect ("...toward the estimator that had been retired at
-    # 0.00% measured coverage"). The figure is true under the calibrated Ewens fit and the
-    # sentences are about the handoff rather than about coverage -- but they are exactly
-    # the shape the rule exists to catch, and the fix is one clause each. Note what is NOT
-    # in this count: the file's corrected line at :190 ("The reason is not data selection,
-    # and it is NOT that...") is GREEN, because the disowning gate reads it -- and the
-    # PRE-fix wording of that same line, which puts a full stop where the comma is, is
-    # still RED. That pair is a test.
-    "docs/START_HERE_overnight.md": 3,
+    # GONE 2026-08-31: `docs/START_HERE_overnight.md`, which was pinned at 3. All three
+    # were the post-mortem prose quoting the question bootstrap's coverage with no branch
+    # named ("...toward the estimator that had been retired at 0.00% measured coverage").
+    # The file was rewritten and every one of the three now names its branch in the same
+    # sentence -- "under the fitted Ewens population and only there", and, for the other
+    # arm, "Under the zero branch ... it covers 100%". The rule is untouched: run the
+    # PRE-fix text of that file through today's ledger and it still reports all three.
+    # This is the honest direction, and it is the one this register was built to make
+    # visible. The dishonest directions are listed in RATCHET_ADVICE, and note that one of
+    # them -- "deleting the file's entry" -- is superficially what happened here. The
+    # difference is the only thing that matters: the entry left because the FINDINGS left,
+    # not to make a red go away, and the count in the same commit is 0 findings and not 3.
     # 5, and TWO OF THEM ARE LIVE. The coverage table's N=40 row reads
     # `| N=40 (atom empty) | 0.27% | 53.7% | 0.00% |` and is followed by "Neither estimator
     # is broken. The estimand dissolves at the moment the atom empties" -- an unconditional

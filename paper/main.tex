@@ -99,7 +99,24 @@ Sampling-Based Hallucination Detectors}
 
 \begin{abstract}
 % ABSTRACT LENGTH BUDGET. arXiv's abstract field takes 1920 characters.
-% NOW: 308 words / 1915 characters, counted 2026-08-30 by the rule below. 5 to spare.
+% NOW: 308 words / 1918 characters, counted 2026-08-31 by the rule below. 2 to spare.
+%
+% THE SINGULAR "the qualifier" WAS FIXED ON 2026-08-31, AND IT COST 3. Once the clusterer
+% scope landed (see the next block), the Abstract carried TWO scope qualifiers on the floor
+% sentence pair, "Under NLI clustering" and "At that standard N=10", and still said "the
+% qualifier is load-bearing", singular, naming neither. Discussion and Conclusion had both
+% been updated to carry two: discussion.tex already said "Both qualifiers are load-bearing"
+% of exactly this pair (right after "At N=10, and under the DeBERTa-large-MNLI clustering"),
+% and conclusion.tex names the budget, then "A second qualifier is load-bearing in the same
+% way, and it names the clusterer rather than the budget". Grep the sentences, not line
+% numbers: the ones this comment used to carry had already rotted by seven and twenty-three
+% lines. "the qualifier is" (16) -> "both qualifiers are" (19) is the whole change, and the
+% Abstract now uses the Discussion's own sentence verbatim, so the three files agree.
+% NAMING THEM WAS COSTED AND DOES NOT FIT. "the budget and the clusterer are load-bearing"
+% is 45 against the 28 of "the qualifier is load-bearing", which is +17 into 5. The
+% compressed form is the same trade the clusterer scope itself makes below: the Abstract
+% names the count, the body names the two. If characters ever free up, this is the THIRD
+% thing to buy, after the two-orders-of-magnitude gloss and the DeBERTa checkpoint name.
 %
 % THE ORACLE SCOPE QUALIFIER WAS ADDED AT ZERO NET COST on 2026-08-30, and this is the
 % record of what paid for it. The adjudication of that date (results/gemini_adjudication_
@@ -161,8 +178,9 @@ Sampling-Based Hallucination Detectors}
 % non-identification wording below and paid for it by spending the gloss "so about half of
 % an uncorrected result is selection on sampling noise" (69), which was redundant against
 % the 44% [23%, 64%] it restated. The one large candidate still unspent is the
-% self-referential "; the qualifier is load-bearing" (31). DO NOT spend it here alone: the
-% same phrase is live at conclusion.tex:21 and discussion.tex:56, so dropping it from this
+% self-referential "; both qualifiers are load-bearing" (34, and 31 in the singular form it
+% carried until 2026-08-31). DO NOT spend it here alone: the same phrase is live in
+% discussion.tex and conclusion.tex, so dropping it from this
 % file only would leave the paper disagreeing with itself, which is the defect class of
 % critique_log 37/38. Spend it in all three or in none.
 %
@@ -243,8 +261,15 @@ Sampling-Based Hallucination Detectors}
 %    ranges over the FEASIBLE candidates only, that the feasibility gate is applied lazily
 %    so just 4703 of 14,400 scored children were ever checked, and that A is therefore NOT
 %    IDENTIFIED from anything the run recorded. Over the admissible range the NLI arm's
-%    median p runs from below 0.001 to 0.92 and crosses 0.05 at about A = 92, which is
-%    inside that range. The exceedance-direction claim is false for NLI at the low end.
+%    median p runs from below 0.001 at A = 41 to 0.939 at A = 181 and crosses 0.05 near
+%    A = 90, which is inside that range. Those three figures are the SHIPPED
+%    implementation's, and they are the ones experiments.tex prints; until 2026-08-31 this
+%    bullet said "to 0.92" and "at about A = 92", which came from an adjudicator's
+%    independent reimplementation under a different tie RNG. At A = 89 the shipped code
+%    gives a median p of 0.0459 and at A = 90 it gives 0.0512, so 90 is the crossing and 92
+%    is not. Do not restore either figure: a comment does not merely record an error, it
+%    schedules one, and this one had scheduled a body edit away from a number the paper
+%    measures. The exceedance-direction claim is false for NLI at the low end.
 %    What carries the headline instead is that the PRE-REGISTERED ADJUDICATOR ARM IS
 %    INVARIANT: the judge's median p is 1.000 at every A from 41 to 181, and so is exact
 %    match's. That is the defence the paper now makes, at introduction.tex and
@@ -268,7 +293,7 @@ No threshold above the maximum fires, so while the atom carries mass the lowest
 false-alarm rate a firing threshold can have \emph{is} the chance a clean correct answer
 yields $N$ mutually distinct meanings. Under NLI clustering that is $10.5\%$ [$9.0$, $12.2$]
 on $1424$ clean correct answers. At that standard $N{=}10$ an operator cannot have a $5\%$
-false-alarm budget, however well the score ranks; the qualifier is load-bearing. At $N{=}40$
+false-alarm budget, however well the score ranks; both qualifiers are load-bearing. At $N{=}40$
 none of the fair pool's $200$ correct answers reaches $\ln 40$ ($0/200$, at most $1.9\%$). The
 atom is empty, and the obstruction with it. What $200$ answers cannot do is locate the
 floor: their cheapest alarm costs $2.0\%$, but that is the population's floor only if it can
@@ -305,6 +330,68 @@ no attack effect here.
 
 \section{Conclusion}
 \input{sections/conclusion}
+
+% DATA AND CODE AVAILABILITY. Added 2026-08-31; there was none before. The review of
+% 2026-08-30 (results/heavy_review_2026_08_30.md, F7) grepped the whole PDF and all seven
+% section files for availab|github|repositor|artifact|licen|zenodo|url|http|href|doi.org|
+% acknowledg and found only package options and unrelated prose ("sequence probabilities are
+% not available"). For a paper whose contribution is measurement validity, and whose
+% Limitations rest it on one under-recorded generation cache, that is among the first things
+% a referee checks, and ARTIFACT_AVAILABILITY.md says so in its own opening: "Adding an
+% availability statement to the paper is a separate, owed edit; this file does not
+% substitute for it."
+%
+% EVERY CLAIM BELOW WAS CHECKED AGAINST THE TREE ON 2026-08-31, NOT AGAINST A SUMMARY OF IT:
+%   - the URL is what `git remote get-url origin` returns and what README.md's own citation
+%     block prints;
+%   - LICENSE is tracked, MIT, "Copyright (c) 2026 ScriptSampler". It covers the CODE. The
+%     data bundle's licence is UNDECIDED (ARTIFACT_AVAILABILITY.md section 6 item 3: the
+%     cache carries TriviaQA questions and Llama-3.1-8B-Instruct generations, whose
+%     redistribution is not self-evidently MIT), which is why this paragraph licenses the
+%     repository and says nothing about a data licence. Do not add one until it is decided;
+%   - what a bare clone reproduces is ARTIFACT_AVAILABILITY.md section 2, which verified it
+%     by running it on CPU with no cache present, and figures/ does carry a plotted-points
+%     CSV for each of the paper's four figures (fig1_ceiling, fig2_censoring,
+%     fig_achievable_roc, fig_floor_budget);
+%   - the 4.75 MB is wk4_full_2000q, measured file by file in section 3.2.
+%
+% NO COMMIT HASH IS PRINTED, AND THAT IS DELIBERATE. F7's fix asks for "a URL and a commit
+% hash". This edit is uncommitted, so any hash written here would name a state that predates
+% the statement itself and would be stale the moment it landed. Fill it with the submission
+% commit before any external posting, on the same schedule as the affiliation above, and do
+% not ship a placeholder in its place.
+%
+% DO NOT UPGRADE THE WORDING. "is not currently distributed", "cannot re-run the pipeline
+% that produced them" and "we claim no more reproducibility than that" are the honest form
+% and were chosen over stronger ones. The cache is 4.75 MB, so what stands between a reader
+% and the empirical half is a decision not yet taken, not a technical obstacle; a sentence
+% implying the numbers are rebuildable from a clone would be the one overclaim in a paper
+% whose stated virtue is that it does not overclaim.
+\section*{Data and Code Availability}
+Code, analysis scripts, the dated reports of record that own the numbers above, and the
+plotted points behind every figure are in the repository, under the MIT licence:
+\begin{center}
+\url{https://github.com/ScriptSampler/red-team-semantic-entropy}
+\end{center}
+\noindent
+What a clone buys differs sharply between the two halves of the headline, and we would rather say
+so than let a URL imply more than it delivers. The combinatorial half reproduces from a bare
+clone with no data, no model and no GPU: the $39$ attainable values at $N{=}10$, the two of
+them in the top tenth of the range, the atom at $\ln 10$, and the corresponding counts at
+$N{=}20$ and $N{=}40$ are an enumeration over integer partitions, pinned on CPU in seconds
+against an independent implementation. The read-only checkers that verify the population
+label on every rate we print, and that re-derive the printed quantities with no producing
+artifact of their own, run in a fresh clone as well. The empirical half does not. Every
+measured rate here is computed from a sample cache of $2000$ TriviaQA \texttt{rc.nocontext}
+questions with ten Llama-3.1-8B-Instruct generations each, $4.75$ MB, which lives outside the
+repository tree and is not currently distributed; the null control's per-target checkpoints
+are written into the tree and then excluded from it. A clone therefore carries every derived
+report and each figure's plotted points as a CSV, so the arithmetic is auditable from the run
+outputs onward, but it cannot re-run the pipeline that produced them, and we claim no more
+reproducibility than that. \texttt{ARTIFACT\_AVAILABILITY.md} in the repository names the
+files a clone is missing, with their sizes and SHA-256 digests. Model weights and datasets
+are obtained from their upstream sources under their own licences and are not redistributed
+here.
 
 \bibliographystyle{plainnat}
 \bibliography{related_work}

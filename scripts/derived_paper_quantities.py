@@ -23,6 +23,17 @@ TWO GUARDS, AND THE SECOND ONE IS NEW (2026-08-19).
   the literal the .tex must still print, matched on whitespace-normalised text so that a
   reflow of the paragraph is not a failure but a rewording of the number is.
 
+  AND THE ANCHOR ON ITS ABSENCE HALF (2026-08-31). The inverted form of that guard, which
+  keeps a RETIRED number out of the paper, was matching its literal as a bare substring. On
+  a short numeric literal that is not a guard on a value; it is a guard on a spelling. The
+  paper gained a prevalence sentence printing a rate of 28.8 percent, the retired
+  Monte-Carlo leg 8.8 is three characters inside it, and the suite went red on a correct
+  number that has nothing to do with that leg. Every absence
+  claim whose literal is a bare digit string is now matched as a WHOLE number, by the two
+  lookarounds `scripts/check_population_labels.py` already uses for the same reason; a
+  registration test fails the suite if a new one is added without them. The full account,
+  including what the anchor deliberately does not reach, is in the ANCHORING block below.
+
 WHAT A FAILURE MEANS. Both guards collect rather than abort, so one stale literal cannot hide
 the rest of the report; the run exits non-zero with every problem listed. A paper-side miss
 can also be a RACE -- paper/ is edited concurrently -- so the report prints each .tex file's
@@ -35,6 +46,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -66,6 +78,88 @@ def _read(rel: str) -> str:
     return p.read_text(encoding="utf-8", errors="replace")
 
 
+# ======================================================================================
+# ANCHORING A RETIRED NUMBER (2026-08-31)
+#
+# THE DEFECT. `leg_10_20_mc_retired` held the retired Monte-Carlo rendering of the
+# 10 -> 20 floor leg out of discussion.tex by asking whether the three characters `8.8`
+# appear anywhere in that file. They do, inside `28.8`: the prevalence sentence prints a
+# natural hallucination rate of $28.8\%$, and the guard went red on a correct number that
+# has nothing to do with the retired leg. A bare substring cannot tell a standalone value
+# from a digit run inside a longer one, so on a short numeric literal an absence guard is
+# not a guard on a VALUE at all; it is a guard on a SPELLING, and every number the paper
+# gains is a fresh chance for it to fire. The anchor is the defect, not the expectation.
+#
+# THE IDIOM IS ALREADY IN THE REPO, so this does not invent one.
+# `scripts/check_population_labels.py` met the same thing and settled it: its docstring
+# records defect 2, the bare token `97` being "also satisfied by `0.97` and by the year
+# `1997`", and every numeric rule written there since carries a pair of lookarounds, one in
+# front and `(?!\d)` behind (`\b0\.78(?!\d)`, `(?<![/\d.])\b\d+/97\b`, `_NUM` at line 2342,
+# `(?<![\d.%])` at line 1819). The same pair is what is used here.
+#
+# WHAT EACH LOOKAROUND BUYS, on the claim that fired:
+#   left  `(?<![\d.])`   rejects `28.8`, `18.8`, `108.8`, `0.88`. This is the one the
+#                        prevalence sentence needed.
+#   right `(?!\d)`       rejects `8.85`, and `8.86`. The second matters on its own
+#                        account: `8.86` is the EXACT leg, the live number this claim
+#                        exists to protect, and a guard that fires on the replacement for
+#                        resembling the retired value is the same defect facing backwards.
+# Neither rejects any markup the paper could put a standalone `8.8` in. `$8.8$`, `-8.8`,
+# `$-8.8$`, `8.8\%`, `\textbf{8.8}` and `[$6.8$, $8.8$]` all still fire, because `$`, `-`,
+# `{`, `,` and a space are none of them digits, and the value is still followed by a
+# non-digit in every one. `tests/test_derived_paper_quantities.py` probes each of those
+# renderings and controls the near-misses, for every anchored claim rather than for this
+# one, and mutates both lookarounds away to prove each is load-bearing.
+#
+# THE ONE CHARACTER THIS DOES NOT COPY FROM THAT FILE, because copying it would have opened
+# a gap. The commonest lookbehind there is `(?<![/\d.])`, and the `/` in it is deliberate:
+# those rules match a NUMERATOR ("21/80 correct targets") and must not let a DENOMINATOR
+# pose as a standalone count. This guard has the opposite job. A retired value used as a
+# denominator is still the retired value, and for `1440` that is not hypothetical: the
+# substring oracle's count is live as a denominator in three artifacts, `436/1440` and
+# `437/1440` in `results/cluster_count_bound.md` and `151/1440` in
+# `results/likelihood_weight_sensitivity.md`, against the paper's own `150/1424`. With `/`
+# in the lookbehind, a `150/1440` arriving in limitations.tex would read as silence. So the
+# left guard is `(?<![\d.])`: is this digit string the tail of a longer NUMBER, and nothing
+# else.
+#
+# WHAT IS STILL NOT COVERED, said plainly rather than left to be discovered.
+#   * A zero-padded rendering. `8.80` and `5.030` are the retired values carrying a decimal
+#     place the paper does not use, and `(?!\d)` declines them. This is the same trade
+#     `\b0\.78(?!\d)` makes in the other file, where an audit later armed the fuller
+#     rendering as a rule of its own rather than by loosening that one; the same route is
+#     open here. It cannot be bought by tolerating a trailing zero, because a trailing zero
+#     is exactly what would let `1440` match `14400` again.
+#   * A number the paper splits with markup, `8{.}8` or `8\,{.}8`. The bare substring this
+#     replaces missed those too, and the whitespace normalisation above does not reach
+#     them. No .tex in paper/ writes a decimal that way today.
+# Both are recorded by name in tests, so neither is a belief about the guard that no run
+# checks.
+# ======================================================================================
+ANCHOR_LEFT = r"(?<![\d.])"
+ANCHOR_RIGHT = r"(?!\d)"
+
+
+def _standalone_re(literal: str) -> re.Pattern:
+    """`literal` as a whole number rather than as a run of characters.
+
+    Composed at call time from the two module constants above rather than cached, so that a
+    test can blank either one and watch this stop biting. An anchor no test can break is an
+    anchor no test has checked, which is the failure this whole file was written about."""
+    return re.compile(ANCHOR_LEFT + re.escape(_norm(literal)) + ANCHOR_RIGHT)
+
+
+def _is_bare_numeric(literal: str) -> bool:
+    """Is `literal` a digit string with nothing distinctive around it?
+
+    The registration-hygiene test uses this to decide which absence claims MUST carry the
+    anchor. `[$0.78$, $5.03$]` is self-delimiting and needs no anchor; `5.03` is three
+    characters of digits and cannot survive alone. Deliberately generous about `%` and a
+    thousands comma, because `8.8%` and `1,440` are just as unable to defend themselves as
+    `8.8` and `1440` are."""
+    return bool(re.fullmatch(r"[\d.,%]+", _norm(literal)))
+
+
 @dataclass(frozen=True)
 class Input:
     """A number lifted from an artifact, with the literal that must still be there."""
@@ -89,19 +183,28 @@ class PaperClaim:
 
     `present=False` inverts it: the literal must be ABSENT. That is how a retired number is
     held down -- the 1440-vs-1424 oracle mix-up below was fixed in the .tex, and the only way
-    to keep it fixed is to fail if 1440 comes back."""
+    to keep it fixed is to fail if 1440 comes back.
+
+    `standalone=True` makes the match a NUMBER rather than a substring, by the anchor above.
+    Every absence claim whose literal is a bare digit string carries it, and
+    `test_every_bare_numeric_absence_claim_is_anchored` fails the suite if a new one does
+    not, because remembering to set a flag is the process that produced the defect."""
     name: str
     value: float
     literal: str
     source: str
     present: bool = True
+    standalone: bool = False  # match the literal as a whole number, not as a substring
     note: str = ""            # provenance tag, for the operational-figure checker
 
     def check(self) -> None:
         text = _read(self.source)
         if not text:
             return
-        found = _norm(self.literal) in _norm(text)
+        if self.standalone:
+            found = _standalone_re(self.literal).search(_norm(text)) is not None
+        else:
+            found = _norm(self.literal) in _norm(text)
         if found is not self.present:
             verb = "no longer contains" if self.present else "contains again"
             PROBLEMS.append(
@@ -321,16 +424,28 @@ CLAIMS = {c.name: c for c in [
     # has already been "corrected" in one file at a time twice tonight. A bare "5.03" is
     # pinned as well as the bracketed forms: the whole concession used to turn on that one
     # digit, and it must not come back in any markup.
+    #
+    # THE BRACKETED FORMS STAY SUBSTRINGS; THE BARE ONES ARE ANCHORED (2026-08-31).
+    # `[$0.78$, $5.03$]` carries its own delimiters and cannot be a fragment of another
+    # number. `5.03` can: unanchored it matched `15.03`, `45.03` and `5.031`, none of which
+    # is the withdrawn Wilson endpoint. The full-precision renderings that the anchor's
+    # right lookaround now declines (`5.0287`, `5.02866`) are not left unguarded: they are
+    # banned by name in `test_the_n40_floor_count_carries_no_interval_in_the_paper`, and by
+    # `\b5\.02[89]\d*` in `scripts/check_population_labels.py`, which is where that audit
+    # put them.
     PaperClaim("n40_floor_wilson_retired_disc", 5.03, r"[$0.78$, $5.03$]", DISC,
                present=False),
     PaperClaim("n40_floor_boot_retired_disc", 4.0, r"[$0.5$, $4.0$]", DISC, present=False),
-    PaperClaim("n40_floor_503_retired_disc", 5.03, "5.03", DISC, present=False),
+    PaperClaim("n40_floor_503_retired_disc", 5.03, "5.03", DISC, present=False,
+               standalone=True),
     PaperClaim("n40_floor_wilson_retired_main", 5.03, r"[$0.8$, $5.03$]", MAIN,
                present=False),
-    PaperClaim("n40_floor_503_retired_main", 5.03, "5.03", MAIN, present=False),
+    PaperClaim("n40_floor_503_retired_main", 5.03, "5.03", MAIN, present=False,
+               standalone=True),
     PaperClaim("n40_floor_wilson_retired_concl", 5.03, r"[$0.8$, $5.03$]", CONCL,
                present=False),
-    PaperClaim("n40_floor_503_retired_concl", 5.03, "5.03", CONCL, present=False),
+    PaperClaim("n40_floor_503_retired_concl", 5.03, "5.03", CONCL, present=False,
+               standalone=True),
     PaperClaim("n40_floor_rounded_retired_intro", 5.0, r"[$0.8$, $5.0$]", INTRO,
                present=False),
 
@@ -362,17 +477,36 @@ CLAIMS = {c.name: c for c in [
     PaperClaim("leg_20_40_points", 1.1, r"$1.1$ points [$-0.2$, $2.4$]", DISC),
     # ...and the MC renderings of that same leg, held down by ABSENCE, because "correct the
     # paper to match the artifact" is the specific move that has to be prevented here.
-    PaperClaim("leg_10_20_mc_retired", 8.8, "8.8", DISC, present=False),
+    #
+    # ANCHORED 2026-08-31, and this is the claim that forced the anchor. As a bare substring
+    # `8.8` matched the `$28.8\%$` of the prevalence sentence and failed the suite on a
+    # correct number; it also stood ready to match `8.86`, which is the EXACT leg this claim
+    # exists to defend. See the ANCHORING block above for both lookarounds.
+    PaperClaim("leg_10_20_mc_retired", 8.8, "8.8", DISC, present=False, standalone=True),
     PaperClaim("leg_10_20_mc_ci_retired", 11.0, r"[$6.8$, $11.0$]", DISC, present=False),
     # The retired replay family, held down as bare digits rather than as LaTeX. The whole
     # trio 11.9 / 3.0 / 2.0 and its fall of 9.9 [15.5, 5.0] came off an average over 200 whole
     # replicates and was replaced by the per-question mean; none of these five strings occurs
     # in discussion.tex today, and each is registered so that it cannot come back in ANY
     # markup. A guard written as `$9.9$ points` would have missed `9.9~points`.
-    PaperClaim("fall_points_retired", 9.9, "9.9", DISC, present=False),
-    PaperClaim("replay10_floor_retired", 11.9, "11.9", DISC, present=False),
-    PaperClaim("replay20_floor_retired", 3.0, "3.0", DISC, present=False),
-    PaperClaim("fall_ci_lo_retired", 15.5, "15.5", DISC, present=False),
+    #
+    # ALL FOUR ANCHORED 2026-08-31. Refusing to spell the markup was right and is kept; what
+    # was wrong was refusing to say where the number ENDS, which is a different thing and is
+    # what let `8.8` match `28.8` two claims above. Each of these four had a live collision
+    # waiting, and two of them were waiting on THIS paper's own numbers rather than on a
+    # hypothetical future one:
+    #   `11.9`  matched `11.9921`, the EXACT N=10 replay floor, and `11.974`, the MC one.
+    #           Both are live inputs registered above. The retired value is the 1 dp 11.9.
+    #   `3.0`   matched `13.0`, `23.0`, `43.0` and `3.05`. The live N=20 floor is 3.1, so
+    #           every one of those would have been a false positive on arithmetic that is
+    #           not even about this row.
+    #   `9.9`   matched `29.9`, `19.9`, `99.9`, `9.95`.
+    #   `15.5`  matched `115.5`, `215.5`, `15.55`.
+    PaperClaim("fall_points_retired", 9.9, "9.9", DISC, present=False, standalone=True),
+    PaperClaim("replay10_floor_retired", 11.9, "11.9", DISC, present=False,
+               standalone=True),
+    PaperClaim("replay20_floor_retired", 3.0, "3.0", DISC, present=False, standalone=True),
+    PaperClaim("fall_ci_lo_retired", 15.5, "15.5", DISC, present=False, standalone=True),
 
     # -- discussion.tex: the variance decomposition ---------------------------------------
     PaperClaim("sd20_subset", 0.98,
@@ -396,7 +530,14 @@ CLAIMS = {c.name: c for c in [
 
     # -- limitations.tex: the oracle mix-up, now fixed and held down ------------------------
     PaperClaim("span_oracle_count", 1424, r"$1424$ greedy-correct questions", LIMS),
-    PaperClaim("substring_oracle_count_absent", 1440, "1440", LIMS, present=False),
+    # ANCHORED 2026-08-31, and this one was closest to firing of the eight. Unanchored,
+    # `1440` matches `14400`, and 14,400 is the count of scored children in the budget
+    # non-identification argument: 4,703 of 14,400 were ever checked by the lazy feasibility
+    # gate. That number is live, it is load-bearing for the defence of the attack arm's
+    # non-rejection, and the day it reaches limitations.tex without a thousands separator
+    # this guard would have reported the retired substring oracle's count as having returned.
+    PaperClaim("substring_oracle_count_absent", 1440, "1440", LIMS, present=False,
+               standalone=True),
 ]}
 
 CAP = math.log(10)
@@ -535,11 +676,27 @@ def main(write: bool = True, quiet: bool = False) -> int:
     log("")
     log("## What the paper prints, and where")
     log("")
-    log("| claim | value | file | literal | must be | provenance |")
-    log("|---|---|---|---|---|---|")
+    log("| claim | value | file | literal | must be | matched as | provenance |")
+    log("|---|---|---|---|---|---|---|")
     for c in CLAIMS.values():
         log(f"| {c.name} | {c.value} | `{c.source}` | `{c.literal}` | "
-            f"{'present' if c.present else '**absent**'} | {c.note or '-'} |")
+            f"{'present' if c.present else '**absent**'} | "
+            f"{'whole number' if c.standalone else 'substring'} | {c.note or '-'} |")
+    log("")
+    n_anchored = sum(1 for c in CLAIMS.values() if c.standalone)
+    log(f"**The `matched as` column, and why it is worth a column.** {n_anchored} of these")
+    log("are matched as whole numbers rather than as substrings, and all of them are retired")
+    log("values held down by ABSENCE. A short numeric literal checked by substring is a guard")
+    log("on a spelling and not on a value: `8.8` is inside `28.8`, `3.0` is inside `13.0`,")
+    log("and `1440` is inside `14400`. All three of those collisions were live. The first")
+    log("failed the suite on 2026-08-31 against the prevalence sentence's natural")
+    log("hallucination rate; the third sits one thousands-separator away from the 14,400")
+    log("scored children of the budget argument. The anchor is the pair of lookarounds")
+    log("`scripts/check_population_labels.py` settled on for its own numeric rules. It")
+    log("narrows nothing the paper could plausibly print: a standalone value still matches")
+    log("in every markup, `$8.8$`, `-8.8`, `8.8\\%`, `\\textbf{8.8}` and inside a bracketed")
+    log("pair. A claim listed as a substring here is one whose literal carries its own")
+    log("delimiters, so it cannot be a fragment of a longer number in the first place.")
     log("")
     log(f"Ceiling: log(10) = {CAP:.6f} nats.")
     log("")

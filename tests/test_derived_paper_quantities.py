@@ -303,3 +303,261 @@ def test_the_variance_identity_closes_at_both_budgets():
         pbar = src[f"subset-averaged replay floor at {tag} (percent)"] / 100
         binom = 100 * math.sqrt(pbar * (1 - pbar) / D.N_STRATUM)
         assert math.hypot(s, q) == pytest.approx(binom, abs=1e-3), tag
+
+
+# ======================================================================================
+# THE ANCHOR ON THE ABSENCE GUARDS (2026-08-31)
+#
+# `PaperClaim(..., "8.8", DISC, present=False)` failed the suite against a correct number:
+# the paper gained a prevalence sentence printing a natural hallucination rate of
+# $28.8\%$, and `8.8` is three characters inside `28.8`. The guard did what it was written
+# to do, and what it was written to do could not tell a retired standalone value from a
+# digit run inside another number.
+#
+# THESE TESTS ARE THE POINT OF THAT FIX, not a formality around it. An anchor is a claim
+# about a regex, and this file's whole thesis is that a claim nothing mutates is
+# decoration. So every anchored registration is probed in ten renderings, controlled
+# against five near-misses, and then both lookarounds are deleted in turn and required to
+# take a named test red with them.
+# ======================================================================================
+_ANCHORED = sorted(k for k, c in D.CLAIMS.items() if c.standalone)
+
+
+def _against(tmp_path, monkeypatch, claim, body: str) -> list[str]:
+    """Run ONE claim against a synthetic file holding exactly `body`, and return what it
+    said. Synthetic because a probe has to control the text: paper/ is edited concurrently
+    and cannot be made to contain `8.85` on demand."""
+    p = tmp_path / claim.source
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(body, encoding="utf-8")
+    monkeypatch.setattr(D, "ROOT", tmp_path)
+    D.PROBLEMS.clear()
+    claim.check()
+    return list(D.PROBLEMS)
+
+
+# The markups a retired number could come back in. Each is a real shape from this paper:
+# bare in prose, in math mode, negated (the legs are printed as falls), as a percentage,
+# emphasised, inside a bracketed interval, reflowed across a line break, and ending a
+# sentence. The last is the one a naive right-hand guard of `(?![\d.])` would have lost.
+_RENDERINGS = [
+    "the retired leg was {v} points",
+    "the retired leg was ${v}$ points",
+    "a fall of $-{v}$ points",
+    "a fall of -{v} points",
+    "${v}\\%$ of the correct stratum",
+    "\\textbf{{{v}}} points",
+    "[$6.8$, ${v}$]",
+    "a fall of\n{v}\npoints",
+    "the retired leg was {v}.",
+    "{v}~points",
+]
+
+
+@pytest.mark.parametrize("key", _ANCHORED)
+@pytest.mark.parametrize("markup", _RENDERINGS)
+def test_an_anchored_absence_claim_still_catches_its_value_in_any_markup(
+        key, markup, tmp_path, monkeypatch):
+    """THE PROBE. Anchoring must not have bought quiet by narrowing what counts as a
+    return. Every one of these is the retired value standing alone, and the guard owes a
+    finding on all of them."""
+    c = D.CLAIMS[key]
+    body = markup.format(v=c.literal)
+    problems = _against(tmp_path, monkeypatch, c, body)
+    assert problems, (
+        f"claim '{key}' did not catch its own retired value {c.literal!r} in {body!r}. "
+        f"The anchor has narrowed the guard past the renderings the paper actually uses.")
+    assert "contains again" in problems[0], problems
+
+
+# The near-misses. `2{v}` is the shape that fired the false positive (`28.8` inside the
+# prevalence sentence); `1{v}` and `10{v}` are the same defect one and two digits over;
+# `{v}5` and `{v}1` are the retired value with another significant figure after it, which
+# is a different number and in one case -- 8.86, the EXACT 10 -> 20 leg -- is the LIVE
+# number this very claim exists to protect.
+#
+# `0.{v}` IS HERE BECAUSE A MUTATION RUN SAID IT WAS MISSING. With the first five, deleting
+# the `.` from ANCHOR_LEFT changed the behaviour of nothing in this file: every test still
+# passed, so a character of the anchor was going unchecked, which is the exact shape of
+# defect this module exists to refuse. The `.` earns its place on `1440` -- without it the
+# guard fires on a probability of `0.1440`, and four-decimal renderings are everywhere in
+# this repo -- and the case is now controlled for all nine.
+_NEAR_MISSES = ["2{v}", "1{v}", "10{v}", "{v}5", "{v}1", "0.{v}"]
+
+
+@pytest.mark.parametrize("key", _ANCHORED)
+@pytest.mark.parametrize("near", _NEAR_MISSES)
+def test_an_anchored_absence_claim_ignores_a_longer_number_containing_it(
+        key, near, tmp_path, monkeypatch):
+    """THE CONTROL. A digit string inside another number is not the retired value, and a
+    guard that says otherwise blocks the paper from printing arithmetic."""
+    c = D.CLAIMS[key]
+    body = "the paper prints $" + near.format(v=c.literal) + "\\%$ here"
+    assert not _against(tmp_path, monkeypatch, c, body), (
+        f"claim '{key}' fired on {near.format(v=c.literal)!r}, which contains its literal "
+        f"{c.literal!r} but is not that number. This is the 28.8-versus-8.8 defect.")
+
+
+def test_the_exact_case_that_failed_the_suite(tmp_path, monkeypatch):
+    """Named, because a regression here is not an abstraction. The prevalence sentence and
+    the retired leg, in one file, which is the situation in discussion.tex today."""
+    c = D.CLAIMS["leg_10_20_mc_retired"]
+    live = (r"its natural hallucination rate of $28.8\%$ and the exact leg of $8.86$ "
+            r"and a floor of $18.8\%$")
+    assert not _against(tmp_path, monkeypatch, c, live)
+    assert _against(tmp_path, monkeypatch, c, live + r" and a retired $8.8$ points"), (
+        "the retired 8.8 came back beside the numbers it collides with and was not caught")
+
+
+def test_a_retired_count_is_caught_when_it_returns_as_a_denominator(tmp_path, monkeypatch):
+    """Why the left lookbehind is `(?<![\\d.])` and not the `(?<![/\\d.])` that
+    `scripts/check_population_labels.py` uses for most of its numeric rules.
+
+    That file's `/` is deliberate and correct THERE: its rules match a numerator and must
+    not let a denominator pose as a standalone count. This guard has the opposite job, and
+    the retired substring-oracle count is live as a denominator in three artifacts:
+    `436/1440`, `437/1440` (results/cluster_count_bound.md) and `151/1440`
+    (results/likelihood_weight_sensitivity.md), against the paper's own `150/1424`. A
+    `150/1440` reaching limitations.tex is the likeliest way that number comes back, and
+    with `/` in the lookbehind it would read as silence."""
+    c = D.CLAIMS["substring_oracle_count_absent"]
+    assert _against(tmp_path, monkeypatch, c, "the floor is $150/1440 = 10.4\\%$")
+    # ...and the thing the anchor was added for is still refused: 14,400 is the scored-
+    # children count of the budget argument, and unseparated it contains 1440.
+    assert not _against(tmp_path, monkeypatch, c,
+                        "only $4703$ of $14400$ scored children were ever checked")
+
+
+def test_a_four_decimal_probability_is_not_a_retired_count(tmp_path, monkeypatch):
+    """Why the left lookbehind carries `.` as well as `\\d`, on the one claim where the
+    difference is reachable.
+
+    `0.1440` contains `1440` and is preceded by a decimal point rather than by a digit, so
+    only the `.` in `(?<![\\d.])` keeps this guard off it. That matters here specifically:
+    this repo prints four-decimal probabilities everywhere (`0.7804`, `0.2726`, `0.0163`),
+    so a `0.1440` is an ordinary thing for a paper sentence to acquire. A mutation run is
+    what found this missing -- deleting the `.` broke no test at all until this case and
+    the `0.{v}` control above were added."""
+    c = D.CLAIMS["substring_oracle_count_absent"]
+    assert not _against(tmp_path, monkeypatch, c, "a weight of $0.1440$ on that term")
+
+
+# ======================================================================================
+# MUTATION: break the anchor, and a NAMED test must go red.
+# ======================================================================================
+def test_deleting_the_left_lookaround_reopens_the_false_positive(monkeypatch):
+    """Mutation on ANCHOR_LEFT, run against the REAL paper, because the collision is real:
+    discussion.tex prints $28.8\\%$ today, so an unanchored `8.8` fails the whole run. If
+    this test ever passes, the left guard has stopped doing anything."""
+    monkeypatch.setattr(D, "ANCHOR_LEFT", "")
+    assert run() == 1, "ANCHOR_LEFT is not load-bearing; the anchor is decoration"
+    assert any("leg_10_20_mc_retired" in p and "contains again" in p for p in D.PROBLEMS), (
+        D.PROBLEMS)
+
+
+def test_deleting_the_right_lookaround_reopens_the_live_number(tmp_path, monkeypatch):
+    """Mutation on ANCHOR_RIGHT, on the case that matters most: without it the guard on the
+    retired 8.8 fires on 8.86, which is the EXACT leg the claim exists to defend."""
+    c = D.CLAIMS["leg_10_20_mc_retired"]
+    body = r"the exact leg is $-8.86$ points"
+    assert not _against(tmp_path, monkeypatch, c, body)
+    monkeypatch.setattr(D, "ANCHOR_RIGHT", "")
+    assert _against(tmp_path, monkeypatch, c, body), (
+        "ANCHOR_RIGHT is not load-bearing; it is the only thing keeping the guard off the "
+        "live 8.86 that replaced the retired 8.8")
+
+
+def test_dropping_the_anchor_from_a_claim_reopens_the_false_positive(monkeypatch):
+    """Mutation on the REGISTRATION rather than on the regex: the flag itself must be what
+    switches the behaviour, not something that merely correlates with it."""
+    broken = dict(D.CLAIMS)
+    broken["leg_10_20_mc_retired"] = replace(
+        D.CLAIMS["leg_10_20_mc_retired"], standalone=False)
+    monkeypatch.setattr(D, "CLAIMS", broken)
+    assert run() == 1
+    assert any("leg_10_20_mc_retired" in p for p in D.PROBLEMS), D.PROBLEMS
+
+
+# ======================================================================================
+# Registration hygiene: the flag must not be something anyone has to remember.
+# ======================================================================================
+def test_every_bare_numeric_absence_claim_is_anchored():
+    """THE RULE THAT MAKES THE FIX PERMANENT.
+
+    A bare-substring absence guard on a short numeric string is a defect CLASS, not a
+    single instance: `8.8` is inside `28.8`, `3.0` inside `13.0`, `1440` inside `14400`,
+    and the paper gains numbers every week. Fixing the one that fired and leaving eight
+    others armed would just move the failure to the next sentence someone writes. So the
+    requirement is checked over the whole registry rather than remembered claim by claim.
+
+    A literal that carries its own delimiters (`[$0.78$, $5.03$]`) needs no anchor and does
+    not have to take one; only a literal that is nothing but digits does."""
+    unanchored = sorted(
+        f"{c.name} ({c.literal!r} in {c.source})"
+        for c in D.CLAIMS.values()
+        if not c.present and D._is_bare_numeric(c.literal) and not c.standalone)
+    assert not unanchored, (
+        "these absence claims hold down a bare numeric literal by SUBSTRING, so each one "
+        "fires on the next number the paper gains that happens to contain those digits:\n  "
+        + "\n  ".join(unanchored)
+        + "\nPass standalone=True; see the ANCHORING block in "
+          "scripts/derived_paper_quantities.py.")
+
+
+def test_the_anchor_is_only_used_where_the_literal_is_a_whole_number():
+    """The other direction. `standalone=True` on a literal with prose in it would be a
+    registration that reads as stricter than it is."""
+    for c in D.CLAIMS.values():
+        if c.standalone:
+            assert D._is_bare_numeric(c.literal), (
+                f"{c.name} is anchored as a whole number but its literal {c.literal!r} is "
+                f"not one")
+
+
+def test_the_anchored_claims_are_the_nine_the_sweep_found():
+    """The census, pinned. Eight of these nine were LATENT: only `leg_10_20_mc_retired` had
+    actually fired, and the other eight were each one new paper number away from firing.
+    Pinning the set means a tenth cannot join it without somebody reading this list."""
+    assert _ANCHORED == sorted([
+        "fall_ci_lo_retired",
+        "fall_points_retired",
+        "leg_10_20_mc_retired",
+        "n40_floor_503_retired_concl",
+        "n40_floor_503_retired_disc",
+        "n40_floor_503_retired_main",
+        "replay10_floor_retired",
+        "replay20_floor_retired",
+        "substring_oracle_count_absent",
+    ])
+
+
+def test_the_report_says_which_claims_are_matched_as_whole_numbers(tmp_path):
+    """A report that printed each literal without saying how it is matched would let a
+    reader believe every absence guard is the same strength. They are not, and the split is
+    the kind of thing this file already reports for derived-versus-pinned."""
+    D.main(write=True, quiet=True)
+    report = (tmp_path / "derived_paper_quantities.md").read_text(encoding="utf-8")
+    assert "| matched as |" in report
+    for key in _ANCHORED:
+        row = next(ln for ln in report.splitlines() if ln.startswith(f"| {key} |"))
+        assert "whole number" in row, row
+    subs = next(ln for ln in report.splitlines()
+                if ln.startswith("| n40_floor_wilson_retired_disc |"))
+    assert "substring" in subs, subs
+
+
+@pytest.mark.parametrize("key", _ANCHORED)
+def test_a_zero_padded_rendering_is_not_caught_and_that_is_recorded(
+        key, tmp_path, monkeypatch):
+    """NOT A PASSING GRADE: the honest boundary of the anchor, written down so that it is a
+    known limit rather than a surprise.
+
+    `8.80` is the retired 8.8 carrying a decimal place the paper does not use, and `(?!\\d)`
+    declines it. The trade is forced: tolerating a trailing zero is exactly what would let
+    `1440` match `14400` again, which is the collision this anchor exists for. The other
+    file met the same boundary on `\\b0\\.78(?!\\d)` and closed it by arming the fuller
+    rendering as a rule of its own, which is the route open here if a padded rendering ever
+    turns up in paper/. If this test starts FAILING, that has happened; read it as news and
+    not as a break."""
+    c = D.CLAIMS[key]
+    assert not _against(tmp_path, monkeypatch, c, f"the value is ${c.literal}0$ here")

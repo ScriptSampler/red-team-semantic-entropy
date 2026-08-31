@@ -169,9 +169,15 @@ surface single-hop NLI false positives. The residual fidelity of that one
 gate hop is therefore not assumed away but measured directly, in the answer-flip
 subcategory of the evaluation below. The search terminates on a score threshold or an
 iteration budget of $20$ rounds, which is $1 + 20 \times P \times B \approx 181$ objective
-evaluations per target. That count is the attacker's search budget, and the benign noise
-floor of $m{=}50$ random NLI-passing paraphrases is matched against it analytically, by the
-exceedance test of Section~\ref{sec:experiments}, rather than by setting $m$ equal to it. We
+evaluations per target. That count is the number of candidates \emph{scored}, and it is an
+upper bound on the attacker's search budget rather than the budget itself: only a candidate
+that also clears the feasibility gate can become the reported maximum, and the gate is
+applied lazily, so the number of candidates that maximum actually ranges over is only partly
+identified. Section~\ref{sec:experiments} bounds it to $[41,181]$, reports the test across
+that range, and rests the verdict on the arm that is invariant over it. The benign noise
+floor of $m{=}50$ random NLI-passing paraphrases is matched against that budget
+analytically, by the exceedance test of that section, rather than by setting $m$ equal to
+it. We
 swap SECA's objective (confidence in a wrong multiple-choice token) for the detector entropy
 above, and its LLM-judge feasibility check for the NLI gate.
 
@@ -224,9 +230,8 @@ different sets of questions.
 
 What disqualifies the attacked subset from characterising the detector is accordingly not
 that it is a different population but that it is a \emph{selected sub-sample of a single
-stratum}: each direction draws from one correctness class only, the hide arm is additionally
-still incomplete against its planned $80$, and it is the sample the optimiser was actually
-run on. A quantity computed there describes correct answers, or hallucinating ones,
+stratum}: each direction draws from one correctness class only, and it is the sample the
+optimiser was actually run on. A quantity computed there describes correct answers, or hallucinating ones,
 under the attack's own sampling. It never describes the correct-versus-hallucinating contrast
 that ``the detector's AUROC'' names. The ceiling and granularity counts are \emph{within}-stratum
 frequencies among correct targets, so we report them on the attacked pool and label them as

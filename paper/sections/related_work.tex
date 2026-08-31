@@ -134,7 +134,7 @@ that SE-\emph{family} detectors can be attacked. We do not claim that as our nov
 distinction is substantive rather than a label. CORVUS perturbs a frozen hidden-state probe
 \emph{model-side} (LoRA fine-tuning, fixed inputs, suppression-only, no
 semantic-equivalence constraint, Alpaca/FAVA). We perturb the \emph{input} under a
-hard equivalence constraint, in both directions, on TriviaQA/SQuAD. Our target is the
+hard equivalence constraint, in both directions, on TriviaQA. Our target is the
 sampling-and-NLI-clustering pipeline itself, which is a different attack surface. A weaker
 neighbour prompts LLMs to fool generic activation probes~\citep{blandfort2025redteamprobes},
 but not in the hallucination-detection setting. Each ingredient of our attack is by now
@@ -168,7 +168,7 @@ competing, and we are careful not to promote that into an explanation. Two mecha
 make a plug-in estimate fall short of the semantic entropy it targets: truncation at
 $\log N$, which binds whenever the true quantity exceeds the cap, and the finite-sample
 negative bias of a plug-in entropy over an alphabet the sample under-covers, which is the
-mechanism these papers propose and correct for. They are not mutually exclusive, both are
+mechanism these papers correct for. They are not mutually exclusive, both are
 active at deployed $N$, and nothing we measure apportions the understatement between them,
 so we claim agreement with their finding and not a diagnosis of it.
 Separately, \citet{sun2026granularity} name the \emph{score granularity

@@ -139,6 +139,30 @@ results/*.jsonl
 # transparency-in-place-of-inter-annotator-kappa argument the protocol rests on.
 !results/equivalence_audit*.csv
 
+# ...but NOT the un-blinding key, and not yet. The negation above is right at the END of the
+# audit: protocol section 7d asks for the protocol, the blinded sheet, the key and the FILLED
+# LABELS to be published together, because with one annotator transparency is doing the work
+# that an inter-annotator kappa normally does. It is being applied at the wrong time. Measured
+# 2026-08-31: 0 of 123 round-1 rows and 0 of 37 round-2 rows are annotated, in this tree and in
+# all seven .claude/worktrees copies. There are no labels to publish the key alongside.
+#
+# The key is not merely adjacent to the blinded sheet, it is its answer. Three columns are
+# decisive: `stratum` names all 10 catch trials, which protocol 7b calls the only part of the
+# design that can detect a rubber-stamping annotator; `round1_pair_id` maps all 37 round-2
+# pairs back to their round-1 twins, restoring exactly the identification that the new ids,
+# independent shuffle and flipped orientation of protocol 7a were built to destroy; and
+# `success` / `status_held` / `entropy_and_feasible` give the outcome of every pair outright.
+#
+# NOTE FOR WHOEVER COMMITS THIS: this line alone changes nothing, because the key is ALREADY
+# TRACKED. It only stops a future `git add` from re-adding it. To act, run
+#     git rm --cached results/equivalence_audit_key.csv
+# and move the file outside the repository, as the protocol's own file table instructs. Note
+# also that this does NOT erase it: the blob is in commit 6d65384 (2026-08-13) and reachable
+# from every later commit, so a public push of this history publishes the key regardless.
+# Sequestration requires publishing a snapshot or a squashed history, not just an untrack.
+# Once the audit is done, DELETE THIS LINE and ship the key with the labels in one release.
+results/equivalence_audit_key.csv
+
 # Runtime status surfaces -- rewritten every 15 s by the stop watcher and every 300 s by the
 # progress monitor. Tracking them makes the tree permanently dirty and invites an accidental
 # commit of whatever a background agent happened to be mid-write on.
@@ -150,3 +174,17 @@ dashboard/*.stdout
 dashboard/*.err
 dashboard/stop_watcher*.log
 dashboard/overnight_*.log
+
+# Agent worktrees and runtime state. These were held out only by .git/info/exclude, which is
+# local to one clone and travels with nothing: not a push, not a clone, not a release tarball.
+# Measured 2026-08-31: 31 MB across 7 worktrees, each a full copy of results/ (and therefore a
+# copy of the un-blinding key). Versioning the rule is what makes the exclusion survive.
+.claude/worktrees/
+.claude/checkpoints/
+.claude/mailbox/
+.claude/routines/.state/
+.claude/scheduled_tasks.lock
+.claude/scheduled_tasks.json
+.claude/agent-registry.json
+.claude/agent-memory-local/
+.claude/assistant-daemon-state.json

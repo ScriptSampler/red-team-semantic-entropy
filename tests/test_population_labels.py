@@ -52,6 +52,58 @@ def _check(tmp_path: Path, text: str, name: str = "probe.tex") -> list[str]:
     return check_file(f)
 
 
+# --------------------------------------------------------------------------------------
+# A TEST SUITE MAY NOT MUTATE TRACKED SOURCE, and this module is pointed at two tracked
+# files by name: the ledger it tests, and itself. Every probe here is supposed to go into
+# `tmp_path` or a `TemporaryDirectory`, and a probe that goes into the real file instead is
+# invisible in a green run and looks, in a red one, exactly like an edit somebody made and
+# forgot -- which is how a register fix gets silently reverted rather than reviewed.
+#
+# WHAT WAS ACTUALLY MEASURED, 2026-08-31, because this guard is here on a report that did
+# NOT reproduce and the distinction belongs in the file rather than in a commit message.
+# The full suite was run under an audit hook on `open` (both the io.open mode string and
+# the os.open flag word), on os.rename / os.remove / os.replace / shutil.*, and on
+# subprocess.Popen; and separately with both files byte-hashed after each of ~1400 tests.
+# The ledger is never opened for writing, by this module or any other. The suite makes
+# exactly ONE write inside the repo -- tests/__cd.md, from
+# test_operational_provenance.py::test_the_countdown_rule_needs_no_judgement_at_all, which
+# already unlinks it in a `finally` -- and starts exactly one subprocess with the repo as
+# its cwd, a read-only `git show 852e0f7`.
+#
+# So this fixture pins a property that currently holds rather than repairing one that does
+# not. It is worth its cost anyway: it is a few hundred microseconds a test, it names the
+# offending test instead of leaving a dirty tree, and it RESTORES the bytes on every path
+# including a failing assert, an error and a KeyboardInterrupt, which is the part a
+# hand-written `finally` in one test is always one refactor away from losing.
+_GUARDED_SOURCES = (REPO / "scripts" / "check_population_labels.py",
+                    REPO / "tests" / "test_population_labels.py")
+_PRISTINE = {p: p.read_bytes() for p in _GUARDED_SOURCES}
+
+
+@pytest.fixture(autouse=True)
+def _tracked_source_is_not_a_scratch_file():
+    """Fail the test that edited the ledger, and put the ledger back before the next one."""
+    yield
+    damaged = []
+    for path, pristine in _PRISTINE.items():
+        try:
+            current = path.read_bytes()
+        except OSError:                                    # deleted outright
+            current = None
+        if current == pristine:
+            continue
+        path.write_bytes(pristine)                          # restore, then complain
+        damaged.append(f"{path.relative_to(REPO).as_posix()} "
+                       f"({'deleted' if current is None else f'{len(current)} bytes'} "
+                       f"against {len(pristine)} pristine)")
+    assert not damaged, (
+        "this test wrote to tracked source: " + "; ".join(damaged) + "\n"
+        "      The bytes have been put back, so `git status` is clean and the next test "
+        "sees the real file -- but find the write and point it at `tmp_path`.\n"
+        "      A suite that edits the files it is checking cannot tell a repair from a "
+        "revert, and neither can `git status`.")
+
+
 def _say(problems: list[str]) -> str:
     return "\n".join(problems)
 
@@ -2726,6 +2778,14 @@ def test_the_guard_is_cheap_enough_to_run_in_the_suite():
 #     the retired-VALUE half of SUPERSEDED  273 findings in 38 files
 #     the retired-POSITION rules (these)     32 findings in  7 files  <- the only one that ports
 #
+# THAT TABLE IS THE 2026-08-26 READING AND IS LEFT AT IT ON PURPOSE: it is what the tier
+# line was decided on, and a decision is not improved by being back-dated. Today's figures
+# are 776 / 80 / 303 / 23 over 238 tier-2 files, re-struck 2026-08-31 in the checker's SCOPE
+# section with the movement attributed file by file. Only the last row moved for a reason
+# anyone here caused -- docs/START_HERE_overnight.md repaired, 26 -> 23; the other three
+# grew because eleven unrelated result files entered scope. Do not edit the figures above
+# to match; read them as dated, and read `--dry-run` for now.
+#
 # The first three are not backlogs, they are category errors, and each has its own reason
 # (the module docstring's SCOPE section states all three). The short version: the pool and
 # growing rules arbitrate by SENTENCE DISTANCE and neither a markdown table row nor a line
@@ -3067,7 +3127,10 @@ def test_the_register_matches_the_repo_today():
         "KNOWN_OPEN and the repo disagree.\n"
         f"  found but not pinned : { {k: v for k, v in open_now.items() if KNOWN_OPEN.get(k) != v} }\n"
         f"  pinned but not found : { {k: v for k, v in KNOWN_OPEN.items() if open_now.get(k) != v} }")
-    assert sum(KNOWN_OPEN.values()) == 26 and len(KNOWN_OPEN) == 5
+    assert sum(KNOWN_OPEN.values()) == 23 and len(KNOWN_OPEN) == 4, (
+        "START_HERE_overnight.md left the register on 2026-08-31 when its three sites "
+        "were fixed, not silenced. Lowering a pin because a file was repaired is the "
+        "ratchet working; raising one to clear a red is what it exists to catch.")
 
 
 def test_a_new_defect_in_a_pinned_file_still_fails(tmp_path):
@@ -3142,7 +3205,11 @@ def test_the_pinned_findings_are_not_printed_on_an_unrelated_failure(capsys):
 
     C.main()
     out = capsys.readouterr().out
-    assert "OK (" in out and "26 finding(s) pinned in 5" in out
+    # 26 in 5 until 2026-08-31; docs/START_HERE_overnight.md's three sites were fixed and
+    # its entry left the register with them. The literal is deliberate -- a pin re-struck
+    # by hand is the device this whole file is built on -- but it is the SAME number the
+    # ratchet and the census carry, so all three move together or the suite says so.
+    assert "OK (" in out and "23 finding(s) pinned in 4" in out
     assert "STALE VALUE" not in out, "a green run printed the pinned backlog"
 
 
@@ -3410,14 +3477,15 @@ def test_mutation_running_the_latex_flattener_on_markdown_loses_sites(tmp_path,
 
 
 def test_mutation_widening_tier_two_to_every_superseded_entry_reddens_the_repo():
-    """The 1083-finding measurement, as a live assertion instead of a comment. Run the FULL
-    ledger over the tier-2 files and the backlog explodes across the run artifacts, the
-    absence-pins and the correction records -- which is the whole argument for the
-    value/position line, and it stops being an argument the day it stops being true."""
+    """The 1159-finding measurement -- 1083 when this was written -- as a live assertion
+    instead of a comment. Run the FULL ledger over the tier-2 files and the backlog
+    explodes across the run artifacts, the absence-pins and the correction records --
+    which is the whole argument for the value/position line, and it stops being an
+    argument the day it stops being true."""
     import check_population_labels as C
 
     wide_now = sum(len(C.check_file(f)) for f in C.wide_files())
-    assert wide_now == 26
+    assert wide_now == 23         # 26 until docs/START_HERE_overnight.md was repaired
 
     census = C.scope_census()
     value_findings, value_files = census["retired-value"]
@@ -3503,39 +3571,62 @@ def test_a_third_party_file_quoting_a_rule_pattern_is_reported():
 # --- 11. a red run shows the NEW finding, not the pinned backlog ------------------------
 def test_a_breach_prints_its_own_file_and_not_the_other_pinned_ones(capsys,
                                                                     monkeypatch):
-    """Twenty-six pinned findings printed alongside one new one is a report nobody reads,
+    """Twenty-three pinned findings printed alongside one new one is a report nobody reads,
     and this file's docstring is explicit that a guard whose output is skipped has the same
     end state as one that cannot fail. So `main` prints findings only for files that BREACH
-    the ratchet."""
+    the ratchet.
+
+    THE PROBE MOVED ON 2026-08-31, and it had to. It used to drive the breach through
+    docs/START_HERE_overnight.md, pinned at 3; that file was repaired, reports 0 today, and
+    dropping its pin to 0 no longer breaches anything -- the test was asserting a red that
+    can no longer happen. It now breaches results/morning_review_2026_08_19.md, which is
+    still pinned at 5, and the three files that must stay quiet are the rest of the
+    register, so all four pinned files are still named here.
+    """
     import check_population_labels as C
 
-    monkeypatch.setitem(C.KNOWN_OPEN, "docs/START_HERE_overnight.md", 0)
+    loud = "results/morning_review_2026_08_19.md"
+    assert C.KNOWN_OPEN[loud] > 0, "the probe needs a file with findings left to print"
+    monkeypatch.setitem(C.KNOWN_OPEN, loud, 0)
     assert C.main([]) == 1
     out = capsys.readouterr().out
-    assert "docs/START_HERE_overnight.md" in out
+    assert loud in out
     assert "STALE VALUE" in out, "the breaching file's finding itself must be shown"
     for quiet in ("results/replay_control.md", "scripts/replay_control.py",
                   "results/schedule_2026_08_26.md"):
         assert f"{quiet}: [run provenance]" not in out, (
             f"{quiet} is at its baseline and its findings were printed anyway")
+        # ...and the same claim without relying on `_line_hint` having failed to locate
+        # the finding, which is the only shape the assertion above can actually see.
+        assert f"{quiet}:" not in out, (
+            f"{quiet} is at its baseline and was printed anyway")
 
 
 def test_the_scope_census_matches_the_numbers_the_docstring_argues_from():
     """THE SCOPE ARGUMENT IS A MEASUREMENT, so it expires like every other list in this
     ledger -- `labels` (defect 5), `numbers` (defect 6), FROZEN_COUNTS (defect 7). The
-    docstring says the pool rules would return 736 findings outside paper/ and that this
+    docstring says the pool rules would return 776 findings outside paper/ and that this
     is why they stay scoped. If that becomes 40, the argument is gone and nobody would
     know. Bands rather than exact equality, because these move when the repo does; a band
     breach is a prompt to re-read the SCOPE section, not necessarily a defect.
+
+    RE-STRUCK 2026-08-31, and only the docstring figures moved -- the BANDS are untouched,
+    because all three scoped-out families stayed inside the ones already written. Widening
+    a band to admit a number is the move the SCOPE section calls dishonest, and it was not
+    needed: 736 -> 776, 73 -> 80, 274 -> 303 are eleven new tier-2 files (run reports and
+    an adjudication landing in results/) plus three tracked files growing, none of it
+    anything to do with this guard. The exact pin is the one that had to move, and for the
+    opposite reason: 26 -> 23 is docs/START_HERE_overnight.md repaired, three findings
+    gone, its register entry gone with them.
     """
     from check_population_labels import scope_census
 
     census = scope_census()
     bands = {                       # (low, high) for findings; the docstring's figure
-        "pools": (600, 900),                    # 736
-        "growing": (50, 120),                   # 73
-        "retired-value": (200, 380),            # 274
-        "retired-position": (26, 26),           # 26 -- pinned exactly; it is the ratchet
+        "pools": (600, 900),                    # 776
+        "growing": (50, 120),                   # 80
+        "retired-value": (200, 380),            # 303
+        "retired-position": (23, 23),           # 23 -- pinned exactly; it is the ratchet
     }
     for name, (low, high) in bands.items():
         found, _ = census[name]
@@ -3544,7 +3635,7 @@ def test_the_scope_census_matches_the_numbers_the_docstring_argues_from():
             "of scripts/check_population_labels.py argues from. Re-read that section and "
             "restate the number, or move the tier line -- but do not leave the docstring "
             "quoting a figure the code no longer produces")
-    assert census["retired-position"][1] == 5
+    assert census["retired-position"][1] == 4
 
 
 # ======================================================================================

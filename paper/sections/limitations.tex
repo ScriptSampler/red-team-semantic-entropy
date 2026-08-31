@@ -98,8 +98,9 @@ regard it as owed.
 \paragraph{Selection on a noisy estimator, measured rather than merely acknowledged.}
 Semantic entropy is a finite-sample quantity: for each candidate we cluster $N{=}10$ sampled
 answers, so the score is a Monte-Carlo estimate of the true entropy. Our optimiser selects the
-extremum of this estimate over $\sim$180 candidate paraphrases, and the extremum of many
-noisy-but-unbiased estimates is biased in the attacker's favour even when, as here, sampling is
+extremum of this estimate over the feasible candidates of a $\sim$180-candidate search, and
+the extremum of many noisy-but-unbiased estimates is biased in the attacker's favour even
+when, as here, sampling is
 seeded so each estimate is \emph{reproducible}. Reproducibility is not the same as
 noise-freeness.
 
@@ -191,7 +192,7 @@ under $q'$, rather than relying on the greedy check alone.
 Results are on a single model family (Llama-3.1-8B-Instruct) run in 4-bit quantisation on one
 16\,GB GPU; quantisation may shift both the entropy estimates and the attack surface relative
 to a full-precision detector, and generalisation across model families and scales is untested.
-Our primary dataset is TriviaQA; broader datasets (e.g.\ SQuAD) are in progress. The attack
+Our only dataset is TriviaQA, and no result here covers a second corpus. The attack
 budget (beam and iteration counts) is modest by necessity, and the reported cells use small
 per-stratum $n$, so the confidence intervals are wide and the numbers are best read as
 preliminary effect sizes rather than tight estimates.
