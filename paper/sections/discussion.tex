@@ -168,14 +168,24 @@ the floor that hull is one straight line out of the origin.
 
 \paragraph{Does a larger sample budget fix it?}
 Half of this was settled without data and half needed the measurement, and the two halves
-are easy to conflate. Settled without data: the floor is non-increasing in $N$. Couple the budgets by taking the
+are easy to conflate. Settled without data: the mass of the ceiling atom, the probability that
+all $N$ answers are pairwise inequivalent, is non-increasing in $N$. Couple the budgets by taking the
 $N{=}10$ sample to be the first ten draws of the $N{=}20$ one; if all twenty answers are
 pairwise inequivalent then so are any ten of them, so $\{\text{saturate at }20\}$ is
 contained in $\{\text{saturate at }10\}$, and the first ten of an i.i.d.\ draw of twenty have
-the law of an i.i.d.\ draw of ten. Raising the budget can therefore only lower the
-false-alarm floor, and the floor itself is a fact about how often the model answers a
-question in $N$ ways the clusterer holds apart. That frequency is a property of the model,
-the question distribution and the equivalence relation jointly, not of
+the law of an i.i.d.\ draw of ten. What that carries to the \emph{floor} it carries only
+through the identity between the two, and that identity is conditional: while the atom carries
+mass the floor \emph{is} that mass, so there raising the budget can only lower the false-alarm
+floor; once the atom empties the floor is the mass of a different lattice point and the
+coupling is silent about it. Silent, and not merely cautious. Give a question type equal mass
+on ten meanings and a perfect clusterer, and the atom is empty at $N{=}11$, where the floor
+stands more than five times higher than at $N{=}10$: no sample of eleven can be all-distinct,
+so the cheapest alarm is the crowded partition one rung below. Past the atom, monotonicity is
+an empirical question rather than a proved one, and the ladder measured below answers it
+affirmatively at $N{=}10$, $N{=}20$ and $N{=}40$, on the terms set out there, and settles
+nothing beyond $N{=}40$. What the floor is does not change with the budget: it is a fact about
+how often the model answers a question in $N$ ways the clusterer holds apart. That frequency
+is a property of the model, the question distribution and the equivalence relation jointly, not of
 the estimator's arithmetic. Not settled that way: whether the grid becomes usably
 \emph{fine} near the operating region. Enumeration bounds the number of thresholds available in the top tenth of
 the range at seven ($455$ attainable values at $N{=}20$, against $39$ and two at $N{=}10$),
@@ -497,8 +507,11 @@ targets, and the adjudicator's pre-registered exceedance test does not reject
 (Section~\ref{sec:experiments}): with the attacker's own search budget priced into the null,
 the optimised search does not beat a budget-matched benign one under an equivalence oracle
 the detector does not supply. We report that as the gate said we would, and we decline the
-stronger form of it. A non-rejection by a design with power $0.77$ against a two-fold effect
-bounds what we could have seen, not what exists; it is confined to the false-alarm direction
+stronger form of it. A non-rejection by a design with power $0.67$ against a two-fold effect
+bounds what we could have seen, not what exists. That figure is the design that ran and not the
+one that was planned, and what costs it is the analytic null's integer granularity, which admits
+no cut between $0.0296$ and $0.0501$, rather than the targets the run lost: at a fixed cut the
+realized design is the stronger of the two. The non-rejection is confined to the false-alarm direction
 of the SE detector on those $80$ targets, and it leaves the hide direction and SRE untested.
 What the run removes is the licence to claim the effect, not the possibility of one. A single
 validated judge, however independent, is in any case not the

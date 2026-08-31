@@ -14,13 +14,13 @@ are taken at check time so a miss can be re-checked against the same bytes.
 
 | paper file | bytes | sha256[:12] |
 |---|---|---|
-| `paper/main.tex` | 27394 | `dd8f5edb5379` |
+| `paper/main.tex` | 27811 | `ac082df709a5` |
 | `paper/sections/conclusion.tex` | 9951 | `4caf132bc5db` |
-| `paper/sections/discussion.tex` | 44556 | `0cb850faa45d` |
-| `paper/sections/experiments.tex` | 42008 | `48a927577e13` |
-| `paper/sections/introduction.tex` | 24360 | `7f5dd7bc34dc` |
-| `paper/sections/limitations.tex` | 20766 | `60102cd0b3db` |
-| `paper/sections/methods.tex` | 33233 | `bbc844e6fbd9` |
+| `paper/sections/discussion.tex` | 45814 | `7b8f91f7d144` |
+| `paper/sections/experiments.tex` | 48724 | `20a3f46f3d59` |
+| `paper/sections/introduction.tex` | 24437 | `b62adb582cb3` |
+| `paper/sections/limitations.tex` | 21242 | `a0c2bf692e46` |
+| `paper/sections/methods.tex` | 33820 | `c1df4153d558` |
 
 ## Inputs, and where they come from
 

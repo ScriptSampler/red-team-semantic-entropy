@@ -50,7 +50,17 @@ results/run_all_status.txt
 results/*.pkl
 results/*.npy
 results/*.csv
-results/figures/
+# results/figures/ holds the retired pre-B1 headline chart. `headline_auroc.json` and
+# `headline_auroc.png` are TRACKED (they predate this rule and tracking beats ignoring), so a
+# cloner gets them and gets a clean AUROC of 1.000 with nothing beside it saying that the 1.000
+# is the selection rule rather than the detector. Their retirement notices therefore have to
+# ship too, and git cannot re-include a path whose PARENT DIRECTORY is excluded -- so this is
+# `results/figures/*`, matching the contents, and not `results/figures/`, matching the directory.
+# Ignoring a retirement notice is the same defect as writing no notice at all (see the
+# `!results/*.SUPERSEDED.json` rule below, which is the same argument for checkpoints).
+results/figures/*
+!results/figures/README.md
+!results/figures/*.SUPERSEDED.json
 results/runs/
 results/samples/
 !results/.gitkeep

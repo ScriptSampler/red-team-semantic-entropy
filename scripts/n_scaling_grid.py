@@ -44,7 +44,11 @@ with the cached N=10 grid available as the control that the subsetting is sound.
 REUSE, NOT REIMPLEMENTATION
 ---------------------------
   * ids and Wilson intervals      `scripts/fair_pool_granularity.fair_pool_ids`, `.wilson`
-  * attainable lattice            `scripts/fair_pool_granularity.attainable_lattice`
+  * partition enumeration         `scripts/fair_pool_granularity.partitions`,
+                                  `.partition_entropy`
+    (its `attainable_lattice` is NOT reused: that one dedupes on a rounded float, which
+    is interpreter-dependent at N=40. `lattice` below dedupes on the exact integer
+    prod c^c instead -- see its docstring.)
   * the grid and the budget count `scripts/achievable_fpr_grid.grid`, `.n_firing_below`
   * threshold rule                `se.stats.attainable_fprs`, `se.stats.operating_point`
     (the versions FIXED on 2026-08-13; the old quantile rule overshot its target FPR by up
@@ -223,11 +227,43 @@ def measured_throughput(records: list[dict]) -> dict[int, dict]:
 _LATTICE_CACHE: dict[int, list[float]] = {}
 
 
+def _prod_c_to_the_c(part: tuple[int, ...]) -> int:
+    """prod over clusters of c**c -- an exact integer, and the whole of the entropy."""
+    prod = 1
+    for c in part:
+        prod *= c ** c
+    return prod
+
+
 def lattice(n: int) -> list[float]:
-    """Every entropy value the estimator can emit from n samples (reused enumeration)."""
+    """Every entropy value the estimator can emit from n samples, sorted, deduped EXACTLY.
+
+    A cluster-size distribution over n samples IS an integer partition of n, so this
+    enumeration is exhaustive. The dedup is the part that has to be got right:
+
+        H(part) = -sum_c (c/n) ln(c/n) = ln n - (1/n) * ln prod_c c^c
+
+    and ln is injective on the positives, so two partitions of the SAME n have equal
+    entropy if and only if the integer prod_c c^c is equal. That is an exact criterion
+    with an exact answer, and it is what this function keys on.
+
+    `fair_pool_granularity.attainable_lattice` instead dedupes on `round(H, 12)`. A
+    tolerance is the wrong instrument here, and at n=40 it gives the wrong answer on some
+    interpreters: two families of exactly-equal partitions (integer products
+    2446118092800000 and 71155975251910694400000) differ in the last float ULP and land
+    on either side of a 12-dp rounding boundary, so that route returns 14116 on Windows
+    CPython 3.11 and 14114 on Linux CPython 3.12.3. The count is 14114 on both. At n=10
+    and n=20, the only budgets the other callers of that helper use, the two routes agree
+    exactly (39 and 455), so nothing outside this module is affected.
+
+    The float returned for each value is the entropy of the first partition enumerated
+    with that product, so downstream comparisons at DP=9 are unchanged."""
     if n not in _LATTICE_CACHE:
-        from fair_pool_granularity import attainable_lattice
-        _LATTICE_CACHE[n] = attainable_lattice(n)
+        from fair_pool_granularity import partition_entropy, partitions
+        by_product: dict[int, float] = {}
+        for p in partitions(n):
+            by_product.setdefault(_prod_c_to_the_c(p), partition_entropy(p))
+        _LATTICE_CACHE[n] = sorted(by_product.values())
     return _LATTICE_CACHE[n]
 
 
@@ -1038,6 +1074,15 @@ def write_plan(args) -> int:
         log(f"| {n} | {npart} | **{st['size']}** | **{st['n_top10']}** | {st['n_top5']} | "
             f"{st['n_top1']} | {st['top_gap']:.4f} |")
     log("")
+    log("**Those counts are exact integers, not rounding outcomes.** H(part) = ln N -")
+    log("(1/N) ln prod_c c^c, so two partitions of the same N have equal entropy if and")
+    log("only if the integer prod_c c^c is equal, and the enumeration dedupes on that")
+    log("integer. Deduping on a rounded float instead is interpreter-dependent: at N=40")
+    log("two families of exactly-equal partitions differ in the last float ULP and")
+    log("straddle a 12-dp boundary, which reports 14116 on Windows CPython 3.11 and 14114")
+    log("on Linux CPython 3.12.3. The count is 14114. At N=10 and N=20 the two routes")
+    log("agree exactly.")
+    log("")
     log("**A closed form worth putting in the paper.** The highest attainable value below")
     log("the cap is the partition (2,1,...,1), whose entropy is ln N - (2 ln 2)/N. So the")
     log("last step of the scale is ALWAYS exactly `2 ln 2 / N` nats wide:")
@@ -1096,9 +1141,12 @@ def write_plan(args) -> int:
         log(f"| {n} | {st['min_gap_all']:.2e} | {st['min_gap_top10']:.2e} | "
             f"{st['merged_at_9dp']} | {st['merged_at_9dp_in_top10']} |")
     log("")
-    log("At N=40 two pairs of attainable values fall within 1e-9 of each other and 9-dp")
-    log("rounding merges them -- but none is in the top tenth, where the smallest gap is")
-    log(f"{lattice_stats(40)['min_gap_top10']:.1e} nats, seven orders of magnitude clear. "
+    log("No two attainable values merge under 9-dp rounding at any of these budgets. The")
+    log(f"tightest the lattice ever gets is {st40['min_gap_all']:.2e} nats at N=40, "
+        f"{st40['min_gap_all'] / 10 ** -DP:.0f}x the 9-dp grain;")
+    log("and in the top tenth, where every claim lives, the smallest gap is "
+        f"{st40['min_gap_top10']:.1e} nats,")
+    log(f"{st40['min_gap_top10'] / st40['min_gap_all']:.0f}x wider again. "
         "The mitigation still")
     log("points at the real risk (float noise fabricating operating points) and still")
     log("cannot destroy a real one anywhere a claim is made.")

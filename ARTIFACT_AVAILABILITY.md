@@ -15,14 +15,19 @@ reported by another file rather than measured here, it says so.
 > the README says *that* a clone cannot reproduce the headline; this file says exactly which
 > bytes are missing, how many there are, where they are, and what to do about it.
 
-This file exists because the paper does not say any of it. There is no data-availability,
-code-availability or artifact statement in `paper/main.pdf` (34 pages). Searching the
-extracted PDF text and the LaTeX sources for `availab`, `artifact`, `reproduc`, `github`,
-`zenodo` and `supplement` returns only body prose -- "sequence probabilities are not
-available", "so each estimate is reproducible", and so on. A reader has no way to learn that
-the numbers depend on a 4.75 MB cache that is not in the repository, and no way to learn
-where that cache is. **Adding an availability statement to the paper is a separate, owed
-edit; this file does not substitute for it.** A draft is in section 8.
+This file exists because the paper did not say any of it. **That gap is now closed:
+`paper/main.pdf` (41 pages) carries a Data and Code Availability section, added 2026-08-31
+from the draft in section 8 below.** The two are meant to complement each other. The paper's
+statement tells a reader that the headline depends on a cache which is not in the repository
+and where to obtain it; this file says exactly which bytes are missing, how many there are,
+and what a bare clone does and does not reproduce without them.
+
+Recorded for provenance, because it is why this file has the shape it does: before that edit,
+searching the extracted PDF text and the LaTeX sources for `availab`, `artifact`, `reproduc`,
+`github`, `zenodo` and `supplement` returned only body prose -- "sequence probabilities are
+not available", "so each estimate is reproducible", and so on. A reader had no way to learn
+that the numbers depend on a 4.75 MB cache absent from the repository, and no way to learn
+where that cache was.
 
 ---
 
@@ -50,8 +55,14 @@ Verified by running it. No GPU, no model, no network, no cache.
 | Values in the top tenth of the N=10 range (>= 0.9 ln 10 = 2.0723) | same | **2** -- 2.163956 and 2.302585 |
 | The maximum is an atom | same | max = ln 10 = 2.302585, attained by exactly one partition: all ten samples in singleton clusters |
 | Attainable values at N=20 / in its top tenth | same | **455** / **7** |
-| Attainable values at N=40 / in its top tenth | same | **14116** / **42** |
-| Test suite | `.venv/Scripts/python.exe -m pytest -q` | **2 failed, 1221 passed, 17 skipped** in 66 s, with no cache present |
+| Attainable values at N=40 / in its top tenth | exact integer criterion, see below | **14114** / **42** |
+| Test suite | `.venv/Scripts/python.exe -m pytest -q` | **2 failed, 1221 passed, 17 skipped** in 66 s, with no cache present. Measured 2026-08-26; the suite has since grown to 1408 collected, and the cacheless condition has not been re-measured since. Re-run before quoting. |
+
+The N=40 count is obtained by keying partitions on the integer product `prod(c^c)`, which
+is equal for two partitions **iff** their entropies are equal. That is exact arithmetic and
+needs no tolerance. The **14116** this table carried until 2026-08-31 came from rounding
+scores to 12 decimal places, which is the default of `scripts/fair_pool_granularity.py`;
+that route gives 14114 at 9 to 11 places and 14138 at 13, so it has no correct setting.
 
 The two failures are the known-open `tests/test_operational_provenance.py` pair naming
 `scripts/overnight_2026_08_14.sh`. That is the documented baseline, not a regression. Note
@@ -626,7 +637,8 @@ ships:
 > The pre-registered equivalence-audit protocol, its sampling design, and both blinded
 > annotation sheets are in the repository; the un-blinding key that scores them is
 > [released alongside the completed labels / withheld until the audit reported as owed in
-> Section~ef{sec:limitations} is complete].
+> Section~
+ef{sec:limitations} is complete].
 
 ---
 

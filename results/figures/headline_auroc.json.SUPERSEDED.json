@@ -1,0 +1,21 @@
+{
+  "schema": "superseded-artifact/1",
+  "superseded": [
+    "results/figures/headline_auroc.json",
+    "results/figures/headline_auroc.png"
+  ],
+  "generator": "scripts/make_figures.py",
+  "generated_on": "2026-06-26",
+  "marked_on": "2026-08-31",
+  "reason": "Both files are rendered from the pre-B1 wk9 attack campaigns, whose targets were selected on the detector's own entropy. Under that rule the clean AUROC is 1.000 by construction, which is the artifact the paper's protocol contribution exists to refute, not a property of the detector. External review B1 retired the rule on 2026-07-02; results/attack_matrix.md and the four results/wk9_*.md reports carry the prose form of this banner. A .json and a .png cannot carry it, so this file is it.",
+  "why_a_sidecar": "Neither JSON nor PNG has a comment syntax, so neither can open with the '> SUPERSEDED' banner every retired .md in results/ carries. results/figures/README.md carries the human-readable form for anyone browsing the directory; this file is the machine-readable form, and it is kept in git by the '!results/*.SUPERSEDED.json' rule's intent.",
+  "retracted_claim": "clean AUROC 1.000 on the score-dependent wk9 selection (triviaqa/se, n=30 questions)",
+  "current_claim": "clean AUROC 0.704 [0.653, 0.753] on the score-independent fair pool (results/fair_pool_report.md); the same report gives the extreme-entropy ablation as 1.000 [1.000, 1.000] and labels it an artifact of selection",
+  "canonical_reports": [
+    "results/fair_pool_report.md",
+    "results/fair_recompute_report.md"
+  ],
+  "do_not_cite": true,
+  "referenced_by": "nothing. No .tex, .py, .md or figure include in the repository reads either file; scripts/make_figures.py only writes them. Verified 2026-08-31 by grep over *.md *.py *.tex *.json *.sh.",
+  "note_for_whoever_regenerates": "scripts/make_figures.py rewrites headline_auroc.json and .png unconditionally and does not read this sidecar. If those files are ever regenerated from a fair-pool campaign, delete this sidecar and results/figures/README.md's banner in the same commit rather than leaving a banner over current numbers."
+}

@@ -162,7 +162,8 @@ which is owed before any judge-arm effect size is claimed.
 
 One consequence of that shared dependence reaches past the attack and into the
 measurement-validity result, and we had not scoped it far enough. The achievable false-alarm
-floor we report is the mass of an atom at $\log N$, and what sits at $\log N$ is whatever the
+floor we report is the mass of the top score the clusterer leaves attainable, an atom at
+$\log N$ for as long as that atom carries mass, and what sits at the top is whatever the
 clusterer declines to merge, so the floor is a property of this clusterer as much as of the
 model. Section~\ref{sec:discussion} measures how far it moves when the relation is changed
 and the samples are held fixed: on one set of $80$ clean targets the same estimand reads
@@ -173,20 +174,22 @@ because the one relation that would suggest it is measured at a denominator too 
 exclude the budget in question.
 
 \paragraph{Equivalence is certified automatically, not by humans.}
-Feasibility is a judgement of bidirectional entailment. Our answer-flip subcategory collects
-the successful attacks in which the model's correctness flips under $q'$, and that subcategory
-is a \emph{lower} bound on how often the gate admits a non-equivalent paraphrase, since a $q'$
-can shift scope or presupposition while leaving the greedy answer unchanged. We do not yet
-report a human (or disclosed strong-LLM-judge) equivalence audit of a random sample of
+Feasibility is a judgement of bidirectional entailment. Our answer-flip subcategory is defined
+to collect the successful attacks in which the model's correctness flips under $q'$, and it
+would be a \emph{lower} bound on how often the gate admits a non-equivalent paraphrase, since a
+$q'$ can shift scope or presupposition while leaving the greedy answer unchanged. We report no
+count for it, so the residual fidelity of the equivalence gate is not measured anywhere here.
+We do not yet report a human (or disclosed strong-LLM-judge) equivalence audit of a random sample of
 successful $q'$; such an audit, with an inter-annotator agreement estimate, is needed before
 the meaning-preserving claim is fully established.
 
 \paragraph{Status check versus what the detector sees.}
 The success criterion re-checks the model's answer with a single greedy decode, while the
 detector clusters temperature-$1.0$ samples. The two can disagree, because a greedy answer may
-stay wrong while the sampled distribution shifts toward correct (or vice versa). We therefore
-report both the greedy status and the fraction of the detector's own samples that are correct
-under $q'$, rather than relying on the greedy check alone.
+stay wrong while the sampled distribution shifts toward correct (or vice versa). We do not
+report the fraction of the detector's own samples that are correct under $q'$, which is the
+statistic that would price that disagreement, so nothing here bounds how far the greedy check
+and the detector's own view of correctness come apart.
 
 \paragraph{Model, precision, data, and budget.}
 Results are on a single model family (Llama-3.1-8B-Instruct) run in 4-bit quantisation on one
@@ -208,10 +211,13 @@ further experiments: they are replays of that one run's recorded pairwise equiva
 on random subsets of its $40$ samples, unbiased for the smaller budget by the exchangeability
 argument of Section~\ref{sec:discussion}, but read off one generation run rather than three.
 Only the top of the ladder is a measurement and nothing above it was run, so what we can say is
-that the floor is non-increasing in $N$, which we prove rather than measure, and that on the
-fair pool's $200$ correct answers it had reached a measured $2.0\%$ by $N{=}40$; how it behaves
+that the mass of the ceiling atom is non-increasing in $N$, which we prove rather than measure,
+that the floor inherits that monotonicity only while the atom carries mass and the atom is
+already empty at $N{=}40$, and that on the fair pool's $200$ correct answers the floor had
+reached a measured $2.0\%$ by $N{=}40$; how it behaves
 further out, and whether the decay between two coupled points is the shape it keeps, we cannot
-say. Three narrower scopes ride along. The ladder exists only on the fair pool. The
+say, and past the atom no coupling argument answers it. Three narrower scopes ride along. The
+ladder exists only on the fair pool. The
 $1424$-answer superset estimates the same $N{=}10$ floor as the fair pool's $9.5\%$ over seven
 times as many negatives, but it has no $N{=}40$ counterpart, so every row here is estimated on
 $200$ negatives, a resolution that cannot separate false-alarm rates less than half a point

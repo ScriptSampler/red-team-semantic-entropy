@@ -128,7 +128,16 @@ enumerable, and it bounds how good the achievable grid could possibly get.
 | --- | --- | --- | --- | --- | --- | --- |
 | 10 | 42 | **39** | **2** | 1 | 1 | 0.1386 |
 | 20 | 627 | **455** | **7** | 3 | 1 | 0.0693 |
-| 40 | 37338 | **14116** | **42** | 10 | 2 | 0.0347 |
+| 40 | 37338 | **14114** | **42** | 10 | 2 | 0.0347 |
+
+**Those counts are exact integers, not rounding outcomes.** H(part) = ln N -
+(1/N) ln prod_c c^c, so two partitions of the same N have equal entropy if and
+only if the integer prod_c c^c is equal, and the enumeration dedupes on that
+integer. Deduping on a rounded float instead is interpreter-dependent: at N=40
+two families of exactly-equal partitions differ in the last float ULP and
+straddle a 12-dp boundary, which reports 14116 on Windows CPython 3.11 and 14114
+on Linux CPython 3.12.3. The count is 14114. At N=10 and N=20 the two routes
+agree exactly.
 
 **A closed form worth putting in the paper.** The highest attainable value below
 the cap is the partition (2,1,...,1), whose entropy is ln N - (2 ln 2)/N. So the
@@ -148,13 +157,13 @@ binds.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 10 | 39 | 200 | 39 | 2.56% | **lattice** | 2 | 50.00% (lattice) |
 | 20 | 455 | 200 | 200 | 0.50% | **sample size** | 7 | 14.29% (lattice) |
-| 40 | 14116 | 200 | 200 | 0.50% | **sample size** | 42 | 2.38% (lattice) |
+| 40 | 14114 | 200 | 200 | 0.50% | **sample size** | 42 | 2.38% (lattice) |
 
 Read that table as the ceiling on what the measurement can find:
 
 - At **N=10** the lattice binds everywhere: 39 values against 200 negatives, so the grid can be no finer than 2.6%, and in the top tenth no finer than 50% of whatever mass lands there. The measured grid (0% -> 9.5% -> 21.5%) is at that limit, not far from it.
 - At **N=20** the lattice stops binding globally (455 values > 200 negatives) but still binds at the top: only 7 points in the top tenth, and only 3 in the top twentieth.
-- At **N=40** the lattice has stopped binding anywhere that matters: 14116 values, 42 of them in the top tenth. **From N=40 on, the coarseness of the grid can no longer be blamed on the estimator's arithmetic** -- if it is still coarse it is because the population is piled on one value, which is a fact about the language model, not about entropy of a partition.
+- At **N=40** the lattice has stopped binding anywhere that matters: 14114 values, 42 of them in the top tenth. **From N=40 on, the coarseness of the grid can no longer be blamed on the estimator's arithmetic** -- if it is still coarse it is because the population is piled on one value, which is a fact about the language model, not about entropy of a partition.
 
 That is the sharpest thing enumeration alone can say, and it is what makes the
 N=40 arm the decisive one: it separates *the estimator cannot express a 5% rate*
@@ -168,11 +177,12 @@ gets denser):
 | --- | --- | --- | --- | --- |
 | 10 | 2.90e-03 | 1.39e-01 | 0 | 0 |
 | 20 | 1.42e-04 | 2.62e-02 | 0 | 0 |
-| 40 | 1.00e-12 | 7.25e-04 | 2 | 0 |
+| 40 | 3.34e-07 | 7.25e-04 | 0 | 0 |
 
-At N=40 two pairs of attainable values fall within 1e-9 of each other and 9-dp
-rounding merges them -- but none is in the top tenth, where the smallest gap is
-7.3e-04 nats, seven orders of magnitude clear. The mitigation still
+No two attainable values merge under 9-dp rounding at any of these budgets. The
+tightest the lattice ever gets is 3.34e-07 nats at N=40, 334x the 9-dp grain;
+and in the top tenth, where every claim lives, the smallest gap is 7.3e-04 nats,
+2174x wider again. The mitigation still
 points at the real risk (float noise fabricating operating points) and still
 cannot destroy a real one anywhere a claim is made.
 
@@ -349,8 +359,8 @@ cost. Worked out, and it does not rescue the detector:
 | k | average k runs at N=10 | equal-resolution single run | finest step at the top (nats) | cost of averaging | cost of the single run | single run / averaging |
 | --- | --- | --- | --- | --- | --- | --- |
 | 2 | 395 attainable values | N=20, 455 attainable values | 0.0693 | 26 s | 29 s | **1.13x** |
-| 3 | 1659 attainable values | N=30, 2982 attainable values | 0.0462 | 39 s | 50 s | **1.28x** |
-| 4 | 5186 attainable values | N=40, 14116 attainable values | 0.0347 | 52 s | 74 s | **1.43x** |
+| 3 | 1659 attainable values | N=30, 2980 attainable values | 0.0462 | 39 s | 50 s | **1.28x** |
+| 4 | 5186 attainable values | N=40, 14114 attainable values | 0.0347 | 52 s | 74 s | **1.43x** |
 
 **Averaging wins on price and loses on substance.** Both moves divide the last
 step of the scale by the same factor -- averaging k runs at budget n gives steps of

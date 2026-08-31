@@ -1,3 +1,15 @@
+> **SUPERSEDED (2026-07-02): pre-B1 extreme-entropy selection.** These numbers use the
+> discredited selection rule where clean AUROC = 1.000 by construction (external review B1).
+> Do NOT cite. B1-corrected fair-pool results: scripts/recompute_fair.py -> results/fair_recompute_report.md.
+>
+> **The `Verdict: PASS` at the foot of this file is retracted.** This is a week-7 pilot on ten
+> targets picked for extreme entropy (every one starts at zero, which is the selection rule,
+> not a finding). It has no benign-paraphrase noise floor, no answer-invariance gate and no
+> correction for selection on noise, so it cannot separate an attack effect from what benign
+> rephrasing and sampling variance already do. Run to completion under the confirmatory null
+> control, the false-alarm cell **fails to reject in every clustering arm**
+> (`results/null_control_report_defb.md`), and the paper claims no attack effect.
+
 # Attack summary: false_alarm (wk7_false_alarm.jsonl)
 
 questions: 10

@@ -117,11 +117,15 @@ it subtracts an arm-specific benign comparator, and the bracket does not survive
 subtraction (Section~\ref{sec:methods}).
 $^{\ast}$The test clamps each target's measured tie multiplicity $b_j$ to $A$, since $b_j$
 counts attack candidates at the maximum. The clamp fires on no target at $A{=}181$, on $2$
-at $A{=}121$ and on $22$ of the $77$ ($29\%$) at $A{=}41$, so that last row overwrites the
+at $A{=}121$ and on $22$ of the $77$ ($29\%$) at $A{=}41$, so the $A{=}41$ row overwrites the
 measured multiplicity on $29\%$ of them. Clamping $b_j$ down enlarges each tied benign
 draw's credit $1/(b_j{+}1)$ and so raises $p$: the direction is conservative, and it is the
 only reason the exact-match and adjudicator totals drift up, by $7$ and $2$, across the
-range.}
+range. $^{\dagger}$$A$ is per-target and $41$ is the \emph{mean} of the per-target lower
+bounds $A_j$; since $\mathbb{E}[K_j]{=}m_j/(A_j{+}1)$ is convex in $A_j$, substituting that
+mean understates the null expectation rather than bounding it, so the $A_j$ row and not the
+$A{=}41$ row is the least favourable admissible budget. That row needs no clamp at all,
+because $b_j{\leq}A_j$ holds by construction on all $80$ targets.}
 \label{tab:nullcontrol}
 \begin{tabular}{lccc}
 \toprule
@@ -139,7 +143,8 @@ Benign floor, best of $m$ ($n{=}77$)     & $+0.363$ [$+0.232$, $+0.490$] & $+0.2
 \quad range over those $101$ draws       & [$0.229$, $1.000$] & [$1.000$, $1.000$] & [$1.000$, $1.000$] \\
 \quad draws reaching $p{\leq}0.05$       & $0/101$ & $0/101$ & $0/101$ \\
 \quad median $p$ at $A{=}121$ (point estimate) & $0.403$ & $1.000$ & $1.000$ \\
-\quad median $p$ at $A{=}41$ (lower bound)$^{\ast}$ & $<0.001$ & $1.000$ & $1.000$ \\
+\quad median $p$ at $A{=}41$, the mean bound$^{\ast}$ & $<0.001$ & $1.000$ & $1.000$ \\
+\quad median $p$ at the per-target bound $A_j$$^{\dagger}$ & $<0.001$ & $0.760$ & $1.000$ \\
 Exceedances $S$, seed-$0$ draw / expected & $30$ / $20.4$ & $383$ / $20.4$ & $636$ / $20.4$ \\
 \quad median $S$ over those $101$ draws  & $28$ & $383$ & $652$ \\
 \textbf{Effective benign budget $n_{\mathrm{eff}}$} & $\mathbf{122.5}$ & $\mathbf{8.7}$ & $\mathbf{4.8}$ \\
@@ -202,7 +207,24 @@ analytic null reaches power $0.51$ at an achieved level of $0.025$ for $m{=}30$,
 at $0.041$ for the pre-registered $m{=}50$; levels and powers are paired on the same
 $4{,}000$ simulated trials per cell, and the analytic null's own nominal tails at those cut
 points are $0.031$ and $0.044$, so the shipped test is stricter than it believes itself to
-be. We quote the deployed test throughout. On the same draws, a critical value calibrated
+be. We quote the deployed test throughout.
+
+\emph{Those are the design's numbers and the design is not the one that ran, so we give the
+realized figure here and every later reading of the non-rejection uses that one.} They are
+computed at $n{=}80$ targets with a uniform $m{=}50$, a design whose deployed cut is
+$S{\leq}13$ at the nominal $0.044$ just quoted. The confirmatory run has $n{=}77$ and six
+short arms, hence $3{,}704$ benign draws and a cut of $S{\leq}11$ at a nominal $0.0296$,
+which this section computes for itself below and which we join to the power figure here
+rather than leave to the reader. Re-simulating the same rule on the realized arm lengths, at
+$8{,}000$ trials per cell and three seeds, gives power $0.67$ against a two-fold effect and
+$0.95$ against a three-fold one, at an achieved level of $0.026$. The realized design is not
+the weaker design, and the shortfall is not the three missing targets or the six short arms. Its
+null expects $20.4$ exceedances against the other's $22.0$, and at the other's own cut of
+$S{\leq}13$ it is the more powerful of the two. The shortfall is the analytic null's integer granularity,
+which admits no cut between $S{\leq}11$ at $0.0296$ and $S{\leq}12$ at $0.0501$ and so drops
+the design's $13$ to $11$.
+
+On the same draws, a critical value calibrated
 against the true simulated null reaches $0.66$
 at level $0.056$ and $0.84$ at $0.064$ for those two cells. Such a calibration is an oracle
 the deployed test does not have. The difference between the two
@@ -271,9 +293,27 @@ every budget, and what the range moves is the expectation $S$ is weighed against
 adjudicator's median $p$ is $1.000$ at every $A$ in $[41,181]$ and at every one of the $101$
 tie draws, and so is the exact-match arm's; their medians are $652$ and $383$ at $A{=}181$,
 unchanged at $A{=}121$, and $654$ and $390$ at $A{=}41$ once the clamp has fired, against an
-expectation rising from $20.4$ to $30.4$ to $88.2$, so both stand more than fourfold above it
-at the hard lower bound. The shared-NLI median moves as little, from $28$ to $31$: its
+expectation rising from $20.4$ to $30.4$ to $88.2$, so at that last budget both stand more
+than fourfold above it. The shared-NLI median moves as little, from $28$ to $31$: its
 $p$-value moves because the expectation passes its total, not because the total does.
+
+There is one thing that scalar must not be asked to do, and we correct it here rather than
+leave a row label carrying it. $A$ is a per-target quantity, and $41$ is the \emph{mean} of
+the per-target lower bounds $A_j$, which run over $[1,132]$ with quartiles $8$, $33$ and
+$66$. Because $\mathbb{E}[K_j] = m_j/(A_j{+}1)$ is convex in $A_j$, substituting that mean
+into it understates the null expectation instead of bounding it. Run per target, the honest
+lower bound expects $349.0$ exceedances and not $88.2$, with $13$ targets at $A_j{\leq}5$
+supplying $228$ of the total between them. So it is the per-target row of
+Table~\ref{tab:nullcontrol}, and not the $A{=}41$ row, that a reader should read as the least
+favourable admissible budget, and it is the more adverse of the two in exactly the arms whose
+margin the scalar flattered. There the exact-match arm stands at $1.1$ times its null rather
+than fourfold above it, and its median $p$ falls from $1.000$ to $0.760$; the shared-NLI arm
+stays below $0.001$. \textbf{The adjudicator's median $p$ is $1.000$ there too}, on every one
+of the $101$ tie draws, with its total of $652$ still standing at $1.9$ times the honest
+null. The correction spends margin in the two arms the rule is not stated on and spends none
+of the verdict, which is the whole point of having stated the rule on the arm whose answer
+does not move with a budget we cannot measure.
+
 \textbf{The decision rule was pre-registered on the adjudicator arm alone} (below), and that
 arm's verdict is invariant to the one parameter we cannot pin down. That invariance, and not
 any headroom in the shared-NLI arm, is what the non-rejection rests on. Reporting the NLI
@@ -291,12 +331,21 @@ simulation settings, $0.66$ on the higher-precision re-run quoted above) because
 selection-on-noise measurement indicates the true effect is modest and the design must be
 able to see a small one. We disclose that those pre-registration figures were the
 oracle-calibrated ones; the deployed analytic-null test, cutting at its stricter achieved
-level, delivers $0.77$ at $m{=}50$ and $0.51$ at $m{=}30$. That shortfall is a level rather
+level, delivers $0.77$ at $m{=}50$ and $0.51$ at $m{=}30$ for that design. That shortfall is a level rather
 than a weaker statistic, since re-cut to the oracle's level the two agree to three decimals,
 as above. It is nonetheless the operating point we actually ship. The ordering that drove the choice
 is unchanged and we do not re-choose $m$ after the fact, but the design rejects less
 readily than the number we picked it on, and
-a non-rejection must be read against $0.77$ rather than $0.84$. If the test does not reject, (a) is not claimed, and the
+a non-rejection must be read against neither of those figures. Both are computed at $n{=}80$
+with a uniform $m$, and the run delivered $n{=}77$ with six short arms; at the realized arm
+lengths the deployed power against a two-fold effect is $0.67$, and that is the number a
+non-rejection here has to be read against. We state the awkward part rather than let a
+reader find it: $0.67$ is also, to two decimals, the oracle power at the design-time settings
+of the cheaper $m{=}30$ design this paragraph says was passed over as too weak. The two
+quantities are not the same one, the first being the deployed power of the design that ran
+and the second the oracle power of a design that did not, but the coincidence is fair to
+record, and the honest summary is that the run bought the sensitivity of the option it
+declined. If the test does not reject, (a) is not claimed, and the
 NLI/exact-match bracket together with the judge's point estimate is reported as the honest
 result. We are precise about what is bounded there, because the pre-registration was not: the
 bracket bounds the mean intended move, and the judge's point estimate lies outside it on the
@@ -304,8 +353,9 @@ paired nets of Table~\ref{tab:nullcontrol} that the closing paragraphs lead with
 \emph{bounded} is not available for the quantities this section concludes from. That is the branch the run took, and
 the paragraphs after the deviations report it.
 
-Four deviations from the original pre-registration are disclosed as outcome-triggered
-rather than folded silently into ``the pre-registered rule''. The adjudicator moved from the
+Five deviations from the original pre-registration are disclosed as outcome-triggered or,
+in the last case, as an omission, rather than folded silently into ``the pre-registered
+rule''. The adjudicator moved from the
 sentence embedder to the LLM-judge, triggered by the embedder's $0.51$ hard-negative AUROC.
 The benign floor moved from individual draws to a budget-corrected comparison, triggered by
 the winner's-curse mismatch surfaced in adversarial review. The budget correction then moved
@@ -318,8 +368,26 @@ $2.3\times$ too large, and a reader checking whether the rule was tuned is entit
 corrected number. And the tie rule moved from
 conservative to randomised
 breaking, triggered by the simulation above showing the conservative rule has no power under
-the ceiling. Each trigger is objective, each was recorded before the corresponding data was
-seen, and the full sequence is given here rather than in an appendix precisely because a
+the ceiling.
+
+The fifth is a deviation by omission, and it is the one a reader auditing the
+pre-registration is most likely to catch us on, so we state it rather than let four disclosed
+deviations imply that the primary statistic was used as written. The pre-registration made
+this test primary \emph{conditionally}. The condition was a null-objective ablation, the same
+beam search run against a null objective, and the exact test was to be primary if and only if
+that ablation's mean exceedance count came back within $[0.5\times, 2.0\times]$ of the
+theoretical $m/(A{+}1)$; below the band the analytic null would be anti-conservative and we
+would fall back to a prefix statistic or to a null calibrated from the ablation's own
+distribution, and above it the test could stand as conservative with that noted. \textbf{The
+ablation was never run.} Its only artifact is a single-target checkpoint written under a
+record schema this campaign has since superseded, and its own plan document records its
+status as not run. We used the exact test as primary anyway. No trigger licenses that, because
+there was no outcome to trigger on: the gate was not failed, it was not evaluated, and the
+distinction is one a pre-registration audit is entitled to be told rather than left to
+discover. What it was guarding is stated below with the rest of the null's specification.
+
+Each of the first four triggers is objective, each was recorded before the corresponding data
+was seen, and the full sequence is given here rather than in an appendix precisely because a
 reader is entitled to check that the rule was not tuned to the result.
 
 \paragraph{Result: what the rule returns.}
@@ -365,7 +433,8 @@ Doubling the measured tie multiplicity, the one perturbation that moves $p$ down
 the NLI arm at $0.229$ and the other two at $1.000$.
 
 A non-rejection is not a measurement of zero, and we do not report it as one. At the deployed
-operating point this design has power $0.77$ against a two-fold effect at $m{=}50$, so the
+operating point the design that ran, $n{=}77$ with six short arms, has power $0.67$ against a
+two-fold effect, so the
 correct reading is that an effect of that size is \emph{not detectable at this $n$ on this
 population}, not that none exists. The same discipline governs every supplementary interval in
 this section, and we state it once as a rule so that it can be checked against every later
@@ -436,6 +505,23 @@ has a consequence a reader should not have to derive: the exact-match and judge 
 are weaker evidence than the NLI one, and the NLI arm is the only place where this test is
 asking the question it was designed to ask. That holds even though the NLI arm is itself
 confounded as an effect estimate.
+
+A further mis-specification is structural, lives in the code rather than in the data, and is
+the one the missing ablation existed to price. The null treats a target's attack candidates
+and its benign draws as exchangeable draws from one distribution, but the optimiser proposes
+each child from its \emph{beam parent}, so only its first round is single-hop and everything
+after it is a second- or higher-order rewrite, while the benign sampler proposes every draw
+from the \emph{original question} and so is single-hop throughout. Two effects run against
+each other and we do not know the net sign: multi-hop drift would make the attack's later
+candidates more dispersed for reasons that have nothing to do with optimisation, which is the
+anti-conservative direction, and beam clustering would have the search revisit a small region
+and supply fewer effective draws, which is the conservative one. Measuring that net sign is
+exactly what the ablation would have done. What can be said without it is that the arm the
+rule is stated on sits far from its rejection region under either sign: the adjudicator's
+total stands above its null expectation at every budget in $[41,181]$ and at the per-target
+lower bound too, at worst by a factor of $1.9$. That bounds the consequence of the asymmetry;
+it does not measure it, and we do not offer it as though it did.
+
 That is not the same as resting the verdict on the weakest arm, and a reader who joins this
 paragraph to the budget argument above will otherwise conclude that it is. The verdict is the
 withholding of a claim rather than a claim, so a mis-specification that inflates $p$ can leave

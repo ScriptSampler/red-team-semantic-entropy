@@ -4,7 +4,7 @@ Code, analysis scripts, artifacts of record and paper source for a preprint on *
 to evaluate a paraphrase attack against a sampling-based hallucination detector** — and on the
 measurement-validity result that turned up when we built the controls.
 
-- **Paper:** [`paper/main.pdf`](paper/main.pdf) (34 pages), source in [`paper/`](paper).
+- **Paper:** [`paper/main.pdf`](paper/main.pdf) (41 pages), source in [`paper/`](paper).
   Working title: *Crying Wolf, Carefully: What It Takes to Evaluate Paraphrase Attacks on
   Sampling-Based Hallucination Detectors.*
 - **Status:** preprint in preparation. arXiv target **2026-10-01**. Not yet posted, so there is
@@ -32,7 +32,7 @@ implementations:
 |---|---|---|---|---|
 | 10 | 42 | **39** | 2.302585 | **2** (2.163956 and 2.302585, 0.1386 nats apart) |
 | 20 | 627 | 455 | 2.995732 | 7 |
-| 40 | 37338 | 14116 | 3.688879 | 42 |
+| 40 | 37338 | 14114 | 3.688879 | 42 |
 
 There is an **atom at the maximum**. A detector that flags when the score reaches a threshold can
 only change its false-alarm rate at a value some clean correct answer actually took, and every
@@ -70,16 +70,32 @@ move the detector's score while the model's answer — and its correctness — s
 directions were formulated (*false-alarm*: inflate the score on a correct answer; *hide*: suppress
 it on a wrong one). **Only the false-alarm direction was run under the confirmatory null control.**
 
-That null is priced against the attacker's own search budget (~181 candidate evaluations per
-target, against the benign arm's 50). Run to completion over all 80 false-alarm targets, the
+That null prices the attacker's own search budget in, against the benign arm's 50 draws. The
+optimiser *scores* 181 candidates per target, but a candidate can become the reported maximum
+only if it also clears the feasibility gate, and the gate is applied lazily, so **181 is an
+upper bound on the budget rather than the budget itself**. Nothing the run recorded identifies
+how many of the never-gated candidates would have passed, so the budget `A` is **not
+identified**; the defensible range is **[41, 181]** and the paper reports the test across it
+rather than at one end of it. Run to completion over all 80 false-alarm targets, the
 pre-committed randomised-tie exceedance test **fails to reject in every clustering arm**:
 p = **0.939** (shared NLI), **1.000** (exact match), **1.000** (LLM judge), on the 77 targets
-that have a benign arm (`results/null_control_report_defb.md`). Those are medians over 101
-tie-break draws; no draw in any arm reaches 0.05, and at the median the observed exceedance count
-sits *above* its null expectation — the direction against the attack.
+that have a benign arm (`results/null_control_report_defb.md`), each a median over 101
+tie-break draws. **Those three figures are at the upper bound `A=181`.**
 
-**The paper therefore claims no attack effect.** The design has power 0.77 against a two-fold
-effect, so this bounds what could have been seen rather than measuring a zero.
+What the range does to the arms is not symmetric, and it is why the defence is stated this way.
+The shared-NLI arm's p-value is **not identified**: its median runs from 0.939 at `A=181` to
+below 0.001 at `A=41`, and it crosses the 5% cut near `A=90`, which is inside the range. The
+two re-scored arms do not move: the **pre-registered adjudicator arm's median p is 1.000 at
+every `A` in [41, 181]** and at every one of the 101 tie draws, as is the exact-match arm's.
+That invariance to the one parameter that cannot be pinned down, and not any headroom in the
+shared-NLI arm, is what the non-rejection rests on.
+
+**The paper therefore claims no attack effect.** The design *that ran* — 77 targets, six of them
+with short benign arms — has power **0.67** against a two-fold effect, so this bounds what could
+have been seen rather than measuring a zero. The design that was *planned* (80 targets, a uniform
+50 benign draws each) had 0.77. What costs the difference is the analytic null's integer
+granularity, which admits no cut between 0.0296 and 0.0501, and not the targets the run lost: at a
+fixed cut the realized design is the stronger of the two.
 
 ### 3. What the controls cost, which is the reusable part
 
@@ -143,13 +159,13 @@ Native Windows ROCm for RDNA 4 is not workable, so GPU work runs only under WSL2
 │                                  #   kept as a record — see "Reading the dated documents")
 ├── requirements.txt               # Windows venv, Python 3.11 (CPU: tests + all analysis)
 ├── requirements-wsl.txt           # WSL Ubuntu-24.04 venv (GPU research runtime)
-├── paper/                         # main.tex, sections/, related_work.bib, main.pdf (34 pp.)
+├── paper/                         # main.tex, sections/, related_work.bib, main.pdf (41 pp.)
 ├── src/se/                        # library: sampling, NLI, entropy, SE/SRE pipelines, judge,
 │   └── attacks/                   #   embeddings, defense, stats; attacks/ = the search harness
 ├── scripts/                       # 80 analysis and run scripts, plus WSL bootstrap and the
 │                                  #   overnight/watchdog machinery
 ├── tests/                         # 37 pytest modules; also pin retracted claims OUT of paper/
-├── results/                       # artifacts of record: 76 dated .md reports + evidence CSVs
+├── results/                       # artifacts of record: 78 dated .md reports + evidence CSVs
 ├── figures/                       # the paper's figures, each beside its plotted-points CSV
 │                                  #   and its re-derivation record; figures/README.md maps
 │                                  #   every figure to the population it is measured on
@@ -177,13 +193,13 @@ py -3.11 -m venv .venv
 .venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-**Test suite** — 1240 tests, no GPU, no model, no cached samples:
+**Test suite** — 1408 tests, no GPU, no model, no cached samples:
 
 ```powershell
 .venv\Scripts\python.exe -m pytest -q
 ```
 
-Expected today: **2 failed, 1221 passed, 17 skipped** (verified 2026-08-30). The two failures are
+Expected today: **2 failed, 1389 passed, 17 skipped** (verified 2026-08-31). The two failures are
 deliberate and are both in `tests/test_operational_provenance.py`; they name three untagged
 operational figures in `scripts/overnight_2026_08_14.sh`, a file that is on the do-not-edit list
 because it is the wrapper the long GPU run executes. The debt is real, recorded, and payable only

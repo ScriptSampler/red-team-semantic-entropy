@@ -25,9 +25,9 @@ days stale in four separate places.
 | HEAD | `59b5003` | `git rev-parse HEAD` |
 | GPU | **nothing is running** | `ps` inside WSL, section 1 |
 | the definitive null control | **80/80, complete** | the checkpoint itself, section 1 |
-| suite | **1220 pass / 17 skip / 3 fail** | a real `pytest -q` run, section 6 |
+| suite | **1389 pass / 17 skip / 2 fail** | a real `pytest -q` run, section 6 |
 | citations | **33 keys cited, 33 bib entries, exact bijection, 0 uncited** | `scripts/check_latex_source.py` |
-| committed PDF | **38 pages** | the blob from `git show HEAD:paper/main.pdf`, measured with `pdfinfo` |
+| committed PDF | **41 pages** | rebuilt and recommitted 2026-08-31, so the blob and the working tree agree |
 | working tree | **dirty, and moving under you** | see the warning immediately below |
 
 > **A CLOSING ROUND WAS EDITING THE REPOSITORY WHILE THIS WAS WRITTEN**, and it was widening as
@@ -338,31 +338,44 @@ scope.
 |---|---|---|---|---|---|
 | 10 | 42 | **39** | 3 | 2.302585 | **2**, being 2.163956 and 2.302585 |
 | 20 | 627 | **455** | 172 | 2.995732 | **7** |
-| 40 | 37338 | **14114 or 14116, see below** | 23224 or 23222 | 3.688879 | **42** |
+| 40 | 37338 | **14114** | 23224 | 3.688879 | **42** |
 
-**The N=10 and N=20 rows are stable** at 1e-9, 1e-10 and 1e-12 rounding, and so is every top
-decile count including N=40's 42. Those you may quote.
+**Every row is now exact, and the ambiguity this section used to warn about is resolved.**
+Two partition entropies at N=40 differ by about one float ULP, so any count obtained by
+rounding scores and deduplicating depends on the rounding. There is no correct tolerance to
+pick: `scripts/fair_pool_granularity.attainable_lattice(40, dp=D)` returns 14114 at D=9, 10
+and 11, **14116 at its own default D=12**, and 14138 at D=13. A quantity that moves in three
+directions as you vary a display parameter is being measured with the wrong instrument.
 
-**The N=40 distinct-value count is NOT stable and the previous version of this file was wrong to
-say the whole block could be quoted without re-checking.** Measured on 2026-08-31: rounding to
-1e-9 and 1e-10 gives **14114**; rounding to 1e-12 gives **14116**. Two partition entropies at
-N=40 differ by about one float ULP, so the count depends on the tolerance and on the
-interpreter. This is a known and already-recorded fact that the handoff had lost:
-`results/morning_review_2026_08_19.md` records Windows CPython 3.11 giving `lattice_stats(40)`
-size 14116 and WSL CPython 3.12.3 giving 14114, and says in terms not to send anyone chasing it.
-The 2026-08-30 panel chair re-derived **14114** independently, and
-`tests/test_n_scaling_grid.py::test_lattice_counts_the_plan_quotes` pins **14116**. That test
-passed in today's Windows run, which is confirmed; that it would fail under WSL is **[CARRIED]**
-from `results/morning_review_2026_08_19.md` and was not re-run here.
+**The fix is to stop comparing floats.** Cluster sizes are integers, and
+
+    H = ln N - (1/N) * ln( prod over clusters of c^c )
+
+so two partitions of N carry the same entropy **iff** their integer products `prod(c^c)` are
+equal. Keying on that product is exact integer arithmetic: no tolerance, no interpreter
+dependence, no float anywhere in the comparison. It gives
+
+    N=10 -> 39      N=20 -> 455     N=30 -> 2980    N=40 -> 14114
+
+reproduced on Windows CPython 3.11.9, on WSL CPython 3.12.3, and by a third route built on
+`sympy.partitions`, all three agreeing exactly.
 
 **Consequences.**
 
-- **Do not put an N=40 distinct-value count in the paper without naming a tolerance.** Check
-  before believing any document that prints one bare, `results/n_scaling_plan.md` included, which
-  prints 14116 in four places.
-- The *argument* does not depend on the digit. It needs the N=40 lattice to be dense, and 14114
+- **An N=40 count no longer needs a tolerance named beside it**, because the criterion that
+  produces it is exact. The number is **14114**, and the earlier instruction in this file to
+  never quote one bare is withdrawn.
+- `tests/test_n_scaling_grid.py` now pins **14114** and passes on both platforms. It
+  previously pinned 14116, which passed on Windows and would have failed under WSL.
+- **`results/n_scaling_plan.md` was corrected in place** on 2026-08-31 and now prints 14114 in
+  all four places, with the integer criterion stated beside its table. It is quotable again.
+  It is one of the few results files corrected rather than bannered, because the wrong digit
+  was arithmetic rather than a superseded finding.
+- `attainable_lattice` is the float-rounding implementation and is the *source* of the 14116,
+  not a second opinion about it. Its default `dp=12` is the branch that produces it.
+- The *argument* never depended on the digit. It needs the N=40 lattice to be dense, and 14114
   against 14116 is the same claim. Nothing in section 2 moves.
-- The stable claim to make is the **top decile**: 2 points at N=10, 7 at N=20, 42 at N=40.
+- The **top decile** counts were stable throughout: 2 points at N=10, 7 at N=20, 42 at N=40.
 
 At N=10 the gap between the top two attainable points is **0.138629 nats**, the next point down
 is **2.025326**, leaving **0.277259 nats** of headroom from the cap. So at a success criterion of
@@ -446,9 +459,11 @@ Two standing warnings that have each been "fixed" back by mistake before:
 
 ## 6. The guards, and what the suite says today
 
-**[RE-DERIVED 2026-08-31]**, a full `.venv/Scripts/python.exe -m pytest -q` run, 77.13 s:
-**3 failed, 1220 passed, 17 skipped, 1 warning.** The previous version reported 1035 / 17 / 2,
-which was a real run on 2026-08-26; the suite has gained 185 passing tests and one failure since.
+**[RE-DERIVED 2026-08-31, late]**, a full `.venv/Scripts/python.exe -m pytest -q` run, 69.87 s:
+**2 failed, 1389 passed, 17 skipped, 1 warning.** An earlier run the same day reported
+3 failed / 1220 passed; the third failure was `tests/test_n_scaling_grid.py` pinning the
+float-rounding count 14116, which is now pinned exactly at 14114 and passes on both
+platforms. The suite has gained 169 passing tests since that run.
 **Re-run before quoting it. The count is stable only while nobody is editing, and the warning at
 the top of this file says somebody is.**
 

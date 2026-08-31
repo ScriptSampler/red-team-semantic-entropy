@@ -1,3 +1,17 @@
+> **SUPERSEDED (retired 2026-08-19, bannered 2026-08-31): this is the `_def` checkpoint's own
+> report.** Every figure below is computed from
+> `results/winners_curse_ckpt_se_false_alarm_def.jsonl`, which
+> `results/winners_curse_ckpt_se_false_alarm_def.jsonl.SUPERSEDED.json` retires in favour of the
+> `_defb` rerun. Do NOT cite. The canonical report is
+> `results/winners_curse_se_false_alarm.md`, and every winner's-curse figure in the paper is a
+> `_defb` figure. Read the sidecar before quoting anything here: the retired and current
+> headlines are close enough to be mistaken for one another, which is exactly why the machine
+> gate exists and why this file needs a banner rather than a footnote.
+>
+> The `## Result` section further down is older still. It is the n=10 pilot, already superseded
+> by the table at the top of this file, and its "roughly two-thirds does not survive" reading
+> does not describe the complete cell.
+
 # Winner's curse measured: 55% of the raw FA effect is selection-on-noise
 
 **COMPLETE (n = 60).** Every false-alarm target on which the optimiser actually found a

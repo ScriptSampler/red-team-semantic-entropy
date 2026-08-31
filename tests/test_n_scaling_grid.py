@@ -4,7 +4,7 @@
 the paper's central claim will be read against. Everything in it that does not need a GPU
 is pinned here:
 
-  1. THE LATTICE. The counts the plan quotes (39/455/14116 attainable values, 2/7/42 in
+  1. THE LATTICE. The counts the plan quotes (39/455/14114 attainable values, 2/7/42 in
      the top tenth) are enumeration, and the last step of the scale is exactly 2 ln 2 / N
      -- a closed form the plan asserts and the paper is invited to quote.
   2. THE COUPLING. {all N distinct} is contained in {any k of them distinct}, per
@@ -50,11 +50,71 @@ from se.stats import attainable_fprs, operating_point                   # noqa: 
 
 
 # ============================================================== 1. the lattice
-@pytest.mark.parametrize("n,size,top10", [(10, 39, 2), (20, 455, 7), (40, 14116, 42)])
+@pytest.mark.parametrize("n,size,top10", [(10, 39, 2), (20, 455, 7), (40, 14114, 42)])
 def test_lattice_counts_the_plan_quotes(n, size, top10):
     st = NS.lattice_stats(n)
     assert st["size"] == size
     assert st["n_top10"] == top10
+
+
+def _prod_cc(part):
+    prod = 1
+    for c in part:
+        prod *= c ** c
+    return prod
+
+
+@pytest.mark.parametrize("n,size", [(10, 39), (20, 455), (30, 2980), (40, 14114)])
+def test_the_lattice_count_is_an_exact_integer_fact_not_a_tolerance(n, size):
+    """The count is not a rounding outcome, and it is the same on every interpreter.
+
+    H(part) = ln n - (1/n) ln prod_c c^c, and ln is injective, so two partitions of the
+    same n have equal entropy IFF the integer prod_c c^c is equal. Counting distinct
+    products is therefore the whole question, in integers, with no tolerance anywhere.
+
+    This is the claim the repository advertises as reproducible from a bare clone in
+    seconds, so it is pinned against an enumeration written here rather than against the
+    module under test alone. Deduping on `round(H, 12)` -- what
+    `fair_pool_granularity.attainable_lattice` still does -- returns 14116 at n=40 on
+    Windows CPython 3.11 and 14114 on Linux CPython 3.12.3; the exact count is 14114 on
+    both, and 2980 rather than 2982 at n=30."""
+    from fair_pool_granularity import partitions
+    assert len({_prod_cc(p) for p in partitions(n)}) == size
+    assert len(NS.lattice(n)) == size
+
+
+def test_the_two_exactly_equal_families_that_float_dedup_splits_at_n40():
+    """The concrete failure the exact key exists to prevent.
+
+    Two families of partitions of 40 share an integer product, hence share an entropy
+    exactly, but are spread over several adjacent floats by the accumulated error of the
+    sum. On some interpreters those floats straddle a 12-dp boundary and the value gets
+    counted twice. The invariants asserted here hold on every platform: the families are
+    exactly equal, and their float spread is far below any tolerance the project uses."""
+    from fair_pool_granularity import partition_entropy, partitions
+    families = {}
+    for p in partitions(40):
+        families.setdefault(_prod_cc(p), []).append(p)
+    assert len(families) == 14114
+
+    # the two families the split happens in, named by their exact product
+    for product, expect_members in [(2446118092800000, 9),
+                                    (71155975251910694400000, 4)]:
+        members = families[product]
+        assert len(members) == expect_members
+        hs = [partition_entropy(p) for p in members]
+        assert max(hs) - min(hs) < 1e-14, "exactly equal, up to float summation error"
+
+    # a clean pair of the same kind: 32^32 * 4^4 == 32^32 * 2^2 * 2^2 * 2^2 * 2^2 = 2^168
+    a, b = (32, 4, 1, 1, 1, 1), (32, 2, 2, 2, 2)
+    assert sum(a) == sum(b) == 40
+    assert _prod_cc(a) == _prod_cc(b) == 2 ** 168
+
+    # and no float key ever merges two DIFFERENT products, which is the other direction
+    by_float = {}
+    for p in partitions(40):
+        by_float.setdefault(round(partition_entropy(p), 12), set()).add(_prod_cc(p))
+    assert all(len(v) == 1 for v in by_float.values())
 
 
 @pytest.mark.parametrize("n", [5, 10, 13, 20, 40])
@@ -77,17 +137,21 @@ def test_the_top_of_the_scale_is_where_the_lattice_stays_sparse():
 
 
 def test_9dp_rounding_is_safe_where_the_claims_live():
-    """The N=10 report rounds to 9 dp before building the grid. At N=40 the lattice is
-    dense enough that two attainable values DO merge at 9 dp -- the plan says so, and says
-    none of them is in the top tenth. Both halves are asserted, because the second is what
-    licenses reusing the same rounding rule at N=40."""
-    assert NS.lattice_stats(10)["merged_at_9dp"] == 0
-    assert NS.lattice_stats(20)["merged_at_9dp"] == 0
-    assert NS.lattice_stats(40)["merged_at_9dp"] > 0
+    """The N=10 report rounds to 9 dp before building the grid, and that mitigation has to
+    be re-checked at each N because the lattice gets denser.
+
+    It survives to N=40: no two attainable values merge at 9 dp at any budget used here.
+    The plan used to say two pairs merge at N=40; they were not two pairs of attainable
+    values, they were one attainable value each, split by the float dedup this module no
+    longer uses. Under the exact key the tightest gap in the whole N=40 lattice is 3.3e-07
+    nats, and in the top tenth, where every claim lives, 7.3e-04."""
     for n in (10, 20, 40):
         st = NS.lattice_stats(n)
+        assert st["merged_at_9dp"] == 0, \
+            "a merge at 9 dp now means two genuinely distinct entropies collided"
         assert st["merged_at_9dp_in_top10"] == 0
         assert st["min_gap_top10"] > 1e-6
+        assert st["min_gap_all"] > 10.0 ** -NS.DP
 
 
 def test_permitted_spacing_names_the_binding_constraint():
@@ -548,7 +612,7 @@ def test_the_floor_carries_an_interval_only_while_the_ceiling_atom_has_mass(budg
 
 def test_a_denser_lattice_alone_does_not_make_the_grid_fine():
     """The point the plan makes about what the measurement can and cannot conclude: at
-    N=40 the lattice has 14116 values, but if the population is piled on the cap the
+    N=40 the lattice has 14114 values, but if the population is piled on the cap the
     achievable grid is still 0 -> 22% -> ... . Coarseness at N=40 is a fact about the
     model, not about the estimator."""
     rng = np.random.default_rng(9)

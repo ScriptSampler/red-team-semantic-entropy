@@ -381,14 +381,19 @@ them in the top tenth of the range, the atom at $\ln 10$, and the corresponding 
 $N{=}20$ and $N{=}40$ are an enumeration over integer partitions, pinned on CPU in seconds
 against an independent implementation. The read-only checkers that verify the population
 label on every rate we print, and that re-derive the printed quantities with no producing
-artifact of their own, run in a fresh clone as well. The empirical half does not. Every
-measured rate here is computed from a sample cache of $2000$ TriviaQA \texttt{rc.nocontext}
-questions with ten Llama-3.1-8B-Instruct generations each, $4.75$ MB, which lives outside the
-repository tree and is not currently distributed; the null control's per-target checkpoints
-are written into the tree and then excluded from it. A clone therefore carries every derived
-report and each figure's plotted points as a CSV, so the arithmetic is auditable from the run
-outputs onward, but it cannot re-run the pipeline that produced them, and we claim no more
-reproducibility than that. \texttt{ARTIFACT\_AVAILABILITY.md} in the repository names the
+artifact of their own, run in a fresh clone as well. The empirical half does not, and it rests
+on two generation runs rather than one. Every $N{=}10$ rate here is computed from a June sample
+cache of $2000$ TriviaQA \texttt{rc.nocontext} questions with ten Llama-3.1-8B-Instruct
+generations each, $4.75$ MB, which lives outside the repository tree and is not currently
+distributed. The $N{=}40$ ladder is not, and could not be: a cache of ten generations per
+question cannot produce an $N{=}40$ score. It comes from a separate August run of forty
+generations over the fair pool's $400$ targets, whose per-target pairwise equivalence verdicts
+and entropies are recorded in \texttt{results/n\_scaling\_ckpt.jsonl}, $2.42$ MB; that file is
+written into the tree and then excluded from it, as are the null control's per-target
+checkpoints. A clone therefore carries every derived report and each figure's plotted points
+as a CSV, so the arithmetic is auditable from the run outputs onward, but it cannot re-run the
+pipeline that produced them, and we claim no more reproducibility than that.
+\texttt{ARTIFACT\_AVAILABILITY.md} in the repository names the
 files a clone is missing, with their sizes and SHA-256 digests. Model weights and datasets
 are obtained from their upstream sources under their own licences and are not redistributed
 here.
