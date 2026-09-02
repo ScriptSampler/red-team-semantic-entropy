@@ -126,7 +126,8 @@ certified. We accordingly treat the equivalence constraint as an instrument requ
 own validation rather than as a definition: we constrain, re-check that answer invariance
 actually held, measure how often the gate nonetheless admitted a non-equivalent rewrite and
 report that as a disclosed lower bound, and validate the oracle making the judgement on an
-adversarial discrimination that disqualified the obvious cheap candidate ($0.51$). An attack
+adversarial discrimination that disqualified the obvious cheap candidate (hard-negative
+AUROC $0.51$). An attack
 whose constraint is an $\ell_p$ ball has no analogue of these steps, because there the
 constraint is definitional rather than inferred. Most relevant of all, CORVUS red-teams
 single-pass hallucination detectors and degrades SEP~\citep{corvus2026}, which establishes
@@ -245,6 +246,8 @@ Second, using an LLM as an equivalence oracle inherits the LLM-as-judge literatu
 lesson that judges track humans well yet carry biases and must be validated per
 task~\citep{zheng2023judging}. Our judge contribution is accordingly not the concept but
 the \emph{adversarial-case} validation: the oracle is accepted only on the hard-negative
-discrimination where the cheap embedding oracle demonstrably fails ($0.93$ vs.\ $0.51$),
+discrimination where the cheap embedding oracle demonstrably fails (hard-negative
+\emph{accuracy} $0.93$ for the judge, hard-negative \emph{AUROC} $0.51$ for the embedder,
+which are different metrics on different samples and not a head-to-head margin),
 with its pre-registered acceptance gate, the failed positive-recognition leg, and the
 consequent false-alarm-only re-scoping disclosed rather than assumed away (Methods).

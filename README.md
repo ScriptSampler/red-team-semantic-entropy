@@ -93,8 +93,8 @@ shared-NLI arm, is what the non-rejection rests on.
 **The paper therefore claims no attack effect.** The design *that ran* — 77 targets, six of them
 with short benign arms — has power **0.67** against a two-fold effect, so this bounds what could
 have been seen rather than measuring a zero. The design that was *planned* (80 targets, a uniform
-50 benign draws each) had 0.77, and it is the stronger of the two at every level at which both
-can be read: 0.699 against 0.669 at a common achieved level of 0.025, and 0.809 against 0.783
+50 benign draws each) had 0.77, and it is the stronger of the two at both levels at which we compare
+them: 0.699 against 0.669 at a common achieved level of 0.025, and 0.809 against 0.783
 at 0.050. Most of the difference is the analytic null's integer granularity, which admits no cut
 between 0.0296 and 0.0501 and so forces the cut from 13 down to 11; about a third of it is the
 three targets with no benign arm and the six short ones. A fixed cut is not a fixed level and
@@ -116,12 +116,23 @@ re-simulated at the lower budgets and none is reported there.
 - **Score-independent target selection.** Selecting targets on the detector's own scores inflates
   clean AUROC to **1.000** by construction, against **0.704 [0.653, 0.753]** on the fair pool
   (`results/fair_pool_report.md`).
+- **A trivial baseline to read that against.** Mean generation length, used alone as the score,
+  reaches **0.634 [0.580, 0.687]** on the fair pool and **0.631 [0.605, 0.656]** over all 2000
+  labelled questions. Semantic entropy beats it by **+0.070 [+0.023, +0.116]** and **+0.063
+  [+0.040, +0.084]** under a paired bootstrap resampling questions jointly, and length is not
+  complementary signal: a rank-sum of the two is significantly *worse* than semantic entropy
+  alone. The margin, not the level, is what the clean number establishes
+  (`results/length_confound_verification_2026_08_31.md` for the point estimates;
+  `results/length_baseline_intervals_2026_09_02.md` for the intervals and the exact bootstrap
+  convention behind them, which is not the verification report's).
 - **An independent equivalence oracle.** The detector's NLI model both clusters answers and
   certifies paraphrase equivalence, so a single-clusterer evaluation cannot separate a real change
   in the model's answers from that model's own inconsistency. Sentence embedders do not break the
-  tie — e5 is near-chance (~0.51) on exactly the word-preserving, meaning-shifted case. The
-  deployed Qwen2.5-7B-Instruct judge reaches **0.930 [0.900, 0.957]** on hard negatives
-  (`results/judge_validation.md`), with conditions (ii) and (iii) of its validation still open.
+  tie — e5 is near-chance on exactly the word-preserving, meaning-shifted case, at **AUROC 0.51**
+  over 1,500 hard negatives. The
+  deployed Qwen2.5-7B-Instruct judge reaches **accuracy 0.930 [0.900, 0.957]** over 300
+  hard negatives (`results/judge_validation.md`). Those are different metrics on different
+  samples, so the pair is not a head-to-head margin; with conditions (ii) and (iii) of its validation still open.
 
 ### Claims this repository does not make
 
@@ -139,8 +150,13 @@ They are named here because the file stood for 66 days and 202 commits after the
 - **Two claims died on their merits and must not return in either direction**: AUROC-vs-sample-budget,
   and cross-budget TPR/pAUC. Every interval in the uniform-provenance family covers zero.
 - **SRE, SQuAD, the hide direction, cross-detector transfer and the reformulation-averaging
-  defense are not confirmatory results.** They exist as reduced-scale exploratory cells; the paper
-  reports them as pending.
+  defense are not confirmatory results.** SRE, SQuAD, the hide direction and SE→SEP transfer
+  exist only as reduced-scale exploratory cells under `results/`, and the paper prints no number
+  from any of them. The cross-detector transfer table and the defense curve are a step further
+  back than that: the paper states their design and says in Methods, Experiments and the
+  Conclusion that **the experiments are specified and have not been run**. "Pending" was the
+  wording here and in `experiments.tex` until 2026-09-02; it understated the status, because
+  nothing is filling.
 
 ---
 
@@ -176,7 +192,8 @@ Native Windows ROCm for RDNA 4 is not workable, so GPU work runs only under WSL2
 │                                  #   overnight/watchdog machinery
 ├── tests/                         # 37 pytest modules; also pin retracted claims OUT of paper/
 ├── results/                       # artifacts of record: 78 dated .md reports + evidence CSVs
-├── figures/                       # the paper's figures, each beside its plotted-points CSV
+├── figures/                       # the paper's two figures plus two attack-pool figures it
+│                                  #   does NOT include, each beside its plotted-points CSV
 │                                  #   and its re-derivation record; figures/README.md maps
 │                                  #   every figure to the population it is measured on
 ├── docs/                          # handoff, methodology, critique log, positioning, setup

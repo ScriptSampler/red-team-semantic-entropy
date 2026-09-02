@@ -262,14 +262,18 @@ detector's NLI model both clusters answers and certifies paraphrase equivalence,
 single-clusterer evaluation cannot separate a real change in the model's answers from that
 model's own inconsistency. Cheap oracles do not resolve it. Sentence embedders are
 near-chance on exactly the adversarial case, so we build and validate an LLM-judge that
-clears that discrimination ($0.93$ vs.\ $0.51$). The confirmatory evaluation under it has
+clears that discrimination (hard-negative \emph{accuracy} $0.93$, where the embedder's
+hard-negative \emph{AUROC} is $0.51$; two metrics on two samples, not a head-to-head
+margin, and Methods says why). The confirmatory evaluation under it has
 run, and under that adjudicator the exceedance test does not reject; the pre-registered
 $n{\geq}80$ was met by the attacked stratum but not by the test, which ran on the $77$ of
 those targets with a benign arm (Section~\ref{sec:experiments}).
-(5) \textbf{The attack itself as the case study that exercises the protocol}, together with
-a reformulation-averaging defense and an analysis of what it does and does not close. The
+(5) \textbf{The attack itself as the case study that exercises the protocol.} The
 attack is bidirectional and NLI-constrained, and it foregrounds the induced-false-positive
-direction. We
+direction. A reformulation-averaging defense is designed here, together with the
+cost-matched control it must beat and the interval that would falsify it, but \emph{the
+experiment is specified and has not been run} (Conclusion); no defense result, and no
+cross-detector transfer result, appears anywhere in this paper. We
 claim neither the direction nor the search primitive as new: inducing a detector false
 positive while the underlying prediction stays correct is an established
 family~\citep{rusert2025redherring, khanmohammadi2026answerpreserving}, and constrained

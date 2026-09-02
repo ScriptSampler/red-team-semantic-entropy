@@ -63,6 +63,33 @@ Section~\ref{sec:limitations} traces to a single June 2026 generation cache, who
 sampling configuration is under-recorded and against which the later $N{=}40$ run shows a
 measured generation drift; neither has been bounded for this number.
 
+\paragraph{What the clean detector beats.}
+A hallucination detector that does not beat something trivial has not been shown to work, so
+we measure a trivial one. Mean generation length, used on its own as the score, reaches
+AUROC $0.634$ [$0.580$, $0.687$] on the same fair pool and $0.631$ [$0.605$, $0.656$] on the
+full $2000$-question labelled pass. Semantic entropy beats it on both, by $+0.070$
+[$+0.023$, $+0.116$] and $+0.063$ [$+0.040$, $+0.084$] under a paired bootstrap that
+resamples questions jointly, so the margin is measured on shared questions rather than by
+differencing two independent intervals. The baseline is far above chance because length and
+error are themselves associated here: the hallucination rate rises from $9.9\%$ in the
+shortest quintile of mean sample length to $36.5\%$ in the longest. Two further measurements
+say what the margin is made of, and both favour the score. Length is not complementary
+signal, since a rank-sum of the two is \emph{worse} than semantic entropy alone
+($-0.016$ [$-0.028$, $-0.005$] on the $2000$-question pass): there is nothing the length
+heuristic sees that the score is missing. And the separation survives controlling for length
+directly. Comparing correct against hallucinating answers only within bins of mean sample
+length leaves AUROC at $0.656$ on the fair pool, and at $0.644$, $0.638$ and $0.637$ at
+$5$, $10$ and $20$ bins on the full pass, against $0.502$ for the length heuristic itself put
+through the identical control at $20$ bins. So the ranking is degraded by the control but not
+removed by it, and what the control removes is length. The margin is small, and we state it
+as a margin rather than let the level stand on its own: $+0.070$ on the pool the headline is
+quoted on is the whole of what this replication establishes over the trivial alternative.
+Every interval in this paragraph is a percentile bootstrap over questions, paired on a single
+resampled index wherever a difference is quoted, under the same convention that produces the
+fair pool's $0.704$. All five are re-derived, and that convention, together with the one
+endpoint that sits a Monte-Carlo step from it, is set out knob by knob in
+\texttt{results/length\_baseline\_intervals\_2026\_09\_02.md}.
+
 \paragraph{Reading the null control.}
 Every cell of Table~\ref{tab:nullcontrol} is measured on the \emph{false-alarm stratum of the
 attacked pool}, the $80$ score-independently selected correct-answer targets the optimiser was
@@ -97,8 +124,10 @@ $80$ targets of the false-alarm stratum and its attack move is undefined. There 
 embedding measurement here. Its absence is not a measured null, and we do not report it as
 one. The LLM-judge (Qwen2.5-7B-Instruct) is the \textbf{adjudicator} for the false-alarm
 direction, under the disclosed re-scoped gate (Methods). It is victim- and NLI-independent,
-and it is validated to $0.93$ [$0.90$, $0.96$] ($n{=}300$) on domain-matched gold-alias hard
-negatives, which are a proxy for the deployed clustering decision.
+and it is validated to hard-negative \emph{accuracy} $0.93$ [$0.90$, $0.96$] ($n{=}300$) on
+domain-matched gold-alias hard
+negatives, which are a proxy for the deployed clustering decision. The embedder's $0.51$
+above is an \emph{AUROC} on a different sample; the two are not a head-to-head margin.
 
 The bands themselves are the mean intended move (nats) with a $95\%$ paired bootstrap over
 targets, and they are descriptive only: the band ordering is not the test. The test is the
@@ -227,10 +256,12 @@ which this section computes for itself below and which we join to the power figu
 rather than leave to the reader. Re-simulating the same rule on the realized arm lengths, at
 $8{,}000$ trials per cell and three seeds, gives power $0.67$ against a two-fold effect and
 $0.95$ against a three-fold one, at an achieved level of $0.026$. The realized design is the
-weaker of the two, and it is weaker wherever the two can be compared at all, which is at a
+weaker of the two, and the comparison that establishes it has to be made at a
 common level and not at a common cut: read at a common achieved level its power is $0.669$
 against the other's $0.699$ at $0.025$, and $0.783$ against $0.809$ at $0.050$, and the sign
-is the same at every level we sweep from $0.005$ to $0.20$. Most of the shortfall is the analytic
+is the same at every level of the sweep on record, which is those two endpoints and two
+points between them, at $0.030$ and $0.040$
+(\texttt{results/power\_deployed\_vs\_oracle.md}). Most of the shortfall is the analytic
 null's integer granularity, which admits no cut between $S{\leq}11$ at $0.0296$ and
 $S{\leq}12$ at $0.0501$ and so drops the design's $13$ to $11$; but a material part of it is
 the three targets the run could not test and the six short arms, and we do not attribute that
@@ -239,7 +270,7 @@ and averaging the two orders in which the decomposition can be taken, puts about
 granularity and about $0.03$ on the design, roughly a third of the total. That design term
 divides again between the two causes just named, and we give the division in words rather
 than in digits. What is stable is that both are positive at
-every level at which the two designs can be matched, and that neither is the whole of the term.
+every level at which we matched the two designs, and that neither is the whole of the term.
 What is not stable is their relative size: it moves with the matched level and with the
 simulation seed, and we decline to print a pair of figures our own re-runs do not reproduce.
 Two readings that would reverse this are not available and we name them, because the first is
@@ -253,8 +284,8 @@ that is less data, not more power.
 On the same draws, a critical value calibrated
 against the true simulated null reaches $0.66$
 at level $0.056$ and $0.84$ at $0.064$ for those two cells
-(	exttt{scripts/power\_sim\_deployed.py}, tabulated with the remaining $m$ in
-	exttt{results/power\_deployed\_vs\_oracle.md}). Such a calibration is an oracle
+(\texttt{scripts/power\_sim\_deployed.py}, tabulated with the remaining $m$ in
+\texttt{results/power\_deployed\_vs\_oracle.md}). Such a calibration is an oracle
 the deployed test does not have. The difference between the two
 columns is a level, not a statistic: at a common $m$ the analytic $p$-value is strictly
 increasing in the exceedance total alone, so the deployed and oracle tests are the same cut
@@ -475,10 +506,14 @@ Four different $n$ appear above, all of them inside the false-alarm stratum of t
 pool, and none of them may be substituted for another. The campaign
 is $80$; every benign-referenced statistic runs
 on $77$, because three targets have no benign arm at all; convention~(c) runs on $69$; and the
-full $m{=}50$ budget was achieved on $71$. Three of those four are row denominators in
-Table~\ref{tab:nullcontrol}, and the table is read block by block: the bands run over all $80$
-attacked targets, every benign-referenced row over the $77$ with a non-empty benign arm, and
-the convention~(c) row of Table~\ref{tab:nullconventions} over $69$.
+full $m{=}50$ budget was achieved on $71$. \emph{Two} of those four are row denominators in
+Table~\ref{tab:nullcontrol}, and that table is read block by block: the bands run over all
+$80$ attacked targets, and every benign-referenced row over the $77$ with a non-empty
+benign arm. The third, $69$, is a row denominator of
+Table~\ref{tab:nullconventions} and of no row of Table~\ref{tab:nullcontrol}: it belongs to
+convention~(c) alone. The fourth, $71$, is a row denominator of neither table. It counts the
+targets that reached the full $m{=}50$ benign budget, and the six that fell short of it are
+itemised below; every $77$-denominated row carries those six at their own shorter $m$.
 The exceedance test and the paired net are both
 benign-referenced, so both run on $77$. The three empty arms
 (\texttt{qb\_565}, \texttt{qz\_3393}, \texttt{qb\_2689}) are the targets whose every one of
@@ -506,7 +541,7 @@ Six further arms are
 short, at $m$ of $1$, $26$, $27$, $27$, $35$ and $38$. The resulting inflation of the
 net is $+0.006$ nats as-is and $+0.001$ under the locked convention, because the benign score
 distributions are lumpy: the discrete estimator has only $39$ attainable values at $N{=}10$,
-and $29\%$ of a target's benign NLI draws already sit at that target's own maximum, so a maximum over
+and $29.8\%$ of a target's benign NLI draws already sit at that target's own maximum, so a maximum over
 $26$ draws almost always equals the maximum over $50$. That is a disclosure, not a correction.
 The two disclosures pull the same way and neither is large enough to move a conclusion: the
 short arms inflate the net, and the locked convention deflates it. Finally, and non-negotiably:
@@ -643,7 +678,14 @@ search. Even index-matched the attack retains $181$ NLI evaluations against the 
 $50$, so that reading is not a claim in the attack's favour either.
 
 \paragraph{Transfer and defense.}
-These results are pending. Both the SE$\leftrightarrow$SRE transfer table and the
-defense curve for reformulation-averaging fill from the same campaign. Both are reported net
-of the benign floor, and both read as corroborating rather than independent evidence, because
-the two detectors share the DeBERTa backbone.
+Neither experiment has been run, and neither appears in this paper. The
+SE$\leftrightarrow$SRE transfer table and the defense curve for reformulation-averaging are
+both \emph{specified} (Section~\ref{sec:methods}, and the falsification condition in the
+Conclusion) and both are unexecuted, so there is no transfer table and no defense curve
+here, and nothing in this section is a reading of one. Two consequences follow and we
+state them rather than leave them to be inferred. The benign floor measured above does
+\emph{not} cover them: it is a floor for the false-alarm direction of the SE detector on the
+false-alarm stratum of the attacked pool, and for nothing else
+(Section~\ref{sec:discussion} says the same). And
+when the transfer arm is run it will read as corroborating rather than independent
+evidence, because the two detectors share the DeBERTa backbone.

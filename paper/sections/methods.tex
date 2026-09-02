@@ -78,6 +78,20 @@ when the normalised cluster likelihoods are exactly equal, an event of measure z
 has no ceiling \emph{atom} and hence no floor on the false-positive rates it can be operated
 at; the ceiling is shared, the atom that makes the ceiling an operating constraint is not.
 
+\paragraph{Two properties of our instantiation.}
+Two details of how we instantiate the estimator are not fixed by the definition above, and we
+state them here rather than leave them to be recovered from our code. First, our clusterer
+passes the \emph{bare answer strings} to the entailment model (\texttt{src/se/entropy.py}):
+the question is not concatenated to each generation before the check, and the clustering
+routine takes no question argument at all, so the equivalence relation whose classes
+$\mathcal{C}(q)$ we count is one between answers alone. Second, generation is zero-shot from
+the chat template with no instruction on answer length, capped at $48$ new tokens; the
+resulting samples average $19.6$ words ($114$ characters), and $25.4\%$ of them end without
+terminal punctuation, having reached the cap mid-sentence. Both are properties of our
+replication rather than of the method, and both plausibly affect cluster granularity, so
+every number in this paper should be read as characterising the discrete estimator under this
+configuration. We make no claim here about how the works we cite instantiate either choice.
+
 We state the consequence for the main method plainly, where the scoping is introduced,
 rather than leave a reader to derive it from the argument, because it is the least
 favourable reading of our own result and it is now measured rather than argued. We re-scored
@@ -111,7 +125,16 @@ on the weighting, which is what they disagree about; on the fair pool it is met 
 $200$ correct answers ($29.0\%$ [$23.2$, $35.6$]) against $115$ of $200$ hallucinating ones
 ($57.5\%$ [$50.6$, $64.1$]), so for most of the correct stratum the top of the scale is
 unreachable under any weighting rather than merely unreached under ours. The bound follows
-from the $\log N$ ceiling, so it too is silent about Kuhn's Eq.~(4). Two disclosed gaps ride
+from the $\log N$ ceiling, so it too is silent about Kuhn's Eq.~(4). One scope limit belongs
+with it. The bound is arithmetic and holds whatever the clustering is, but the distribution
+of $K$ it is applied to is not: across the full $2000$-question cached pass the Spearman
+correlation between a question's mean sample length and its cluster count is $+0.666$, so how
+much of either stratum clears $K \geq 8$ is in part a property of the $48$-token
+configuration disclosed above. The \emph{gap} between the strata is more robust than that.
+Splitting that same $2000$-question pass into quintiles of mean sample length, the
+$K \geq 8$ share is higher for hallucinating answers than for correct ones within every
+quintile, by $20.5$, $13.1$, $16.7$, $22.6$ and $17.3$ points from shortest to longest. Two
+disclosed gaps ride
 along with the re-scoring and we do not paper over them. First, the cache stores decoded
 answer strings rather than the token ids the sampler emitted, so teacher forcing scores each
 answer under its \emph{canonical} tokenisation. In the cache, $17$ of $20{,}000$ samples
@@ -313,7 +336,21 @@ It is also the sharpest of the claims that does \emph{not} carry to the likeliho
 estimator, whose real-valued weights leave no lattice for a $\delta$ to fall between.
 
 \paragraph{Evaluation and reporting.}
-We report every rate with a bootstrap $95\%$ confidence interval over questions.
+There is no single interval convention in this paper, and declaring one would misdescribe
+what we do. Which estimator an interval belongs to follows from what is being counted, so
+the rule follows the quantity rather than the section, and we state it once here. A rate that is a count of independent
+indicators at a threshold fixed in advance takes a \emph{Wilson} interval on that count,
+as the $26.2\%$ above does. An AUROC, or a mean over questions, takes a \emph{percentile
+bootstrap over questions}, resampling a single question index per replicate when two
+scores are compared on the same questions so that the comparison stays paired. A mean over
+attacked targets takes a \emph{paired bootstrap over targets}
+(Section~\ref{sec:experiments}). One load-bearing rate carries \emph{no interval at all},
+by design and not by omission: the false-alarm floor of $2.0\%$, measured at $N{=}40$ over
+the fair pool's $200$ correct answers, is a count at no
+fixed threshold, and the quantity a reader would take an interval to describe is not
+identified at that $n$, so we print that rate bare and say why
+(Section~\ref{sec:discussion}, which also sets out why a blanket convention would be wrong
+here rather than merely unnecessary).
 Beyond the aggregate score shift, the operationally meaningful events are operating-point
 flips: fixing a detector threshold at a target false-positive rate on clean data, counting hide
 targets that move from flagged to unflagged and false-alarm targets that move
@@ -350,10 +387,17 @@ and our attack's feasibility gate uses the same model; a measured entropy move u
 this clusterer therefore cannot be attributed to a change in the model's answer
 distribution rather than to the clusterer's own inconsistency. To separate these, we
 re-cluster the identical answer samples under equivalence relations independent of the
-DeBERTa-MNLI supervision: an exact-match relation (canonical-normalised string equality)
-and an embedding-cosine relation using \texttt{e5-base-unsupervised}, the E5 checkpoint
-trained only by contrastive pretraining before any NLI fine-tuning. We report the
-attack's mean \emph{intended move} under each as a bracket, with the shared-NLI arm as the
+DeBERTa-MNLI supervision. Two cheap ones were specified. The first is an exact-match relation
+(canonical-normalised string equality), and it is the one of the two the campaign
+instantiates. The
+second was an embedding-cosine relation using \texttt{e5-base-unsupervised}, the E5
+checkpoint trained only by contrastive pretraining before any NLI fine-tuning; it is
+\emph{absent} from the campaign reported below, which was launched with an empty
+embedding-model setting, so there is no embedding measurement on these samples and we
+report none (Section~\ref{sec:experiments} says so where the column would have been). We
+report the
+attack's mean \emph{intended move} under the relations we do have as a bracket, with the
+shared-NLI arm as the
 confounded upper bound and exact-match as the saturation-limited lower bound. The bracket is
 a statement about the intended move only, and it does not survive differencing. Every
 budget-controlled quantity we report subtracts an arm-specific benign comparator, and a lower
@@ -366,12 +410,18 @@ score. The adjudicator therefore lies outside the bracket on the paired net
 headers imply otherwise. We find that no cheap
 independent oracle adjudicates cleanly: exact-match saturates
 on short factoid answers, and the embedding oracle, though excellent on easy paraphrase
-pairs (STS-B AUROC $0.99$), is near-chance on the word-preserving, meaning-shifted pairs
-the attack produces (hard-negative AUROC $0.51$), so its clustering cannot be trusted to
+pairs (STS-B AUROC $0.99$), is near-chance on the word-preserving, meaning-shifted kind of
+pair the attack produces (hard-negative AUROC $0.51$), so its clustering cannot be trusted to
 adjudicate. We therefore build and validate a victim- and NLI-independent LLM-judge
-equivalence oracle (Qwen2.5-7B-Instruct). In the deployed symmetric configuration, on the
-same labelled pairs, it reaches hard-negative accuracy $0.93$ [$0.90$, $0.96$]
-($n{=}300$) where the embedder is near-chance ($0.51$). These strata are clean gold-alias
+equivalence oracle (Qwen2.5-7B-Instruct). In the deployed symmetric configuration it reaches
+hard-negative \emph{accuracy} $0.93$ [$0.90$, $0.96$] ($n{=}300$), against the embedder's
+hard-negative \emph{AUROC} of $0.51$ over $1{,}500$ such pairs and $1{,}500$ positives.
+Those are two different metrics on two different
+samples, and the paper names both wherever it prints the pair, because an AUROC is
+threshold-free while an accuracy is taken at a threshold and no embedder accuracy was
+recorded anywhere. The pair is therefore not a head-to-head margin. What it supports is the
+narrower claim we make from it: the judge makes a discrimination the embedder cannot.
+Both sets of strata are clean gold-alias
 pairs, a domain-matched \emph{proxy} for the deployed clustering decision over sampled
 answers, and a validation on messy real sample pairs remains owed (Limitations).
 \emph{We disclose a deviation.} Our pre-registered
@@ -437,13 +487,24 @@ arm costs the exceedance test power rather than calibration, since its null carr
 target's own $m$; the threshold was nonetheless not met by the statistic the decision rule is
 stated on, and a non-rejection has to be read against that.
 
-\paragraph{Transfer and defense.}
-To test whether the vulnerability is paradigm-level rather than specific to one
-implementation, we take a paraphrase optimized against one detector and measure the
+\paragraph{Transfer and defense: two designs, neither of them run.}
+Neither arm in this paragraph has been run to the design below, and no transfer result
+and no defense result appears anywhere in this paper. One piece was executed early and is
+not reported here rather than left to be found: a preliminary version of the SEP stretch ran
+on this campaign, and we exclude it because its transfer figures inherit this campaign's own
+outcomes and sample size, which is the dependence the design exists to avoid
+(Section~\ref{sec:experiments}); they are given here because a design that can fail is
+worth stating in advance even when it is still owed. To test whether the vulnerability is
+paradigm-level rather than specific to one
+implementation, the transfer arm would take a paraphrase optimized against one detector and
+measure the
 score change it induces on another (SE$\leftrightarrow$SRE), and, as a stretch,
 on a hidden-state probe (SEP~\citep{kossen2024seps}) that never samples. As a
-first defense we average the detector score over $d$ paraphrases of whatever
+first defense, the defended arm would average the detector score over $d$ paraphrases of
+whatever
 input is received ($d$ distinct from SRE's samples-per-reformulation $K$ and the
 benign-floor budget $m$), on the intuition that a single adversarial phrasing is diluted
-by its own paraphrases; this mirrors SRE's built-in reformulation and lets us ask
-whether that mechanism confers attack resistance.
+by its own paraphrases; this mirrors SRE's built-in reformulation and would let us ask
+whether that mechanism confers attack resistance. The cost-matched control that arm has to
+beat, and the interval whose covering zero would falsify the defense claim, are stated in
+the Conclusion.

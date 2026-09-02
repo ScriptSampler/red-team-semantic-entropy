@@ -498,9 +498,10 @@ the construction alone; the load-bearing \emph{empirical} test is whether the ef
 survives an equivalence oracle independent of the detector's own NLI. We run that test.
 Cheap independent oracles do not settle it. Exact-match saturates on short factoid
 answers, and sentence embedders are near-chance on the adversarial, word-preserving case
-(Methods). A victim- and NLI-independent LLM-judge, validated to $0.93$ accuracy on
-the gold-alias hard negatives that proxy that adversarial discrimination (where the
-embedder scores $0.51$), can settle it for the false-alarm direction, under the disclosed
+(Methods). A victim- and NLI-independent LLM-judge, validated to $0.93$ hard-negative \emph{accuracy}
+on the gold-alias hard negatives that proxy that adversarial discrimination (where the
+embedder's hard-negative \emph{AUROC} is $0.51$, on a different sample and at no
+threshold), can settle it for the false-alarm direction, under the disclosed
 re-scoped gate (Methods). Under it, the structural question has now been put to that test
 for one direction of one detector, and the effect does not survive it. That is a failure to
 establish the effect and not a demonstration of its absence, and we hold it to that below.
@@ -520,8 +521,8 @@ stronger form of it. A non-rejection by a design with power $0.67$ against a two
 that power computed at the budget upper bound $A{=}181$ like every other in
 Section~\ref{sec:experiments}, bounds what we could have seen, not what exists. That figure is
 the design that ran and not the
-one that was planned, and the design that ran is the weaker of the two at every level at which
-both can be read. Most of what costs it is the analytic null's integer granularity, which admits
+one that was planned, and the design that ran is the weaker of the two at both levels at which we
+compare them. Most of what costs it is the analytic null's integer granularity, which admits
 no cut between $0.0296$ and $0.0501$; about a third of it is the three targets with no benign
 arm and the six short ones, which we count rather than attribute away. At a fixed cut the
 realized design scores higher, but a fixed cut is not a fixed level and that reading is the one
@@ -594,5 +595,5 @@ report the verdict whichever way it falls. Everything above is to be read agains
 what we ultimately claim are effects exceeding what benign rephrasing achieves by chance.
 That floor has now been measured for the false-alarm direction and is reported in
 Section~\ref{sec:experiments}; the defence curve and the SE$\leftrightarrow$SRE transfer are
-not covered by it, have not been run, and remain readings of preliminary data rather than
-claims.
+not covered by it and have not been run, so neither appears in this paper in any form,
+preliminary or otherwise.

@@ -99,7 +99,10 @@ Sampling-Based Hallucination Detectors}
 
 \begin{abstract}
 % ABSTRACT LENGTH BUDGET. arXiv's abstract field takes 1920 characters.
-% NOW: 308 words / 1918 characters, counted 2026-08-31 by the rule below. 2 to spare.
+% NOW: 308 words / 1918 characters IN THE RENDERED FORM, recounted at byte level on
+% 2026-09-02 by the rule below. 2 to spare. THE RENDERED FORM IS THE ONE THAT IS SAFE TO
+% PASTE, and it is the only one that is. The same abstract pasted with its three {=}
+% sequences left intact is 1924, four OVER the cap, and is rejected. Full recount below.
 %
 % THE SINGULAR "the qualifier" WAS FIXED ON 2026-08-31, AND IT COST 3. Once the clusterer
 % scope landed (see the next block), the Abstract carried TWO scope qualifiers on the floor
@@ -190,10 +193,15 @@ Sampling-Based Hallucination Detectors}
 % (\emph{x} -> x, $N{=}10$ -> N=10, \% -> %, \ln -> ln, $ deleted). Collapse runs of
 % whitespace to a single space. A newline in this file becomes one space in the arXiv field,
 % so the line wrapping here costs nothing. But PASTE THE RENDERED TEXT, not this source.
-% Pasted with {=} left intact, the same abstract is 1921, one character OVER the cap and
-% rejected. The old figure here said 1905 and called it a fit; it was wrong on both counts
-% and it was wrong for the 1909-character Abstract too, which measured 1921 the same way.
-% Recount before believing any number above.
+% RECOUNTED AT BYTE LEVEL ON 2026-09-02, BOTH FORMS, FROM THE ABSTRACT AS IT NOW STANDS.
+%   RENDERED ({=} replaced by =):   1918 characters, 308 words.  FITS, 2 to spare.
+%   SOURCE   ({=} left intact):     1924 characters, 308 words.  FOUR OVER. REJECTED.
+% The abstract holds THREE {=} sequences and each costs 2 characters over a rendered =, so
+% the two forms differ by exactly 6 and no arithmetic other than that separates them.
+% PASTE THE RENDERED FORM. This block said the intact form was 1921 and one character over
+% until the recount, and the figure before that said 1905 and called it a fit; both were
+% wrong. A stale count here is a submission blocker and not a note, so recount BOTH forms
+% before believing any number above, and recount them again after any edit to the Abstract.
 %
 % WHAT MAY NOT BE TRIMMED. Each of these was bought with a withdrawn claim:
 %  - EVERY INTERVAL. Quoting a rate without one is this project's named failure mode.
@@ -211,7 +219,7 @@ Sampling-Based Hallucination Detectors}
 %    THE ABSTRACT'S FORM IS THE COMPRESSED ONE, AND DELIBERATELY. The canonical scoped form
 %    the rest of the paper carries is "at N=10, under bidirectional DeBERTa-large-MNLI
 %    clustering" (discussion.tex, limitations.tex, introduction.tex, conclusion.tex). Naming
-%    the model here costs 8 characters over "Under NLI clustering" and there are 5, so the
+%    the model here costs 8 characters over "Under NLI clustering" and there are 2, so the
 %    Abstract names the relation family and the body names the checkpoint. If characters
 %    ever free up, lengthening this is the SECOND thing to buy; the first is still the
 %    two-orders-of-magnitude gloss listed further down.
@@ -351,8 +359,20 @@ no attack effect here.
 %     repository and says nothing about a data licence. Do not add one until it is decided;
 %   - what a bare clone reproduces is ARTIFACT_AVAILABILITY.md section 2, which verified it
 %     by running it on CPU with no cache present, and figures/ does carry a plotted-points
-%     CSV for each of the paper's four figures (fig1_ceiling, fig2_censoring,
-%     fig_achievable_roc, fig_floor_budget);
+%     CSV for each of the paper's figures.
+%
+%     THE PAPER HAS TWO FIGURES, NOT FOUR. This bullet said "the paper's four figures
+%     (fig1_ceiling, fig2_censoring, fig_achievable_roc, fig_floor_budget)" until
+%     2026-09-02, and the built PDF has only ever had two: fig_achievable_roc and
+%     fig_floor_budget, both included from sections/discussion.tex, both measured on the
+%     fair pool's 200 correct answers. fig1_ceiling and fig2_censoring exist on disk, are
+%     current, and are included NOWHERE. That is a recorded decision and not an oversight:
+%     figures/README.md owns it, and the reason is that both are measured on the 80-target
+%     ATTACKED pool, so wiring either one in puts a second population into the paper's
+%     figure set and needs captions written to keep the two apart. DO NOT "fix" the count
+%     by including them; adding two figures to a paper of this length is a layout change and
+%     the author's call, not a repair. The count was the error, and a comment does not merely
+%     record an error, it schedules one;
 %   - the 4.75 MB is wk4_full_2000q, measured file by file in section 3.2.
 %
 % NO COMMIT HASH IS PRINTED, AND THAT IS DELIBERATE. F7's fix asks for "a URL and a commit

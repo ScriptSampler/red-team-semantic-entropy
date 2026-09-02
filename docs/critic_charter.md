@@ -28,8 +28,11 @@ support its stated claim.
    or a graded judge with a reported human-agreement number. The headline must
    survive a stricter oracle. A surface-sensitive oracle is disqualifying for a
    surface-form-sensitivity study.
-4. **Power and scope.** Confidence intervals (bootstrap over questions) on every
-   reported number. At least one dataset beyond TriviaQA before any general
+4. **Power and scope.** An interval on every reported number, by the rule Methods states:
+   Wilson on a count at a threshold fixed in advance, percentile bootstrap over questions
+   for an AUROC or a mean over questions, paired bootstrap over targets for a mean over
+   attacked targets, and no interval where the estimand is not identified. A blanket
+   bootstrap-over-questions rule is NOT the convention and asserting one misdescribes it. At least one dataset beyond TriviaQA before any general
    claim. Single model and 4-bit quantization stated and defended (quantization
    perturbs the very distribution whose entropy is measured).
 5. **Construct validity.** Report operating-point effects (flips at a fixed,

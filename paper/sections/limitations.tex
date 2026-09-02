@@ -133,9 +133,15 @@ attack's feasibility constraint uses the same model, so a measured degradation c
 reflect that one model's self-inconsistency rather than a paradigm-level weakness. We address
 this directly by re-clustering the answer samples under equivalence oracles independent of the
 DeBERTa-MNLI supervision (Methods), but two caveats bound the check. First, the cheap
-independent oracles are unreliable on the adversarial case (exact-match saturates; the sentence
-embedder is near-chance), so the adjudication rests on a single LLM-judge. That judge is
-validated ($0.93$) on the hard discrimination the others fail, but a single oracle is not
+independent oracles do not settle the adversarial case, and they fail it in two different
+ways. Exact-match runs as an arm of the campaign and saturates on short factoid answers.
+The sentence embedder does not run as an arm at all: it was disqualified in advance by a
+separate calibration on gold-alias pairs, where its hard-negative AUROC is $0.51$, and the
+campaign was launched without it, so nothing here is an embedding measurement set aside
+(Section~\ref{sec:experiments}). The adjudication therefore rests on a single LLM-judge.
+That judge is
+validated at $0.93$ hard-negative accuracy on the discrimination the embedder fails, but a
+single oracle is not
 dispositive even when it is independent and validated, and a human or multi-judge equivalence
 audit remains owed. Second, the judge's own positive-recognition is imperfect, at $0.65$
 [$0.59$, $0.70$]. On the clean gold-alias pairs it was validated on, it \emph{over}-splits

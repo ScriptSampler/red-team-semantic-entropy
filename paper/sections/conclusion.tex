@@ -99,7 +99,9 @@ First, our clusterer and our equivalence gate are the same NLI model, so whether
 vulnerability is a property of the \emph{paradigm} or of one model's self-inconsistency turns
 on an independent clustering oracle. We build one. The cheap candidates (exact match, sentence
 embeddings) fail on the adversarial case, but a victim- and NLI-independent LLM-judge,
-validated on a domain-matched proxy of that case ($0.93$ vs.\ $0.51$), clears it. It is under
+validated on a domain-matched proxy of that case, clears it: hard-negative \emph{accuracy}
+$0.93$, against the embedder's hard-negative \emph{AUROC} of $0.51$. Those are two metrics
+on two samples and we do not read the pair as a head-to-head margin (Methods). It is under
 this judge that the confirmatory large-$n$ run, now complete, adjudicated whether the
 false-alarm effect survives the independent clusterer (the direction to which the judge is
 re-scoped; Methods). It does not survive it: the adjudicator's exceedance test does not reject,
